@@ -12,3 +12,4 @@ clean:
 	make -C $(KERNEL_SRC) SUBDIRS=$(PWD) clean
 
 clean-files := *.o *.ko *.mod.[co] *~
+
