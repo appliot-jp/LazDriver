@@ -1,0 +1,7 @@
+*.cmd
+*.ko
+Module.symvers
+description-pak
+*.o
+modules.order
+

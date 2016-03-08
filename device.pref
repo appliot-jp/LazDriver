@@ -1,0 +1,6 @@
+name=LazuritePiGateway
+driver=/home/pi/driver/sub-ghz/DRV_802154.ko
+device=/dev/bp3596
+option=mode,ch,panid,pwr,rate
+value=2,36,-1,-1,-1
+
