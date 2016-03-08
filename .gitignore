@@ -1,7 +1,7 @@
+.*.cmd
 *.cmd
 *.ko
 Module.symvers
-description-pak
 *.o
 modules.order
-
+DRV_802154.*
