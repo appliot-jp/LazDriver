@@ -46,9 +46,12 @@
 //		read size = data size
 //			command			16bit
 //				0x0000				nop
-//				0x0001				send data
-//				0x0002				set parameter(does not include payload)
-//				0x0003				receiving data packet
+//				0x0101				phy reset
+//				0x0201				send data
+//				0x0301				set rx parameter(does not include payload)
+//				0x0302				receiving data packet
+//				0x0401				set to read ed value
+//				0x0402				read ed value
 //			time.tv_sec		32bit	current time (32bit epoch gime)
 //			time.tv_nsec	32bit	nano sec time(000,000,000ns ~ 999,999,999ns) of current time
 //			area			16bit	area code. currently support only "JP"
