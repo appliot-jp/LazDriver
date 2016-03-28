@@ -771,7 +771,8 @@ static int bp_setrf( uint8_t rf ) {
 		hang++;
         bp_idle();
         bp_spi_read(SPI_ADR_RF_STATUS, &value, 1);
-        if( hang > 1000000 ) {
+//        if( hang > 1000000 ) {		// modified 2016.3.28 Naotaka Saito   waiting time is too long...
+        if( hang > 1000 ) {
 			printk( "%s(%d:) ERROR : RF_STATUS hangup!! (0x%02X)\r\n", __FUNCTION__, __LINE__, value  );
 			return SPI_ERR_UNKNOWN;
 		}
