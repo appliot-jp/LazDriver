@@ -118,9 +118,14 @@ module_param(pwr, int, S_IRUGO);
 static t_802154E_SETTING	mac_init_param;
 
 // *****************************************************************
+//			transfer process (input from chrdev)
+// *****************************************************************
+uint16_t gen_tx_stream(uint8_t *in) {
+}
+// *****************************************************************
 //			receiving process (output to chrdev)
 // *****************************************************************
-uint16_t write_rx_stream(uint8_t *out, t_MAC_HEADER *phdr) {
+uint16_t gen_rx_stream(uint8_t *out, t_MAC_HEADER *phdr) {
 	uint16_t offset=0;
 	struct timespec time;
 
@@ -306,7 +311,7 @@ int rx_callback(t_MAC_HEADER *phdr)
 		if(mode == MODE_STREAM)
 		{
 			out = new_data->data;
-			size = write_rx_stream(out, phdr);
+			size = gen_rx_stream(out, phdr);
 			new_data->len = size;
 			DEBUGONDISPLAY(MODE_DRV_DEBUG,PAYLOADDUMP(out, size));
 		}
@@ -422,7 +427,12 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 		count = 0;
 		goto error;
 	}
-	status = mac.send(buf,count);
+	if(mode == MODE_STREAM)
+	{
+	} else
+	{
+		status = mac.send(buf,count);
+	}
 
 	DEBUGONDISPLAY(MODE_DRV_DEBUG,PAYLOADDUMP(buf,count));		// for debug
 
