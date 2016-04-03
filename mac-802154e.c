@@ -378,11 +378,22 @@ int mac_get_name(char* name)
 	return -1;
 }
 
+// add API from 	16.4.2	Naotaka Saito
+t_MAC_HEADER *mac_rx_header(void){
+	return &macParam.rxHdr;
+};
+t_MAC_HEADER *mac_tx_header(void){
+	return &macParam.txHdr;
+};
+// add API up to 	16.4.2	Naotaka Saito
+
 const MAC mac ={
 	.init = mac_param_init,
 	.send = mac_send,
 	.get_name = mac_get_name,
 	.remove = mac_remove,
+	.get_rx_header = mac_rx_header,		// add 16.4.2 Naotaka Saito
+	.get_tx_header = mac_tx_header		// add 16.4.2 Naotaka Saito
 };
 
 

@@ -79,6 +79,9 @@ typedef struct {
 } t_MAC_DATA;
 
 typedef struct {
+	uint8_t				ch;				//add	16.4.2 Naotaka Saito
+	uint8_t				pwr;			//add	16.4.2 Naotaka Saito
+	uint8_t				rate;			//add	16.4.2 Naotaka Saito
 	t_MAC_DATA			raw;
 	e_IEEE_FRAME_TYPE	frame_type;
 	e_IEEE_FRAME_VER	frame_ver;
@@ -133,6 +136,13 @@ typedef struct {
 	int (*send)(const uint8_t *data, uint16_t len);
 	int (*get_name)(char* name);
 	int (*remove)(void);
+	uint16_t (*phy_reset)(void);		// add 16.4.2	Naotaka Saito
+	uint16_t (*send2)(t_MAC_HEADER *param);		// add 16.4.2	Naotaka Saito
+	uint16_t (*set_rx_param)(t_MAC_HEADER *param);		// add 16.4.2	Naotaka Saito
+	uint16_t (*get_rx_param)(t_MAC_HEADER *param);		// add 16.4.2	Naotaka Saito
+	uint16_t (*get_ed_val)(t_MAC_HEADER *param);		// add 16.4.2	Naotaka Saito
+	t_MAC_HEADER *(*get_rx_header)(void);		// add 16.4.2	Naotaka Saito;
+	t_MAC_HEADER *(*get_tx_header)(void);		// add 16.4.2	Naotaka Saito
 } MAC;
 
 extern const MAC mac;

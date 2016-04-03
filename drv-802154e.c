@@ -120,7 +120,61 @@ static t_802154E_SETTING	mac_init_param;
 // *****************************************************************
 //			transfer process (input from chrdev)
 // *****************************************************************
-uint16_t gen_tx_stream(uint8_t *in) {
+uint16_t cmd_phy_reset(const uint8_t *in) {
+	uint16_t ret = 0;
+	mac.phy_reset();
+	return ret;
+}
+uint16_t cmd_send_data(const uint8_t *in) {
+	uint16_t ret = 0;
+	t_MAC_HEADER tx;
+	mac.send2(&tx);
+	return ret;
+}
+uint16_t cmd_set_rx_param(const uint8_t *in) {
+	uint16_t ret = 0;
+	t_MAC_HEADER tx;
+	mac.set_rx_param(&tx);
+	return ret;
+}
+uint16_t cmd_get_ed_val(const uint8_t *in) {
+	uint16_t ret = 0;
+	t_MAC_HEADER tx;
+	mac.get_ed_val(&tx);
+	return ret;
+}
+#define		CMD_NOP				0x0000
+#define		CMD_PHY_RESET		0x0101
+#define		CMD_SEND_DATA		0x0201
+#define		CMD_SET_RX_PARAM	0x0301
+#define		CMD_GET_ED_VAL		0x0401
+uint16_t gen_tx_stream(const uint8_t *in) {
+	uint16_t ret = 0;
+	uint16_t tmp16;
+	t_MAC_HEADER *tx;
+
+	tx = mac.get_tx_header();
+	tmp16 = (uint16_t) in[0];
+	
+	switch(tmp16) {
+		case CMD_PHY_RESET:
+		cmd_phy_reset(in);
+		break;
+		case CMD_SEND_DATA:
+		cmd_send_data(in);
+		break;
+		case CMD_SET_RX_PARAM:
+		cmd_set_rx_param(in);
+		break;
+		case CMD_GET_ED_VAL:
+		cmd_get_ed_val(in);
+		break;
+		default:
+		case CMD_NOP:
+		break;
+	}
+	
+	return ret;
 }
 // *****************************************************************
 //			receiving process (output to chrdev)
@@ -422,15 +476,16 @@ end:
 static ssize_t chardev_write (struct file * file, const char __user * buf,
 		size_t count, loff_t * ppos) {
 	int status = 0;
-	if(count >=250)
-	{
-		count = 0;
-		goto error;
-	}
 	if(mode == MODE_STREAM)
 	{
+		status = gen_tx_stream(buf);
 	} else
 	{
+		if(count >=250)
+		{
+			count = 0;
+			goto error;
+		}
 		status = mac.send(buf,count);
 	}
 
