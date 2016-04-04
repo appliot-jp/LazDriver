@@ -250,7 +250,6 @@ uint16_t gen_rx_stream(uint8_t *out, t_MAC_HEADER *phdr) {
 			MEM_TO_BUFFER(out,tmp8,offset);
 			break;
 		case 2:
-			tmp8 = 0;
 			MEM_TO_BUFFER(out,tmp8,offset);
 			MEM_TO_BUFFER(out,tmp8,offset);
 			MEM_TO_BUFFER(out,tmp8,offset);
