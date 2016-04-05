@@ -120,24 +120,45 @@ static t_802154E_SETTING	mac_init_param;
 // *****************************************************************
 //			transfer process (input from chrdev)
 // *****************************************************************
-uint16_t cmd_phy_reset(const uint8_t *in) {
+static ssize_t dec_data_to_header(const uint8_t *in,size_t size, t_MAC_HEADER *tx) {
+	uint16_t offset = 12;
+	uint32_t header;
+	// headerの値を元にMACのデータを更新
+	// 後から設定されるAddrTypeは、設定された値を上書きしていく。
+	// 最後に設定されいるパラメータからrawデータを生成する。
+	tx->ch = *(uint16_t *)(in + offset),offset += sizeof(uint16_t);
+	tx->rate = *(uint16_t *)(in + offset),offset += sizeof(uint16_t);
+	tx->pwr = *(uint16_t *)(in + offset),offset += sizeof(uint16_t);
+	header = *(uint32_t *)(in + offset),offset += sizeof(uint32_t);
+	tx->ch = *(uint16_t *)(in + offset),offset += sizeof(uint16_t);
+	tx->ch = *(uint16_t *)(in + offset),offset += sizeof(uint16_t);
+	tx->ch = *(uint16_t *)(in + offset),offset += sizeof(uint16_t);
+	tx->ch = *(uint16_t *)(in + offset),offset += sizeof(uint16_t);
+	tx->ch = *(uint16_t *)(in + offset),offset += sizeof(uint16_t);
+	tx->ch = *(uint16_t *)(in + offset),offset += sizeof(uint16_t);
+	
+}
+static ssize_t cmd_phy_reset(const uint8_t *in,size_t size) {
 	uint16_t ret = 0;
 	mac.phy_reset();
 	return ret;
 }
-uint16_t cmd_send_data(const uint8_t *in) {
-	uint16_t ret = 0;
+static ssize_t cmd_send_data(const uint8_t *in, size_t size) {
+	uint16_t ret;
 	t_MAC_HEADER tx;
-	mac.send2(&tx);
+	//ret = mac.send2(&tx);
+	ret = -EFAULT;
+	PAYLOADDUMP(in,size);
+	ret = size;
 	return ret;
 }
-uint16_t cmd_set_rx_param(const uint8_t *in) {
+static ssize_t cmd_set_rx_param(const uint8_t *in, size_t size) {
 	uint16_t ret = 0;
 	t_MAC_HEADER tx;
 	mac.set_rx_param(&tx);
 	return ret;
 }
-uint16_t cmd_get_ed_val(const uint8_t *in) {
+ssize_t cmd_get_ed_val(const uint8_t *in, size_t size) {
 	uint16_t ret = 0;
 	t_MAC_HEADER tx;
 	mac.get_ed_val(&tx);
@@ -148,32 +169,33 @@ uint16_t cmd_get_ed_val(const uint8_t *in) {
 #define		CMD_SEND_DATA		0x0201
 #define		CMD_SET_RX_PARAM	0x0301
 #define		CMD_GET_ED_VAL		0x0401
-uint16_t gen_tx_stream(const uint8_t *in) {
-	uint16_t ret = 0;
+static ssize_t gen_tx_stream(const uint8_t *in, size_t size) {
+	ssize_t ret;
 	uint16_t tmp16;
-	t_MAC_HEADER *tx;
 
-	tx = mac.get_tx_header();
-	tmp16 = (uint16_t) in[0];
+	tmp16 = *((uint16_t *) (in + 0));
+	printk("command = %04x\n",tmp16);
+	PAYLOADDUMP(in,size);
 	
 	switch(tmp16) {
 		case CMD_PHY_RESET:
-		cmd_phy_reset(in);
-		break;
+			ret = cmd_phy_reset(in,size);
+			break;
 		case CMD_SEND_DATA:
-		cmd_send_data(in);
-		break;
+			ret = cmd_send_data(in,size);
+			break;
 		case CMD_SET_RX_PARAM:
-		cmd_set_rx_param(in);
-		break;
+			ret = cmd_set_rx_param(in,size);
+			break;
 		case CMD_GET_ED_VAL:
-		cmd_get_ed_val(in);
-		break;
-		default:
+			ret = cmd_get_ed_val(in,size);
+			break;
 		case CMD_NOP:
 		break;
+		default:
+			ret = -ESRCH;
+			break;
 	}
-	
 	return ret;
 }
 // *****************************************************************
@@ -475,9 +497,10 @@ end:
 static ssize_t chardev_write (struct file * file, const char __user * buf,
 		size_t count, loff_t * ppos) {
 	int status = 0;
+	spin_lock( &chrdev.lock );
 	if(mode == MODE_STREAM)
 	{
-		status = gen_tx_stream(buf);
+		status = gen_tx_stream(buf,count);
 	} else
 	{
 		if(count >=250)
@@ -491,6 +514,7 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 	DEBUGONDISPLAY(MODE_DRV_DEBUG,PAYLOADDUMP(buf,count));		// for debug
 
 error:
+	spin_unlock( &chrdev.lock );
 	return status;
 }
 
