@@ -364,6 +364,11 @@ int mac_param_init(t_802154E_SETTING *p, int (*rx_callback)(t_MAC_HEADER *phdr))
 
 	return status;
 }
+int mac_get_myaddr(uint8_t* addr)
+{
+	memcpy(addr,macParam.myInfo.myAddr.addr64,8);
+	return 0;
+}
 int mac_get_name(char* name)
 {
 	int len;
@@ -391,6 +396,7 @@ const MAC mac ={
 	.init = mac_param_init,
 	.send = mac_send,
 	.get_name = mac_get_name,
+	.get_myaddr = mac_get_myaddr,
 	.remove = mac_remove,
 	.get_rx_header = mac_rx_header,		// add 16.4.2 Naotaka Saito
 	.get_tx_header = mac_tx_header		// add 16.4.2 Naotaka Saito

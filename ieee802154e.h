@@ -16,6 +16,9 @@
 #ifndef	_IEEE802154E_H_
 #define	_IEEE802154E_H_
 
+extern uint8_t get_seq_num(void);
+extern int32_t enc_mac_header(t_MAC_HEADER* pHdr);
+extern int dec_mac_header(uint16_t mac_header,t_MAC_HEADER* pHdr);
 extern int dec_ieee802154e_header(t_MAC_HEADER* pHdr, bool rx);
 extern int enc_ieee802154e_header(t_MAC_HEADER* pHdr);
 extern int enc_ieee802154e_ack_header(t_MAC_HEADER* pHdr, t_MAC_DATA* raw);

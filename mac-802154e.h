@@ -135,6 +135,7 @@ typedef struct {
 //	int (*rx_callback)(t_MAC_HEADER *phdr);
 	int (*send)(const uint8_t *data, uint16_t len);
 	int (*get_name)(char* name);
+	int (*get_myaddr)(uint8_t* addr);
 	int (*remove)(void);
 	uint16_t (*phy_reset)(void);		// add 16.4.2	Naotaka Saito
 	uint16_t (*send2)(t_MAC_HEADER *param);		// add 16.4.2	Naotaka Saito

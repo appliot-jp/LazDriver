@@ -33,40 +33,8 @@
 
 #include "drv-802154e.h"
 #include "mac-802154e.h"
-
-// Device driver IO
-// mode = 0 :
-//		read size = 2:				receiving packet size
-//		read size = packet size:	raw data output
-// mode = 1: sniffer
-//		read size = 2:				receiving packet size
-//		read size = packet size:	raw data output
-// mode = 2 : MODE_STREAM
-//		read size = 2				output data size
-//		read size = data size
-//			command			16bit
-//				0x0000				nop
-//				0x0101				phy reset
-//				0x0201				send data
-//				0x0301				set rx parameter(does not include payload)
-//				0x0302				receiving data packet
-//				0x0401				set to read ed value
-//				0x0402				read ed value
-//			time.tv_sec		32bit	current time (32bit epoch gime)
-//			time.tv_nsec	32bit	nano sec time(000,000,000ns ~ 999,999,999ns) of current time
-//			area			16bit	area code. currently support only "JP"
-//			ch				16bit	frequency
-//			rate			16bit	bit rate
-//			pwr				16bit	output power
-//			header			32bit	header frame
-//			rxPanid			32bit	0-0xFFFF = panid,  -1= omitted
-//			rxAddrType		8bit	0: omit, 1=8bit, 2=16bit, 3=128bit
-//			rxAddr			64bit
-//			txPanid			32bit	0-0xFFFF = panid,  -1= omitted
-//			txAddrType		8bit	0: omit, 1=8bit, 2=16bit, 3=128bit
-//			txAddr			64bit
-//			rssi			8bit
-//			payload			flexible length
+#include "ieee802154e.h"
+#include "cmdif.h"
 
 #define PHY_DATA_SIZE		512		//250 + 1
 //static wait_queue_head_t read_q;	//poll wait
@@ -115,255 +83,11 @@ module_param(mode, int, S_IRUGO);
 module_param(pwr, int, S_IRUGO);
 
 // IEEE802.15.4e custom parameter
-static t_802154E_SETTING	mac_init_param;
+t_802154E_SETTING	mac_init_param;
 
 // *****************************************************************
 //			transfer process (input from chrdev)
 // *****************************************************************
-static ssize_t dec_data_to_header(const uint8_t *in,size_t size, t_MAC_HEADER *tx) {
-	uint16_t offset = 12;
-	uint32_t header;
-	// headerの値を元にMACのデータを更新
-	// 後から設定されるAddrTypeは、設定された値を上書きしていく。
-	// 最後に設定されいるパラメータからrawデータを生成する。
-	tx->ch = *(uint16_t *)(in + offset),offset += sizeof(uint16_t);
-	tx->rate = *(uint16_t *)(in + offset),offset += sizeof(uint16_t);
-	tx->pwr = *(uint16_t *)(in + offset),offset += sizeof(uint16_t);
-	header = *(uint32_t *)(in + offset),offset += sizeof(uint32_t);
-	tx->ch = *(uint16_t *)(in + offset),offset += sizeof(uint16_t);
-	tx->ch = *(uint16_t *)(in + offset),offset += sizeof(uint16_t);
-	tx->ch = *(uint16_t *)(in + offset),offset += sizeof(uint16_t);
-	tx->ch = *(uint16_t *)(in + offset),offset += sizeof(uint16_t);
-	tx->ch = *(uint16_t *)(in + offset),offset += sizeof(uint16_t);
-	tx->ch = *(uint16_t *)(in + offset),offset += sizeof(uint16_t);
-	
-}
-static ssize_t cmd_phy_reset(const uint8_t *in,size_t size) {
-	uint16_t ret = 0;
-	mac.phy_reset();
-	return ret;
-}
-static ssize_t cmd_send_data(const uint8_t *in, size_t size) {
-	uint16_t ret;
-	t_MAC_HEADER tx;
-	//ret = mac.send2(&tx);
-	ret = -EFAULT;
-	PAYLOADDUMP(in,size);
-	ret = size;
-	return ret;
-}
-static ssize_t cmd_set_rx_param(const uint8_t *in, size_t size) {
-	uint16_t ret = 0;
-	t_MAC_HEADER tx;
-	mac.set_rx_param(&tx);
-	return ret;
-}
-ssize_t cmd_get_ed_val(const uint8_t *in, size_t size) {
-	uint16_t ret = 0;
-	t_MAC_HEADER tx;
-	mac.get_ed_val(&tx);
-	return ret;
-}
-#define		CMD_NOP				0x0000
-#define		CMD_PHY_RESET		0x0101
-#define		CMD_SEND_DATA		0x0201
-#define		CMD_SET_RX_PARAM	0x0301
-#define		CMD_GET_ED_VAL		0x0401
-static ssize_t gen_tx_stream(const uint8_t *in, size_t size) {
-	ssize_t ret;
-	uint16_t tmp16;
-
-	tmp16 = *((uint16_t *) (in + 0));
-	printk("command = %04x\n",tmp16);
-	PAYLOADDUMP(in,size);
-	
-	switch(tmp16) {
-		case CMD_PHY_RESET:
-			ret = cmd_phy_reset(in,size);
-			break;
-		case CMD_SEND_DATA:
-			ret = cmd_send_data(in,size);
-			break;
-		case CMD_SET_RX_PARAM:
-			ret = cmd_set_rx_param(in,size);
-			break;
-		case CMD_GET_ED_VAL:
-			ret = cmd_get_ed_val(in,size);
-			break;
-		case CMD_NOP:
-		break;
-		default:
-			ret = -ESRCH;
-			break;
-	}
-	return ret;
-}
-// *****************************************************************
-//			receiving process (output to chrdev)
-// *****************************************************************
-uint16_t gen_rx_stream(uint8_t *out, t_MAC_HEADER *phdr) {
-	uint16_t offset=0;
-	struct timespec time;
-
-	// output temprary 
-	uint16_t tmp16;
-	uint32_t tmp32;
-	uint8_t tmp8;
-
-#define MEM_TO_BUFFER(A,B,C)	memcpy(A+C,&B,sizeof(B));\
-	C+=sizeof(B);
-	// write command 
-	tmp16 = 0x03;
-	MEM_TO_BUFFER(out,tmp16,offset);
-
-	// write tv_sec & tv_nsec
-	getnstimeofday(&time);
-	MEM_TO_BUFFER(out,time.tv_sec,offset);
-	MEM_TO_BUFFER(out,time.tv_nsec,offset);
-
-	// area code
-	tmp8 = 'J';
-	MEM_TO_BUFFER(out,tmp8,offset);		// write area
-	tmp8 = 'P';
-	MEM_TO_BUFFER(out,tmp8,offset);		// write area
-	tmp16 = ch;
-	MEM_TO_BUFFER(out,tmp16,offset);	// write ch
-	tmp16 = rate;
-	MEM_TO_BUFFER(out,tmp16,offset);	// write rate
-	tmp16 = pwr;
-	MEM_TO_BUFFER(out,tmp16,offset);	// write pwr
-
-	tmp32 = (uint32_t)(*(unsigned short*)phdr->raw.data);	// header
-
-	MEM_TO_BUFFER(out,tmp32,offset);
-
-	// rx_panid
-	if(phdr->rx_addr.panid_enb) tmp32 = (uint32_t)phdr->rx_addr.panid;
-	else tmp32 = 0xffffffff;
-	MEM_TO_BUFFER(out,tmp32,offset);
-
-	// rx_addr type
-	tmp8 = (uint32_t)phdr->rx_addr.addr_type;
-	MEM_TO_BUFFER(out,tmp8,offset);
-
-	// rx_addr
-	switch(phdr->rx_addr.addr_type) {
-		case 0:
-			tmp8 = 0xff;
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			break;
-		case 1:
-			tmp8 = 0;
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			tmp8 = phdr->rx_addr.addr.addr8;
-			MEM_TO_BUFFER(out,tmp8,offset);
-			break;
-		case 2:
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			tmp8 = (uint8_t)(phdr->rx_addr.addr.addr16>>8);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			tmp8 = (uint8_t)phdr->rx_addr.addr.addr16&0x00ff;
-			MEM_TO_BUFFER(out,tmp8,offset);
-			break;
-		case 3:
-			MEM_TO_BUFFER(out,phdr->rx_addr.addr.addr64[7],offset);
-			MEM_TO_BUFFER(out,phdr->rx_addr.addr.addr64[6],offset);
-			MEM_TO_BUFFER(out,phdr->rx_addr.addr.addr64[5],offset);
-			MEM_TO_BUFFER(out,phdr->rx_addr.addr.addr64[4],offset);
-			MEM_TO_BUFFER(out,phdr->rx_addr.addr.addr64[3],offset);
-			MEM_TO_BUFFER(out,phdr->rx_addr.addr.addr64[2],offset);
-			MEM_TO_BUFFER(out,phdr->rx_addr.addr.addr64[1],offset);
-			MEM_TO_BUFFER(out,phdr->rx_addr.addr.addr64[0],offset);
-			break;
-	}
-
-	// tx_panid
-	if(phdr->tx_addr.panid_enb) tmp32 = (uint32_t)phdr->tx_addr.panid;
-	else tmp32 = 0xffffffff;
-	MEM_TO_BUFFER(out,tmp32,offset);
-
-	// tx_addr type
-	tmp8 = (uint32_t)phdr->tx_addr.addr_type;
-	MEM_TO_BUFFER(out,tmp8,offset);
-
-	// tx_addr
-	switch(phdr->tx_addr.addr_type) {
-		case 0:
-			tmp8 = 0xff;
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			break;
-		case 1:
-			tmp8 = 0;
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			tmp8 = phdr->tx_addr.addr.addr8;
-			MEM_TO_BUFFER(out,tmp8,offset);
-			break;
-		case 2:
-			tmp8 = 0;
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			tmp8 = (uint8_t)(phdr->tx_addr.addr.addr16>>8);
-			MEM_TO_BUFFER(out,tmp8,offset);
-			tmp8 = (uint8_t)phdr->tx_addr.addr.addr16&0x00ff;
-			MEM_TO_BUFFER(out,tmp8,offset);
-			break;
-		case 3:
-			MEM_TO_BUFFER(out,phdr->tx_addr.addr.addr64[7],offset);
-			MEM_TO_BUFFER(out,phdr->tx_addr.addr.addr64[6],offset);
-			MEM_TO_BUFFER(out,phdr->tx_addr.addr.addr64[5],offset);
-			MEM_TO_BUFFER(out,phdr->tx_addr.addr.addr64[4],offset);
-			MEM_TO_BUFFER(out,phdr->tx_addr.addr.addr64[3],offset);
-			MEM_TO_BUFFER(out,phdr->tx_addr.addr.addr64[2],offset);
-			MEM_TO_BUFFER(out,phdr->tx_addr.addr.addr64[1],offset);
-			MEM_TO_BUFFER(out,phdr->tx_addr.addr.addr64[0],offset);
-			break;
-	}
-
-	// rssi
-	tmp8 = phdr->rssi;
-	MEM_TO_BUFFER(out,tmp8,offset);
-
-	// payload
-	memcpy(out+offset,phdr->payload.data,phdr->payload.len);
-	offset+=phdr->payload.len;
-	return offset;
-}
-
 int rx_callback(t_MAC_HEADER *phdr)
 {
 	struct list_data *new_data;
@@ -498,7 +222,7 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 		size_t count, loff_t * ppos) {
 	int status = 0;
 	spin_lock( &chrdev.lock );
-	if(mode == MODE_STREAM)
+	if(mode && MODE_STREAM)
 	{
 		status = gen_tx_stream(buf,count);
 	} else
@@ -555,7 +279,7 @@ static int __init drv_param_init(void) {
 	}
 
 	drv_mode = mode;
-	printk(KERN_INFO "[DRV-802154E] Starting\n");
+	printk(KERN_INFO "[DRV-802154E] Starting:: mode=0x%04x\n",drv_mode);
 
 	status = mac.get_name(chrdev.name);
 	printk(KERN_INFO "[DRV-802154E] DEVNAME=%s\n",chrdev.name);

@@ -11,6 +11,7 @@
 #define MODE_TEST			0x1000
 #define MODE_PA_TEST		0x0800
 #define MODE_REG_DUMP		0x0400
+#define MODE_STREAM_DEBUG	0x0200
 #define MODE_DEBUG			( MODE_DRV_DEBUG | MODE_MAC_DEBUG | MODE_PHY_DEBUG )
 extern uint16_t drv_mode;
 

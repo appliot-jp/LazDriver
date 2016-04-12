@@ -9,7 +9,7 @@
  */
 
 
-//#include <linux/module.h>
+#include <linux/module.h>
 //#include <linux/init.h>
 //#include <linux/wait.h>
 //#include <linux/sched.h>
@@ -53,10 +53,83 @@ typedef struct {
 	uint8_t tx_addr_type:2;
 } t_FRAME_HEADER_BIT;
 
+int32_t enc_mac_header(t_MAC_HEADER* pHdr)
+{
+	int8_t rxAddr = pHdr->rx_addr.addr_type;
+	int8_t txAddr = pHdr->tx_addr.addr_type;
+	int8_t rxPanid = pHdr->rx_addr.panid_enb;
+	int8_t txPanid = pHdr->tx_addr.panid_enb;
+	int8_t addr_type = -1;
+	int8_t panid_comp;
+	int32_t header = 0;
+	//	data check
+	if((rxAddr <0 ) || (rxAddr > 4)) {printk("rxAddr type error:: must be 0 to 4.\n");header = -1;}
+	if((txAddr <0 ) || (rxAddr > 4)) {printk("txAddr type error:: must be 0 to 4.\n");header = -1;}
+	if((rxPanid <0 ) || (rxPanid > 1))  {printk("rxPanid Comp type error:: must be 0 or 1.\n");header = -1;}
+	if((txPanid <0 ) || (txPanid > 1))  {printk("txPanid Comp type error:: must be 0 or 1.\n");header = -1;}
+	if(header<0) goto ERROR;
+
+	//	rxAddr	txAddr	rxPanid	txPanid	--> PanidComp	AddrType
+	//	0		0		0		0			0			0
+	if((rxAddr == 0)&&(txAddr==0)&&(rxPanid == 0) && (txPanid == 0)) { panid_comp = 0, addr_type = 0; }
+	//	0		0		0		1			1			1
+	if((rxAddr == 0)&&(txAddr == 0)&&(rxPanid == 0) && (txPanid == 1)) { panid_comp = 1, addr_type = 1; }
+	//	0		0		1		0			x			x-
+	if((rxAddr == 0)&&(txAddr == 0)&&(rxPanid == 1) && (txPanid == 0)) { header = -1; }
+	//	0		0		1		1			x			x-
+	if((rxAddr == 0)&&(txAddr == 0)&&(rxPanid == 1) && (txPanid == 1)) { header = -2; }
+	//	0		1		0		0			1			3
+	if((rxAddr == 0)&&(txAddr > 0)&&(rxPanid == 0) && (txPanid == 0)) { panid_comp = 1, addr_type = 3; }
+	//	0		1		0		1			x			x-
+	if((rxAddr == 0)&&(txAddr > 0)&&(rxPanid == 0) && (txPanid == 1)) { header = -3; }
+	//	0		1		1		0			0			2
+	if((rxAddr == 0)&&(txAddr > 0)&&(rxPanid == 1) && (txPanid == 0)) { panid_comp = 0, addr_type = 2; }
+	//	0		1		1		1			x			x
+	if((rxAddr == 0)&&(txAddr > 0)&&(rxPanid == 1) && (txPanid == 1)) { header = -4; }
+	//	1		0		0		0			1			5
+	if((rxAddr > 0)&&(txAddr == 0)&&(rxPanid == 0) && (txPanid == 0)) { panid_comp = 1, addr_type = 5; }
+	//	1		0		0		1			0			4
+	if((rxAddr > 0)&&(txAddr == 0)&&(rxPanid == 0) && (txPanid == 1)) { panid_comp = 0, addr_type = 4; }
+	//	1		0		1		0			x			x
+	if((rxAddr > 0)&&(txAddr == 0)&&(rxPanid == 1) && (txPanid == 0)) { header = -5; }
+	//	1		0		1		1			x			x
+	if((rxAddr > 0)&&(txAddr == 0)&&(rxPanid == 1) && (txPanid == 1)) { header = -6; }
+	//	1		1		0		0			1			7
+	if((rxAddr > 0)&&(txAddr > 0)&&(rxPanid == 0) && (txPanid == 0)) { panid_comp = 1, addr_type = 7; }
+	//	1		1		0		1			x			x
+	if((rxAddr > 0)&&(txAddr > 0)&&(rxPanid == 0) && (txPanid == 1)) { header = -7; }
+	//	1		1		1		0			0			6
+	if ((rxAddr > 0)&&(txAddr > 0)&&(rxPanid == 1) && (txPanid == 0)) { panid_comp = 0, addr_type = 6; }
+	//	1		1		1		1			x			x
+	if((rxAddr > 0)&&(txAddr > 0)&&(rxPanid == 1) && (txPanid == 1)) { header = -8; }
+
+	if(header < 0) {
+		printk("Address Type Error:%08x,%d,%d,%d,%d\n",header,rxAddr,txAddr,rxPanid,txPanid);
+		goto ERROR;
+	}
+
+	header  = pHdr->rx_addr.addr_type;
+	header <<= 2,header += pHdr->frame_ver;
+	header <<= 2,header += pHdr->tx_addr.addr_type;
+	header <<= 1,header += ((pHdr->ielist.len>0) ? 1 : 0);
+	header <<= 1,header += pHdr->seq_comp;
+	header <<= 2,header += panid_comp;
+	header <<= 1,header += pHdr->ack_req;
+	header <<= 1,header += pHdr->pending;
+	header <<= 1,header += pHdr->sec_enb;
+	header <<= 3,header += pHdr->frame_type;
+
+ERROR:
+	return header;
+}
+uint8_t get_seq_num(void){
+	static uint8_t seq=0x80;
+	seq++;
+	return seq;
+}
 int enc_ieee802154e_header(t_MAC_HEADER* pHdr)
 {
 	int status = 0;
-	static uint8_t seq=0x80;
 	//int i;
 	//uint8_t *buf = pHdr->raw.data;
 	union  {
@@ -72,7 +145,7 @@ int enc_ieee802154e_header(t_MAC_HEADER* pHdr)
 	tmp.hdr_bit.pending = pHdr->pending;
 	tmp.hdr_bit.seq_comp = pHdr->seq_comp;
 	if(tmp.hdr_bit.seq_comp == 0)
-		pHdr->seq = seq++;		// update seqence number
+		pHdr->seq = get_seq_num();		// update seqence number
 	if(pHdr->ielist.len == 0)
 	{
 		tmp.hdr_bit.ielist = 0;
@@ -83,7 +156,7 @@ int enc_ieee802154e_header(t_MAC_HEADER* pHdr)
 		tmp.hdr_bit.ielist = 1;
 	}
 	tmp.hdr_bit.tx_addr_type = pHdr->tx_addr.addr_type;
-	
+
 	tmp.hdr_bit.rx_addr_type = pHdr->rx_addr.addr_type;
 	tmp.hdr_bit.frame_ver = pHdr->frame_ver;
 
@@ -94,54 +167,54 @@ int enc_ieee802154e_header(t_MAC_HEADER* pHdr)
 
 	switch(addr_type)
 	{
-	case 0:
-		if((pHdr->tx_addr.panid_enb == 0)&& (pHdr->rx_addr.panid_enb == 0))
-		{
-			tmp.hdr_bit.panid_comp = 0;
-			addr_type = 0;
-		}
-		else
-		{
-			tmp.hdr_bit.panid_comp = 1;
-			addr_type = 1;
-		}
-		break;
-	case 2:
-		if((pHdr->tx_addr.panid_enb == 1)&& (pHdr->rx_addr.panid_enb == 0))
-		{
-			tmp.hdr_bit.panid_comp = 0;
-			addr_type = 2;
-		}
-		else
-		{
-			tmp.hdr_bit.panid_comp = 1;
-			addr_type = 3;
-		}
-		break;
-	case 4:
-		if((pHdr->tx_addr.panid_enb == 0)&& (pHdr->rx_addr.panid_enb == 1))
-		{
-			tmp.hdr_bit.panid_comp = 0;
-			addr_type = 4;
-		}
-		else
-		{
-			tmp.hdr_bit.panid_comp = 1;
-			addr_type = 5;
-		}
-		break;
-	case 6:
-		if((pHdr->tx_addr.panid_enb == 0)&& (pHdr->rx_addr.panid_enb == 1))
-		{
-			tmp.hdr_bit.panid_comp = 0;
-			addr_type = 6;
-		}
-		else
-		{
-			tmp.hdr_bit.panid_comp = 1;
-			addr_type = 7;
-		}
-		break;
+		case 0:
+			if((pHdr->tx_addr.panid_enb == 0)&& (pHdr->rx_addr.panid_enb == 0))
+			{
+				tmp.hdr_bit.panid_comp = 0;
+				addr_type = 0;
+			}
+			else
+			{
+				tmp.hdr_bit.panid_comp = 1;
+				addr_type = 1;
+			}
+			break;
+		case 2:
+			if((pHdr->tx_addr.panid_enb == 1)&& (pHdr->rx_addr.panid_enb == 0))
+			{
+				tmp.hdr_bit.panid_comp = 0;
+				addr_type = 2;
+			}
+			else
+			{
+				tmp.hdr_bit.panid_comp = 1;
+				addr_type = 3;
+			}
+			break;
+		case 4:
+			if((pHdr->tx_addr.panid_enb == 0)&& (pHdr->rx_addr.panid_enb == 1))
+			{
+				tmp.hdr_bit.panid_comp = 0;
+				addr_type = 4;
+			}
+			else
+			{
+				tmp.hdr_bit.panid_comp = 1;
+				addr_type = 5;
+			}
+			break;
+		case 6:
+			if((pHdr->tx_addr.panid_enb == 0)&& (pHdr->rx_addr.panid_enb == 1))
+			{
+				tmp.hdr_bit.panid_comp = 0;
+				addr_type = 6;
+			}
+			else
+			{
+				tmp.hdr_bit.panid_comp = 1;
+				addr_type = 7;
+			}
+			break;
 	}
 
 	if((addr_type == 6 )||(addr_type == 7)) pHdr->ack_req = 1;
@@ -161,20 +234,20 @@ int enc_ieee802154e_header(t_MAC_HEADER* pHdr)
 	}
 	switch(pHdr->rx_addr.addr_type)
 	{
-	case 0:
-		break;
-	case 1:
-		pHdr->raw.data[offset] = pHdr->rx_addr.addr.addr8;
-		offset+=1;
-		break;
-	case 2:
-		*((uint16_t *)(pHdr->raw.data + offset)) = pHdr->rx_addr.addr.addr16;
-		offset += 2;
-		break;
-	case 3:
-		memcpy(&pHdr->raw.data[offset],pHdr->rx_addr.addr.addr64,8);
-		offset+=8;
-		break;
+		case 0:
+			break;
+		case 1:
+			pHdr->raw.data[offset] = pHdr->rx_addr.addr.addr8;
+			offset+=1;
+			break;
+		case 2:
+			*((uint16_t *)(pHdr->raw.data + offset)) = pHdr->rx_addr.addr.addr16;
+			offset += 2;
+			break;
+		case 3:
+			memcpy(&pHdr->raw.data[offset],pHdr->rx_addr.addr.addr64,8);
+			offset+=8;
+			break;
 	}
 	if(pHdr->tx_addr.panid_enb == 1)
 	{
@@ -183,20 +256,20 @@ int enc_ieee802154e_header(t_MAC_HEADER* pHdr)
 	}
 	switch(pHdr->tx_addr.addr_type)
 	{
-	case 0:
-		break;
-	case 1:
-		pHdr->raw.data[offset] = pHdr->tx_addr.addr.addr8;
-		offset+=1;
-		break;
-	case 2:
-		*((uint16_t *)(pHdr->raw.data + offset)) = pHdr->tx_addr.addr.addr16;
-		offset += 2;
-		break;
-	case 3:
-		memcpy(&pHdr->raw.data[offset],pHdr->tx_addr.addr.addr64,8);
-		offset+=8;
-		break;
+		case 0:
+			break;
+		case 1:
+			pHdr->raw.data[offset] = pHdr->tx_addr.addr.addr8;
+			offset+=1;
+			break;
+		case 2:
+			*((uint16_t *)(pHdr->raw.data + offset)) = pHdr->tx_addr.addr.addr16;
+			offset += 2;
+			break;
+		case 3:
+			memcpy(&pHdr->raw.data[offset],pHdr->tx_addr.addr.addr64,8);
+			offset+=8;
+			break;
 	}
 	memcpy(&pHdr->raw.data[offset],pHdr->payload.data, pHdr->payload.len);
 	offset += pHdr->payload.len;
@@ -204,21 +277,15 @@ int enc_ieee802154e_header(t_MAC_HEADER* pHdr)
 
 	return status;
 }
-int dec_ieee802154e_header(t_MAC_HEADER* pHdr, bool rssi_enb)
-{
-	uint16_t offset = 0;
+uint8_t dec_mac_header(uint16_t mac_header,t_MAC_HEADER* pHdr) {
 	uint8_t panid_comp;
 	uint8_t addr_type;
-	int status;
-	uint8_t *buf = pHdr->raw.data;
 	union  {
 		uint16_t dat16;
 		t_FRAME_HEADER_BIT hdr_bit;
 	} tmp;
 
-	tmp.dat16 = (uint16_t)buf[offset++];
-	tmp.dat16 += ((uint16_t)buf[offset++]<<8); 
-
+	tmp.dat16 = mac_header;
 
 	pHdr->frame_type = (e_IEEE_FRAME_TYPE)tmp.hdr_bit.frame_type;
 	pHdr->sec_enb = tmp.hdr_bit.sec_enb;
@@ -254,32 +321,115 @@ int dec_ieee802154e_header(t_MAC_HEADER* pHdr, bool rssi_enb)
 	//	address
 	switch(addr_type)
 	{
-	case 0:
-		pHdr->tx_addr.panid_enb = 0, pHdr->rx_addr.panid_enb = 0;
-		break;
-	case 1:
-		pHdr->tx_addr.panid_enb = 0, pHdr->rx_addr.panid_enb = 1;
-		break;
-	case 2:
-		pHdr->tx_addr.panid_enb = 1, pHdr->rx_addr.panid_enb = 0;
-		break;
-	case 3:
-		pHdr->tx_addr.panid_enb = 0, pHdr->rx_addr.panid_enb = 0;
-		break;
-	case 4:
-		pHdr->tx_addr.panid_enb = 0, pHdr->rx_addr.panid_enb = 1;
-		break;
-	case 5:
-		pHdr->tx_addr.panid_enb = 0, pHdr->rx_addr.panid_enb = 0;
-		break;
-	case 6:
-		pHdr->tx_addr.panid_enb = 0, pHdr->rx_addr.panid_enb = 1;
-		break;
-	case 7:
-		pHdr->tx_addr.panid_enb = 0, pHdr->rx_addr.panid_enb = 0;
-		break;
+		case 0:
+			pHdr->tx_addr.panid_enb = 0, pHdr->rx_addr.panid_enb = 0;
+			break;
+		case 1:
+			pHdr->tx_addr.panid_enb = 0, pHdr->rx_addr.panid_enb = 1;
+			break;
+		case 2:
+			pHdr->tx_addr.panid_enb = 1, pHdr->rx_addr.panid_enb = 0;
+			break;
+		case 3:
+			pHdr->tx_addr.panid_enb = 0, pHdr->rx_addr.panid_enb = 0;
+			break;
+		case 4:
+			pHdr->tx_addr.panid_enb = 0, pHdr->rx_addr.panid_enb = 1;
+			break;
+		case 5:
+			pHdr->tx_addr.panid_enb = 0, pHdr->rx_addr.panid_enb = 0;
+			break;
+		case 6:
+			pHdr->tx_addr.panid_enb = 0, pHdr->rx_addr.panid_enb = 1;
+			break;
+		case 7:
+			pHdr->tx_addr.panid_enb = 0, pHdr->rx_addr.panid_enb = 0;
+			break;
 	}
+	return addr_type;
+}
 
+int dec_ieee802154e_header(t_MAC_HEADER* pHdr, bool rssi_enb)
+{
+	uint16_t offset = 0;
+	//	uint8_t panid_comp;
+	//	uint8_t addr_type;
+	int status;
+	uint16_t mac_header;
+	uint8_t *buf = pHdr->raw.data;
+	uint8_t addr_type;
+	//	union  {
+	//		uint16_t dat16;
+	//		t_FRAME_HEADER_BIT hdr_bit;
+	//	} tmp;
+
+	//	tmp.dat16 = (uint16_t)buf[offset++];
+	//	tmp.dat16 += ((uint16_t)buf[offset++]<<8); 
+	mac_header = (uint16_t)buf[offset++];
+	mac_header += ((uint16_t)buf[offset++]<<8); 
+
+	addr_type = dec_mac_header(mac_header,pHdr);
+	/*
+	   pHdr->frame_type = (e_IEEE_FRAME_TYPE)tmp.hdr_bit.frame_type;
+	   pHdr->sec_enb = tmp.hdr_bit.sec_enb;
+	   pHdr->pending = tmp.hdr_bit.pending;
+	   pHdr->ack_req = tmp.hdr_bit.ack_req;
+	   panid_comp = tmp.hdr_bit.panid_comp;
+	   pHdr->seq_comp = tmp.hdr_bit.seq_comp;
+	   if(tmp.hdr_bit.ielist == 0)
+	   {
+	   pHdr->ielist.len = 0;
+	   pHdr->ielist.data = NULL;
+	   }
+	   else
+	   {
+	// does not support ielist
+	// need to add code
+	pHdr->ielist.len = 1;
+	}
+	pHdr->tx_addr.addr_type = tmp.hdr_bit.tx_addr_type;
+	pHdr->frame_ver = tmp.hdr_bit.frame_ver;
+	pHdr->rx_addr.addr_type = tmp.hdr_bit.rx_addr_type;
+
+	//	address type
+	addr_type=0;
+	if (pHdr->tx_addr.addr_type != 0) addr_type = 2;
+	if (pHdr->rx_addr.addr_type != 0) addr_type += 4;
+	if (panid_comp != 0) addr_type += 1;
+
+#ifdef IEEE_HEADR_TEST
+printf("addr_type=%d\n",addr_type);
+#endif
+
+	//	address
+	switch(addr_type)
+	{
+	case 0:
+	pHdr->tx_addr.panid_enb = 0, pHdr->rx_addr.panid_enb = 0;
+	break;
+	case 1:
+	pHdr->tx_addr.panid_enb = 0, pHdr->rx_addr.panid_enb = 1;
+	break;
+	case 2:
+	pHdr->tx_addr.panid_enb = 1, pHdr->rx_addr.panid_enb = 0;
+	break;
+	case 3:
+	pHdr->tx_addr.panid_enb = 0, pHdr->rx_addr.panid_enb = 0;
+	break;
+	case 4:
+	pHdr->tx_addr.panid_enb = 0, pHdr->rx_addr.panid_enb = 1;
+	break;
+	case 5:
+	pHdr->tx_addr.panid_enb = 0, pHdr->rx_addr.panid_enb = 0;
+	break;
+	case 6:
+	pHdr->tx_addr.panid_enb = 0, pHdr->rx_addr.panid_enb = 1;
+	break;
+	case 7:
+	pHdr->tx_addr.panid_enb = 0, pHdr->rx_addr.panid_enb = 0;
+	break;
+	}
+	 */
 	//	sequence
 	if(pHdr->seq_comp) pHdr->seq = 0; else pHdr->seq = buf[offset++];
 
@@ -296,20 +446,20 @@ int dec_ieee802154e_header(t_MAC_HEADER* pHdr, bool rssi_enb)
 	{
 		switch(pHdr->rx_addr.addr_type)
 		{
-		case 1:
-			pHdr->rx_addr.addr.addr8 = buf[offset++];
-			break;
-		case 2:
-			pHdr->rx_addr.addr.addr16 = (uint16_t)buf[offset++];
-			pHdr->rx_addr.addr.addr16 += ((uint16_t)buf[offset++]<<8);
-			break;
-		case 3:
-			memcpy(pHdr->rx_addr.addr.addr64,(buf+offset),8);
-			offset += 8;
-			break;
-		default:
-			goto error;
-			break;
+			case 1:
+				pHdr->rx_addr.addr.addr8 = buf[offset++];
+				break;
+			case 2:
+				pHdr->rx_addr.addr.addr16 = (uint16_t)buf[offset++];
+				pHdr->rx_addr.addr.addr16 += ((uint16_t)buf[offset++]<<8);
+				break;
+			case 3:
+				memcpy(pHdr->rx_addr.addr.addr64,(buf+offset),8);
+				offset += 8;
+				break;
+			default:
+				goto error;
+				break;
 		}
 	}
 
@@ -326,20 +476,20 @@ int dec_ieee802154e_header(t_MAC_HEADER* pHdr, bool rssi_enb)
 	{
 		switch(pHdr->tx_addr.addr_type)
 		{
-		case 1:
-			pHdr->tx_addr.addr.addr8 = buf[offset++];
-			break;
-		case 2:
-			pHdr->tx_addr.addr.addr16 = (uint16_t)buf[offset++];
-			pHdr->tx_addr.addr.addr16 += ((uint16_t)buf[offset++]<<8);
-			break;
-		case 3:
-			memcpy(pHdr->tx_addr.addr.addr64,(buf+offset),8);
-			offset += 8;
-			break;
-		default:
-			goto error;
-			break;
+			case 1:
+				pHdr->tx_addr.addr.addr8 = buf[offset++];
+				break;
+			case 2:
+				pHdr->tx_addr.addr.addr16 = (uint16_t)buf[offset++];
+				pHdr->tx_addr.addr.addr16 += ((uint16_t)buf[offset++]<<8);
+				break;
+			case 3:
+				memcpy(pHdr->tx_addr.addr.addr64,(buf+offset),8);
+				offset += 8;
+				break;
+			default:
+				goto error;
+				break;
 		}
 	}
 
@@ -355,17 +505,17 @@ int dec_ieee802154e_header(t_MAC_HEADER* pHdr, bool rssi_enb)
 		memset(global_addr.addr64,0xff,sizeof(global_addr.addr64));
 		switch(pHdr->rx_addr.addr_type)
 		{
-		case 1:
-			if(pHdr->rx_addr.addr.addr8 == global_addr.addr8) pHdr->ack_req = 0;
-			break;
-		case 2:
-			if(pHdr->rx_addr.addr.addr16 == global_addr.addr16) pHdr->ack_req = 0;
-			break;
-		case 3:
-			if(memcmp(pHdr->rx_addr.addr.addr64,global_addr.addr64,8)==0) pHdr->ack_req = 0;
-			break;
-		default:
-			break;
+			case 1:
+				if(pHdr->rx_addr.addr.addr8 == global_addr.addr8) pHdr->ack_req = 0;
+				break;
+			case 2:
+				if(pHdr->rx_addr.addr.addr16 == global_addr.addr16) pHdr->ack_req = 0;
+				break;
+			case 3:
+				if(memcmp(pHdr->rx_addr.addr.addr64,global_addr.addr64,8)==0) pHdr->ack_req = 0;
+				break;
+			default:
+				break;
 		}
 	}
 
@@ -399,80 +549,80 @@ error:
 
 int enc_ieee802154e_ack_header(t_MAC_HEADER* pHdr,t_MAC_DATA *raw)
 {
-    //uint8_t buf[4];
-    int status = 0;
+	//uint8_t buf[4];
+	int status = 0;
 	int len = 0;
-    union {
-        uint16_t data16;
-        t_FRAME_HEADER_BIT hbit;
-    } tmp;
+	union {
+		uint16_t data16;
+		t_FRAME_HEADER_BIT hbit;
+	} tmp;
 	tmp.data16 = 0;
 
 	// set frame control
-    tmp.hbit.frame_type = ACK_FRAME;
-    tmp.hbit.sec_enb = 0;
-    tmp.hbit.pending = 0;
-    tmp.hbit.ack_req = 0;
-    tmp.hbit.seq_comp = pHdr->seq_comp;
-    tmp.hbit.ielist = 0;
-    tmp.hbit.frame_ver = pHdr->frame_ver;
+	tmp.hbit.frame_type = ACK_FRAME;
+	tmp.hbit.sec_enb = 0;
+	tmp.hbit.pending = 0;
+	tmp.hbit.ack_req = 0;
+	tmp.hbit.seq_comp = pHdr->seq_comp;
+	tmp.hbit.ielist = 0;
+	tmp.hbit.frame_ver = pHdr->frame_ver;
 
 #ifdef	ACK_CTI
 	tmp.hbit.tx_addr_type = 2;
 	tmp.hbit.rx_addr_type = 2;
 	tmp.hbit.panid_comp = 0;
 
-    raw->data[len++] = (uint8_t)(tmp.data16 & 0x00FF);
-    raw->data[len++] = (uint8_t)(tmp.data16 >> 8); 
+	raw->data[len++] = (uint8_t)(tmp.data16 & 0x00FF);
+	raw->data[len++] = (uint8_t)(tmp.data16 >> 8); 
 
-    if(pHdr->seq_comp == 0) raw->data[len++] = pHdr->seq;
+	if(pHdr->seq_comp == 0) raw->data[len++] = pHdr->seq;
 
-    raw->data[len++] = (uint8_t)(pHdr->rx_addr.panid & 0x00FF);
-    raw->data[len++] = (uint8_t)(pHdr->rx_addr.panid >> 8); 
+	raw->data[len++] = (uint8_t)(pHdr->rx_addr.panid & 0x00FF);
+	raw->data[len++] = (uint8_t)(pHdr->rx_addr.panid >> 8); 
 
-    raw->data[len++] = (uint8_t)(pHdr->rx_addr.addr.addr16 & 0x00FF);
-    raw->data[len++] = (uint8_t)(pHdr->rx_addr.addr.addr16 >> 8); 
+	raw->data[len++] = (uint8_t)(pHdr->rx_addr.addr.addr16 & 0x00FF);
+	raw->data[len++] = (uint8_t)(pHdr->rx_addr.addr.addr16 >> 8); 
 
-    raw->data[len++] = (uint8_t)(pHdr->tx_addr.addr.addr16 & 0x00FF);
-    raw->data[len++] = (uint8_t)(pHdr->tx_addr.addr.addr16 >> 8); 
+	raw->data[len++] = (uint8_t)(pHdr->tx_addr.addr.addr16 & 0x00FF);
+	raw->data[len++] = (uint8_t)(pHdr->tx_addr.addr.addr16 >> 8); 
 #endif	//ACK_CTI
 
 #ifdef ACK_SHORT
 	// set address type = 0 (tx addr = off, rx addr = off, panid_comp = 0)
 	// tx panid = off, tx addr = off
 	// rx panid = off, rx addr = off
-    tmp.hbit.tx_addr_type = 0;
-    tmp.hbit.rx_addr_type = 0;
-    tmp.hbit.panid_comp = 0;
+	tmp.hbit.tx_addr_type = 0;
+	tmp.hbit.rx_addr_type = 0;
+	tmp.hbit.panid_comp = 0;
 
 	// set frame control to buffer
-    raw->data[len++] = (uint8_t)(tmp.data16 & 0x00FF);
-    raw->data[len++] = (uint8_t)(tmp.data16 >> 8); 
+	raw->data[len++] = (uint8_t)(tmp.data16 & 0x00FF);
+	raw->data[len++] = (uint8_t)(tmp.data16 >> 8); 
 
 	// set sequence number to buffer
-    if(pHdr->seq_comp == 0)
+	if(pHdr->seq_comp == 0)
 	{
-        raw->data[len++] = pHdr->seq;
-    }   
+		raw->data[len++] = pHdr->seq;
+	}   
 #endif	// ACK_SHORT
 
 #ifdef	ACK_ADDRESS
 	// set address type = 2 (tx addr = on, rx addr = off, panid_comp = 0)
 	// tx panid = on,  tx addr = on
 	// rx panid = off, rx addr = 0ff
-    tmp.hbit.tx_addr_type = pHdr->rx_addr.addr_type;
-    tmp.hbit.rx_addr_type = pHdr->tx_addr.addr_type;
-    tmp.hbit.panid_comp = (pHdr->rx_addr.panid_enb==false)?1:0;
+	tmp.hbit.tx_addr_type = pHdr->rx_addr.addr_type;
+	tmp.hbit.rx_addr_type = pHdr->tx_addr.addr_type;
+	tmp.hbit.panid_comp = (pHdr->rx_addr.panid_enb==false)?1:0;
 
 	// set frame control to buffer
-    raw->data[len++] = (uint8_t)(tmp.data16 & 0x00FF);
-    raw->data[len++] = (uint8_t)(tmp.data16 >> 8); 
+	raw->data[len++] = (uint8_t)(tmp.data16 & 0x00FF);
+	raw->data[len++] = (uint8_t)(tmp.data16 >> 8); 
 
 	// set sequence number to buffer
-    if(pHdr->seq_comp == 0)
+	if(pHdr->seq_comp == 0)
 	{
-        raw->data[len++] = pHdr->seq;
-    }   
+		raw->data[len++] = pHdr->seq;
+	}   
 
 	// set tx panid to buffer
 	if(pHdr->rx_addr.panid_enb==true)
@@ -497,7 +647,7 @@ int enc_ieee802154e_ack_header(t_MAC_HEADER* pHdr,t_MAC_DATA *raw)
 
 	raw->len = len;
 
-    return status;
+	return status;
 }
 
 int set_ieee802154e_addr(t_MAC_HEADER* pHdr,u_MAC_ADDR *paddr_from, bool rx )
@@ -510,18 +660,18 @@ int set_ieee802154e_addr(t_MAC_HEADER* pHdr,u_MAC_ADDR *paddr_from, bool rx )
 
 	switch(paddr_to->addr_type)
 	{
-	case 0:
-		paddr_to->addr.addr8 = paddr_from->addr8;
-		break;
-	case 1:
-		paddr_to->addr.addr16 = paddr_from->addr16;
-		break;
-	case 2:
-		memcpy(paddr_to->addr.addr64,paddr_from->addr64,8);
-		break;
-	default:
-		status = -1;
-		break;
+		case 0:
+			paddr_to->addr.addr8 = paddr_from->addr8;
+			break;
+		case 1:
+			paddr_to->addr.addr16 = paddr_from->addr16;
+			break;
+		case 2:
+			memcpy(paddr_to->addr.addr64,paddr_from->addr64,8);
+			break;
+		default:
+			status = -1;
+			break;
 	}
 	return status;
 }
