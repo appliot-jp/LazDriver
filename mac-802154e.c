@@ -398,8 +398,6 @@ const MAC mac ={
 	.get_name = mac_get_name,
 	.get_myaddr = mac_get_myaddr,
 	.remove = mac_remove,
-	.get_rx_header = mac_rx_header,		// add 16.4.2 Naotaka Saito
-	.get_tx_header = mac_tx_header		// add 16.4.2 Naotaka Saito
 };
 
 

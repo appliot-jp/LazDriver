@@ -88,33 +88,35 @@ t_802154E_SETTING	mac_init_param;
 // *****************************************************************
 //			transfer process (input from chrdev)
 // *****************************************************************
-int rx_callback(t_MAC_HEADER *phdr)
-{
+int write_list_data(t_MAC_HEADER *phdr,uint16_t command){
 	struct list_data *new_data;
 	uint16_t size;
 	uint8_t *in, *out;
 
-	DEBUGONDISPLAY(MODE_DRV_DEBUG,printk(KERN_INFO "[DRV-802154E] %dbyte received\n", phdr->raw.len));
+	DEBUGONDISPLAY(MODE_STREAM_DEBUG,printk(KERN_INFO "[DRV-802154E] %s 1\n", __func__));
 
 	new_data = kmalloc(sizeof(struct list_data), GFP_KERNEL);
 	if (new_data == NULL) {
 		printk(KERN_ERR "[DRV-802154E] kmalloc (list_data) GFP_KERNEL no memory\n");
 		return -ENOMEM;
 	}
+	DEBUGONDISPLAY(MODE_STREAM_DEBUG,printk(KERN_INFO "[DRV-802154E] %s 2\n", __func__));
 
 	// copy data to list
 	size = phdr->raw.len;
 
 	if(size < PHY_DATA_SIZE)
 	{
-		if(mode == MODE_STREAM)
+		DEBUGONDISPLAY(MODE_STREAM_DEBUG,printk(KERN_INFO "[DRV-802154E] %s 3 size=%d, PHY_DATA_SIZE=%d\n", __func__,size,PHY_DATA_SIZE));
+		if(mode & MODE_STREAM)
 		{
+			DEBUGONDISPLAY(MODE_STREAM_DEBUG,printk(KERN_INFO "[DRV-802154E] %s 3\n", __func__));
 			out = new_data->data;
-			size = gen_rx_stream(out, phdr);
+			size = gen_rx_stream(out, phdr,command);
 			new_data->len = size;
-			DEBUGONDISPLAY(MODE_DRV_DEBUG,PAYLOADDUMP(out, size));
-		}
-		else {
+			DEBUGONDISPLAY(MODE_STREAM_DEBUG,printk(KERN_INFO "[DRV-802154E] dump in %s\n",__func__));
+			DEBUGONDISPLAY(MODE_STREAM_DEBUG,PAYLOADDUMP(out, size));
+		} else {
 			in = phdr->raw.data;
 			out = new_data->data;
 			memcpy(out,in,size);
@@ -144,6 +146,11 @@ int rx_callback(t_MAC_HEADER *phdr)
 	}
 
 	return DRV_OK;
+}
+int rx_callback(t_MAC_HEADER *phdr)
+{
+	return write_list_data(phdr,CMD_RX&CMD_READ);
+
 }
 
 // poll wait cancell 

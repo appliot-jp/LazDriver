@@ -137,13 +137,23 @@ typedef struct {
 	int (*get_name)(char* name);
 	int (*get_myaddr)(uint8_t* addr);
 	int (*remove)(void);
-	uint16_t (*phy_reset)(void);		// add 16.4.2	Naotaka Saito
-	uint16_t (*send2)(t_MAC_HEADER *param);		// add 16.4.2	Naotaka Saito
-	uint16_t (*set_rx_param)(t_MAC_HEADER *param);		// add 16.4.2	Naotaka Saito
-	uint16_t (*get_rx_param)(t_MAC_HEADER *param);		// add 16.4.2	Naotaka Saito
-	uint16_t (*get_ed_val)(t_MAC_HEADER *param);		// add 16.4.2	Naotaka Saito
-	t_MAC_HEADER *(*get_rx_header)(void);		// add 16.4.2	Naotaka Saito;
-	t_MAC_HEADER *(*get_tx_header)(void);		// add 16.4.2	Naotaka Saito
+	ssize_t (*phy_reset)(void);		// add 16.4.2	Naotaka Saito
+	ssize_t (*tx)(t_MAC_HEADER *param);		// add 16.4.2	Naotaka Saito
+	ssize_t (*get_ch)(uint8_t *ch);		// add 16.4.2	Naotaka Saito
+	ssize_t (*set_ch)(uint8_t ch);		// add 16.4.2	Naotaka Saito
+	ssize_t (*get_rate)(uint8_t *rate);		// add 16.4.2	Naotaka Saito
+	ssize_t (*set_rate)(uint8_t rate);		// add 16.4.2	Naotaka Saito
+	ssize_t (*get_pwr)(uint8_t *pwr);		// add 16.4.2	Naotaka Saito
+	ssize_t (*set_pwr)(uint8_t pwr);		// add 16.4.2	Naotaka Saito
+	ssize_t (*set_rxon)(void);		// add 16.4.2	Naotaka Saito
+	ssize_t (*set_rxoff)(void);		// add 16.4.2	Naotaka Saito
+	ssize_t (*get_panid)(uint16_t *panid);		// add 16.4.2	Naotaka Saito
+	ssize_t (*set_panid)(uint16_t panid);		// add 16.4.2	Naotaka Saito
+	ssize_t (*get_edval)(uint8_t *rssi);		// add 16.4.2	Naotaka Saito
+	ssize_t (*get_cca_cycle)(uint16_t *cycle);		// add 16.4.2	Naotaka Saito
+	ssize_t (*set_cca_cycle)(uint16_t cycle);		// add 16.4.2	Naotaka Saito
+	ssize_t (*get_tx_retry)(uint16_t *cycle);		// add 16.4.2	Naotaka Saito
+	ssize_t (*set_tx_retry)(uint16_t cycle);		// add 16.4.2	Naotaka Saito
 } MAC;
 
 extern const MAC mac;
