@@ -18,23 +18,7 @@
 #include <linux/ctype.h>
 #include <linux/kernel.h>
 #include <linux/spi/spi.h>
-#include "spi-bp3596.h"
-
-#include "phy-bp3596.h"
-#include "common_802154e.h"
-
-
-#define DRVNAME "bp3596"
-#define SPI_ADR_BANK_SEL 0x00  /* BANKÀÚ¤ê´¹¤¨ */
-#define SPI_RESET_WAIT 3  /* ¥ê¥»¥Ã¥È¥Ñ¥ë¥¹Éý[usec] */
-#define SPI_BUFFERSIZE 256
-#define SINTN_HIGH !0
-#define SINTN_LOW 0
-
-#define ISERROR(func) ((func) < 0)  /* 戻り値のエラー判定 */
-#define ONERRORGOTO(func) if (ISERROR(status = (func))) goto error
-
-static uint8_t local_bank = 0;
+#include "spi-lzgw.h"
 
 // call back PHY when spi_probe
 int (*callback_func)(void);
@@ -175,42 +159,10 @@ static int spi_write_law(uint8_t address, const uint8_t *data, uint8_t size) {
     return status;
 }
 
-int bp_spi_write(uint8_t bank, uint8_t address, const uint8_t *data, uint8_t length) {
-    int status = SPI_ERR_UNKNOWN;
-
-    if (bank != local_bank) {
-        ONERRORGOTO(spi_write_law(SPI_ADR_BANK_SEL, &bank, 1));
-        local_bank = bank;
-    }
-    ONERRORGOTO(spi_write_law(address, data, length));
-    status = length;
-error:
+int bp_spi_transfer(const uint8_t* wdata, uint16_t wsize, uint8_t* rdata, uint16_t rsize) {
+    int status;
+	status = spi_write_then_read(m_bp_spi->spi,wdata, wsize, rdata, rsize);
+	if(!status) printk("[BP-SPI] Unknow Error\r\n");
     return status;
 }
 
-static int spi_read_law(uint8_t address, uint8_t *data, uint8_t size) {
-    int status = SPI_ERR_UNKNOWN;
-    static uint8_t tx[SPI_BUFFERSIZE], rx[SPI_BUFFERSIZE];
-
-    tx[0] = 0x00 | (address << 1);
-	if (spi_write_then_read(m_bp_spi->spi, tx, 1, rx, size) != 0) {
-		printk(KERN_ERR"spi_write_then_read failed\n");
-		return -1;
-	}
-	if( data ) /* NULL»ØÄê¤Ç¶õÆÉ¤ß */
-	    memcpy(data, rx, size);
-    status = size;
-    return status;
-}
-
-int bp_spi_read(uint8_t bank, uint8_t address, uint8_t *data, uint8_t size) {
-    int status = SPI_ERR_UNKNOWN;
-    if (bank != local_bank) {
-        ONERRORGOTO(spi_write_law(SPI_ADR_BANK_SEL, &bank, 1));
-        local_bank = bank;
-    }
-    ONERRORGOTO(spi_read_law(address, data, size));
-    status = size;
-error:
-    return status;
-}

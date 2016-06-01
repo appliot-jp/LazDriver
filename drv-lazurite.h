@@ -17,17 +17,8 @@
 #ifndef _DRV_802154E_H_
 #define _DRV_802154E_H_
 
-#include "mac-802154e.h"
 #define	DRV_OK				0
-#define DRV_ERR_DEVNAME		-1
 
-typedef struct {
-	char *devname;
-	int (*addlist)(t_MAC_HEADER* phdr);
-	t_802154E_SETTING* set;
-} t_DRV_INIT_PARAM;
-
-extern int write_list_data(t_MAC_HEADER *phdr,uint16_t command);
 #endif // _DRV_802154E_H_
 
 

@@ -30,16 +30,16 @@
 #include <linux/time.h>
 
 #include "common_802154e.h"
+#include "subghz_api.h"
 
-#include "drv-802154e.h"
-#include "mac-802154e.h"
-#include "ieee802154e.h"
-#include "cmdif.h"
-
-#define PHY_DATA_SIZE		512		//250 + 1
+#define DATA_SIZE		256
+#define DRV_NAME		"lzgw"
 //static wait_queue_head_t read_q;	//poll wait
+
+uint8_t rxbuf[DATA_SIZE];
+
 struct list_data {				
-	uint8_t	data[PHY_DATA_SIZE];
+	uint8_t	data[DATA_SIZE];
 	int		len;
 	struct list_head list;
 };
@@ -53,47 +53,16 @@ static struct s_CHAR_DEV {
 	wait_queue_head_t	read_q;		// polling wait for char dev
 } chrdev =
 {
-	.name = "",
+	.name = DRV_NAME,
 	.access_num = 0
 };
-// MAC / PHY Initializing parameter
-static int ch = 36;            //BASE channel
-static int rate = 100;           // BASE rate
-static int panid = 0xABCD;     		// PANID
-static int pwr = 20;     			// PANID
-
-// MODE OPtion:
-//  debug code is trace
-// MODE_DRV_DEBUG:  for driver layer
-// MODE_MAC_DEBUG:  for mac layer
-// MODE_PHY_DEBUG:  for phy layer
-// MODE_INVALID_MAC: in this option, driver works as sniffer.
-// MODE_RAW: 
-// (ex)
-// all trace is available, mac is invalid.
-// static int mode = MODE_DRV_DEBUG | MODE_MAC_DEBUG | MODE_PHY_DEBUG | MODE_INVALID_MAC;
-static int mode = 0 ;
-uint16_t drv_mode;
-uint16_t listed_packet = 0;
-
-module_param(ch, int, S_IRUGO);
-module_param(rate, int, S_IRUGO);
-module_param(panid, int, S_IRUGO);
-module_param(mode, int, S_IRUGO);
-module_param(pwr, int, S_IRUGO);
-
-// IEEE802.15.4e custom parameter
-t_802154E_SETTING	mac_init_param;
-
+int listed_packet = 0;
 // *****************************************************************
 //			transfer process (input from chrdev)
 // *****************************************************************
-int write_list_data(t_MAC_HEADER *phdr,uint16_t command){
+int write_list_data(uint8_t* raw,uint16_t len){
 	struct list_data *new_data;
-	uint16_t size;
-	uint8_t *in, *out;
-
-	DEBUGONDISPLAY(MODE_STREAM_DEBUG,printk(KERN_INFO "[DRV-802154E] %s 1\n", __func__));
+	uint8_t *in,*out;
 
 	new_data = kmalloc(sizeof(struct list_data), GFP_KERNEL);
 	if (new_data == NULL) {
@@ -103,26 +72,13 @@ int write_list_data(t_MAC_HEADER *phdr,uint16_t command){
 	DEBUGONDISPLAY(MODE_STREAM_DEBUG,printk(KERN_INFO "[DRV-802154E] %s 2\n", __func__));
 
 	// copy data to list
-	size = phdr->raw.len;
-
-	if(size < PHY_DATA_SIZE)
+	if(len < DATA_SIZE)
 	{
-		DEBUGONDISPLAY(MODE_STREAM_DEBUG,printk(KERN_INFO "[DRV-802154E] %s 3 size=%d, PHY_DATA_SIZE=%d\n", __func__,size,PHY_DATA_SIZE));
-		if(mode & MODE_STREAM)
-		{
-			DEBUGONDISPLAY(MODE_STREAM_DEBUG,printk(KERN_INFO "[DRV-802154E] %s 3\n", __func__));
-			out = new_data->data;
-			size = gen_rx_stream(out, phdr,command);
-			new_data->len = size;
-			DEBUGONDISPLAY(MODE_STREAM_DEBUG,printk(KERN_INFO "[DRV-802154E] dump in %s\n",__func__));
-			DEBUGONDISPLAY(MODE_STREAM_DEBUG,PAYLOADDUMP(out, size));
-		} else {
-			in = phdr->raw.data;
-			out = new_data->data;
-			memcpy(out,in,size);
-			new_data->len = size;
-			DEBUGONDISPLAY(MODE_DRV_DEBUG,PAYLOADDUMP(out, size));
-		}
+		in = raw;
+		out = new_data->data;
+		memcpy(out,in,len);
+		new_data->len = len;
+		DEBUGONDISPLAY(MODE_DRV_DEBUG,PAYLOADDUMP(out, len));
 		// list add 
 		list_add_tail(&new_data->list, &head.list);
 		listed_packet++;
@@ -145,11 +101,11 @@ int write_list_data(t_MAC_HEADER *phdr,uint16_t command){
 		return -1;
 	}
 
-	return DRV_OK;
+	return 0;
 }
-int rx_callback(t_MAC_HEADER *phdr)
+int rx_callback(uint8_t *raw, uint16_t len)
 {
-	return write_list_data(phdr,CMD_RX&CMD_READ);
+	return write_list_data(raw,len);
 
 }
 
@@ -165,7 +121,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 
 static int chardev_open(struct inode* inode, struct file* filp) {
 	spin_lock( &chrdev.lock );
-	if (chrdev.access_num > 2) {
+	if (chrdev.access_num >= 2) {
 		spin_unlock(&chrdev.lock );
 		return -EBUSY;
 	}
@@ -188,17 +144,19 @@ static ssize_t chardev_read (struct file * file, char __user * buf, size_t count
 
 	spin_lock( &chrdev.lock );
 
-	//printk("read size=%d\n",count);
+	// list empty
 	if (list_empty(&head.list) != 0) {
 		//		DEBUGONDISPLAY(MODE_DRV_DEBUG,printk("list empty\n"));   
 		goto end;
 	}
+	// error
 	ptr = list_entry(head.list.next, struct list_data, list);
 	if (ptr == NULL) {
 		printk( KERN_ERR "%s : list_entry failed\n", chrdev.name);
 		bytes_read = 0;
 		goto end;
 	}
+	// 2byte read,then return size
 	if (count == sizeof(unsigned short)) {
 		DEBUGONDISPLAY(MODE_DRV_DEBUG,printk("list_data %d[bytes]\n", ptr->len));
 		bytes_read = count;
@@ -208,6 +166,7 @@ static ssize_t chardev_read (struct file * file, char __user * buf, size_t count
 			goto end;
 		}
 	} else {
+		// return data
 		bytes_read = count;
 		if (bytes_read > 0 && copy_to_user (buf, &(ptr->data), bytes_read)) {
 			printk( KERN_ERR "%s : copy_to_user failed\n", chrdev.name);
@@ -229,20 +188,14 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 		size_t count, loff_t * ppos) {
 	int status = 0;
 	spin_lock( &chrdev.lock );
-	if(mode && MODE_STREAM)
-	{
-		status = gen_tx_stream(buf,count);
-	} else
-	{
-		if(count >=250)
-		{
-			count = 0;
-			goto error;
-		}
-		status = mac.send(buf,count);
-	}
 
 	DEBUGONDISPLAY(MODE_DRV_DEBUG,PAYLOADDUMP(buf,count));		// for debug
+	if(count<DATA_SIZE)
+	{
+	} else {
+		status = -E2BIG;
+		goto error;
+	}
 
 error:
 	spin_unlock( &chrdev.lock );
@@ -277,22 +230,8 @@ static int __init drv_param_init(void) {
 	int err;
 	struct device *dev;
 
-	// check ch & rate
-	if(( ch==32)&&(rate==100))
-	{
-		printk(KERN_INFO "[DRV-802154E] ch=%d, rate = %d can not be used\n",ch, rate);
-		status = -1;
-		goto error;
-	}
-
-	drv_mode = mode;
-	printk(KERN_INFO "[DRV-802154E] Starting:: mode=0x%04x\n",drv_mode);
-
-	status = mac.get_name(chrdev.name);
-	printk(KERN_INFO "[DRV-802154E] DEVNAME=%s\n",chrdev.name);
-
 	// create char device
-	if((chrdev.major = register_chrdev(0, chrdev.name, &chardev_fops)) < 0)
+	if((chrdev.major = register_chrdev(0, DRV_NAME, &chardev_fops)) < 0)
 	{
 		printk(KERN_ERR "[DRV-802154E] unable to get major =%d\n",
 				chrdev.major);
@@ -319,16 +258,8 @@ static int __init drv_param_init(void) {
 	// initializing wait queue
 	init_waitqueue_head( &chrdev.read_q );
 
-	// parameter initialization
-	mac_init_param.ch = ch;
-	mac_init_param.bitrate = rate;
-	mac_init_param.panid = panid;
-	mac_init_param.tx_pwr = pwr;
-
-	// MAC initialization
-	//mac.rx_callback = recv_addlist;
-	status = mac.init(&mac_init_param, rx_callback);
-	if(status != MAC_OK) goto error_device_create;
+	status = SubGHz.init();
+	if(status != SUBGHZ_OK) goto error_device_create;
 
 
 	printk(KERN_INFO "[DRV-802154E] End of init\n");
@@ -366,7 +297,7 @@ static void __exit drv_param_exit(void) {
 	unregister_chrdev(chrdev.major, chrdev.name);
 	DEBUGONDISPLAY(MODE_DRV_DEBUG,printk(KERN_INFO "[DRV-802154E] char dev delete\n"));
 	// mac remove
-	mac.remove();
+	SubGHz.remove();
 	printk(KERN_INFO "[DRV-802154E] exit remove\n");
 	return;
 }
@@ -376,6 +307,6 @@ module_init(drv_param_init);
 module_exit(drv_param_exit);
 
 MODULE_AUTHOR("Lapis Semiconductor.");
-MODULE_DESCRIPTION("IEEE802.15.4e driver");
+MODULE_DESCRIPTION("Lazurite Kernel Driver");
 MODULE_LICENSE("Dual BSD/GPL");
 
