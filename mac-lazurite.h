@@ -25,11 +25,21 @@
 #endif	//LAZURITE_IDE
 
 typedef struct {
+	uint16_t panid;
+	union {
+		uint8_t addr64[8];
+		uint16_t addr16;
+	} addr;
+}IEEE802154_HW_ADDR;
+typedef struct {
 	int (*init)(void);
 	int (*remove)(void);
 	int (*setup)(uint8_t ch, uint8_t panid, uint8_t bps, uint8_t pwr);
 	int (*send)(uint16_t dstPanid,uint16_t dstAddr,uint8_t addrMode,uint8_t *payload,uint16_t len, void (*callback)(uint8_t rssi,int status));
 	int (*rxEnable)(void (*callback)(uint8_t *data,uint8_t rssi, int status));
+	int (*rxDisable)(void);
+	int (*getMyAddr)(uint16_t *addr);
+	int (*getMyAddr64)(uint8_t* addr64);
 	int (*close)(void);
 } MAC_LAZURITE;
 

@@ -91,6 +91,7 @@ typedef struct
 	SUBGHZ_MSG (*rxDisable)(void);
 	short (*readData)(uint8_t *data, uint16_t max_size);
 	uint16_t (*getMyAddress)(void);
+	uint8_t (*getMyAddress64)(uint8_t* addr64);
 	void (*getStatus)(SUBGHZ_STATUS *tx, SUBGHZ_STATUS *rx);
 	void (*msgOut)(SUBGHZ_MSG msg);
 	SUBGHZ_MSG (*setSendMode)(SUBGHZ_PARAM *param);

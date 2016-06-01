@@ -160,9 +160,20 @@ static void subghz_getStatus(SUBGHZ_STATUS *tx, SUBGHZ_STATUS *rx)
 	return;
 }
 
+static int subghz_getMyAddress64(uint8_t* addr)
+{
+	SUBGHZ_MSG msg;
+	uint8_t addr64[8]; 
+	msg = mac.getMyAddr64(addr64);
+	memcpy(addr,addr64,8);
+	return msg;
+}
+
 static uint16_t subghz_getMyAddress(void)
 {
-	return subghz_param.myAddress;
+	uint16_t addr16;
+	mac.getMyAddr(&addr16);
+	return addr16;
 }
 
 static void subghz_msgOut(SUBGHZ_MSG msg)
@@ -211,13 +222,13 @@ static void subghz_msgOut(SUBGHZ_MSG msg)
 		goto no_error;
 		break;
 	}
-	Serial.print(message);
+	//Serial.print(message);
 
 no_error:
-	Serial.print("RSSI=");
-	Serial.print_long((long)subghz_param.tx_stat.rssi,DEC);
-	Serial.print("\tSTATUS=");
-	Serial.println_long((long)subghz_param.tx_stat.status,DEC);
+	//Serial.print("RSSI=");
+	//Serial.print_long((long)subghz_param.tx_stat.rssi,DEC);
+	//Serial.print("\tSTATUS=");
+	//Serial.println_long((long)subghz_param.tx_stat.status,DEC);
 	return;
 }
 
