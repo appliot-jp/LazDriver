@@ -1,7 +1,7 @@
 /*
- * BP3596 SPI Driver
+ * Lazurite Pi Gateway SPI Driver
  * 
- * File:  spi-bp3596.c
+ * File:  spi-lzpi.c
  * 
  * Copyright 2015 Lapis Semiconductor Co.,Ltd.
  * Author: Naotaka Saito
@@ -20,36 +20,26 @@
 #include <linux/spi/spi.h>
 #include <linux/interrupt.h>
 #include <linux/gpio.h>
-#include "spi-lzpi.h"
-#include "common-lzpi.h"
-#include "hal.h"
-#include "hal-lzpi.h"
-
-// call back PHY when spi_probe
-int (*callback_func)(void);
 
 //	SPI API
-struct bp_spi_dev {
+struct lzpi_spi_dev {
 	struct spi_device *spi;
 	char name[SPI_NAME_SIZE];
 	u16 irq;
 	struct mutex		lock;
 };
 
-struct bp_spi_dev *m_bp_spi;
+struct lzpi_spi_dev *m_lzpi_spi;
 
 // SPI probe
-static int bp_spi_probe(struct spi_device *spi)
+static int lzpi_spi_probe(struct spi_device *spi)
 {
 	int err;
-	struct bp_spi_dev *bp_spi;
-
-//	finish_flag = 0;
-	DEBUGONDISPLAY(MODE_PHY_DEBUG,printk("[SPI] probe\n"));
+	struct lzpi_spi_dev *lzpi_spi;
 
 	// initializing SPI
-	bp_spi = kzalloc(sizeof(*bp_spi), GFP_KERNEL);
-	if (!bp_spi) {
+	lzpi_spi = kzalloc(sizeof(*lzpi_spi), GFP_KERNEL);
+	if (!lzpi_spi) {
 	        return -ENOMEM;
 	}
 
@@ -61,89 +51,68 @@ static int bp_spi_probe(struct spi_device *spi)
 		goto error_spi_setup;
 	}
 
-	mutex_init(&bp_spi->lock);
+	mutex_init(&lzpi_spi->lock);
 
-	bp_spi->spi = spi;
-	strcpy(bp_spi->name, spi->modalias);
-	bp_spi->irq = (u16)spi->irq;
+	lzpi_spi->spi = spi;
+	strcpy(lzpi_spi->name, spi->modalias);
+	lzpi_spi->irq = (u16)spi->irq;
 
-	m_bp_spi = bp_spi;
-	printk(KERN_INFO "bp_spi_probe name[%s]]\n", bp_spi->name);
+	m_lzpi_spi = lzpi_spi;
+	printk(KERN_INFO "spi_probe name[%s]]\n", lzpi_spi->name);
 
-	spi_set_drvdata(spi, bp_spi);
-
-	DEBUGONDISPLAY(MODE_PHY_DEBUG,printk("[SPI] set drvdata\n"));
+	spi_set_drvdata(spi, lzpi_spi);
 
 	return 0;
 
-//error_mac_callback:
-//	spi_set_drvdata(bp_spi->spi, NULL);
 error_spi_setup:
-	kfree(bp_spi);
+	kfree(lzpi_spi);
 	return err;
 }
 
-static int bp_spi_remove(struct spi_device *dev)
+static int lzpi_spi_remove(struct spi_device *dev)
 {
-	struct bp_spi_dev *bp_spi = spi_get_drvdata(dev);
+	struct lzpi_spi_dev *lzpi_spi = spi_get_drvdata(dev);
 
 //	finish_flag = 1;
-	// irq disable
-	disable_irq(gpio_to_irq(GPIO_SINTN));
-	free_irq(gpio_to_irq(GPIO_SINTN), NULL);
 
-	spi_set_drvdata(bp_spi->spi, NULL);
-	if (!bp_spi)
+	spi_set_drvdata(lzpi_spi->spi, NULL);
+	if (!lzpi_spi)
 		return 0;
-	kfree(bp_spi);
+	kfree(lzpi_spi);
 	
 	/* gpio uninit */
 	//gpio_free(GPIO_SINTN);
 
-	printk(KERN_INFO "bp_spi_remove\n");
+	printk(KERN_INFO "spi_remove\n");
 	return 0;
 }
 
-static struct spi_driver bp_spi_driver = {
+static struct spi_driver lzpi_spi_driver = {
 	.driver = {
 		.name   = "bp3596_spi",
 		.owner  = THIS_MODULE,
 	},
-	.probe          = bp_spi_probe,
-	.remove         = bp_spi_remove,
+	.probe          = lzpi_spi_probe,
+	.remove         = lzpi_spi_remove,
 };
 
-int bp_spi_add_driver(int (*callback)(void))
+int lzpi_spi_init(void)
 {
-	int status = 0;
-	callback_func = callback;
-	status = spi_register_driver(&bp_spi_driver);
-	if(status == SPI_OK)
-	{	
-		DEBUGONDISPLAY(MODE_PHY_DEBUG,printk("[SPI] init success\n"));
-	}
-	else
-	{
-		printk("[SPI] init fail\n");
-	}
-
-	return status;
+	return spi_register_driver(&lzpi_spi_driver);
 }
 
 
-int bp_spi_del_driver(void)
+int lzpi_spi_del_driver(void)
 {
 	int status = 0;
-	spi_unregister_driver(&bp_spi_driver);
-	DEBUGONDISPLAY(MODE_PHY_DEBUG,printk("[SPI] delete driver\n"));
-
+	spi_unregister_driver(&lzpi_spi_driver);
 	return status;
 }
 
-int bp_spi_transfer(const uint8_t* wdata, uint16_t wsize, uint8_t* rdata, uint16_t rsize) {
+int lzpi_spi_transfer(const uint8_t* wdata, uint16_t wsize, uint8_t* rdata, uint16_t rsize) {
     int status;
-	status = spi_write_then_read(m_bp_spi->spi,wdata, wsize, rdata, rsize);
-	if(!status) printk("[BP-SPI] Unknow Error\r\n");
+	status = spi_write_then_read(m_lzpi_spi->spi,wdata, wsize, rdata, rsize);
+	if(!status) printk("[LZPI] SPI Unknow Error\r\n");
     return status;
 }
 

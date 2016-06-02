@@ -24,8 +24,8 @@
 #define SPI_OK				0
 #define SPI_ERR_UNKNOWN		-1
 
-extern int bp_spi_add_driver(int (*callback)(void));
-extern int bp_spi_del_driver(void);
-extern int bp_spi_transfer(const uint8_t* wdata,uint16_t wsize,uint8_t* rdata, uint16_t rsize);
+extern int lzpi_spi_init(void);
+extern int lzpi_spi_del_driver(void);
+extern int lzpi_spi_transfer(const uint8_t* wdata,uint16_t wsize,uint8_t* rdata, uint16_t rsize);
 
 #endif	// _SPI_LZPI_H_

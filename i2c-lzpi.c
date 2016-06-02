@@ -1,7 +1,7 @@
 /*
- * BP3596 I2C Driver
+ * Lazurite Pi Gateway I2C Driver
  * 
- * File:  i2c-bp3596.c
+ * File:  i2c-lzpi.c
  * 
  * Copyright 2015 Lapis Semiconductor Co.,Ltd.
  * Author: Naotaka Saito
@@ -27,7 +27,7 @@
 static struct i2c_client *g_client=I2C_NOT_PROBED;
 
 // local function
-static int bp_i2c_write(uint8_t address, const uint8_t *data, uint8_t length) {
+static int lzpi_i2c_write(uint8_t address, const uint8_t *data, uint8_t length) {
     static unsigned char buffer[I2C_BUFFERSIZE] = {0};
 	int ret;
 	if (g_client == NULL)
@@ -41,11 +41,11 @@ static int bp_i2c_write(uint8_t address, const uint8_t *data, uint8_t length) {
 	return ret;
 }
 
-static int bp_i2c_read(uint8_t address, uint8_t *data, uint8_t length) {
+static int lzpi_i2c_read(uint8_t address, uint8_t *data, uint8_t length) {
 	int ret = 0;
 	if (g_client == NULL)
 		return -1;
-	ret = bp_i2c_write(address, NULL, 0);
+	ret = lzpi_i2c_write(address, NULL, 0);
 	if (ret < 1) {
 		printk("i2c_write failed\n");
 		return ret;
@@ -58,7 +58,7 @@ static int bp_i2c_read(uint8_t address, uint8_t *data, uint8_t length) {
 	return ret;
 }
 // Driver Interface
-static const struct i2c_device_id bp_i2c_id[] = {
+static const struct i2c_device_id lzpi_i2c_id[] = {
 	{ "bp3596_i2c", 0 },
 	{ }
 };

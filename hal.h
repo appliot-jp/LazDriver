@@ -63,7 +63,7 @@
 #define HAL_delayMicroseconds(v) delay_microseconds((unsigned long)v)
 
 extern int HAL_SPI_setup(void);
-extern int HAL_SPI_transfer(const uint8_t *wdata, uint8_t *rdata, uint8_t size);
+extern int HAL_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize);
 extern int HAL_GPIO_setup(void);
 extern int HAL_GPIO_setValue(uint8_t pin, uint8_t value);
 extern int HAL_GPIO_getValue(uint8_t pin, uint8_t *value);

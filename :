@@ -40,12 +40,12 @@
 //*****************************************************
 // Local definition
 //*****************************************************
+void (*hal_irq_func)(void);				// gpio call back
 #define	LED_FLASH_TIME	1					// LED Flashing time
 static struct timespec start_time;			// memory of tick timer
 static struct timer_list g_timer;			// timer handler
 static void (*ext_timer_func)(void);
 static void (*ext_irq_func)(void);
-static bool ext_irq_enb;
 int finish_flag = 0;
 static wait_queue_head_t rf_irq_q;
 static wait_queue_head_t tx_led_q;
@@ -71,7 +71,7 @@ int tx_led_thread(void *p)
 }
 // rf hardware interrupt handler
 static irqreturn_t rf_irq_handler(int irq,void *dev_id) {
-		if((ext_irq_enb)&&(ext_irq_func)){
+		if(ext_irq_func){
 			finish_flag = 1;
 			wake_up_interruptible(&rf_irq_q);
 			return IRQ_WAKE_THREAD;
@@ -89,7 +89,6 @@ int lazurite_setup(void)
 	// init external functions
 	ext_timer_func = NULL;
 	ext_irq_func = NULL;
-	ext_irq_enb = false;
 	
 	// IRQ Initializing
 	init_waitqueue_head( &rf_irq_q );
@@ -117,15 +116,15 @@ int lazurite_setup(void)
 	}
 
 #ifdef GPIO_RX_LED
-	rx_led_task = kthread_run(rx_led_thread, NULL,0);
+	rx_led_task = kthread_run(rx_led_thread, NULL,LED_FLASH_TIME);
 	if (IS_ERR(rx_led_task)) {
 		printk(KERN_INFO "bp3596_init: rx_led_kthread_run failed\n");
 		goto error_thread;
 	}
 #endif
 #ifdef GPIO_TX_LED
-	tx_led_task = kthread_run(tx_led_thread, NULL, 0);
-	if (IS_ERR(tx_led_task)) {
+	tx_led_tsk = kthread_run(tx_led_thread, NULL, LED_FLASH_TIME);
+	if (IS_ERR(tx_led_tsk)) {
 		printk(KERN_INFO "bp3596_init: tx_led_kthread_run failed\n");
 		goto error_thread;
 	}
@@ -140,63 +139,41 @@ error_irq_request:
 	return status;
 }
 
-#define HAL_SPI_INIT_ERR	1
+
 int HAL_SPI_setup(void)
 {
-	int result;
-	result = lzpi_spi_init();
-	if(result != 0) {
-		printk(KERN_ERR"[LZPI] SPI INIT ERROR\n");
-		result = -HAL_SPI_INIT_ERR;
-	}
-
-	return result;
+	bp_spi_add_driver(lazurite_setup());
+	
+	return HAL_STATUS_OK;
 }
 
 //int HAL_SPI_transfer(unsigned char *wdata, unsigned char *rdata, unsigned char size)
-int HAL_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize)
+int HAL_SPI_transfer(const unsigned char *wdata, unsigned char wsize,unsigned char *rdata, unsigned char rsize)
 {
-	lzpi_spi_transfer(wdata,wsize,rdata,rsize);
+	bp_spi_transfer(wdata,wsize,rdata,rsize);
 	return 0;
 }
 
 int HAL_GPIO_setInterrupt(void (*func)(void))
 {
-	ext_irq_func = func;
+	hal_irq_func = func;
 	return HAL_STATUS_OK;
 }
 
 int HAL_GPIO_enableInterrupt(void)
 {
-	ext_irq_enb = true;
 	return HAL_STATUS_OK;
 }
 
 int HAL_GPIO_disableInterrupt(void)
 {
-	ext_irq_enb = false;
 	return HAL_STATUS_OK;
 }
 
-#define HAL_I2C_ERR	2
 int HAL_I2C_setup(void)
 {
-	int result;
-	result = lzpi_i2c_init();
-	if(result != 0)
-	{
-		result = HAL_I2C_ERR;
-		goto error;
-	}
-
-	result = lzpi_i2c_adapter_init();
-	if(result != 0)
-	{
-		result = HAL_I2C_ERR;
-		goto error;
-	}
-
-	return result;
+	Wire0.begin();
+	return HAL_STATUS_OK;
 }
 
 int HAL_I2C_read(unsigned char devAddr, unsigned short addr, unsigned char *data, unsigned char size)
@@ -224,10 +201,7 @@ int HAL_I2C_read(unsigned char devAddr, unsigned short addr, unsigned char *data
 
 int HAL_remove(void)
 {
-	// irq disable
-	disable_irq(gpio_to_irq(GPIO_SINTN));
-	free_irq(gpio_to_irq(GPIO_SINTN), NULL);
-	// thread
+	// thread‚Ì’âŽ~
 	// I2C remove
 	bp_i2c_remove();
 	// SPI‚Ì’âŽ~
@@ -265,10 +239,9 @@ void timer_function(unsigned long data)
 
 int HAL_TIMER_start(unsigned short msec, void (*func)(void))
 {
-	uint32_t tmp = HZ;
 	init_timer(&g_timer);
 	g_timer.data = 0;
-	g_timer.expires = jiffies + (tmp*ms)/1000;
+	g_timer.expires = jiffies + (HZ*ms)/1000;
 	g_timer.function = timer_function;
 	add_timer(&g_timer);
 	return HAL_STATUS_OK;
