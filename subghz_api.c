@@ -133,12 +133,11 @@ static void subghz_rx_callback(uint8_t *raw,uint8_t rssi, int status)
 }
 static SUBGHZ_MSG subghz_rxEnable(void (*callback)(uint8_t *raw,uint8_t rssi, int status))
 {
-	int result;
 	SUBGHZ_MSG msg;
 	rx_callback = callback;
 	msg = mac.rxEnable(subghz_rx_callback);
 	
-	return result;
+	return msg;
 }
 
 static SUBGHZ_MSG subghz_rxDisable(void)
@@ -160,7 +159,7 @@ static void subghz_getStatus(SUBGHZ_STATUS *tx, SUBGHZ_STATUS *rx)
 	return;
 }
 
-static int subghz_getMyAddress64(uint8_t* addr)
+static SUBGHZ_MSG subghz_getMyAddress64(uint8_t* addr)
 {
 	SUBGHZ_MSG msg;
 	uint8_t addr64[8]; 
@@ -234,32 +233,12 @@ no_error:
 
 static SUBGHZ_MSG subghz_getSendMode(SUBGHZ_PARAM *param)
 {
-	param->addrType = subghz_param.addrType;
-	param->senseTime = subghz_param.senseTime;
-	param->txRetry = subghz_param.txRetry;
-	param->txInterval = subghz_param.txInterval;
-	// 2015.10.26 Eiichi Saito   addition random backoff
-	param->ccaWait = subghz_param.ccaWait;
-	param->myAddress = subghz_param.myAddress; 
 
 	return SUBGHZ_OK;
 }
 
 static SUBGHZ_MSG subghz_setSendMode(SUBGHZ_PARAM *param)
 {
-	// check addrType
-	if( param->addrType > 7 )
-	{
-		return SUBGHZ_ERR_ADDRTYPE;
-	}
-	subghz_param.addrType = param->addrType;
-	subghz_param.senseTime = param->senseTime;
-	subghz_param.txRetry = param->txRetry;
-	subghz_param.txInterval = param->txInterval;
-	// 2015.10.26 Eiichi Saito   addition random backoff
-	subghz_param.ccaWait = param->ccaWait;
-	subghz_param.myAddress = param->myAddress;
-	
 	return SUBGHZ_OK;
 }
 static SUBGHZ_MSG subghz_remove(void) 
@@ -270,16 +249,17 @@ static SUBGHZ_MSG subghz_remove(void)
 // setting of function
 const SubGHz_CTRL SubGHz = {
 	subghz_init,
+	subghz_remove,
 	subghz_begin,
 	subghz_close,
-	subghz_tx,
+	subghz_send,
 	subghz_rxEnable,
 	subghz_rxDisable,
 	subghz_readData,
 	subghz_getMyAddress,
+	subghz_getMyAddress64,
 	subghz_getStatus,
 	subghz_msgOut,
 	subghz_setSendMode,
 	subghz_getSendMode,
-	subghz_remove
 };

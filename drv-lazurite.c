@@ -29,7 +29,7 @@
 #include <linux/list.h>
 #include <linux/time.h>
 
-#include "common_802154e.h"
+#include "common-lzpi.h"
 #include "subghz_api.h"
 
 #define DATA_SIZE		256
