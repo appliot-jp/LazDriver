@@ -62,9 +62,8 @@
 // 2015.06.08 Eiichi Saito
 #define HAL_delayMicroseconds(v) delay_microseconds((unsigned long)v)
 
-extern int HAL_SPI_setup(void);
-extern int HAL_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize);
-extern int HAL_GPIO_setup(void);
+extern int HAL_init(uint8_t i2c_addr, uint8_t addr_bits);
+extern int HAL_remove(void);
 extern int HAL_GPIO_setValue(uint8_t pin, uint8_t value);
 extern int HAL_GPIO_getValue(uint8_t pin, uint8_t *value);
 extern int HAL_GPIO_setInterrupt(void (*func)(void));
@@ -78,9 +77,8 @@ extern int HAL_TIMER_enableInterrupt(void);
 extern int HAL_TIMER_disableInterrupt(void);
 #endif  /* #ifndef ML7396_HWIF_NOTHAVE_TIMER_DI */
 extern int HAL_TIMER_getTick(uint32_t *tick);
-extern int HAL_I2C_setup(void);
-extern int HAL_I2C_read(uint8_t daddr, uint8_t addr, uint8_t *data, uint8_t size);
-// 2015.12.14 Eiichi Saito: for preference of SubGHz
+extern int HAL_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize);
+extern int HAL_I2C_read(uint16_t addr, uint8_t *data, uint8_t size);
 extern void HAL_EX_enableInterrupt(void);
 extern void HAL_EX_disableInterrupt(void);
 

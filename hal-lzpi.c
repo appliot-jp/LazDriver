@@ -53,6 +53,7 @@ static wait_queue_head_t rx_led_q;
 static struct task_struct *rf_main_task;
 static struct task_struct *tx_led_task;
 static struct task_struct *rx_led_task;
+int drv_mode = 0;
 //*****************************************************
 // temporary
 //*****************************************************
@@ -62,12 +63,15 @@ static struct task_struct *rx_led_task;
 //*****************************************************
 int rf_main_thread(void *p)
 {
+	return 0;
 }
 int rx_led_thread(void *p)
 {
+	return 0;
 }
 int tx_led_thread(void *p)
 {
+	return 0;
 }
 // rf hardware interrupt handler
 static irqreturn_t rf_irq_handler(int irq,void *dev_id) {
@@ -152,12 +156,27 @@ int HAL_SPI_setup(void)
 
 	return result;
 }
+int HAL_init(uint8_t i2c_addr, uint8_t addr_bits){
+	return 0;
+}
+int HAL_remove(void)
+{
+	// irq disable
+	disable_irq(gpio_to_irq(GPIO_SINTN));
+	free_irq(gpio_to_irq(GPIO_SINTN), NULL);
+	// thread
+
+	// I2C remove
+	lzpi_i2c_del_driver();
+	// SPI remove
+	
+	return 0;
+}
 
 //int HAL_SPI_transfer(unsigned char *wdata, unsigned char *rdata, unsigned char size)
 int HAL_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize)
 {
-	lzpi_spi_transfer(wdata,wsize,rdata,rsize);
-	return 0;
+	return lzpi_spi_transfer(wdata,wsize,rdata,rsize);
 }
 
 int HAL_GPIO_setInterrupt(void (*func)(void))
@@ -179,9 +198,11 @@ int HAL_GPIO_disableInterrupt(void)
 }
 
 #define HAL_I2C_ERR	2
-int HAL_I2C_setup(void)
+static int i2c_addr_bits;
+int HAL_I2C_setup(uint8_t i2c_addr, uint8_t addr_bits)
 {
 	int result;
+	i2c_addr_bits = addr_bits;
 	result = lzpi_i2c_init();
 	if(result != 0)
 	{
@@ -189,65 +210,48 @@ int HAL_I2C_setup(void)
 		goto error;
 	}
 
-	result = lzpi_i2c_adapter_init();
+	result = lzpi_i2c_adapter_init(i2c_addr);
 	if(result != 0)
 	{
 		result = HAL_I2C_ERR;
 		goto error;
 	}
-
+error:
 	return result;
 }
 
-int HAL_I2C_read(unsigned char devAddr, unsigned short addr, unsigned char *data, unsigned char size)
+int HAL_I2C_read(unsigned short addr, unsigned char *data, unsigned char size)
 {
-	unsigned char n;
-	int dtmp;
+	uint8_t wtmp[2];
 
-	Wire0.beginTransmission(devAddr);
-#ifdef LAZURIE_MINI
-	Wire0.write_byte((addr>>8)&0x00FF);
-#endif
-	Wire0.write_byte(addr&0x00FF);
-	Wire0.endTransmission(false);
-	Wire0.requestFrom(devAddr,size,true);
-	
-	for(n=0;n<size;n++)
-	{
-		dtmp = Wire0.read();
-		if(dtmp < 0) return HAL_STATUS_ERROR_TIMEOUT;
-		*(data + n) = (uint8_t)dtmp;
+
+	if(i2c_addr_bits < 8) {
+		wtmp[0] = addr&0x00FF;
+		lzpi_i2c_write(&wtmp[0],1);
+	} else {
+		wtmp[0] = (addr>>8)&0x00FF;
+		wtmp[1] = addr&0x00FF;
+		lzpi_i2c_write(&wtmp[0],2);
 	}
-	
+	lzpi_i2c_read(data,size);
+
 	return HAL_STATUS_OK;
 }
 
-int HAL_remove(void)
-{
-	// irq disable
-	disable_irq(gpio_to_irq(GPIO_SINTN));
-	free_irq(gpio_to_irq(GPIO_SINTN), NULL);
-	// thread
-	// I2C remove
-	bp_i2c_remove();
-	// SPI‚Ì’âŽ~
-	
-}
 
 // timer function
-int HAL_TIMER_getTick(unsigned long *tick)
+int HAL_TIMER_getTick(uint32_t *tick)
 {
 	struct timespec current_time;
 	struct timespec diff_time;
-	unsigned long diff_ms;
-	
+
 	getnstimeofday(&current_time);
-	
+
 	diff_time.tv_sec = current_time.tv_sec - start_time.tv_sec;
 	diff_time.tv_nsec = current_time.tv_nsec - start_time.tv_nsec;
-	
+
 	*tick = diff_time.tv_sec * 1000 + diff_time.tv_nsec/1000000;
-	
+
 	return HAL_STATUS_OK;
 }
 
@@ -268,7 +272,7 @@ int HAL_TIMER_start(unsigned short msec, void (*func)(void))
 	uint32_t tmp = HZ;
 	init_timer(&g_timer);
 	g_timer.data = 0;
-	g_timer.expires = jiffies + (tmp*ms)/1000;
+	g_timer.expires = jiffies + (tmp*msec)/1000;
 	g_timer.function = timer_function;
 	add_timer(&g_timer);
 	return HAL_STATUS_OK;

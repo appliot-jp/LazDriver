@@ -18,10 +18,10 @@
 
 #define I2C_OK		0
 
-extern int bp_i2c_init(void);
-//extern int bp_i2c_add_driver(void);
-extern int bp_i2c_adapter_init(void);
-extern int bp_read_eeprom( uint8_t reg );
-extern int bp_i2c_del_driver(void);
+extern int lzpi_i2c_init(void);
+extern int lzpi_i2c_adapter_init(uint8_t i2c_addr);
+extern int lzpi_i2c_del_driver(void);
+extern int lzpi_i2c_write(const uint8_t* data, uint8_t length);
+extern int lzpi_i2c_read(uint8_t* data, uint8_t length);
 
 #endif	// _I2C_BP3596_H_
