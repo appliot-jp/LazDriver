@@ -65,7 +65,6 @@ static struct i2c_driver lzpi_i2c_driver = {
 		.name = "lzpi_i2c",
 	},
 	.probe	= lzpi_i2c_probe,
-	.remove	= lzpi_i2c_remove,
 	.id_table = lzpi_i2c_id,
 	//.address_list = normal_i2c,
 };

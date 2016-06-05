@@ -30,7 +30,7 @@ struct lzpi_spi_dev {
 };
 
 struct lzpi_spi_dev *m_lzpi_spi;
-
+int (*probe_callback)(void);
 // SPI probe
 static int lzpi_spi_probe(struct spi_device *spi)
 {
@@ -62,7 +62,7 @@ static int lzpi_spi_probe(struct spi_device *spi)
 
 	spi_set_drvdata(spi, lzpi_spi);
 
-	return 0;
+	return probe_callback();
 
 error_spi_setup:
 	kfree(lzpi_spi);
@@ -96,8 +96,9 @@ static struct spi_driver lzpi_spi_driver = {
 	.remove         = lzpi_spi_remove,
 };
 
-int lzpi_spi_init(void)
+int lzpi_spi_init(int (*callback)(void))
 {
+	probe_callback = callback;
 	return spi_register_driver(&lzpi_spi_driver);
 }
 
@@ -112,7 +113,7 @@ int lzpi_spi_del_driver(void)
 int lzpi_spi_transfer(const uint8_t* wdata, uint16_t wsize, uint8_t* rdata, uint16_t rsize) {
     int status;
 	status = spi_write_then_read(m_lzpi_spi->spi,wdata, wsize, rdata, rsize);
-	if(!status) printk("[LZPI] SPI Unknow Error\r\n");
+	if(status != 0) printk("[LZPI] SPI Unknow Error\r\n");
     return status;
 }
 

@@ -243,6 +243,7 @@ static SUBGHZ_MSG subghz_setSendMode(SUBGHZ_PARAM *param)
 }
 static SUBGHZ_MSG subghz_remove(void) 
 {
+	mac.remove();
 	return SUBGHZ_OK;
 }
 

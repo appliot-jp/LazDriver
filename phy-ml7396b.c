@@ -15,14 +15,17 @@
 
 #include "mac-lazurite.h"
 #include "phy-ml7396b.h"
+#include "hal.h"
 
 int phy7396b_init(void)
 {
+	HAL_init(0x50,8);
 	return 0;
 }
 
 int phy7396b_remove(void)
 {
+	HAL_remove();
 	return 0;
 }
 

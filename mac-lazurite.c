@@ -16,13 +16,20 @@
 #include "mac-lazurite.h"
 #include "phy-ml7396b.h"
 
+#ifdef	LAZURITE_IDE
+#else	// LAZURITE_IDE
+#include <linux/printk.h>
+#endif
+
 int mac_init(void)
 {
+	phy.init();
 	return 0;
 }
 
 int mac_remove(void)
 {
+	phy.remove();
 	return 0;
 }
 

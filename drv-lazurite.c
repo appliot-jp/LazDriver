@@ -31,12 +31,15 @@
 
 #include "common-lzpi.h"
 #include "subghz_api.h"
+#include "drv-lazurite.h"
+#include "hal.h"
 
 #define DATA_SIZE		256
 #define DRV_NAME		"lzgw"
 //static wait_queue_head_t read_q;	//poll wait
 
 uint8_t rxbuf[DATA_SIZE];
+uint16_t drv_mode;
 
 struct list_data {				
 	uint8_t	data[DATA_SIZE];
@@ -49,7 +52,7 @@ static struct s_CHAR_DEV {
 	struct class *dev_class;		// device class
 	int major;						// device major number
 	int access_num;					// open count
-	spinlock_t	lock;				// chardev spin lock
+	struct mutex	lock;				// chardev spin lock
 	wait_queue_head_t	read_q;		// polling wait for char dev
 } chrdev =
 {
@@ -66,7 +69,7 @@ int write_list_data(uint8_t* raw,uint16_t len){
 
 	new_data = kmalloc(sizeof(struct list_data), GFP_KERNEL);
 	if (new_data == NULL) {
-		printk(KERN_ERR "[DRV-802154E] kmalloc (list_data) GFP_KERNEL no memory\n");
+		printk(KERN_ERR "[DRV-Lazurite] kmalloc (list_data) GFP_KERNEL no memory\n");
 		return -ENOMEM;
 	}
 	DEBUGONDISPLAY(MODE_STREAM_DEBUG,printk(KERN_INFO "[DRV-802154E] %s 2\n", __func__));
@@ -109,32 +112,120 @@ int rx_callback(uint8_t *raw, uint16_t len)
 
 }
 
-// poll wait cancell 
-
 // *****************************************************************
 //			char dev function
 // *****************************************************************
+static unsigned char ch=36;
+static unsigned char pwr=20;
+static unsigned char bps=100;
+static unsigned short panid=0xABCD;
+
 static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg) {
-	long ret = 0;
+	unsigned char command = cmd>>12;
+	unsigned int param = cmd & 0x0FFF;
+	long ret=0;
+	mutex_lock( &chrdev.lock );
+
+	// printk(KERN_INFO"ioctl %0x %x,%x,%lx\n",cmd, command,param,arg);
+	switch(command) {
+		case IOCTL_PARAM:
+			switch(param) {
+				case IOCTL_GET_CH:			// get ch
+					ret = ch;
+					break;
+				case IOCTL_SET_CH:			// set ch
+					if((arg>=24) || (arg<=61)) {
+						ch = arg;
+					} else {
+						printk(KERN_ERR"ch = %lx error!! must be 24-61\n",arg);
+					}
+					break;
+				case IOCTL_GET_PWR:			// get pwr
+					ret = pwr;
+					break;
+				case IOCTL_SET_PWR:			// set pwr
+					if((arg==1) || (arg==20)) {
+						pwr = arg;
+					} else {
+						printk(KERN_ERR"pwr = %lx error!! must be 1 or 20\n",arg);
+					}
+					break;
+				case IOCTL_GET_BPS:			// get bps
+					ret = bps;
+					break;
+				case IOCTL_SET_BPS:			// set bps
+					if((arg==50) || (arg==100)) {
+						bps = arg;
+					} else {
+						printk(KERN_ERR"bps = %lx error!! must be 50 or 100\n",arg);
+					}
+					break;
+				case IOCTL_GET_PANID:			// get panid
+					ret = panid;
+					break;
+				case IOCTL_SET_PANID:			// set panid
+					if((arg >= 0) || (arg <= 0xffff)) {
+						panid = arg;
+					} else {
+						printk(KERN_ERR"bps = %lx error!! must be 50 or 100\n",arg);
+					}
+					break;
+			}
+			break;
+		case IOCTL_RF:
+			if(param<0x7f)	// read
+			{
+				uint8_t rdata[1];
+				uint8_t wdata[1];
+				wdata[0] = (param<<1);
+				EXT_SPI_transfer(wdata,1,rdata,1);
+				ret = rdata[0];
+			}
+			else			// write
+			{
+				uint8_t rdata;
+				uint8_t wdata[2];
+				wdata[0]=((param&0x7f)<<1)+1;
+				wdata[1]=arg;
+				EXT_SPI_transfer(wdata,2,&rdata,0);
+				ret = 0;
+			}
+			break;
+		case IOCTL_EEPROM:
+			{
+				uint8_t data;
+				EXT_I2C_read(param,&data,1);
+				ret = data;
+				break;
+			}
+		case IOCTL_LED:
+			{
+				uint8_t data;
+				HAL_I2C_read(param,&data,1);
+				ret = data;
+				break;
+			}
+	}
+	mutex_unlock( &chrdev.lock );
 	return ret;
 }
 
 static int chardev_open(struct inode* inode, struct file* filp) {
-	spin_lock( &chrdev.lock );
-	if (chrdev.access_num >= 2) {
-		spin_unlock(&chrdev.lock );
+	mutex_lock( &chrdev.lock );
+	if (chrdev.access_num > 2) {
+		mutex_unlock(&chrdev.lock );
 		return -EBUSY;
 	}
 	chrdev.access_num ++;
-	spin_unlock( &chrdev.lock );
+	mutex_unlock( &chrdev.lock );
 	return 0;
 }
 
 static int chardev_release(struct inode* inode, struct file* filp)
 {
-	spin_lock( &chrdev.lock );
+	mutex_lock( &chrdev.lock );
 	chrdev.access_num --;
-	spin_unlock( &chrdev.lock );
+	mutex_unlock( &chrdev.lock );
 	return 0;
 }
 
@@ -142,7 +233,7 @@ static ssize_t chardev_read (struct file * file, char __user * buf, size_t count
 	ssize_t bytes_read = 0;
 	struct list_data *ptr = NULL;
 
-	spin_lock( &chrdev.lock );
+	mutex_lock( &chrdev.lock );
 
 	// list empty
 	if (list_empty(&head.list) != 0) {
@@ -180,14 +271,14 @@ static ssize_t chardev_read (struct file * file, char __user * buf, size_t count
 		kfree(ptr);
 	}
 end:
-	spin_unlock( &chrdev.lock );
+	mutex_unlock( &chrdev.lock );
 	return bytes_read;
 }
 
 static ssize_t chardev_write (struct file * file, const char __user * buf,
 		size_t count, loff_t * ppos) {
 	int status = 0;
-	spin_lock( &chrdev.lock );
+	mutex_lock( &chrdev.lock );
 
 	DEBUGONDISPLAY(MODE_DRV_DEBUG,PAYLOADDUMP(buf,count));		// for debug
 	if(count<DATA_SIZE)
@@ -198,7 +289,7 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 	}
 
 error:
-	spin_unlock( &chrdev.lock );
+	mutex_unlock( &chrdev.lock );
 	return status;
 }
 
@@ -233,7 +324,7 @@ static int __init drv_param_init(void) {
 	// create char device
 	if((chrdev.major = register_chrdev(0, DRV_NAME, &chardev_fops)) < 0)
 	{
-		printk(KERN_ERR "[DRV-802154E] unable to get major =%d\n",
+		printk(KERN_ERR "[drv-lazurite] unable to get major =%d\n",
 				chrdev.major);
 		goto error;
 	}
@@ -241,16 +332,16 @@ static int __init drv_param_init(void) {
 	if(IS_ERR(chrdev.dev_class))
 	{
 		err = PTR_ERR(chrdev.dev_class);
-		printk(KERN_ERR"[DRV-802154E] class_create error %d\n", err);
+		printk(KERN_ERR"[drv-lazurite] class_create error %d\n", err);
 		goto error_class_create;
 	}
 	dev = device_create(chrdev.dev_class, NULL, MKDEV(chrdev.major, 0), NULL, chrdev.name);
 	if (IS_ERR(dev)) {
 		err = PTR_ERR(dev);
-		printk(KERN_ERR"[DRV-802154E]device_create error %d\n", err);
+		printk(KERN_ERR"[drv-lazurite]device_create error %d\n", err);
 		goto error_device_create;
 	}
-	DEBUGONDISPLAY(MODE_DRV_DEBUG,printk(KERN_INFO "[DRV-802154E] char dev create = %s\n",chrdev.name));
+	DEBUGONDISPLAY(MODE_DRV_DEBUG,printk(KERN_INFO "[drv-lazurite] char dev create = %s\n",chrdev.name));
 
 	//initializing list head
 	INIT_LIST_HEAD(&head.list);
@@ -262,7 +353,8 @@ static int __init drv_param_init(void) {
 	if(status != SUBGHZ_OK) goto error_device_create;
 
 
-	printk(KERN_INFO "[DRV-802154E] End of init\n");
+	printk(KERN_INFO "[drv-lazurite] End of init\n");
+	mutex_init( &chrdev.lock );
 
 	return status;
 
@@ -271,7 +363,7 @@ error_device_create:
 error_class_create:
 	unregister_chrdev(chrdev.major, chrdev.name);
 error:
-	printk(KERN_INFO "[DRV-802154E] Init Error\n");
+	printk(KERN_ERR "[drv-lazurite] Init Error\n");
 	return status;
 }
 
@@ -282,7 +374,6 @@ static void __exit drv_param_exit(void) {
 	//void drv_param_exit(void) {
 	//	mac_802154e_exit();
 	//list delete 
-	printk(KERN_INFO "[DRV-802154E] remove\n");
 	while (!list_empty(&head.list)) {
 		struct list_data *data;
 		data = list_entry(head.list.next, struct list_data, list);
@@ -295,10 +386,9 @@ static void __exit drv_param_exit(void) {
 	device_destroy(chrdev.dev_class, MKDEV(chrdev.major, 0));
 	class_destroy(chrdev.dev_class);
 	unregister_chrdev(chrdev.major, chrdev.name);
-	DEBUGONDISPLAY(MODE_DRV_DEBUG,printk(KERN_INFO "[DRV-802154E] char dev delete\n"));
 	// mac remove
 	SubGHz.remove();
-	printk(KERN_INFO "[DRV-802154E] exit remove\n");
+	printk(KERN_INFO "[drv-lazurite] exit remove\n");
 	return;
 }
 

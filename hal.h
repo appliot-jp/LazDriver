@@ -37,29 +37,15 @@
 /* 戻り値定義
  *  0以上=正常終了, 0未満=異常終了
  */
-#define HAL_STATUS_OK             0  /* 正常終了 */
-#define HAL_STATUS_ERROR_PARAM   -1  /* パラメータ異常 */
-#define HAL_STATUS_ERROR_STATE   -2  /* ステート異常 */
-#define HAL_STATUS_ERROR_TIMEOUT -3  /* タイムアウト */
+#define HAL_STATUS_OK				0	// 
+#define HAL_ERROR_PARAM		-1	//
+#define HAL_ERROR_STATE		-2	// 
+#define HAL_ERROR_TIMEOUT	-3	// 
+#define HAL_ERROR_SPI		-4 		 // SPI error
+#define HAL_ERROR_I2C		-5 		 // I2C errror
+#define HAL_ERROR_IRQ		-5 		 // IRQ error
+#define HAL_ERROR_THREAD	-6 		 // thread error
 
-/* pin引数定義
- */
-/*
-#define HAL_GPIO_CSB    19
-#define HAL_GPIO_RESETN 35
-#define HAL_GPIO_DMON   30
-#define HAL_GPIO_SINTN  15
-#define BP3596A_SINTN_IRQNUM	3
-*/
-#define HAL_GPIO_CSB    6
-#define HAL_GPIO_RESETN 7
-#define HAL_GPIO_DMON   5
-#define HAL_GPIO_SINTN  27
-#define BP3596A_SINTN_IRQNUM	3
-
-/* 外部公開関数
- */
-// 2015.06.08 Eiichi Saito
 #define HAL_delayMicroseconds(v) delay_microseconds((unsigned long)v)
 
 extern int HAL_init(uint8_t i2c_addr, uint8_t addr_bits);
@@ -79,8 +65,12 @@ extern int HAL_TIMER_disableInterrupt(void);
 extern int HAL_TIMER_getTick(uint32_t *tick);
 extern int HAL_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize);
 extern int HAL_I2C_read(uint16_t addr, uint8_t *data, uint8_t size);
+extern int EXT_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize);
+extern int EXT_I2C_read(uint16_t addr, uint8_t *data, uint8_t size);
 extern void HAL_EX_enableInterrupt(void);
 extern void HAL_EX_disableInterrupt(void);
+extern void HAL_tx_led_flash(void);
+extern void HAL_rx_led_flash(void);
 
 
 #endif  /* #ifndef _INCLUDE_HAL_H */
