@@ -65,12 +65,12 @@ extern int HAL_TIMER_disableInterrupt(void);
 extern int HAL_TIMER_getTick(uint32_t *tick);
 extern int HAL_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize);
 extern int HAL_I2C_read(uint16_t addr, uint8_t *data, uint8_t size);
-extern int EXT_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize);
-extern int EXT_I2C_read(uint16_t addr, uint8_t *data, uint8_t size);
 extern void HAL_EX_enableInterrupt(void);
 extern void HAL_EX_disableInterrupt(void);
-extern void HAL_tx_led_flash(void);
-extern void HAL_rx_led_flash(void);
+extern int EXT_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize);
+extern int EXT_I2C_read(uint16_t addr, uint8_t *data, uint8_t size);
+extern void EXT_tx_led_flash(uint32_t time);
+extern void EXT_rx_led_flash(uint32_t time);
 
 
 #endif  /* #ifndef _INCLUDE_HAL_H */

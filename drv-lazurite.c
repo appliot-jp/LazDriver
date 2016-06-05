@@ -201,8 +201,12 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 		case IOCTL_LED:
 			{
 				uint8_t data;
-				HAL_I2C_read(param,&data,1);
-				ret = data;
+				if(param == 0x000) {
+					EXT_rx_led_flash(arg);
+				} else {
+					EXT_tx_led_flash(arg);
+				}
+				ret = 0;
 				break;
 			}
 	}

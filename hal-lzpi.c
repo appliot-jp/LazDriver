@@ -60,7 +60,7 @@ int i2c_addr_bits;
 
 // main_thread_parameter
 static struct {
-	uint16_t trigger;
+	volatile uint16_t trigger;
 	struct {
 		const uint8_t* wdata;
 		uint16_t wsize;
@@ -76,7 +76,10 @@ static struct {
 		uint8_t addr_bits;
 		uint8_t i2c_addr;
 	} i2c;
-} m;
+	struct {
+		uint32_t time;
+	} led;
+} m = {0};
 
 
 
@@ -92,6 +95,11 @@ int rf_main_thread(void *p)
 {
 	m.trigger = 0;
 	while(!kthread_should_stop()) {
+		if(m.trigger != 0) {
+			m.trigger = 0;
+			que_th2ex = 1;
+			wake_up_interruptible(&ext_q);
+		}
 		wait_event_interruptible(rf_irq_q, que_ex2th);
 		if(kthread_should_stop()) break;
 		que_ex2th = 0;
@@ -101,53 +109,46 @@ int rf_main_thread(void *p)
 			case 1:
 				break;
 			case 2:
-				// printk(KERN_INFO"SPI access\n");
 				m.spi.ret=lzpi_spi_transfer(m.spi.wdata,m.spi.wsize,m.spi.rdata,m.spi.rsize);
-				if(m.spi.rsize == 0){
-					// printk(KERN_INFO"SPI Write addr=%02x, data=%02x\n",m.spi.wdata[0], m.spi.wdata[1]);
-				} else {
-					// printk(KERN_INFO"SPI Read addr=%02x, data=%02x\n",m.spi.wdata[0], m.spi.rdata[0]);
-				}
-				que_th2ex = 1;
-				wake_up_interruptible(&ext_q);
 				break;
 			case 3:
 				m.i2c.ret=HAL_I2C_read(m.i2c.addr,m.i2c.data,m.i2c.size);
-				if(m.spi.rsize == 0){
-				} else {
-				}
-				que_th2ex = 1;
-				wake_up_interruptible(&ext_q);
-				break;
 				break;
 		}
-		m.trigger = 0;
 	}
 	printk(KERN_INFO"[HAL] %s thread end\n",__func__);
 	return 0;
 }
 int rx_led_thread(void *p)
 {
+	uint32_t time;
 	while(!kthread_should_stop()) {
 		que_ex2th = 0;
 		wait_event_interruptible(rx_led_q, que_ex2th);
 		if(kthread_should_stop()) break;
+		if(m.trigger==4) time = m.led.time;
+		else time = 1;
 		gpio_set_value(GPIO_RX_LED,0);
-		msleep(1);
+		msleep(time);
 		gpio_set_value(GPIO_RX_LED,1);
+		m.trigger = 0;
 	}
 	printk(KERN_INFO"[HAL] %s thread end\n",__func__);
 	return 0;
 }
 int tx_led_thread(void *p)
 {
+	uint32_t time;
 	while(!kthread_should_stop()) {
 		que_ex2th = 0;
 		wait_event_interruptible(tx_led_q, que_ex2th);
 		if(kthread_should_stop()) break;
+		if(m.trigger==4) time = m.led.time;
+		else time = 1;
 		gpio_set_value(GPIO_TX_LED,0);
-		msleep(1);
+		msleep(time);
 		gpio_set_value(GPIO_TX_LED,1);
+		m.trigger = 0;
 	}
 	printk(KERN_INFO"[HAL] %s thread end\n",__func__);
 	return 0;
@@ -285,19 +286,6 @@ int HAL_SPI_transfer(const uint8_t *wdata, uint16_t wsize,unsigned char *rdata, 
 {
 	return lzpi_spi_transfer(wdata,wsize,rdata,wsize);
 }
-int EXT_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize)
-{
-	m.spi.wdata = wdata;
-	m.spi.wsize = wsize;
-	m.spi.rdata = rdata;
-	m.spi.rsize = rsize;
-	m.trigger = 2;
-	que_ex2th = 1;
-	wake_up_interruptible(&rf_irq_q);
-	que_th2ex = 0;
-	wait_event_interruptible(ext_q,que_th2ex);
-	return m.spi.ret;
-}
 
 int HAL_GPIO_setInterrupt(void (*func)(void))
 {
@@ -333,18 +321,6 @@ int HAL_I2C_read(unsigned short addr, unsigned char *data, unsigned char size)
 	return HAL_STATUS_OK;
 }
 
-int EXT_I2C_read(unsigned short addr, unsigned char *data, unsigned char size)
-{
-	m.i2c.addr = addr;
-	m.i2c.data = data;
-	m.i2c.size = size;
-	m.trigger = 3;
-	que_ex2th = 1;
-	wake_up_interruptible(&rf_irq_q);
-	que_th2ex = 0;
-	wait_event_interruptible(ext_q,que_th2ex);
-	return m.i2c.ret;
-}
 
 // timer function
 int HAL_TIMER_getTick(uint32_t *tick)
@@ -391,6 +367,47 @@ int HAL_TIMER_stop(void)
 	return HAL_STATUS_OK;
 }
 
+int EXT_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize)
+{
+	m.spi.wdata = wdata;
+	m.spi.wsize = wsize;
+	m.spi.rdata = rdata;
+	m.spi.rsize = rsize;
+	m.trigger = 2;
+	que_ex2th = 1;
+	wake_up_interruptible(&rf_irq_q);
+	que_th2ex = 0;
+	wait_event_interruptible_timeout(ext_q,que_th2ex,1);
+	return m.spi.ret;
+}
+
+int EXT_I2C_read(unsigned short addr, unsigned char *data, unsigned char size)
+{
+	m.i2c.addr = addr;
+	m.i2c.data = data;
+	m.i2c.size = size;
+	m.trigger = 3;
+	que_ex2th = 1;
+	wake_up_interruptible(&rf_irq_q);
+	que_th2ex = 0;
+	wait_event_interruptible_timeout(ext_q,que_th2ex,1);
+	return m.i2c.ret;
+}
+
+void EXT_tx_led_flash(uint32_t time)
+{
+	m.trigger = 4;
+	m.led.time = time;
+	que_ex2th = 1;
+	wake_up_interruptible(&tx_led_q);
+}
+void EXT_rx_led_flash(uint32_t time)
+{
+	m.trigger = 4;
+	m.led.time = time;
+	que_ex2th = 1;
+	wake_up_interruptible(&rx_led_q);
+}
 // no need in Raspberry Pi
 void HAL_EX_disableInterrupt(void)
 {
