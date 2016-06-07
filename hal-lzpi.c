@@ -377,7 +377,7 @@ int EXT_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16
 	que_ex2th = 1;
 	wake_up_interruptible(&rf_irq_q);
 	que_th2ex = 0;
-	wait_event_interruptible_timeout(ext_q,que_th2ex,1);
+	wait_event_interruptible_timeout(ext_q,que_th2ex,2);
 	return m.spi.ret;
 }
 
@@ -390,7 +390,7 @@ int EXT_I2C_read(unsigned short addr, unsigned char *data, unsigned char size)
 	que_ex2th = 1;
 	wake_up_interruptible(&rf_irq_q);
 	que_th2ex = 0;
-	wait_event_interruptible_timeout(ext_q,que_th2ex,1);
+	wait_event_interruptible_timeout(ext_q,que_th2ex,2);
 	return m.i2c.ret;
 }
 

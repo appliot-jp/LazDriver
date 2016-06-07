@@ -34,8 +34,8 @@
  */
 #define ML7396_HWIF_NOTHAVE_TIMER_DI
 
-/* 戻り値定義
- *  0以上=正常終了, 0未満=異常終了
+/* return value
+ * 
  */
 #define HAL_STATUS_OK				0	// 
 #define HAL_ERROR_PARAM		-1	//
@@ -45,8 +45,6 @@
 #define HAL_ERROR_I2C		-5 		 // I2C errror
 #define HAL_ERROR_IRQ		-5 		 // IRQ error
 #define HAL_ERROR_THREAD	-6 		 // thread error
-
-#define HAL_delayMicroseconds(v) delay_microseconds((unsigned long)v)
 
 extern int HAL_init(uint8_t i2c_addr, uint8_t addr_bits);
 extern int HAL_remove(void);
@@ -67,10 +65,16 @@ extern int HAL_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata,
 extern int HAL_I2C_read(uint16_t addr, uint8_t *data, uint8_t size);
 extern void HAL_EX_enableInterrupt(void);
 extern void HAL_EX_disableInterrupt(void);
+
+#ifdef LAZURITE_IDE
+#define HAL_delayMicroseconds(v) delay_microseconds((unsigned long)v)
+#else
+#define HAL_delayMicroseconds(v) udelay((unsigned long)v)
+#endif
+
 extern int EXT_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize);
 extern int EXT_I2C_read(uint16_t addr, uint8_t *data, uint8_t size);
 extern void EXT_tx_led_flash(uint32_t time);
 extern void EXT_rx_led_flash(uint32_t time);
-
 
 #endif  /* #ifndef _INCLUDE_HAL_H */

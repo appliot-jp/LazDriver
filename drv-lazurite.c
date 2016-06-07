@@ -60,6 +60,27 @@ static struct s_CHAR_DEV {
 	.access_num = 0
 };
 int listed_packet = 0;
+
+static struct {
+	unsigned char ch;
+	unsigned char pwr;
+	unsigned char bps;
+	unsigned short my_panid;
+	unsigned short tx_panid;
+	unsigned char tx_addr[8];
+	unsigned char addr_type;
+	unsigned char addr_size;
+	unsigned char drv_mode;
+} p = {
+	36,		// default ch
+	20,		// default pwr
+	100,		// default bps
+	0xABCD,		// default my panid
+	0xABCD,		// default tx panid
+	{0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff},		// tx addr
+	6,		// address type(0-7)
+	2,		// address size (0=no, 1 = 8bit , 2 = 16bit, 3= 64bit
+};
 // *****************************************************************
 //			transfer process (input from chrdev)
 // *****************************************************************
@@ -115,10 +136,6 @@ int rx_callback(uint8_t *raw, uint16_t len)
 // *****************************************************************
 //			char dev function
 // *****************************************************************
-static unsigned char ch=36;
-static unsigned char pwr=20;
-static unsigned char bps=100;
-static unsigned short panid=0xABCD;
 
 static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg) {
 	unsigned char command = cmd>>12;
@@ -131,43 +148,162 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 		case IOCTL_PARAM:
 			switch(param) {
 				case IOCTL_GET_CH:			// get ch
-					ret = ch;
+					ret = p.ch;
 					break;
 				case IOCTL_SET_CH:			// set ch
-					if((arg>=24) || (arg<=61)) {
-						ch = arg;
-					} else {
-						printk(KERN_ERR"ch = %lx error!! must be 24-61\n",arg);
+					if(p.bps==50) {
+						if((arg>=24) && (arg<=61)) {
+							p.ch = arg;
+							ret = arg;
+						} else {
+							printk(KERN_ERR"ch at 50kbps = %ld error!! must be 24-61\n",arg);
+							ret = -EINVAL;
+						}
+					}else if(p.bps==100) {
+						if((arg>=24) && (arg<=60) &&(arg != 32 )) {
+							p.ch = arg;
+							ret = arg;
+						} else {
+							printk(KERN_ERR"ch at 100kbps = %ld error!! must be 24-31, 33-60\n",arg);
+							ret = -EINVAL;
+						}
 					}
 					break;
 				case IOCTL_GET_PWR:			// get pwr
-					ret = pwr;
+					ret = p.pwr;
 					break;
 				case IOCTL_SET_PWR:			// set pwr
 					if((arg==1) || (arg==20)) {
-						pwr = arg;
+						p.pwr = arg;
+						ret = arg;
 					} else {
 						printk(KERN_ERR"pwr = %lx error!! must be 1 or 20\n",arg);
+						ret = -EINVAL;
 					}
 					break;
 				case IOCTL_GET_BPS:			// get bps
-					ret = bps;
+					ret = p.bps;
 					break;
 				case IOCTL_SET_BPS:			// set bps
 					if((arg==50) || (arg==100)) {
-						bps = arg;
+						p.bps = arg;
+						ret = arg;
 					} else {
 						printk(KERN_ERR"bps = %lx error!! must be 50 or 100\n",arg);
+						ret = -EINVAL;
 					}
 					break;
-				case IOCTL_GET_PANID:			// get panid
-					ret = panid;
+				case IOCTL_GET_MY_PANID:			// get panid
+					ret = p.my_panid;
 					break;
-				case IOCTL_SET_PANID:			// set panid
-					if((arg >= 0) || (arg <= 0xffff)) {
-						panid = arg;
+				case IOCTL_SET_MY_PANID:			// set panid
+					if((arg >= 0) && (arg <= 0xffff)) {
+						p.my_panid = arg;
+						ret = arg;
 					} else {
 						printk(KERN_ERR"bps = %lx error!! must be 50 or 100\n",arg);
+						ret = -EINVAL;
+					}
+					break;
+				case IOCTL_GET_TX_PANID:			// get panid
+					ret = p.tx_panid;
+					break;
+				case IOCTL_SET_TX_PANID:			// set panid
+					if((arg >= 0) && (arg <= 0xffff)) {
+						p.tx_panid = arg;
+						ret = arg;
+					} else {
+						printk(KERN_ERR"bps = %lx error!! must be 50 or 100\n",arg);
+						ret = -EINVAL;
+					}
+					break;
+				case IOCTL_GET_TX_ADDR0:			// get panid
+					ret = p.tx_addr[1];
+					ret <<= 8;
+					ret += p.tx_addr[0];
+					break;
+				case IOCTL_SET_TX_ADDR0:			// set panid
+					if((arg >= 0) && (arg <= 0xffff)) {
+						p.tx_addr[1] = (arg >> 8) & 0x000000ff;
+						p.tx_addr[0] = arg  & 0x000000ff;
+						ret = arg;
+					} else {
+						ret = -EINVAL;
+					}
+					break;
+				case IOCTL_GET_TX_ADDR1:			// get panid
+					ret = p.tx_addr[3];
+					ret <<= 8;
+					ret += p.tx_addr[2];
+					break;
+				case IOCTL_SET_TX_ADDR1:			// set panid
+					if((arg >= 0) && (arg <= 0xffff)) {
+						p.tx_addr[3] = (arg >> 8) & 0x000000ff;
+						p.tx_addr[2] = arg  & 0x000000ff;
+						ret = arg;
+					} else {
+						ret = -EINVAL;
+					}
+					break;
+				case IOCTL_GET_TX_ADDR2:			// get panid
+					ret = p.tx_addr[5];
+					ret <<= 8;
+					ret += p.tx_addr[4];
+					break;
+				case IOCTL_SET_TX_ADDR2:			// set panid
+					if((arg >= 0) && (arg <= 0xffff)) {
+						p.tx_addr[5] = (arg >> 8) & 0x000000ff;
+						p.tx_addr[4] = arg  & 0x000000ff;
+						ret = arg;
+					} else {
+						ret = -EINVAL;
+					}
+					break;
+				case IOCTL_GET_TX_ADDR3:			// get panid
+					ret = p.tx_addr[7];
+					ret <<= 8;
+					ret += p.tx_addr[6];
+					break;
+				case IOCTL_SET_TX_ADDR3:			// set panid
+					if((arg >= 0) && (arg <= 0xffff)) {
+						p.tx_addr[7] = (arg >> 8) & 0x000000ff;
+						p.tx_addr[6] = arg  & 0x000000ff;
+						ret = arg;
+					} else {
+						ret = -EINVAL;
+					}
+					break;
+				case IOCTL_GET_ADDR_TYPE:			// get panid
+					ret = p.addr_type;
+					break;
+				case IOCTL_SET_ADDR_TYPE:			// set panid
+					if((arg >= 0) && (arg <= 7)) {
+						p.addr_type = arg;
+						ret = arg;
+					} else {
+						ret = -EINVAL;
+					}
+					break;
+				case IOCTL_GET_ADDR_SIZE:			// get panid
+					ret = p.addr_size;
+					break;
+				case IOCTL_SET_ADDR_SIZE:			// set panid
+					if((arg >= 0) && (arg <= 3)) {
+						p.addr_size = arg;
+						ret = arg;
+					} else {
+						ret = -EINVAL;
+					}
+					break;
+				case IOCTL_GET_DRV_MODE:			// get panid
+					ret = p.drv_mode;
+					break;
+				case IOCTL_SET_DRV_MODE:			// set panid
+					if((arg >= 0) && (arg <= 255)) {
+						p.drv_mode = arg;
+						ret = arg;
+					} else {
+						ret = -EINVAL;
 					}
 					break;
 			}
@@ -199,16 +335,13 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 				break;
 			}
 		case IOCTL_LED:
-			{
-				uint8_t data;
-				if(param == 0x000) {
-					EXT_rx_led_flash(arg);
-				} else {
-					EXT_tx_led_flash(arg);
-				}
-				ret = 0;
-				break;
+			if(param == 0x000) {
+				EXT_rx_led_flash(arg);
+			} else {
+				EXT_tx_led_flash(arg);
 			}
+			ret = 0;
+			break;
 	}
 	mutex_unlock( &chrdev.lock );
 	return ret;
