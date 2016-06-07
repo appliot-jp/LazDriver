@@ -39,7 +39,6 @@
 //static wait_queue_head_t read_q;	//poll wait
 
 uint8_t rxbuf[DATA_SIZE];
-uint16_t drv_mode;
 
 struct list_data {				
 	uint8_t	data[DATA_SIZE];
@@ -67,19 +66,22 @@ static struct {
 	unsigned char bps;
 	unsigned short my_panid;
 	unsigned short tx_panid;
+	unsigned char my_addr[8];
 	unsigned char tx_addr[8];
 	unsigned char addr_type;
 	unsigned char addr_size;
-	unsigned char drv_mode;
+	unsigned short drv_mode;
 } p = {
 	36,		// default ch
 	20,		// default pwr
 	100,		// default bps
 	0xABCD,		// default my panid
 	0xABCD,		// default tx panid
-	{0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff},		// tx addr
+	{0x01,0x23,0x45,0x67,0x89,0xab,0xcd,0xef},		// my addr
+	{0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff},		// my addr
 	6,		// address type(0-7)
 	2,		// address size (0=no, 1 = 8bit , 2 = 16bit, 3= 64bit
+	0,		// drv_mode
 };
 // *****************************************************************
 //			transfer process (input from chrdev)
@@ -93,7 +95,6 @@ int write_list_data(uint8_t* raw,uint16_t len){
 		printk(KERN_ERR "[DRV-Lazurite] kmalloc (list_data) GFP_KERNEL no memory\n");
 		return -ENOMEM;
 	}
-	DEBUGONDISPLAY(MODE_STREAM_DEBUG,printk(KERN_INFO "[DRV-802154E] %s 2\n", __func__));
 
 	// copy data to list
 	if(len < DATA_SIZE)
@@ -102,7 +103,6 @@ int write_list_data(uint8_t* raw,uint16_t len){
 		out = new_data->data;
 		memcpy(out,in,len);
 		new_data->len = len;
-		DEBUGONDISPLAY(MODE_DRV_DEBUG,PAYLOADDUMP(out, len));
 		// list add 
 		list_add_tail(&new_data->list, &head.list);
 		listed_packet++;
@@ -143,7 +143,6 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 	long ret=0;
 	mutex_lock( &chrdev.lock );
 
-	// printk(KERN_INFO"ioctl %0x %x,%x,%lx\n",cmd, command,param,arg);
 	switch(command) {
 		case IOCTL_PARAM:
 			switch(param) {
@@ -151,7 +150,10 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					ret = p.ch;
 					break;
 				case IOCTL_SET_CH:			// set ch
-					if(p.bps==50) {
+					if(p.drv_mode == 0xFFFF) {
+						p.ch = arg;
+						ret = arg;
+					} else if(p.bps==50) {
 						if((arg>=24) && (arg<=61)) {
 							p.ch = arg;
 							ret = arg;
@@ -173,7 +175,10 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					ret = p.pwr;
 					break;
 				case IOCTL_SET_PWR:			// set pwr
-					if((arg==1) || (arg==20)) {
+					if(p.drv_mode == 0xFFFF) {
+						p.pwr = arg;
+						ret = arg;
+					} else if((arg==1) || (arg==20)) {
 						p.pwr = arg;
 						ret = arg;
 					} else {
@@ -185,7 +190,10 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					ret = p.bps;
 					break;
 				case IOCTL_SET_BPS:			// set bps
-					if((arg==50) || (arg==100)) {
+					if(p.drv_mode == 0xFFFF) {
+						p.bps = arg;
+						ret = arg;
+					} else if((arg==50) || (arg==100)) {
 						p.bps = arg;
 						ret = arg;
 					} else {
@@ -217,57 +225,41 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 						ret = -EINVAL;
 					}
 					break;
-				case IOCTL_GET_TX_ADDR0:			// get panid
-					ret = p.tx_addr[1];
+				case IOCTL_GET_MY_ADDR0:			// get panid
+				case IOCTL_GET_MY_ADDR1:			// get panid
+				case IOCTL_GET_MY_ADDR2:			// get panid
+				case IOCTL_GET_MY_ADDR3:			// get panid
+					ret = p.my_addr[(param-IOCTL_GET_MY_ADDR0)+1];
 					ret <<= 8;
-					ret += p.tx_addr[0];
+					ret += p.my_addr[(param-IOCTL_GET_MY_ADDR0)+0];
+					break;
+				case IOCTL_SET_MY_ADDR0:			// set panid
+				case IOCTL_SET_MY_ADDR1:			// set panid
+				case IOCTL_SET_MY_ADDR2:			// set panid
+				case IOCTL_SET_MY_ADDR3:			// set panid
+					if((arg >= 0) && (arg <= 0xffff)&&(p.drv_mode==0x0000FFFF)) {
+						p.my_addr[(param-IOCTL_SET_MY_ADDR0)+1] = (arg >> 8) & 0x000000ff;
+						p.my_addr[(param-IOCTL_SET_MY_ADDR0)+0] = arg  & 0x000000ff;
+						ret = arg;
+					} else {
+						ret = -EINVAL;
+					}
+					break;
+				case IOCTL_GET_TX_ADDR0:			// get panid
+				case IOCTL_GET_TX_ADDR1:			// get panid
+				case IOCTL_GET_TX_ADDR2:			// get panid
+				case IOCTL_GET_TX_ADDR3:			// get panid
+					ret = p.tx_addr[(param-IOCTL_GET_TX_ADDR0)+1];
+					ret <<= 8;
+					ret += p.tx_addr[(param-IOCTL_GET_TX_ADDR0)+0];
 					break;
 				case IOCTL_SET_TX_ADDR0:			// set panid
-					if((arg >= 0) && (arg <= 0xffff)) {
-						p.tx_addr[1] = (arg >> 8) & 0x000000ff;
-						p.tx_addr[0] = arg  & 0x000000ff;
-						ret = arg;
-					} else {
-						ret = -EINVAL;
-					}
-					break;
-				case IOCTL_GET_TX_ADDR1:			// get panid
-					ret = p.tx_addr[3];
-					ret <<= 8;
-					ret += p.tx_addr[2];
-					break;
 				case IOCTL_SET_TX_ADDR1:			// set panid
-					if((arg >= 0) && (arg <= 0xffff)) {
-						p.tx_addr[3] = (arg >> 8) & 0x000000ff;
-						p.tx_addr[2] = arg  & 0x000000ff;
-						ret = arg;
-					} else {
-						ret = -EINVAL;
-					}
-					break;
-				case IOCTL_GET_TX_ADDR2:			// get panid
-					ret = p.tx_addr[5];
-					ret <<= 8;
-					ret += p.tx_addr[4];
-					break;
 				case IOCTL_SET_TX_ADDR2:			// set panid
-					if((arg >= 0) && (arg <= 0xffff)) {
-						p.tx_addr[5] = (arg >> 8) & 0x000000ff;
-						p.tx_addr[4] = arg  & 0x000000ff;
-						ret = arg;
-					} else {
-						ret = -EINVAL;
-					}
-					break;
-				case IOCTL_GET_TX_ADDR3:			// get panid
-					ret = p.tx_addr[7];
-					ret <<= 8;
-					ret += p.tx_addr[6];
-					break;
 				case IOCTL_SET_TX_ADDR3:			// set panid
 					if((arg >= 0) && (arg <= 0xffff)) {
-						p.tx_addr[7] = (arg >> 8) & 0x000000ff;
-						p.tx_addr[6] = arg  & 0x000000ff;
+						p.tx_addr[(param-IOCTL_SET_TX_ADDR0)+1] = (arg >> 8) & 0x000000ff;
+						p.tx_addr[(param-IOCTL_SET_TX_ADDR0)+0] = arg  & 0x000000ff;
 						ret = arg;
 					} else {
 						ret = -EINVAL;
@@ -277,7 +269,10 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					ret = p.addr_type;
 					break;
 				case IOCTL_SET_ADDR_TYPE:			// set panid
-					if((arg >= 0) && (arg <= 7)) {
+					if(p.drv_mode == 0xFFFF) {
+						p.addr_type = arg;
+						ret = arg;
+					} else if((arg >= 0) && (arg <= 7)) {
 						p.addr_type = arg;
 						ret = arg;
 					} else {
@@ -288,7 +283,10 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					ret = p.addr_size;
 					break;
 				case IOCTL_SET_ADDR_SIZE:			// set panid
-					if((arg >= 0) && (arg <= 3)) {
+					if(p.drv_mode == 0xFFFF) {
+						p.addr_size = arg;
+						ret = arg;
+					} else if((arg >= 0) && (arg <= 3)) {
 						p.addr_size = arg;
 						ret = arg;
 					} else {
@@ -299,7 +297,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					ret = p.drv_mode;
 					break;
 				case IOCTL_SET_DRV_MODE:			// set panid
-					if((arg >= 0) && (arg <= 255)) {
+					if((arg >= 0) && (arg <= 0xFFFF)) {
 						p.drv_mode = arg;
 						ret = arg;
 					} else {
@@ -374,7 +372,6 @@ static ssize_t chardev_read (struct file * file, char __user * buf, size_t count
 
 	// list empty
 	if (list_empty(&head.list) != 0) {
-		//		DEBUGONDISPLAY(MODE_DRV_DEBUG,printk("list empty\n"));   
 		goto end;
 	}
 	// error
@@ -386,7 +383,6 @@ static ssize_t chardev_read (struct file * file, char __user * buf, size_t count
 	}
 	// 2byte read,then return size
 	if (count == sizeof(unsigned short)) {
-		DEBUGONDISPLAY(MODE_DRV_DEBUG,printk("list_data %d[bytes]\n", ptr->len));
 		bytes_read = count;
 		if (bytes_read > 0 && copy_to_user (buf, &(ptr->len), count)) {
 			printk( KERN_ERR "%s : copy_to_user failed\n", chrdev.name);
@@ -417,7 +413,6 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 	int status = 0;
 	mutex_lock( &chrdev.lock );
 
-	DEBUGONDISPLAY(MODE_DRV_DEBUG,PAYLOADDUMP(buf,count));		// for debug
 	if(count<DATA_SIZE)
 	{
 	} else {
@@ -457,7 +452,6 @@ static int __init drv_param_init(void) {
 	int status = 0;
 	int err;
 	struct device *dev;
-
 	// create char device
 	if((chrdev.major = register_chrdev(0, DRV_NAME, &chardev_fops)) < 0)
 	{
@@ -478,7 +472,6 @@ static int __init drv_param_init(void) {
 		printk(KERN_ERR"[drv-lazurite]device_create error %d\n", err);
 		goto error_device_create;
 	}
-	DEBUGONDISPLAY(MODE_DRV_DEBUG,printk(KERN_INFO "[drv-lazurite] char dev create = %s\n",chrdev.name));
 
 	//initializing list head
 	INIT_LIST_HEAD(&head.list);

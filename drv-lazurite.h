@@ -22,34 +22,38 @@
 
 // ioctl command list
 #define	IOCTL_PARAM				(0x1000 >> 12)
-#define	IOCTL_GET_CH			2
-#define	IOCTL_SET_CH			3
-#define	IOCTL_GET_PWR			4
-#define	IOCTL_SET_PWR			5
-#define	IOCTL_GET_BPS			6
-#define	IOCTL_SET_BPS			7
-#define	IOCTL_GET_MY_ADDR0		8
-#define	IOCTL_GET_MY_ADDR1		10
-#define	IOCTL_GET_MY_ADDR2		12
-#define	IOCTL_GET_MY_ADDR3		14
-#define	IOCTL_GET_MY_PANID		16
-#define	IOCTL_SET_MY_PANID		17
-#define	IOCTL_GET_TX_PANID		18
-#define	IOCTL_SET_TX_PANID		19
-#define	IOCTL_GET_TX_ADDR0		20
-#define	IOCTL_SET_TX_ADDR0		21
-#define	IOCTL_GET_TX_ADDR1		22
-#define	IOCTL_SET_TX_ADDR1		23
-#define	IOCTL_GET_TX_ADDR2		24
-#define	IOCTL_SET_TX_ADDR2		25
-#define	IOCTL_GET_TX_ADDR3		26
-#define	IOCTL_SET_TX_ADDR3		27
-#define	IOCTL_GET_ADDR_TYPE		28
-#define	IOCTL_SET_ADDR_TYPE		29
-#define	IOCTL_GET_ADDR_SIZE		30
-#define	IOCTL_SET_ADDR_SIZE		31
-#define	IOCTL_GET_DRV_MODE		32
-#define	IOCTL_SET_DRV_MODE		33
+#define	IOCTL_GET_CH			0x02
+#define	IOCTL_SET_CH			0x03
+#define	IOCTL_GET_PWR			0x04
+#define	IOCTL_SET_PWR			0x05
+#define	IOCTL_GET_BPS			0x06
+#define	IOCTL_SET_BPS			0x07
+#define	IOCTL_GET_MY_PANID		0x08
+#define	IOCTL_SET_MY_PANID		0x09
+#define	IOCTL_GET_TX_PANID		0x0a
+#define	IOCTL_SET_TX_PANID		0x0b
+#define	IOCTL_GET_MY_ADDR0		0x0c
+#define	IOCTL_SET_MY_ADDR0		0x0d
+#define	IOCTL_GET_MY_ADDR1		0x0e
+#define	IOCTL_SET_MY_ADDR1		0x0f
+#define	IOCTL_GET_MY_ADDR2		0x10
+#define	IOCTL_SET_MY_ADDR2		0x11
+#define	IOCTL_GET_MY_ADDR3		0x12
+#define	IOCTL_SET_MY_ADDR3		0x13
+#define	IOCTL_GET_TX_ADDR0		0x14
+#define	IOCTL_SET_TX_ADDR0		0x15
+#define	IOCTL_GET_TX_ADDR1		0x16
+#define	IOCTL_SET_TX_ADDR1		0x17
+#define	IOCTL_GET_TX_ADDR2		0x18
+#define	IOCTL_SET_TX_ADDR2		0x19
+#define	IOCTL_GET_TX_ADDR3		0x1a
+#define	IOCTL_SET_TX_ADDR3		0x1b
+#define	IOCTL_GET_ADDR_TYPE		0x1c
+#define	IOCTL_SET_ADDR_TYPE		0x1d
+#define	IOCTL_GET_ADDR_SIZE		0x1e
+#define	IOCTL_SET_ADDR_SIZE		0x1f
+#define	IOCTL_GET_DRV_MODE		0x20
+#define	IOCTL_SET_DRV_MODE		0x21
 #define	IOCTL_RF				(0x2000 >> 12)
 #define	IOCTL_EEPROM			(0x3000 >> 12)
 #define	IOCTL_LED				(0x4000 >> 12)
