@@ -84,7 +84,8 @@ static void txdone(ML7396_Buffer *buffer) {
 static int rxfilter(const ML7396_Header *header) {
     int filter = 0;
 
-    if ((api.rx.filter.dstpanid == 0 && api.rx.filter.dstaddr0 == 0 && api.rx.filter.dstaddr1 == 0) ||
+    if (
+		// (api.rx.filter.dstpanid == 0 && api.rx.filter.dstaddr0 == 0 && api.rx.filter.dstaddr1 == 0) ||
         (header->dstpanid == api.rx.filter.dstpanid) ||
         (header->dstaddr == api.rx.filter.dstaddr0) ||
         (header->dstaddr == api.rx.filter.dstaddr1) )

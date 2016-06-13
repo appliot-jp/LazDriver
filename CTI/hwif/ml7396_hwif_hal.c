@@ -85,7 +85,8 @@ int ml7396_hwif_init(void) {
     hwif.timer.call_count = 0;
 #endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
 // 2016.6.8 Eiichi Saito: SubGHz API common
-    HAL_init(0x50,8);
+    status = HAL_init(0x50,8);
+	if(status != 0) return status;
 //  HAL_SPI_setup();
 //  HAL_GPIO_setup();
     HAL_TIMER_setup();

@@ -104,9 +104,12 @@ static SUBGHZ_MSG subghz_init(void)
 		msg = SUBGHZ_SETUP_FAIL;
 		goto error;
 	}
+
+	printk(KERN_INFO"end of setup\n");
 	
 	// get my address for setting address filter
 	result = BP3596_getMyAddr(&subghz_param.myAddress);
+	printk(KERN_INFO"end of get my address\n");
 	if(result != BP3596_STATUS_OK)
 	{
 		msg = SUBGHZ_MYADDR_FAIL;
@@ -139,7 +142,10 @@ error:
 
 static SUBGHZ_MSG subghz_remove(void)
 {
-	SUBGHZ_MSG msg = SUBGHZ_OK;
+	SUBGHZ_MSG msg;
+
+	msg = HAL_remove();
+
 	return msg;
 }
 static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUBGHZ_POWER txPower)

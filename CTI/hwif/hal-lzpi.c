@@ -123,11 +123,14 @@ int rf_main_thread(void *p)
 			que_th2ex = 1;
 			wake_up_interruptible(&ext_q);
 		}
+		printk(KERN_INFO"before wait event interruptible %s %d\n",__func__,__LINE__);
 		wait_event_interruptible(rf_irq_q, que_ex2th);
+		printk(KERN_INFO"event_interruptible %s %d\n",__func__,__LINE__);
 		if(kthread_should_stop()) break;
 		que_ex2th = 0;
 		switch(m.trigger) {
 			case 0:
+				if(ext_irq_func) ext_irq_func();
 				break;
 			case 1:
 				break;
@@ -178,6 +181,7 @@ int tx_led_thread(void *p)
 }
 // rf hardware interrupt handler
 static irqreturn_t rf_irq_handler(int irq,void *dev_id) {
+		printk(KERN_INFO"irqreturn_t rf_irq_handler %d %s %d\n",irq, __func__,__LINE__);
 	if(ext_irq_func){
 		que_ex2th = 1;
 		wake_up_interruptible(&rf_irq_q);
@@ -216,10 +220,13 @@ int spi_probe(void){
 	init_waitqueue_head( &ext_q );
 
 	// create GPIO irq
+	gpio_direction_input(GPIO_SINTN);
+	enable_irq(gpio_to_irq(GPIO_SINTN));
 	status = request_irq(gpio_to_irq(GPIO_SINTN),
 			rf_irq_handler,
 			IRQF_TRIGGER_FALLING,
 			"hal_lazurite", NULL);
+	printk(KERN_INFO"request irq %s %d\n",__func__,__LINE__);
 	if(status != 0)
 	{
 		status = HAL_ERROR_IRQ;
@@ -309,7 +316,9 @@ int HAL_remove(void)
 
 int HAL_SPI_transfer(const uint8_t *wdata, uint16_t wsize,unsigned char *rdata, uint16_t rsize)
 {
-	return lzpi_spi_transfer(wdata,wsize,rdata,wsize);
+	int result;
+	result = lzpi_spi_transfer(wdata,wsize,rdata,rsize);
+	return result;
 }
 
 int HAL_GPIO_setInterrupt(void (*func)(void))
@@ -321,6 +330,7 @@ int HAL_GPIO_setInterrupt(void (*func)(void))
 int HAL_GPIO_enableInterrupt(void)
 {
 	enable_irq(gpio_to_irq(GPIO_SINTN));
+	printk(KERN_INFO"enable irq %s %d\n",__func__,__LINE__);
 	return HAL_STATUS_OK;
 }
 
