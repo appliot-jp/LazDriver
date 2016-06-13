@@ -32,7 +32,7 @@
 #include "common-lzpi.h"
 #include "subghz_api.h"
 #include "drv-lazurite.h"
-#include "hal.h"
+#include "CTI/hwif/hal.h"
 
 #define DATA_SIZE		256
 #define DRV_NAME		"lzgw"
@@ -152,11 +152,11 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 				case IOCTL_SET_CH:			// set ch
 					if(p.drv_mode == 0xFFFF) {
 						p.ch = arg;
-						ret = arg;
+						ret = p.ch;
 					} else if(p.bps==50) {
 						if((arg>=24) && (arg<=61)) {
 							p.ch = arg;
-							ret = arg;
+							ret = p.ch;
 						} else {
 							printk(KERN_ERR"ch at 50kbps = %ld error!! must be 24-61\n",arg);
 							ret = -EINVAL;
@@ -164,7 +164,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					}else if(p.bps==100) {
 						if((arg>=24) && (arg<=60) &&(arg != 32 )) {
 							p.ch = arg;
-							ret = arg;
+							ret = p.ch;
 						} else {
 							printk(KERN_ERR"ch at 100kbps = %ld error!! must be 24-31, 33-60\n",arg);
 							ret = -EINVAL;
@@ -177,10 +177,10 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 				case IOCTL_SET_PWR:			// set pwr
 					if(p.drv_mode == 0xFFFF) {
 						p.pwr = arg;
-						ret = arg;
+						ret = p.pwr;
 					} else if((arg==1) || (arg==20)) {
 						p.pwr = arg;
-						ret = arg;
+						ret = p.pwr;
 					} else {
 						printk(KERN_ERR"pwr = %lx error!! must be 1 or 20\n",arg);
 						ret = -EINVAL;
@@ -192,10 +192,10 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 				case IOCTL_SET_BPS:			// set bps
 					if(p.drv_mode == 0xFFFF) {
 						p.bps = arg;
-						ret = arg;
+						ret = p.bps;
 					} else if((arg==50) || (arg==100)) {
 						p.bps = arg;
-						ret = arg;
+						ret = p.bps;
 					} else {
 						printk(KERN_ERR"bps = %lx error!! must be 50 or 100\n",arg);
 						ret = -EINVAL;
@@ -207,7 +207,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 				case IOCTL_SET_MY_PANID:			// set panid
 					if((arg >= 0) && (arg <= 0xffff)) {
 						p.my_panid = arg;
-						ret = arg;
+						ret = p.my_panid;
 					} else {
 						printk(KERN_ERR"bps = %lx error!! must be 50 or 100\n",arg);
 						ret = -EINVAL;
@@ -219,7 +219,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 				case IOCTL_SET_TX_PANID:			// set panid
 					if((arg >= 0) && (arg <= 0xffff)) {
 						p.tx_panid = arg;
-						ret = arg;
+						ret = p.tx_panid;
 					} else {
 						printk(KERN_ERR"bps = %lx error!! must be 50 or 100\n",arg);
 						ret = -EINVAL;
@@ -271,10 +271,10 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 				case IOCTL_SET_ADDR_TYPE:			// set panid
 					if(p.drv_mode == 0xFFFF) {
 						p.addr_type = arg;
-						ret = arg;
+						ret = p.addr_type;
 					} else if((arg >= 0) && (arg <= 7)) {
 						p.addr_type = arg;
-						ret = arg;
+						ret = p.addr_type;
 					} else {
 						ret = -EINVAL;
 					}
@@ -288,7 +288,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 						ret = arg;
 					} else if((arg >= 0) && (arg <= 3)) {
 						p.addr_size = arg;
-						ret = arg;
+						ret = p.addr_size;
 					} else {
 						ret = -EINVAL;
 					}
@@ -299,7 +299,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 				case IOCTL_SET_DRV_MODE:			// set panid
 					if((arg >= 0) && (arg <= 0xFFFF)) {
 						p.drv_mode = arg;
-						ret = arg;
+						ret = p.drv_mode;
 					} else {
 						ret = -EINVAL;
 					}

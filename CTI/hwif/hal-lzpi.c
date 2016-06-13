@@ -91,6 +91,29 @@ static struct {
 //*****************************************************
 // Function
 //*****************************************************
+// millis
+// return milli second time from loading driver
+static struct timespec load_time;
+void millis_init(void)
+{
+	getnstimeofday(&load_time);
+}
+
+uint32_t HAL_millis(void)
+{
+	unsigned long res;
+	struct timespec current_time;
+	struct timespec diff_time;
+	getnstimeofday(&current_time);
+
+	diff_time.tv_sec = current_time.tv_sec - load_time.tv_sec;
+	diff_time.tv_nsec = current_time.tv_nsec - load_time.tv_nsec;
+
+	res = diff_time.tv_sec * 1000 + ((long)diff_time.tv_nsec)/1000000;
+
+	return res;
+}
+
 int rf_main_thread(void *p)
 {
 	m.trigger = 0;
@@ -165,6 +188,8 @@ static irqreturn_t rf_irq_handler(int irq,void *dev_id) {
 }
 int spi_probe(void){
 	int status;
+	// millis timer initialization
+	millis_init();
 	// Hardware Initialization
 	// i2c initialization
 	status = lzpi_i2c_init();
@@ -217,20 +242,20 @@ int spi_probe(void){
 		status = HAL_ERROR_THREAD;
 		goto error_thread;
 	}
-	printk(KERN_INFO"[HAL] %s thread start pid=%d\n",__func__,rf_main_task->pid);
+	printk(KERN_INFO"[HAL] %s thread start pid=%d\n",rf_main_task->comm,rf_main_task->pid);
 
 	rx_led_task = kthread_run(rx_led_thread, NULL,"lzpi_rx_led_thread");
 	if (IS_ERR(rx_led_task)) {
 		status = HAL_ERROR_THREAD;
 		goto error_thread;
 	}
-	printk(KERN_INFO"[HAL] %s thread start pid=%d\n",__func__,rx_led_task->pid);
+	printk(KERN_INFO"[HAL] %s thread start pid=%d\n",rx_led_task->comm,rx_led_task->pid);
 	tx_led_task = kthread_run(tx_led_thread, NULL, "lzpi_tx_led_thread");
 	if (IS_ERR(tx_led_task)) {
 		status = HAL_ERROR_THREAD;
 		goto error_thread;
 	}
-	printk(KERN_INFO"[HAL] %s thread start pid=%d\n",__func__,tx_led_task->pid);
+	printk(KERN_INFO"[HAL] %s thread start pid=%d\n",tx_led_task->comm,tx_led_task->pid);
 
 	return 0;
 
@@ -333,7 +358,7 @@ int HAL_TIMER_getTick(uint32_t *tick)
 	diff_time.tv_sec = current_time.tv_sec - start_time.tv_sec;
 	diff_time.tv_nsec = current_time.tv_nsec - start_time.tv_nsec;
 
-	*tick = diff_time.tv_sec * 1000 + diff_time.tv_nsec/1000000;
+	*tick = diff_time.tv_sec * 1000 + ((long)diff_time.tv_nsec)/1000000;
 
 	return HAL_STATUS_OK;
 }
@@ -365,6 +390,10 @@ int HAL_TIMER_stop(void)
 {
 	del_timer(&g_timer);
 	return HAL_STATUS_OK;
+}
+
+void HAL_sleep(uint32_t us) {
+	return udelay(us*1000);
 }
 
 int EXT_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize)
