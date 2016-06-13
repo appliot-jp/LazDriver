@@ -57,6 +57,7 @@ static struct task_struct *rf_main_task;
 static struct task_struct *tx_led_task;
 static struct task_struct *rx_led_task;
 int i2c_addr_bits;
+bool flag_irq_enable;
 
 // main_thread_parameter
 static struct {
@@ -123,9 +124,7 @@ int rf_main_thread(void *p)
 			que_th2ex = 1;
 			wake_up_interruptible(&ext_q);
 		}
-		printk(KERN_INFO"before wait event interruptible %s %d\n",__func__,__LINE__);
 		wait_event_interruptible(rf_irq_q, que_ex2th);
-		printk(KERN_INFO"event_interruptible %s %d\n",__func__,__LINE__);
 		if(kthread_should_stop()) break;
 		que_ex2th = 0;
 		switch(m.trigger) {
@@ -181,7 +180,6 @@ int tx_led_thread(void *p)
 }
 // rf hardware interrupt handler
 static irqreturn_t rf_irq_handler(int irq,void *dev_id) {
-		printk(KERN_INFO"irqreturn_t rf_irq_handler %d %s %d\n",irq, __func__,__LINE__);
 	if(ext_irq_func){
 		que_ex2th = 1;
 		wake_up_interruptible(&rf_irq_q);
@@ -221,17 +219,17 @@ int spi_probe(void){
 
 	// create GPIO irq
 	gpio_direction_input(GPIO_SINTN);
-	enable_irq(gpio_to_irq(GPIO_SINTN));
 	status = request_irq(gpio_to_irq(GPIO_SINTN),
 			rf_irq_handler,
 			IRQF_TRIGGER_FALLING,
 			"hal_lazurite", NULL);
-	printk(KERN_INFO"request irq %s %d\n",__func__,__LINE__);
 	if(status != 0)
 	{
 		status = HAL_ERROR_IRQ;
 		goto error_irq;
 	}
+	disable_irq(gpio_to_irq(GPIO_SINTN));
+	flag_irq_enable = false;
 	// GPIO Initializing
 	gpio_direction_output(GPIO_RESETN,0);
 	gpio_direction_output(GPIO_TX_LED,1);
@@ -271,7 +269,9 @@ error_thread:
 	if(rf_main_task) kthread_stop(rf_main_task);
 	if(tx_led_task) kthread_stop(tx_led_task);
 	if(rx_led_task) kthread_stop(rx_led_task);
-	disable_irq(gpio_to_irq(GPIO_SINTN));
+
+	HAL_GPIO_disableInterrupt();
+
 	free_irq(gpio_to_irq(GPIO_SINTN), NULL);
 	gpio_free(GPIO_RESETN);
 	gpio_free(GPIO_TX_LED);
@@ -303,7 +303,7 @@ int HAL_remove(void)
 	if(rf_main_task) kthread_stop(rf_main_task);
 	if(tx_led_task) kthread_stop(tx_led_task);
 	if(rx_led_task) kthread_stop(rx_led_task);
-	disable_irq(gpio_to_irq(GPIO_SINTN));
+	HAL_GPIO_disableInterrupt();
 	free_irq(gpio_to_irq(GPIO_SINTN), NULL);
 	gpio_free(GPIO_RESETN);
 	gpio_free(GPIO_TX_LED);
@@ -329,14 +329,15 @@ int HAL_GPIO_setInterrupt(void (*func)(void))
 
 int HAL_GPIO_enableInterrupt(void)
 {
-	enable_irq(gpio_to_irq(GPIO_SINTN));
-	printk(KERN_INFO"enable irq %s %d\n",__func__,__LINE__);
+	if(!flag_irq_enable) enable_irq(gpio_to_irq(GPIO_SINTN));
+	flag_irq_enable = true;
 	return HAL_STATUS_OK;
 }
 
 int HAL_GPIO_disableInterrupt(void)
 {
-	disable_irq(gpio_to_irq(GPIO_SINTN));
+	if(flag_irq_enable) disable_irq(gpio_to_irq(GPIO_SINTN));
+	flag_irq_enable = false;
 	return HAL_STATUS_OK;
 }
 
