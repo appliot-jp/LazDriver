@@ -27,6 +27,8 @@
 #include "driver_irq.h"
 #else
 #include <linux/string.h>
+#include <linux/sched.h>
+#include <linux/wait.h>
 #endif
 
 #include "subghz_api.h"
@@ -37,6 +39,10 @@
 //#define TEST_SEND_INTERVAL
 
 
+#ifndef LAZURITE_IDE
+extern wait_queue_head_t tx_done;
+extern int que_th2ex;
+#endif
 
 
 // local parameters
@@ -60,13 +66,7 @@ static struct {
 	uint16_t ccaWait;
 } subghz_param;
 
-#define DEBUG
-
-#ifndef DEBUG
 static struct {
-#else
-struct {
-#endif
 	unsigned long start_time;
 	unsigned long last_send_time;
 	unsigned long total_send_bytes;
@@ -241,8 +241,11 @@ SUBGHZ_MSG subghz_halt_until_complete(void)
   		lp_setHaltMode();
         // 2016.03.14 tx send event
 		BP3596_sendIdle();
-
 	}
+#else
+	que_th2ex = 0;
+	wait_event_interruptible(tx_done, que_th2ex);
+#endif
 	if(subghz_param.tx_stat.status > 0)
 	{
 		msg = SUBGHZ_OK;
@@ -255,7 +258,6 @@ SUBGHZ_MSG subghz_halt_until_complete(void)
 	{
 		msg = SUBGHZ_TX_ACK_FAIL;
 	}
-#endif
 
 	return msg;
 }
@@ -319,6 +321,8 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 	}
 	
 //	BP3596_send(data, len, addrType, dstAddr, dstPANID);
+
+	subghz_param.tx_callback = callback;
 	
 	result = BP3596_send(data, len, subghz_param.addrType,        dstAddr, panid);
 	if(result != BP3596_STATUS_OK)
@@ -327,19 +331,15 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 		goto error_not_send;
 	}
 	subghz_param.sending = true;
-	
-	subghz_param.tx_callback = callback;
-	if(subghz_param.tx_callback == NULL)
-	{
-		msg = subghz_halt_until_complete();
+
+	msg = subghz_halt_until_complete();
 //	#ifdef DEBUG
 //		Serial.print("msg=");
 //		Serial.println_long(msg,DEC);
 //	#endif
-		if(msg == SUBGHZ_TX_CCA_FAIL)
-		{
-			goto error_not_send;
-		}
+	if(msg == SUBGHZ_TX_CCA_FAIL)
+	{
+		goto error_not_send;
 	}
 	
 	arib.last_send_time = HAL_millis();

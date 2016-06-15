@@ -36,7 +36,9 @@
 
 #define DATA_SIZE		256
 #define DRV_NAME		"lzgw"
-//static wait_queue_head_t read_q;	//poll wait
+
+wait_queue_head_t tx_done;
+extern int que_th2ex;
 
 uint8_t rxbuf[DATA_SIZE];
 
@@ -71,6 +73,10 @@ static struct {
 	unsigned char addr_type;
 	unsigned char addr_size;
 	unsigned short drv_mode;
+	unsigned char rx_rssi;
+	unsigned char tx_rssi;
+	int rx_status;
+	int tx_status;
 } p = {
 	36,		// default ch
 	20,		// default pwr
@@ -86,9 +92,10 @@ static struct {
 // *****************************************************************
 //			transfer process (input from chrdev)
 // *****************************************************************
-int write_list_data(uint8_t* raw,uint16_t len){
+int write_list_data(const uint8_t* raw,int len){
 	struct list_data *new_data;
-	uint8_t *in,*out;
+	const uint8_t *in;
+	uint8_t *out;
 
 	new_data = kmalloc(sizeof(struct list_data), GFP_KERNEL);
 	if (new_data == NULL) {
@@ -127,9 +134,17 @@ int write_list_data(uint8_t* raw,uint16_t len){
 
 	return 0;
 }
-int rx_callback(uint8_t *raw, uint16_t len)
+void rx_callback(const uint8_t *data, uint8_t rssi, int status)
 {
-	return write_list_data(raw,len);
+	if(status > 0) {
+		EXT_rx_led_flash(2);
+		p.rx_status = status;
+		p.rx_rssi = rssi;
+		write_list_data(data,status);
+	} else {		// error
+		p.rx_status = status;
+	}
+	return;
 
 }
 
@@ -144,6 +159,22 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 	mutex_lock( &chrdev.lock );
 
 	switch(command) {
+		case IOCTL_CMD:
+			switch(param) {
+				case IOCTL_SET_BEGIN:
+					ret = SubGHz.begin(p.ch,p.my_panid,p.bps,p.pwr);
+					if(ret != SUBGHZ_OK) ret *= -1;
+					break;
+				case IOCTL_SET_RXON:
+					ret = SubGHz.rxEnable(rx_callback);
+					if(ret != SUBGHZ_OK) ret *=-1;
+					break;
+				case IOCTL_SET_RXOFF:
+					ret = SubGHz.rxDisable();
+					if(ret != SUBGHZ_OK) ret *=-1;
+					break;
+			}
+			break;
 		case IOCTL_PARAM:
 			switch(param) {
 				case IOCTL_GET_CH:			// get ch
@@ -407,20 +438,48 @@ end:
 	mutex_unlock( &chrdev.lock );
 	return bytes_read;
 }
-
+static void tx_callback(uint8_t rssi,int status) {
+	p.tx_rssi = rssi;
+	p.tx_status = status;
+	que_th2ex = 1;
+	wake_up_interruptible(&tx_done);
+	return;
+}
 static ssize_t chardev_write (struct file * file, const char __user * buf,
 		size_t count, loff_t * ppos) {
 	int status = 0;
+	uint8_t payload[DATA_SIZE];
 	mutex_lock( &chrdev.lock );
 
 	if(count<DATA_SIZE)
 	{
+		uint16_t tx_addr;
+		tx_addr = p.tx_addr[1];
+		tx_addr = (tx_addr<<8) + p.tx_addr[0];
+		if(copy_from_user(payload,buf,count))
+		{
+			status = -EFAULT;
+			goto error;
+		}
+		EXT_set_tx_led(0);
+		status = SubGHz.send(p.tx_panid,tx_addr,payload,count,tx_callback);
+		if(status == SUBGHZ_OK)
+		{
+			status = count;
+		} else if(status == SUBGHZ_TX_CCA_FAIL) {
+			status = -EBUSY;
+		} else if (status == SUBGHZ_TX_ACK_FAIL) {
+			status = -ENODEV;
+		} else {
+			status = -EFAULT;
+		}
 	} else {
 		status = -E2BIG;
 		goto error;
 	}
 
 error:
+	EXT_set_tx_led(1);
 	mutex_unlock( &chrdev.lock );
 	return status;
 }
@@ -478,6 +537,7 @@ static int __init drv_param_init(void) {
 
 	// initializing wait queue
 	init_waitqueue_head( &chrdev.read_q );
+	init_waitqueue_head( &tx_done );
 
 	status = SubGHz.init();
 	if(status != SUBGHZ_OK) goto error_device_create;

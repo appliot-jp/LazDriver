@@ -1740,7 +1740,7 @@ static void sint_handler(void) {
 
     /* イベントマシン呼び出し */
     // 2016.03.14 tx send event
-    #if 1   // 本制御が0のとき従来の割込み処理となる。
+    #ifdef LAZURITE_IDE   // 本制御が0のとき従来の割込み処理となる。
     if((em_data.state == ML7396_StateSending) &&
                 hw_event&(HW_EVENT_CCA_DONE|
                     HW_EVENT_FIFO_EMPTY|HW_EVENT_TX_DONE)) {
@@ -1753,6 +1753,7 @@ static void sint_handler(void) {
         }
         /* 処理済の割り込み要因をクリア */
         REG_INTCLR(hw_event);
+	
     }else
     #endif
     {

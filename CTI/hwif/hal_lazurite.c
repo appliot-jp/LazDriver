@@ -201,7 +201,7 @@ int HAL_I2C_read(unsigned short addr, unsigned char *data, unsigned char size)
 
     //  api_debug mod
 	Wire0.beginTransmission(0x50);
-#ifdef LAZURIE_MINI
+#ifdef LAZURITE_MINI
 	Wire0.write_byte(0);
 #endif
 	Wire0.write_byte(addr);

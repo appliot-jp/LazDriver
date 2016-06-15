@@ -21,6 +21,10 @@
 
 
 // ioctl command list
+#define	IOCTL_CMD				(0x0000 >> 12)
+#define	IOCTL_SET_BEGIN			0x11
+#define	IOCTL_SET_RXON			0x13
+#define	IOCTL_SET_RXOFF			0x15
 #define	IOCTL_PARAM				(0x1000 >> 12)
 #define	IOCTL_GET_CH			0x02
 #define	IOCTL_SET_CH			0x03

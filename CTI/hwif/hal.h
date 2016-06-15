@@ -81,5 +81,7 @@ extern int EXT_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata,
 extern int EXT_I2C_read(uint16_t addr, uint8_t *data, uint8_t size);
 extern void EXT_tx_led_flash(uint32_t time);
 extern void EXT_rx_led_flash(uint32_t time);
+extern void EXT_set_tx_led(int value);
+extern void EXT_set_rx_led(int value);
 
 #endif  /* #ifndef _INCLUDE_HAL_H */
