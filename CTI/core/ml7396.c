@@ -142,7 +142,7 @@ static int regbank(uint8_t bank) {
             reg.wdata[0] = (0x00<<1)|0x01, reg.wdata[1] = bank&0x03;
             // 2015.05.27 Eiichi Saito
             if(bank > 2) reg.wdata[1] = reg.wdata[1] | 0x80;
-            ON_ERROR_STATUS(ml7396_hwif_spi_transfer(reg.wdata, reg.rdata, 2), ML7396_STATUS_EREGWRITE);
+            ml7396_hwif_spi_transfer(reg.wdata, reg.rdata, 2);
             reg.bank = bank;
         }
         status = ML7396_STATUS_OK;
@@ -174,10 +174,10 @@ int ml7396_regwrite(uint8_t bank, uint8_t addr, const uint8_t *data, uint8_t siz
         status = ML7396_STATUS_ELOCK;
         GOTO_ERROR;
     }
-    ON_ERROR_STATUS(regbank(bank), ML7396_STATUS_EREGWRITE);
+    regbank(bank);
     reg.wdata[0] = (addr << 1) | 0x01;
     memcpy(reg.wdata + 1, data, size);
-    ON_ERROR_STATUS(ml7396_hwif_spi_transfer(reg.wdata, reg.rdata, size + 1), ML7396_STATUS_EREGWRITE);
+    ml7396_hwif_spi_transfer(reg.wdata, reg.rdata, size + 1);
     status = ML7396_STATUS_OK;
 error:
     --reg.lock;
@@ -200,10 +200,10 @@ int ml7396_regread(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
         status = ML7396_STATUS_ELOCK;
         GOTO_ERROR;
     }
-    ON_ERROR_STATUS(regbank(bank), ML7396_STATUS_EREGREAD);
+    regbank(bank);
     reg.wdata[0] = (addr << 1) | 0x00;
     memset(reg.wdata + 1, 0xff, size);  /* ここは仕様上不定値でも問題ないが、余計なノイズ出力を抑えるため'H'固定にする */
-    ON_ERROR_STATUS(ml7396_hwif_spi_transfer(reg.wdata, reg.rdata, size + 1), ML7396_STATUS_EREGREAD);
+    ml7396_hwif_spi_transfer(reg.wdata, reg.rdata, size + 1);
     // 2016.6.8 Eiichi Saito: SubGHz API common
 //  memcpy(data, reg.rdata + 1, size);
     memcpy(data, reg.rdata, size);
@@ -961,7 +961,7 @@ static int em_setup(EM_Data *em_data, void *data) {
         SWITCH_STATE(ML7396_StateReset);  /* Resetステートへ移行 */
         REG_PHYRST();  /* PHYをリセット */
         em_data->rx = NULL, em_data->tx = NULL;
-        ON_ERROR_STATUS(ml7396_hwif_regset(data), ML7396_STATUS_ESETUP);  /* レジスタ設定 */
+        ml7396_hwif_regset(data);  /* レジスタ設定 */
         /* IEEE802.15.4gパケット, 自動送信ON, 受信データにEDを付加, Whiteningを行う */
         REG_RDB(REG_ADR_PACKET_MODE_SET, reg_data);
         reg_data |=  0x1e;

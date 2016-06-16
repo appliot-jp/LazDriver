@@ -19,8 +19,8 @@
  */
 
 
-#ifndef _HAL_H
-#define _HAL_H
+#ifndef _HAL_H_
+#define _HAL_H_
 
 
 #ifdef	LAZURITE_IDE
