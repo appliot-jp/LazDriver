@@ -157,7 +157,7 @@ void rx_callback(const uint8_t *data, uint8_t rssi, int status)
 static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg) {
 	unsigned char command = cmd>>12;
 	unsigned int param = cmd & 0x0FFF;
-	long ret=0;
+	long ret=-EFAULT;
 	mutex_lock( &chrdev.lock );
 
 	switch(command) {
@@ -291,17 +291,15 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					}
 					break;
 				case IOCTL_GET_MY_ADDR0:			// get panid
+					ret = SubGHz.getMyAddress();
+					p.my_addr[1] = (ret >> 8) & 0x00ff;
+					p.my_addr[0] = ret  & 0x000000ff;
+					break;
 				case IOCTL_GET_MY_ADDR1:			// get panid
 				case IOCTL_GET_MY_ADDR2:			// get panid
 				case IOCTL_GET_MY_ADDR3:			// get panid
-				{
-					ret = SubGHz.getMyAddress();
 					break;
-				}
 				case IOCTL_SET_MY_ADDR0:			// set panid
-				case IOCTL_SET_MY_ADDR1:			// set panid
-				case IOCTL_SET_MY_ADDR2:			// set panid
-				case IOCTL_SET_MY_ADDR3:			// set panid
 					if((arg >= 0) && (arg <= 0xffff)&&(p.drv_mode==0x0000FFFF)) {
 						p.my_addr[(param-IOCTL_SET_MY_ADDR0)+1] = (arg >> 8) & 0x000000ff;
 						p.my_addr[(param-IOCTL_SET_MY_ADDR0)+0] = arg  & 0x000000ff;
@@ -309,6 +307,9 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					} else {
 						ret = -EINVAL;
 					}
+				case IOCTL_SET_MY_ADDR1:			// set panid
+				case IOCTL_SET_MY_ADDR2:			// set panid
+				case IOCTL_SET_MY_ADDR3:			// set panid
 					break;
 				case IOCTL_GET_TX_ADDR0:			// get panid
 				case IOCTL_GET_TX_ADDR1:			// get panid
