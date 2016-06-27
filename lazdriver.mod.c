@@ -57,8 +57,8 @@ __attribute__((section("__versions"))) = {
 	{ 0x8e865d3c, __VMLINUX_SYMBOL_STR(arm_delay_ops) },
 	{ 0xff6a59cd, __VMLINUX_SYMBOL_STR(i2c_unregister_device) },
 	{ 0x8d156e03, __VMLINUX_SYMBOL_STR(i2c_register_driver) },
-	{ 0x1000e51, __VMLINUX_SYMBOL_STR(schedule) },
 	{ 0xd62c833f, __VMLINUX_SYMBOL_STR(schedule_timeout) },
+	{ 0x1000e51, __VMLINUX_SYMBOL_STR(schedule) },
 	{ 0x94eea794, __VMLINUX_SYMBOL_STR(getnstimeofday64) },
 	{ 0xda67b7a5, __VMLINUX_SYMBOL_STR(wake_up_process) },
 	{ 0x8e2e8762, __VMLINUX_SYMBOL_STR(kmem_cache_alloc_trace) },
@@ -90,4 +90,4 @@ __attribute__((section(".modinfo"))) =
 
 MODULE_ALIAS("i2c:lzpi_i2c");
 
-MODULE_INFO(srcversion, "C4DF4FD94813BA9289F5070");
+MODULE_INFO(srcversion, "B225A7632369E3E6BCD12A6");

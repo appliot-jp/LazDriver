@@ -1708,6 +1708,7 @@ static int em_main(EM_Data *em_data, void *data, int sw_event, uint32_t hw_event
     default:
         ASSERT(0);
     }
+
     return status;
 }
 
