@@ -211,6 +211,9 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 						if(ret != SUBGHZ_OK) ret *=-1;
 						break;
 					}
+				default:
+					ret = -ENOTTY;
+					break;
 			}
 			break;
 		case IOCTL_PARAM:
@@ -432,6 +435,9 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 				case IOCTL_GET_TX_RSSI:
 					ret = p.tx_rssi;
 					break;
+				default:
+					ret = -ENOTTY;
+					break;
 			}
 			break;
 		case IOCTL_RF:
@@ -467,6 +473,9 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 				EXT_tx_led_flash(arg);
 			}
 			ret = 0;
+			break;
+		default:
+			ret = -ENOTTY;
 			break;
 	}
 	mutex_unlock( &chrdev.lock );
