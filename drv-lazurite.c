@@ -70,7 +70,6 @@ static struct {
 	unsigned short tx_panid;
 	unsigned char my_addr[8];
 	unsigned char tx_addr[8];
-	unsigned char addr_size;
 	unsigned char rx_rssi;
 	unsigned char tx_rssi;
 	unsigned char senseTime;
@@ -348,20 +347,6 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					} else if((arg >= 0) && (arg <= 7)) {
 						p.addr_type = arg;
 						ret = p.addr_type;
-					} else {
-						ret = -EINVAL;
-					}
-					break;
-				case IOCTL_GET_ADDR_SIZE:			// get panid
-					ret = p.addr_size;
-					break;
-				case IOCTL_SET_ADDR_SIZE:			// set panid
-					if(p.drv_mode == 0xFFFF) {
-						p.addr_size = arg;
-						ret = arg;
-					} else if((arg >= 0) && (arg <= 3)) {
-						p.addr_size = arg;
-						ret = p.addr_size;
 					} else {
 						ret = -EINVAL;
 					}
