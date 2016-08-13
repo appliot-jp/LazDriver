@@ -176,8 +176,10 @@ int ml7396_regwrite(uint8_t bank, uint8_t addr, const uint8_t *data, uint8_t siz
     }
     regbank(bank);
     reg.wdata[0] = (addr << 1) | 0x01;
+	//printk(KERN_INFO"%s %s %d %d %d %d\n",__FILE__,__func__,__LINE__,bank,addr,size);
     memcpy(reg.wdata + 1, data, size);
     ml7396_hwif_spi_transfer(reg.wdata, reg.rdata, size + 1);
+	//printk(KERN_INFO"%s %s %d %d %d %d\n",__FILE__,__func__,__LINE__,bank,addr,size);
     status = ML7396_STATUS_OK;
 error:
     --reg.lock;
@@ -493,8 +495,9 @@ void REG_RXSTART(ML7396_Buffer *_buffer)
     do { \
         uint8_t _reg_cca_cntl[1]; \
         uint8_t _reg_idl_wait[1]; \
-        ON_ERROR(ml7396_regwrite(REG_ADR_DEMSET3, 0x00, 1)); \
-        ON_ERROR(ml7396_regwrite(REG_ADR_DEMSET14, 0x00, 1)); \
+        _reg_cca_cntl[0] = 0x00; \
+        ON_ERROR(ml7396_regwrite(REG_ADR_DEMSET3, _reg_cca_cntl, 1)); \
+        ON_ERROR(ml7396_regwrite(REG_ADR_DEMSET14, _reg_cca_cntl, 1)); \
         if (_type == CCA_STOP) { \
             _reg_cca_cntl[0] = 0x00; \
             _reg_idl_wait[0] = 0x00; \
@@ -986,12 +989,13 @@ error:
 #define UNIT_BAKOFF_PERIOD  300
 #define DEFAUL_BAKOF        1000
 
-static int backoffTimer(EM_Data *em_data){
+static void backoffTimer(EM_Data *em_data){
 
     uint16_t cca_wait;
     cca_wait = (rand()&em_data->tx->opt.tx.cca.wait) * UNIT_BAKOFF_PERIOD;
     if (!cca_wait) cca_wait = DEFAUL_BAKOF;
     HAL_delayMicroseconds(cca_wait);
+	return;
 }
 
 static int em_setup(EM_Data *em_data, void *data) {
@@ -1434,7 +1438,9 @@ static int em_tx_ccadone(EM_Data *em_data, const uint32_t *hw_event) {
 // 2016.05.20 Eiichi Saito :Position measurement: Cca result 
 //  REG_RDB(REG_ADR_CCA_CNTRL, reg_data);  /* CCA_RSLT読み出し */
     // 2015.07.29 Eiichi Saito : not synchronize in CCA
+	//printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
     REG_WRB(REG_ADR_DEMSET3, 0x64);
+	//printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
     REG_WRB(REG_ADR_DEMSET14, 0x27);
 // 2016.05.20 Eiichi Saito :Position measurement: Cca result 
 //  switch (reg_data & 0x03) {
