@@ -520,14 +520,14 @@ int ml7396_hwif_regset(void *data) {
         if (INTQ(freq_min, 20) != INTQ(freq_ch0, 20))  /* 36MHz 境界を跨ぐ設定は無効 */
             goto error;
         n4 = (INTQ(freq_ch0 >> 2, 20) & 0x0f) << 2;  /* nの4倍値 */
-        a = INTQ(freq_ch0, 20) - n4 & 0x03;
-        f = freq_ch0 - (n4 + a << 20) & 0x0fffff;
+        a = (INTQ(freq_ch0, 20) - n4) & 0x03;
+        f = (freq_ch0 - ((n4 + a) << 20)) & 0x0fffff;
         reg_data[0] = f >>  0 & 0xff, reg_data[1] = f >>  8 & 0xff, reg_data[2] = f >> 16 & 0x0f;
         reg_data[3] = n4 << 2 | a;
         ml7396_regwrite(REG_ADR_CH0_FL, reg_data, 4);  /* 特殊コマンド: bp.param[BP_PARAM_CH0_FL]の値を設定 */
         n4 = (INTQ(freq_min >> 2, 20) & 0x0f) << 2;  /* nの4倍値 */
-        a = INTQ(freq_min, 20) - n4 & 0x03;
-        f = freq_min - (n4 + a << 20) & 0x0fffff;
+        a = (INTQ(freq_min, 20) - n4) & 0x03;
+        f = (freq_min - ((n4 + a) << 20)) & 0x0fffff;
         reg_data[0] = f >>  0 & 0xff, reg_data[1] = f >>  8 & 0xff, reg_data[2] = f >> 16 & 0x0f;
         reg_data[3] = n4 << 2 | a;  /* このデータは使われない */
         ml7396_regwrite(REG_ADR_VCO_CAL_MIN_FL, reg_data, 3);  /* 特殊コマンド: bp.param[BP_PARAM_MIN_FL]の値を設定 */
