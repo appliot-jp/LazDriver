@@ -162,6 +162,9 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 			goto error;
 		}
 	}
+	//initializing parameter
+	subghz_param.sending = false;
+	subghz_param.read = false;
 	
 	subghz_param.ch = ch;
 	
