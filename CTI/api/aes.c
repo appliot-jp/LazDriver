@@ -54,8 +54,14 @@ NOTE:   String length must be evenly divisible by 16byte (str_len % 16 == 0)
 /*****************************************************************************/
 /* Includes:                                                                 */
 /*****************************************************************************/
+#ifdef LAZURITE_IDE
 #include <stdint.h>
 #include <string.h> // CBC mode, for memset
+#else
+#include <linux/string.h>
+#include <linux/kernel.h>
+#endif
+
 #include "aes.h"
 
 
@@ -525,7 +531,8 @@ static void XorWithIv(uint8_t* buf)
 }
 
 #define uintptr_t uint8_t
-void AES128_CBC_encrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length, const uint8_t* key, const uint8_t* iv)
+// void AES128_CBC_encrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length, const uint8_t* key, const uint8_t* iv)
+void AES128_CBC_encrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length, const uint8_t* key, uint8_t* iv)
 {
   uintptr_t i;
   uint8_t remainders = length % KEYLEN; /* Remaining bytes in the last non-full block */
@@ -565,7 +572,8 @@ void AES128_CBC_encrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length,
   }
 }
 
-void AES128_CBC_decrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length, const uint8_t* key, const uint8_t* iv)
+//void AES128_CBC_decrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length, const uint8_t* key, const uint8_t* iv)
+void AES128_CBC_decrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length, const uint8_t* key, uint8_t* iv)
 {
   uintptr_t i;
   uint8_t remainders = length % KEYLEN; /* Remaining bytes in the last non-full block */
@@ -631,7 +639,7 @@ uint8_t AES128_CBC_encrypt(uint8_t* output, uint8_t* input, uint32_t length, uin
     *(p_workspace + length + i - 1) = padLen;
 
 
-    AES128_CBC_encrypt_buffer(output, p_workspace, length+padLen, p_key, &ivTable);
+    AES128_CBC_encrypt_buffer(output, p_workspace, length+padLen, p_key, (uint8_t *)&ivTable);
 
     return padLen;
 }
@@ -646,7 +654,7 @@ uint8_t AES128_CBC_decrypt(uint8_t* output, uint8_t* input, uint32_t length, uin
         *(ivTable+i) = *(p_key+i) ^ index;
     }
 
-    AES128_CBC_decrypt_buffer(p_workspace, input, length, p_key, &ivTable);
+    AES128_CBC_decrypt_buffer(p_workspace, input, length, p_key, (uint8_t *)&ivTable);
     padLen = *(p_workspace + length - 1);
     memcpy(output, p_workspace, length-padLen);
 

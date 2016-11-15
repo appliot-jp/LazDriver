@@ -24,6 +24,9 @@
 #ifdef LAZURITE_IDE
 #include <stdint.h>
 #include <string.h>
+// 2016.11.15 Eiichi Saito AES
+#include "Serial.h"
+#define DEBUG_AES 1
 #else
 //#include "../others/stdint.h"
 #include <linux/string.h>
@@ -36,10 +39,6 @@
 #include "bp3596.h"
 // 2016.11.15 Eiichi Saito AES
 #include "aes.h"
-#define DEBUG_AES 1
-#ifdef DEBUG_AES
-#include "Serial.h"
-#endif
 
 
 /* 内部エラーコード
@@ -423,7 +422,7 @@ int BP3596_send(const void *data, uint16_t size,
             seq = header.seq;
         }
 
-        pad = AES128_CBC_encrypt(payload, data, size, seq); 
+        pad = AES128_CBC_encrypt(payload, (uint8_t *)data, size, seq); 
         api.tx.buffer.size += pad;
 #ifdef DEBUG_AES
         {

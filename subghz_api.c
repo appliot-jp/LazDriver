@@ -25,6 +25,8 @@
 #include "string.h"
 #include "lp_manage.h"
 #include "driver_irq.h"
+// 2016.11.15 Eiichi Saito AES
+#define DEBUG_AES 1
 #else
 #include <linux/string.h>
 #include <linux/sched.h>
@@ -36,7 +38,6 @@
 #include "CTI/hwif/hal.h"
 // 2016.11.15 Eiichi Saito AES
 #include "CTI/api/aes.h"
-#define DEBUG_AES 1
 
 #define INIT_SLEEP
 //#define TEST_SEND_INTERVAL
@@ -382,10 +383,9 @@ static void subghz_rxdone(const uint8_t *data, uint8_t rssi, int status)
 static short subghz_readData(uint8_t *data, uint16_t max_size)
 {
 	short result = 0;
+#ifdef	LAZURITE_IDE
     // 2016.11.15 Eiichi Saito AES
     SUBGHZ_MAC_PARAM mac;
-
-#ifdef	LAZURITE_IDE
 //	__DI();
 	dis_interrupts(DI_SUBGHZ);
 	if(subghz_param.rx_buf == NULL)
