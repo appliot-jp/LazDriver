@@ -370,9 +370,42 @@ static void subghz_rxdone(const uint8_t *data, uint8_t rssi, int status)
 //	Serial.print_long(status, DEC);					// for test
 //	Serial.println("");
 
+    // 2016.11.15 Eiichi Saito AES
+    SUBGHZ_MAC_PARAM mac;
+
+
 	subghz_param.rx_buf = data;	
 	subghz_param.rx_stat.rssi = rssi;
 	subghz_param.rx_stat.status = status;
+
+    // 2016.11.15 Eiichi Saito AES
+    subghz_decMac(&mac,subghz_param.rx_buf,subghz_param.rx_stat.status);
+
+    if (mac.mac_header.alignment.sec_enb){
+        uint8_t mhr_len;
+        uint8_t pad;
+        uint8_t workspace[256];
+
+        if (mac.mac_header.alignment.seq_comp){
+            mac.seq_num=0;
+        }
+        mhr_len = mac.raw_len - mac.payload_len;
+        memcpy(workspace, subghz_param.rx_buf,mhr_len);
+        pad = AES128_CBC_decrypt(workspace+mhr_len, mac.payload, mac.payload_len, mac.seq_num);
+        subghz_param.rx_stat.status -= pad;
+        memcpy(subghz_param.rx_buf, workspace, subghz_param.rx_stat.status);
+#ifdef DEBUG_AES
+        Serial.print("\r\n");
+        Serial.print(data+mhr_len);
+        Serial.print("\r\n");
+        Serial.print("total,payload,pad: ");
+        Serial.print_long((long)mac.raw_len,DEC);
+        Serial.print(" ");
+        Serial.print_long((long)mac.payload_len,DEC);
+        Serial.print(" ");
+        Serial.println_long((long)pad,DEC);
+#endif
+    }
 
 	if(subghz_param.rx_callback != NULL)
 	{
@@ -385,7 +418,7 @@ static short subghz_readData(uint8_t *data, uint16_t max_size)
 	short result = 0;
 #ifdef	LAZURITE_IDE
     // 2016.11.15 Eiichi Saito AES
-    SUBGHZ_MAC_PARAM mac;
+//  SUBGHZ_MAC_PARAM mac;
 //	__DI();
 	dis_interrupts(DI_SUBGHZ);
 	if(subghz_param.rx_buf == NULL)
@@ -401,6 +434,7 @@ static short subghz_readData(uint8_t *data, uint16_t max_size)
 		{
 			max_size = result;
 		}
+#if 0
         // 2016.11.15 Eiichi Saito AES
         subghz_decMac(&mac,subghz_param.rx_buf,subghz_param.rx_stat.status);
 
@@ -431,6 +465,8 @@ static short subghz_readData(uint8_t *data, uint16_t max_size)
         {
 		    memcpy(data, subghz_param.rx_buf, max_size+1);
         }
+#end
+		memcpy(data, subghz_param.rx_buf,max_size+1);
 		subghz_param.rx_buf = NULL;
 	}
 	
