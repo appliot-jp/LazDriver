@@ -34,6 +34,9 @@
 #include "subghz_api.h"
 #include "CTI/api/bp3596.h"
 #include "CTI/hwif/hal.h"
+// 2016.11.15 Eiichi Saito AES
+#include "CTI/api/aes.h"
+#define DEBUG_AES 1
 
 #define INIT_SLEEP
 //#define TEST_SEND_INTERVAL
@@ -89,6 +92,8 @@ static SUBGHZ_MSG subghz_init(void)
 	// 2015.10.26 Eiichi Saito   addition random backoff
     // 2016.06.30 Eiichi Saito :Position measurement tuning
 	subghz_param.ccaWait = 7;  // <- 2
+    // 2016.11.15 Eiichi Saito AES
+    AES128_setAes(NULL,NULL);
 	
 	// reset
 	result = BP3596_reset();
@@ -377,7 +382,9 @@ static void subghz_rxdone(const uint8_t *data, uint8_t rssi, int status)
 static short subghz_readData(uint8_t *data, uint16_t max_size)
 {
 	short result = 0;
-	
+    // 2016.11.15 Eiichi Saito AES
+    SUBGHZ_MAC_PARAM mac;
+
 #ifdef	LAZURITE_IDE
 //	__DI();
 	dis_interrupts(DI_SUBGHZ);
@@ -394,7 +401,36 @@ static short subghz_readData(uint8_t *data, uint16_t max_size)
 		{
 			max_size = result;
 		}
-		memcpy(data, subghz_param.rx_buf,max_size+1);
+        // 2016.11.15 Eiichi Saito AES
+        subghz_decMac(&mac,subghz_param.rx_buf,subghz_param.rx_stat.status);
+
+        if (mac.mac_header.alignment.sec_enb){
+            uint8_t mhr_len;
+            uint8_t pad;
+
+            if (mac.mac_header.alignment.seq_comp){
+                mac.seq_num=0;
+            }
+            mhr_len = mac.raw_len - mac.payload_len;
+            memcpy(data, subghz_param.rx_buf,mhr_len);
+            pad = AES128_CBC_decrypt(data+mhr_len, mac.payload, mac.payload_len, mac.seq_num);
+	        subghz_param.rx_stat.status -= pad;
+	        result = subghz_param.rx_stat.status;
+#ifdef DEBUG_AES
+            Serial.print("\r\n");
+            Serial.print(data+mhr_len);
+            Serial.print("\r\n");
+            Serial.print("total,payload,pad: ");
+            Serial.print_long((long)mac.raw_len,DEC);
+            Serial.print(" ");
+            Serial.print_long((long)mac.payload_len,DEC);
+            Serial.print(" ");
+            Serial.println_long((long)pad,DEC);
+#endif
+        }else
+        {
+		    memcpy(data, subghz_param.rx_buf, max_size+1);
+        }
 		subghz_param.rx_buf = NULL;
 	}
 	
@@ -580,6 +616,12 @@ static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len)
 	int i;
 	int16_t offset=0;
 	uint8_t addr_type;
+
+    // 2016.11.15 Eiichi Saito AES
+    for(i=0; i < sizeof(SUBGHZ_MAC_PARAM); i++){
+        *((uint8_t *)mac+i) = 0xff;
+    }
+
 	mac->mac_header.data[0] = raw[offset],offset++;
 	mac->mac_header.data[1] = raw[offset],offset++;
 	if(!mac->mac_header.alignment.seq_comp) {
@@ -606,6 +648,9 @@ static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len)
 	//rx_addr
 	switch(mac->mac_header.alignment.rx_addr_type)
 	{
+	case 0:
+		memset(mac->rx_addr,0xff,8);
+		break;
 	case 1:
 		mac->rx_addr[0] = raw[offset],offset++;
 		for(i=1;i<8;i++) {
@@ -638,8 +683,31 @@ static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len)
 		break;
 	}
 	//tx_addr
+/*	Serial.print_long(mac->mac_header.alignment.frame_type,DEC);
+	Serial.print(",");
+	Serial.print_long(mac->mac_header.alignment.sec_enb,DEC);
+	Serial.print(",");
+	Serial.print_long(mac->mac_header.alignment.pending,DEC);
+	Serial.print(",");
+	Serial.print_long(mac->mac_header.alignment.ack_req,DEC);
+	Serial.print(",");
+	Serial.print_long(mac->mac_header.alignment.panid_comp,DEC);
+	Serial.print(",");
+	Serial.print_long(mac->mac_header.alignment.seq_comp,DEC);
+	Serial.print(",");
+	Serial.print_long(mac->mac_header.alignment.ielist,DEC);
+	Serial.print(",");
+	Serial.print_long(mac->mac_header.alignment.tx_addr_type,DEC);
+	Serial.print(",");
+	Serial.print_long(mac->mac_header.alignment.frame_ver,DEC);
+	Serial.print(",");
+	Serial.println_long(mac->mac_header.alignment.rx_addr_type,DEC);
+*/
 	switch(mac->mac_header.alignment.tx_addr_type)
 	{
+	case 0:
+		memset(&mac->tx_addr[0],0xff,8);
+		break;
 	case 1:
 		mac->tx_addr[0] = raw[offset],offset++;
 		for(i=1;i<8;i++) {
@@ -667,7 +735,12 @@ static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len)
 	return;
 }
 
-	
+// 2016.11.15 Eiichi Saito AES
+static void subghz_setAes(uint8_t *key, uint8_t *workspace)
+{
+    AES128_setAes(key,workspace);
+}
+
 // setting of function
 const SubGHz_CTRL SubGHz = {
 	subghz_init,
@@ -684,4 +757,6 @@ const SubGHz_CTRL SubGHz = {
 	subghz_setSendMode,
 	subghz_getSendMode,
 	subghz_decMac,
+    // 2016.11.15 Eiichi Saito AES
+	subghz_setAes,
 };

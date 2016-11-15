@@ -34,6 +34,12 @@
 #include "../core/endian.h"
 #include "../core/ieee802154.h"
 #include "bp3596.h"
+// 2016.11.15 Eiichi Saito AES
+#include "aes.h"
+#define DEBUG_AES 1
+#ifdef DEBUG_AES
+#include "Serial.h"
+#endif
 
 
 /* 内部エラーコード
@@ -392,6 +398,10 @@ int BP3596_send(const void *data, uint16_t size,
         status = BP3596_STATUS_ERROR_PARAM;
         goto error;
     }
+    // 2016.11.15 Eiichi Saito AES
+    if (AES128_getStatus()){
+        header.fc |= IEEE802154_FC_SECURITY;
+    }
     payload = make_data(api.tx.buffer.data, api.tx.buffer.capacity, &header);
     if (payload == NULL) {
         status = BP3596_STATUS_ERROR_PARAM;
@@ -402,7 +412,48 @@ int BP3596_send(const void *data, uint16_t size,
         status = BP3596_STATUS_ERROR_PARAM;
         goto error;
     }
-    memcpy(payload, data, size);
+    // 2016.11.15 Eiichi Saito AES
+    if (AES128_getStatus()){
+        uint8_t seq;
+        uint8_t pad;
+
+        if (header.fc&IEEE802154_FC_SEQ_SUPPRESS){
+            seq = 0;
+        }else{
+            seq = header.seq;
+        }
+
+        pad = AES128_CBC_encrypt(payload, data, size, seq); 
+        api.tx.buffer.size += pad;
+#ifdef DEBUG_AES
+        {
+            uint8_t i;
+            Serial.print(data);
+            Serial.print("\r\n");
+            for(i=0;i<size-1;i++)
+            {
+                Serial.print_long((long)*((uint8_t *)data+i),HEX);
+            }
+            Serial.print("\r\n");
+            Serial.print("total,payload,pad,seq: ");
+            Serial.print_long( api.tx.buffer.size, DEC);
+            Serial.print(" ");
+            Serial.print_long( size, DEC);
+            Serial.print(" ");
+            Serial.print_long( pad, DEC);
+            Serial.print(" ");
+            Serial.print_long( seq, DEC);
+            Serial.print("\r\n");
+            for(i=0;i<size+pad-1;i++)
+            {
+                Serial.print_long((long)*(payload+i),HEX);
+            }
+            Serial.print("\r\n");
+        }
+#endif
+    }else{
+        memcpy(payload, data, size);
+    }
     if (ml7396_txstart(&api.tx.buffer) < 0) {
         status = BP3596_STATUS_ERROR_STATE;
         goto error;
