@@ -48,6 +48,8 @@ extern wait_queue_head_t tx_done;
 extern int que_th2ex;
 #endif
 
+// this proto-type is for linux
+static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len);
 
 // local parameters
 static struct {
@@ -379,7 +381,7 @@ static void subghz_rxdone(const uint8_t *data, uint8_t rssi, int status)
 	subghz_param.rx_stat.status = status;
 
     // 2016.11.15 Eiichi Saito AES
-    subghz_decMac(&mac,subghz_param.rx_buf,subghz_param.rx_stat.status);
+    subghz_decMac(&mac,(uint8_t *)subghz_param.rx_buf,subghz_param.rx_stat.status);
 
     if (mac.mac_header.alignment.sec_enb){
         uint8_t mhr_len;
@@ -393,7 +395,7 @@ static void subghz_rxdone(const uint8_t *data, uint8_t rssi, int status)
         memcpy(workspace, subghz_param.rx_buf,mhr_len);
         pad = AES128_CBC_decrypt(workspace+mhr_len, mac.payload, mac.payload_len, mac.seq_num);
         subghz_param.rx_stat.status -= pad;
-        memcpy(subghz_param.rx_buf, workspace, subghz_param.rx_stat.status);
+        memcpy((uint8_t *)subghz_param.rx_buf, workspace, subghz_param.rx_stat.status);
 #ifdef DEBUG_AES
         Serial.print("\r\n");
         Serial.print(data+mhr_len);
@@ -417,7 +419,7 @@ static short subghz_readData(uint8_t *data, uint16_t max_size)
 {
 	short result = 0;
 #ifdef	LAZURITE_IDE
-    // 2016.11.15 Eiichi Saito AES
+// 2016.11.15 Eiichi Saito AES
 //  SUBGHZ_MAC_PARAM mac;
 //	__DI();
 	dis_interrupts(DI_SUBGHZ);
@@ -434,7 +436,7 @@ static short subghz_readData(uint8_t *data, uint16_t max_size)
 		{
 			max_size = result;
 		}
-#if 0
+/*
         // 2016.11.15 Eiichi Saito AES
         subghz_decMac(&mac,subghz_param.rx_buf,subghz_param.rx_stat.status);
 
@@ -465,7 +467,7 @@ static short subghz_readData(uint8_t *data, uint16_t max_size)
         {
 		    memcpy(data, subghz_param.rx_buf, max_size+1);
         }
-#end
+*/
 		memcpy(data, subghz_param.rx_buf,max_size+1);
 		subghz_param.rx_buf = NULL;
 	}
