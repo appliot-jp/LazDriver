@@ -372,7 +372,7 @@ static void subghz_rxdone(const uint8_t *data, uint8_t rssi, int status)
 //	Serial.print_long(status, DEC);					// for test
 //	Serial.println("");
 
-    // 2016.11.15 Eiichi Saito AES
+// 2016.11.15 Eiichi Saito AES
     SUBGHZ_MAC_PARAM mac;
 
 
@@ -774,9 +774,10 @@ static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len)
 }
 
 // 2016.11.15 Eiichi Saito AES
-static void subghz_setAes(uint8_t *key, uint8_t *workspace)
+static SUBGHZ_MSG subghz_setAes(uint8_t *key, uint8_t *workspace)
 {
     AES128_setAes(key,workspace);
+	return SUBGHZ_OK;
 }
 
 // setting of function
