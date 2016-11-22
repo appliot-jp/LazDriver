@@ -24,9 +24,6 @@
 #ifdef LAZURITE_IDE
 #include <stdint.h>
 #include <string.h>
-// 2016.11.15 Eiichi Saito AES
-#include "Serial.h"
-#define DEBUG_AES 1
 #else
 //#include "../others/stdint.h"
 #include <linux/string.h>
@@ -37,9 +34,11 @@
 #include "../core/endian.h"
 #include "../core/ieee802154.h"
 #include "bp3596.h"
-// 2016.11.15 Eiichi Saito AES
 #include "aes.h"
 
+#ifdef DEBUG_AES
+#include "Serial.h"
+#endif
 
 /* 内部エラーコード
  */
@@ -230,7 +229,6 @@ int BP3596_reset(void) {
     return status;
 }
 
-// 2015.10.26 Eiichi Saito   addition random backoff
 int BP3596_setup(uint8_t channel, uint8_t rate, uint8_t txPower, uint8_t senseTime,
                  uint8_t txRetry, uint16_t txInterval, uint16_t ccaWait ) {
     int status = BP3596_STATUS_UNKNOWN;
@@ -251,7 +249,6 @@ int BP3596_setup(uint8_t channel, uint8_t rate, uint8_t txPower, uint8_t senseTi
     api.panID = ml7396_mypanid(), *api.panID = 0;
     /* 送信バッファ設定 */
     api.tx.buffer.opt.tx.ack.wait = txInterval, api.tx.buffer.opt.tx.ack.retry = txRetry;
-// 2015.10.26 Eiichi Saito   addition random backoff
 //  api.tx.buffer.opt.tx.cca.wait = 100, api.tx.buffer.opt.tx.cca.retry = senseTime;
     api.tx.buffer.opt.tx.cca.wait = ccaWait , api.tx.buffer.opt.tx.cca.retry = senseTime;
     status = BP3596_STATUS_OK;
@@ -397,7 +394,6 @@ int BP3596_send(const void *data, uint16_t size,
         status = BP3596_STATUS_ERROR_PARAM;
         goto error;
     }
-    // 2016.11.15 Eiichi Saito AES
     if (AES128_getStatus()){
         header.fc |= IEEE802154_FC_SECURITY;
     }
@@ -411,7 +407,6 @@ int BP3596_send(const void *data, uint16_t size,
         status = BP3596_STATUS_ERROR_PARAM;
         goto error;
     }
-    // 2016.11.15 Eiichi Saito AES
     if (AES128_getStatus()){
         uint8_t seq;
         uint8_t pad;

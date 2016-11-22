@@ -25,8 +25,6 @@
 #include "string.h"
 #include "lp_manage.h"
 #include "driver_irq.h"
-// 2016.11.15 Eiichi Saito AES
-#define DEBUG_AES 1
 #else
 #include <linux/string.h>
 #include <linux/sched.h>
@@ -36,7 +34,6 @@
 #include "subghz_api.h"
 #include "CTI/api/bp3596.h"
 #include "CTI/hwif/hal.h"
-// 2016.11.15 Eiichi Saito AES
 #include "CTI/api/aes.h"
 
 #define INIT_SLEEP
@@ -68,7 +65,6 @@ static struct {
 	uint8_t ch;
 	SUBGHZ_RATE rate;
 	uint16_t txInterval;
-	// 2015.10.26 Eiichi Saito   addition random backoff
 	uint16_t ccaWait;
 } subghz_param;
 
@@ -92,10 +88,7 @@ static SUBGHZ_MSG subghz_init(void)
 	subghz_param.senseTime = 20;
 	subghz_param.txRetry = 3;
 	subghz_param.txInterval = 500;
-	// 2015.10.26 Eiichi Saito   addition random backoff
-    // 2016.06.30 Eiichi Saito :Position measurement tuning
 	subghz_param.ccaWait = 7;  // <- 2
-    // 2016.11.15 Eiichi Saito AES
     AES128_setAes(NULL,NULL);
 	
 	// reset
@@ -106,7 +99,6 @@ static SUBGHZ_MSG subghz_init(void)
 		goto error;
 	}
 	
-	// 2015.10.26 Eiichi Saito   addition random backoff
 	result = BP3596_setup(33,	 (uint8_t)SUBGHZ_50KBPS, (uint8_t)SUBGHZ_PWR_1MW, subghz_param.senseTime, subghz_param.txRetry,subghz_param.txInterval, subghz_param.ccaWait );
 	if( result != BP3596_STATUS_OK )
 	{
@@ -176,7 +168,6 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 	
 	subghz_param.ch = ch;
 	
-	// 2015.10.26 Eiichi Saito   addition random backoff
 	result = BP3596_setup(ch, (uint8_t)rate, (uint8_t)txPower, subghz_param.senseTime, subghz_param.txRetry,subghz_param.txInterval,subghz_param.ccaWait );
 	if(result != BP3596_STATUS_OK)
 	{
@@ -372,7 +363,6 @@ static void subghz_rxdone(const uint8_t *data, uint8_t rssi, int status)
 //	Serial.print_long(status, DEC);					// for test
 //	Serial.println("");
 
-// 2016.11.15 Eiichi Saito AES
     SUBGHZ_MAC_PARAM mac;
 
 
@@ -419,7 +409,6 @@ static short subghz_readData(uint8_t *data, uint16_t max_size)
 {
 	short result = 0;
 #ifdef	LAZURITE_IDE
-// 2016.11.15 Eiichi Saito AES
 //  SUBGHZ_MAC_PARAM mac;
 //	__DI();
 	dis_interrupts(DI_SUBGHZ);
@@ -623,7 +612,6 @@ static SUBGHZ_MSG subghz_getSendMode(SUBGHZ_PARAM *param)
 	param->senseTime = subghz_param.senseTime;
 	param->txRetry = subghz_param.txRetry;
 	param->txInterval = subghz_param.txInterval;
-	// 2015.10.26 Eiichi Saito   addition random backoff
 	param->ccaWait = subghz_param.ccaWait;
 	param->myAddress = subghz_param.myAddress; 
 
@@ -641,7 +629,6 @@ static SUBGHZ_MSG subghz_setSendMode(SUBGHZ_PARAM *param)
 	subghz_param.senseTime = param->senseTime;
 	subghz_param.txRetry = param->txRetry;
 	subghz_param.txInterval = param->txInterval;
-	// 2015.10.26 Eiichi Saito   addition random backoff
 	subghz_param.ccaWait = param->ccaWait;
 	subghz_param.myAddress = param->myAddress;
 	
@@ -655,7 +642,6 @@ static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len)
 	int16_t offset=0;
 	uint8_t addr_type;
 
-    // 2016.11.15 Eiichi Saito AES
     for(i=0; i < sizeof(SUBGHZ_MAC_PARAM); i++){
         *((uint8_t *)mac+i) = 0xff;
     }
@@ -796,6 +782,5 @@ const SubGHz_CTRL SubGHz = {
 	subghz_setSendMode,
 	subghz_getSendMode,
 	subghz_decMac,
-    // 2016.11.15 Eiichi Saito AES
 	subghz_setAes,
 };
