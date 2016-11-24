@@ -89,7 +89,7 @@ static uint8_t *p_key;
 static uint8_t *p_workspace;
 static uint8_t secEn;
 #define IVLEN 16
-#define PAD 0x24
+#define PAD 0x00
 static uint8_t ivTable[IVLEN];
 
 /*****************************************************************************/
