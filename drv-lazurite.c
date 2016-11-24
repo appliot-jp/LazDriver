@@ -219,19 +219,21 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
                     {
                         unsigned char i; 
                         unsigned char index;
-                        unsigned char key_chr[32]; 
+                        unsigned char ckey[32]; 
                         unsigned char shift;
                         unsigned char hex;
-		                memcpy(key_chr,(const void *)arg,32);
-						printk(KERN_ERR"AES = %s\n",arg);
-						printk(KERN_ERR"AES = %s\n",key_chr);
+		                memcpy(ckey,(const void *)arg,32);
+						printk(KERN_ERR"AES = %s\n",(char *)arg);
+						printk(KERN_ERR"AES = %s\n",ckey);
                         for(i=0;i < 32;i++){
-                            index = key_chr[i]&0x0f;
-                            if(key_chr[i]&0xc0) index +=10;
-                            shift = 4*(i%2);
+                            index = ckey[i]&0x0f;
+                            // a - f or A - f
+                            if(ckey[i]&0xc0) index +=10;
                             hex = chr_to_hex[index];
+                            // LSB side is 0 shift, MSB side is 4 bits shifth
+                            shift = 4*(i%2);
                             p.key[i/2] |= (hex >> shift);
-						    printk(KERN_ERR"AES = %x %x %d %d %d %x\n",p.key[i/2],key_chr[i],shift,index,i/2,hex);
+						    printk(KERN_ERR"AES = %x %x %d %d %d %x\n",p.key[i/2],ckey[i],shift,index,i/2,hex);
                         }
                         ret = SubGHz.setAes(p.key,aes_workspace);
                         if(ret != SUBGHZ_OK) ret = EFAULT;
