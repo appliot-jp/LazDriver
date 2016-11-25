@@ -90,4 +90,4 @@ __attribute__((section(".modinfo"))) =
 
 MODULE_ALIAS("i2c:lzpi_i2c");
 
-MODULE_INFO(srcversion, "DA4195F5705DA9E9436B166");
+MODULE_INFO(srcversion, "3042BF4C56EC2DED8F0EBFA");
