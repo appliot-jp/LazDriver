@@ -1623,6 +1623,16 @@ static int em_tx_datadone(EM_Data *em_data, const uint32_t *hw_event) {
                 REG_PHYRST();
                 if (em_data->rx != NULL)
                     REG_RXON();
+                HAL_delayMicroseconds(128);
+                /*
+                while (1) {
+                    REG_RDB(REG_ADR_RF_STATUS, reg_data);
+                    if (reg_data & 0x80){
+                        break;
+                    }
+                    __asm("nop");
+                }
+                */
             }
         }
     }

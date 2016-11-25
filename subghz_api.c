@@ -34,6 +34,7 @@
 #include "subghz_api.h"
 #include "CTI/api/bp3596.h"
 #include "CTI/hwif/hal.h"
+#include "CTI/api/aes.h"
 
 #define INIT_SLEEP
 //#define TEST_SEND_INTERVAL
@@ -44,6 +45,8 @@ extern wait_queue_head_t tx_done;
 extern int que_th2ex;
 #endif
 
+// this proto-type is for linux
+static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len);
 
 // local parameters
 static struct {
@@ -62,7 +65,6 @@ static struct {
 	uint8_t ch;
 	SUBGHZ_RATE rate;
 	uint16_t txInterval;
-	// 2015.10.26 Eiichi Saito   addition random backoff
 	uint16_t ccaWait;
 } subghz_param;
 
@@ -86,9 +88,8 @@ static SUBGHZ_MSG subghz_init(void)
 	subghz_param.senseTime = 20;
 	subghz_param.txRetry = 3;
 	subghz_param.txInterval = 500;
-	// 2015.10.26 Eiichi Saito   addition random backoff
-    // 2016.06.30 Eiichi Saito :Position measurement tuning
 	subghz_param.ccaWait = 7;  // <- 2
+    AES128_setAes(NULL,NULL);
 	
 	// reset
 	result = BP3596_reset();
@@ -98,7 +99,6 @@ static SUBGHZ_MSG subghz_init(void)
 		goto error;
 	}
 	
-	// 2015.10.26 Eiichi Saito   addition random backoff
 	result = BP3596_setup(33,	 (uint8_t)SUBGHZ_50KBPS, (uint8_t)SUBGHZ_PWR_1MW, subghz_param.senseTime, subghz_param.txRetry,subghz_param.txInterval, subghz_param.ccaWait );
 	if( result != BP3596_STATUS_OK )
 	{
@@ -168,7 +168,6 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 	
 	subghz_param.ch = ch;
 	
-	// 2015.10.26 Eiichi Saito   addition random backoff
 	result = BP3596_setup(ch, (uint8_t)rate, (uint8_t)txPower, subghz_param.senseTime, subghz_param.txRetry,subghz_param.txInterval,subghz_param.ccaWait );
 	if(result != BP3596_STATUS_OK)
 	{
@@ -364,9 +363,41 @@ static void subghz_rxdone(const uint8_t *data, uint8_t rssi, int status)
 //	Serial.print_long(status, DEC);					// for test
 //	Serial.println("");
 
+    SUBGHZ_MAC_PARAM mac;
+
+
 	subghz_param.rx_buf = data;	
 	subghz_param.rx_stat.rssi = rssi;
 	subghz_param.rx_stat.status = status;
+
+    // 2016.11.15 Eiichi Saito AES
+    subghz_decMac(&mac,(uint8_t *)subghz_param.rx_buf,subghz_param.rx_stat.status);
+
+    if (mac.mac_header.alignment.sec_enb){
+        uint8_t mhr_len;
+        uint8_t pad;
+        uint8_t workspace[256];
+
+        if (mac.mac_header.alignment.seq_comp){
+            mac.seq_num=0;
+        }
+        mhr_len = mac.raw_len - mac.payload_len;
+        memcpy(workspace, subghz_param.rx_buf,mhr_len);
+        pad = AES128_CBC_decrypt(workspace+mhr_len, mac.payload, mac.payload_len, mac.seq_num);
+        subghz_param.rx_stat.status -= pad;
+        memcpy((uint8_t *)subghz_param.rx_buf, workspace, subghz_param.rx_stat.status);
+#ifdef DEBUG_AES
+        Serial.print("\r\n");
+        Serial.print(data+mhr_len);
+        Serial.print("\r\n");
+        Serial.print("total,payload,pad: ");
+        Serial.print_long((long)mac.raw_len,DEC);
+        Serial.print(" ");
+        Serial.print_long((long)mac.payload_len,DEC);
+        Serial.print(" ");
+        Serial.println_long((long)pad,DEC);
+#endif
+    }
 
 	if(subghz_param.rx_callback != NULL)
 	{
@@ -377,8 +408,8 @@ static void subghz_rxdone(const uint8_t *data, uint8_t rssi, int status)
 static short subghz_readData(uint8_t *data, uint16_t max_size)
 {
 	short result = 0;
-	
 #ifdef	LAZURITE_IDE
+//  SUBGHZ_MAC_PARAM mac;
 //	__DI();
 	dis_interrupts(DI_SUBGHZ);
 	if(subghz_param.rx_buf == NULL)
@@ -394,6 +425,38 @@ static short subghz_readData(uint8_t *data, uint16_t max_size)
 		{
 			max_size = result;
 		}
+/*
+        // 2016.11.15 Eiichi Saito AES
+        subghz_decMac(&mac,subghz_param.rx_buf,subghz_param.rx_stat.status);
+
+        if (mac.mac_header.alignment.sec_enb){
+            uint8_t mhr_len;
+            uint8_t pad;
+
+            if (mac.mac_header.alignment.seq_comp){
+                mac.seq_num=0;
+            }
+            mhr_len = mac.raw_len - mac.payload_len;
+            memcpy(data, subghz_param.rx_buf,mhr_len);
+            pad = AES128_CBC_decrypt(data+mhr_len, mac.payload, mac.payload_len, mac.seq_num);
+	        subghz_param.rx_stat.status -= pad;
+	        result = subghz_param.rx_stat.status;
+#ifdef DEBUG_AES
+            Serial.print("\r\n");
+            Serial.print(data+mhr_len);
+            Serial.print("\r\n");
+            Serial.print("total,payload,pad: ");
+            Serial.print_long((long)mac.raw_len,DEC);
+            Serial.print(" ");
+            Serial.print_long((long)mac.payload_len,DEC);
+            Serial.print(" ");
+            Serial.println_long((long)pad,DEC);
+#endif
+        }else
+        {
+		    memcpy(data, subghz_param.rx_buf, max_size+1);
+        }
+*/
 		memcpy(data, subghz_param.rx_buf,max_size+1);
 		subghz_param.rx_buf = NULL;
 	}
@@ -549,7 +612,6 @@ static SUBGHZ_MSG subghz_getSendMode(SUBGHZ_PARAM *param)
 	param->senseTime = subghz_param.senseTime;
 	param->txRetry = subghz_param.txRetry;
 	param->txInterval = subghz_param.txInterval;
-	// 2015.10.26 Eiichi Saito   addition random backoff
 	param->ccaWait = subghz_param.ccaWait;
 	param->myAddress = subghz_param.myAddress; 
 
@@ -567,7 +629,6 @@ static SUBGHZ_MSG subghz_setSendMode(SUBGHZ_PARAM *param)
 	subghz_param.senseTime = param->senseTime;
 	subghz_param.txRetry = param->txRetry;
 	subghz_param.txInterval = param->txInterval;
-	// 2015.10.26 Eiichi Saito   addition random backoff
 	subghz_param.ccaWait = param->ccaWait;
 	subghz_param.myAddress = param->myAddress;
 	
@@ -580,6 +641,11 @@ static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len)
 	int i;
 	int16_t offset=0;
 	uint8_t addr_type;
+
+    for(i=0; i < sizeof(SUBGHZ_MAC_PARAM); i++){
+        *((uint8_t *)mac+i) = 0xff;
+    }
+
 	mac->mac_header.data[0] = raw[offset],offset++;
 	mac->mac_header.data[1] = raw[offset],offset++;
 	if(!mac->mac_header.alignment.seq_comp) {
@@ -606,6 +672,9 @@ static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len)
 	//rx_addr
 	switch(mac->mac_header.alignment.rx_addr_type)
 	{
+	case 0:
+		memset(mac->rx_addr,0xff,8);
+		break;
 	case 1:
 		mac->rx_addr[0] = raw[offset],offset++;
 		for(i=1;i<8;i++) {
@@ -638,8 +707,31 @@ static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len)
 		break;
 	}
 	//tx_addr
+/*	Serial.print_long(mac->mac_header.alignment.frame_type,DEC);
+	Serial.print(",");
+	Serial.print_long(mac->mac_header.alignment.sec_enb,DEC);
+	Serial.print(",");
+	Serial.print_long(mac->mac_header.alignment.pending,DEC);
+	Serial.print(",");
+	Serial.print_long(mac->mac_header.alignment.ack_req,DEC);
+	Serial.print(",");
+	Serial.print_long(mac->mac_header.alignment.panid_comp,DEC);
+	Serial.print(",");
+	Serial.print_long(mac->mac_header.alignment.seq_comp,DEC);
+	Serial.print(",");
+	Serial.print_long(mac->mac_header.alignment.ielist,DEC);
+	Serial.print(",");
+	Serial.print_long(mac->mac_header.alignment.tx_addr_type,DEC);
+	Serial.print(",");
+	Serial.print_long(mac->mac_header.alignment.frame_ver,DEC);
+	Serial.print(",");
+	Serial.println_long(mac->mac_header.alignment.rx_addr_type,DEC);
+*/
 	switch(mac->mac_header.alignment.tx_addr_type)
 	{
+	case 0:
+		memset(&mac->tx_addr[0],0xff,8);
+		break;
 	case 1:
 		mac->tx_addr[0] = raw[offset],offset++;
 		for(i=1;i<8;i++) {
@@ -667,7 +759,13 @@ static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len)
 	return;
 }
 
-	
+// 2016.11.15 Eiichi Saito AES
+static SUBGHZ_MSG subghz_setAes(uint8_t *key, uint8_t *workspace)
+{
+    AES128_setAes(key,workspace);
+	return SUBGHZ_OK;
+}
+
 // setting of function
 const SubGHz_CTRL SubGHz = {
 	subghz_init,
@@ -684,4 +782,5 @@ const SubGHz_CTRL SubGHz = {
 	subghz_setSendMode,
 	subghz_getSendMode,
 	subghz_decMac,
+	subghz_setAes,
 };

@@ -70,6 +70,7 @@ static struct {
 	unsigned short tx_panid;
 	unsigned char my_addr[8];
 	unsigned char tx_addr[8];
+	unsigned char key[16];
 	unsigned char rx_rssi;
 	unsigned char tx_rssi;
 	unsigned char senseTime;
@@ -90,6 +91,10 @@ static struct {
 	{0x01,0x23,0x45,0x67,0x89,0xab,0xcd,0xef},		// my addr
 	{0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff},		// tx addr
 };
+
+static unsigned char aes_workspace[256];
+static const char chr_to_hex[] = {0x00,0x10,0x20,0x30,0x40,0x50,0x60,0x70,0x80,0x90,0x00,0xa0,0xb0,0xc0,0xd0,0xe0,0xf0};
+
 // *****************************************************************
 //			transfer process (input from chrdev)
 // *****************************************************************
@@ -210,6 +215,30 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 						if(ret != SUBGHZ_OK) ret *=-1;
 						break;
 					}
+				case IOCTL_SET_AES:
+                    {
+                        unsigned char i; 
+                        unsigned char index;
+                        unsigned char ckey[32]; 
+                        unsigned char shift;
+                        unsigned char hex;
+		                memcpy(ckey,(const void *)arg,32);
+						printk(KERN_ERR"AES = %s\n",(char *)arg);
+						printk(KERN_ERR"AES = %s\n",ckey);
+                        for(i=0;i < 32;i++){
+                            index = ckey[i]&0x0f;
+                            // a - f or A - f
+                            if(ckey[i]&0xc0) index +=10;
+                            hex = chr_to_hex[index];
+                            // LSB side is 0 shift, MSB side is 4 bits shifth
+                            shift = 4*(i%2);
+                            p.key[i/2] |= (hex >> shift);
+						    printk(KERN_ERR"AES = %x %x %d %d %d %x\n",p.key[i/2],ckey[i],shift,index,i/2,hex);
+                        }
+                        ret = SubGHz.setAes(p.key,aes_workspace);
+                        if(ret != SUBGHZ_OK) ret = EFAULT;
+                        break;
+                    }
 				default:
 					ret = -ENOTTY;
 					break;

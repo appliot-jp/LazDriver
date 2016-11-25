@@ -28,6 +28,7 @@
 #define	IOCTL_SET_CLOSE			0x17
 #define	IOCTL_GET_SEND_MODE		0x18
 #define	IOCTL_SET_SEND_MODE		0x19
+#define	IOCTL_SET_AES		    0x1a
 #define	IOCTL_PARAM				0x1000
 #define	IOCTL_GET_CH			0x02
 #define	IOCTL_SET_CH			0x03
