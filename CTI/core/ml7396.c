@@ -1,4 +1,5 @@
 /* ml7396.c - ML7396ドライバ
+    // 2015.07.10 Eiichi Saito : The conditions for an address filter are changed.
  *
  * Copyright (c) 2015  Communication Technology Inc.,
  * All rights reserved.
@@ -801,25 +802,42 @@ error:
  * *rxheader: 解析したヘッダ情報
  * 戻り値: 0=破棄, 0以外=受信
  */
+
+#ifndef LAZURITE_IDE
+#include "../../common-lzpi.h"
+#endif //LAZURITE_IDE
 static int is_rx_recvdata(const ML7396_Buffer *rx, ML7396_Header *rxheader) {
-    int status = 0;
-    uint16_t dstaddr;
+    int status = !0;
+    //uint16_t dstaddr;
+
+	printk(KERN_INFO"%s %s %d %s\n",__FILE__,__func__,__LINE__,"NG1");
+	PAYLOADDUMP(rx->data,rx->status);
 
     ASSERT(rx->status >= 0);
-    if (parse_data(rx->data, rx->status, rxheader) == NULL)
+    if (parse_data(rx->data, rx->status, rxheader) == NULL){
+		status = 0;
         goto error;                      /* 解析不能なデータは破棄 */
-    // 2015.07.10 Eiichi Saito : The conditions for an address filter are changed.
+	}
+	/*
     dstaddr = *ml7396_myaddr();
     if ((dstaddr != rxheader->dstaddr) && 
-        !(rxheader->dstaddr == 0xffff && rxheader->dstpanid == 0xffff))
+        !(rxheader->dstaddr == 0xffff && rxheader->dstpanid == 0xffff) &&
+		// 2016.11.25
+    	!((rxheader->fc & IEEE802154_FC_SAMODE_MASK) == IEEE802154_FC_SAMODE_NONE) &&
+    	!((rxheader->fc & IEEE802154_FC_DAMODE_MASK) == IEEE802154_FC_DAMODE_NONE)
+		)
+	{
+				printk(KERN_INFO"%s %s %d %s\n",__FILE__,__func__,__LINE__,"NG1");
        goto error;
-
+}
     switch (rxheader->fc & IEEE802154_FC_TYPE_MASK) {
-        case IEEE802154_FC_TYPE_BEACON:  /* IEEE802.15.4eパケットのビーコンは受信 */
-        case IEEE802154_FC_TYPE_DATA:    /* IEEE802.15.4eパケットのデータも受信 */
+        case IEEE802154_FC_TYPE_BEACON:  // IEEE802.15.4eパケットのビーコンは受信
+        case IEEE802154_FC_TYPE_DATA:    // IEEE802.15.4eパケットのデータも受信
             status = !0;
+				printk(KERN_INFO"%s %s %d %04x\n",__FILE__,__func__,__LINE__,rxheader->fc);
             break;
-    }                                    /* その他は全て破棄 */
+    }                                    // その他は全て破棄
+	*/
 error:
     return status;
 }
@@ -1924,6 +1942,7 @@ static void sint_handler(void) {
     ml7396_hwif_timer_di();  /* em_main() と em_data の排他制御 */
     /* 割り込み要因取得 */
     REG_INTSRC(hw_event);
+	printk(KERN_INFO"%s %s %d %08x\n",__FILE__,__func__,__LINE__,hw_event);
     // 2016.03.14 tx send event
     hw_done = 0;
     em_data.store_hw_event = 0;

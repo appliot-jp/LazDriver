@@ -86,8 +86,24 @@ typedef struct {
     int16_t seq;        /* シーケンス番号 */
     uint16_t dstpanid;  /* 宛て先PANID */
     uint16_t dstaddr;   /* 宛て先アドレス */
+	/*
+	uint8_t dstaddr_mode;
+	union {
+		uint8_t addr8;
+		uint16_t addr16;
+		uint8_t addr64[8];
+	}dstaddr;
+	*/
     uint16_t srcpanid;  /* 送り元PANID */
     uint16_t srcaddr;   /* 送り元アドレス */
+	/*
+	uint8_t srcaddr_mode
+	union {
+		uint8_t addr8;
+		uint16_t addr16;
+		uint8_t addr64[8];
+	}srcaddr;
+	*/
 } ML7396_Header;
 
 /* 送受信バッファ
