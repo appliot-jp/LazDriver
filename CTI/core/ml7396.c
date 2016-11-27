@@ -691,109 +691,102 @@ error:
     return payload;
 }
 
-/* 受信データ解析
- *
- * dataのMACヘッダを解析して下記情報をheader構造体に反映する:
- *  フレームコントロールのPANID圧縮
- *  フレームコントロールのシーケンス番号圧縮
- *  フレームコントロールの受信アドレスモード
- *  フレームコントロールの送信アドレスモード
- *  シーケンス番号
- *  宛て先PANID
- *  宛て先アドレス
- *  送り元PANID
- *  送り元アドレス
- *
- *  data: 受信データバッファ
- *  size: 受信データサイズ
- *  *header: 送信データから展開されたヘッダ情報
- *  戻り値: ペイロードデータの先頭アドレス
- *          戻り値 - data = MACヘッダサイズ
- *          受信データサイズ - MACヘッダサイズ = 受信ペイロードサイズ
- */
-static const uint8_t *parse_data(const uint8_t *data, uint16_t size, ML7396_Header *header) {
-    const uint8_t *payload = NULL;
-    struct {
-        uint16_t dstaddrmode;
-        uint16_t srcaddrmode;
-        uint16_t panidcomps;
-        uint16_t seqsuppress;
-        // 2015.07.10 Eiichi Saito : The conditions for an address filter are changed.
-        uint16_t dstaddr;
-    } fc;
+	/******************************************************************************/
+	/*! @brief parse mac header
+	  @param[in] *data start pointer of receiving data
+	  @param[in] size length of data
+	  @param[in] *header  pointer of mac header
+	  @return    false= invalid data, true valid data
+	  @exception  none
+	  @issue  move to mac
+	 ******************************************************************************/
+static bool parse_data(const uint8_t *data, uint16_t size, ML7396_Header *header) {
 
-    /* IEEE 802.15.4e フレームのビーコンとデータ、ACK以外は未対応 */
+	const uint8_t addr_len[] = {0,1,2,8};
+	const uint8_t* ptr = data;
+	uint16_t offset = 0;
+	bool isValid = false;
+	uint16_t min_len = 2;
+	uint8_t panid_comp;
+
+    const uint8_t payload = NULL;
+
+    // framce control
     if (size < 2)
         goto error;
-    header->fc = v2u16(data), data += 2, size -= 2;
-    switch (header->fc & (IEEE802154_FC_IEEE802154_MASK|IEEE802154_FC_TYPE_MASK)) {
-    case IEEE802154_FC_IEEE802154_E|IEEE802154_FC_TYPE_BEACON:
-    case IEEE802154_FC_IEEE802154_E|IEEE802154_FC_TYPE_DATA:
-    case IEEE802154_FC_IEEE802154_E|IEEE802154_FC_TYPE_ACK:
-        break;
-    default:
-        goto error;
-    }
-    /* フレームコントロールフィールドから宛て先/送り元のPANID/アドレスとシーケンス番号のフィールドサイズを取得 */
-    fc.dstaddrmode = header->fc & IEEE802154_FC_DAMODE_MASK;
-    fc.srcaddrmode = header->fc & IEEE802154_FC_SAMODE_MASK;
-    fc.panidcomps = header->fc & IEEE802154_FC_PANID_COMPS;
-    fc.seqsuppress = header->fc & IEEE802154_FC_SEQ_SUPPRESS;
-    /* MACヘッダから宛て先/送り元のPANID/アドレスとシーケンス番号を取得(16ビット以外のアドレスは未対応) */
-    if (!fc.seqsuppress) {
-        if (size < 1)
-            goto error;
-        header->seq = *data++, --size;
-    }
-    else
-        header->seq = ML7396_HEADER_SEQNONE;
-    if (( fc.panidcomps && (fc.dstaddrmode == IEEE802154_FC_DAMODE_NONE) && (fc.srcaddrmode == IEEE802154_FC_SAMODE_NONE)) ||
-        (!fc.panidcomps && (fc.dstaddrmode != IEEE802154_FC_DAMODE_NONE)) ) {
-        if (size < 2)
-            goto error;
-        header->dstpanid = v2u16(data), data += 2, size -= 2;
-    }
-    else
-        header->dstpanid = ML7396_HEADER_PANIDNONE;
-    switch (fc.dstaddrmode) {
-    case IEEE802154_FC_DAMODE_NONE:
-        header->dstaddr = ML7396_HEADER_ADDRNONE;
-        break;
-    case IEEE802154_FC_DAMODE_SHORT:
-        if (size < 2)
-            goto error;
-        header->dstaddr = v2u16(data), data += 2, size -= 2;
-        break;
-    case IEEE802154_FC_DAMODE_LLDN:
-    case IEEE802154_FC_DAMODE_LONG:
-    default:
-        goto error;
-    }
-    if (!fc.panidcomps && fc.dstaddrmode == IEEE802154_FC_DAMODE_NONE && fc.srcaddrmode != IEEE802154_FC_SAMODE_NONE) {
-        if (size < 2)
-            goto error;
-        header->srcpanid = v2u16(data), data += 2, size -= 2;
-    }
-    else
-        header->srcpanid = ML7396_HEADER_PANIDNONE;
-    switch (fc.srcaddrmode) {
-    case IEEE802154_FC_SAMODE_NONE:
-        header->srcaddr = ML7396_HEADER_ADDRNONE;
-        break;
-    case IEEE802154_FC_SAMODE_SHORT:
-        if (size < 2)
-            goto error;
-        header->srcaddr = v2u16(data), data += 2, size -= 2;
-        break;
-    case IEEE802154_FC_SAMODE_LLDN:
-    case IEEE802154_FC_SAMODE_LONG:
-    default:
-        goto error;
-    }
-    /* ペイロードの先頭アドレスを返す */
-    payload = data;
+    header->fc = v2u16(ptr),ptr+=2,offset+=2;
+
+	header->dstaddr.mode = GET_RX_ADDR_TYPE(header->fc);
+	header->srcaddr.mode = GET_TX_ADDR_TYPE(header->fc);
+	panid_comp = GET_PANID_COMP(header->fc);
+
+	// addr type
+	addr_type = panid_comp;
+	addr_type + = header->srcaddr.mode ? 2: 0;
+	addr_type + = header->dstaddr.mode ? 4: 0;
+	header->addr_type = addr_type;
+
+	// panid enb
+	switch(addr_type)
+	{
+		case 0:
+		case 3:
+		case 5:
+		case 7:
+			header->dstpanid.enb = 0, header->srcpanid.enb = 0;
+			break;
+		case 1:
+		case 4:
+		case 6:
+			header->dstpanid.enb = 1, header->srcpanid.enb = 0;
+			min_len += 2;
+			break;
+		case 2:
+			header->dstpanid.enb = 0, header->srcpanid.enb = 1;
+			min_len += 2;
+			break;
+	}
+
+	// packet length check
+	if(GET_SEQ_ENB(header->seq)) min_len+=1;
+	}
+	min_len += addr_len[header->srcaddr.mode];
+	min_len += addr_len[header->dstaddr.mode];
+	if(min_len > size) goto error;
+	else isValid = true;
+
+	// sequence number
+	if (GET_SEC_ENB(header->fc)) {
+		header->seq = *ptr,ptr++,offset++;
+	} else {
+		header->seq = -1;
+	}
+	// dst panid
+	if(header->dstpanid.enb)
+	{
+    	header->dstpanid.panid = v2u16(ptr), ptr+=2,offset+=2;
+	}
+	// dst addr
+	memset(header->dstaddr.addr.addr64,0,8);
+	for(i=0;i< addr_len[header->dstaddr.mode];i++)
+	{
+    	header->dstaddr.addr.addr64[i] = *(ptr), ptr++,offset++;
+	}
+	// src panid
+	if(header->srcpanid.enb)
+	{
+    	header->srcpanid.panid = v2u16(ptr), ptr+=2,offset+=2;
+	}
+	// src addr
+	memset(header->srcaddr.addr.addr64,0,8);
+	for(i=0;i< addr_len[header->srcaddr.mode];i++)
+	{
+    	header->srcaddr.addr.addr64[i] = *(ptr), ptr++,offset++;
+	}
+	header->payload.data = ptr;
+	header->payload.len = size-offset;
 error:
-    return payload;
+	return isValid;
 }
 
 /* 受信データ解析と受信/破棄の判定
@@ -807,39 +800,39 @@ error:
 #include "../../common-lzpi.h"
 #endif //LAZURITE_IDE
 static int is_rx_recvdata(const ML7396_Buffer *rx, ML7396_Header *rxheader) {
-    int status = !0;
-    //uint16_t dstaddr;
+	int status = !0;
+	//uint16_t dstaddr;
 
 	printk(KERN_INFO"%s %s %d %s\n",__FILE__,__func__,__LINE__,"NG1");
 	PAYLOADDUMP(rx->data,rx->status);
 
-    ASSERT(rx->status >= 0);
-    if (parse_data(rx->data, rx->status, rxheader) == NULL){
+	ASSERT(rx->status >= 0);
+	if (parse_data(rx->data, rx->status, rxheader) == NULL){
 		status = 0;
-        goto error;                      /* 解析不能なデータは破棄 */
+		goto error;                      /* 解析不能なデータは破棄 */
 	}
 	/*
-    dstaddr = *ml7396_myaddr();
-    if ((dstaddr != rxheader->dstaddr) && 
-        !(rxheader->dstaddr == 0xffff && rxheader->dstpanid == 0xffff) &&
-		// 2016.11.25
-    	!((rxheader->fc & IEEE802154_FC_SAMODE_MASK) == IEEE802154_FC_SAMODE_NONE) &&
-    	!((rxheader->fc & IEEE802154_FC_DAMODE_MASK) == IEEE802154_FC_DAMODE_NONE)
-		)
+	   dstaddr = *ml7396_myaddr();
+	   if ((dstaddr != rxheader->dstaddr) && 
+	   !(rxheader->dstaddr == 0xffff && rxheader->dstpanid == 0xffff) &&
+	// 2016.11.25
+	!((rxheader->fc & IEEE802154_FC_SAMODE_MASK) == IEEE802154_FC_SAMODE_NONE) &&
+	!((rxheader->fc & IEEE802154_FC_DAMODE_MASK) == IEEE802154_FC_DAMODE_NONE)
+	)
 	{
-				printk(KERN_INFO"%s %s %d %s\n",__FILE__,__func__,__LINE__,"NG1");
-       goto error;
-}
-    switch (rxheader->fc & IEEE802154_FC_TYPE_MASK) {
-        case IEEE802154_FC_TYPE_BEACON:  // IEEE802.15.4eパケットのビーコンは受信
-        case IEEE802154_FC_TYPE_DATA:    // IEEE802.15.4eパケットのデータも受信
-            status = !0;
-				printk(KERN_INFO"%s %s %d %04x\n",__FILE__,__func__,__LINE__,rxheader->fc);
-            break;
-    }                                    // その他は全て破棄
-	*/
+	printk(KERN_INFO"%s %s %d %s\n",__FILE__,__func__,__LINE__,"NG1");
+	goto error;
+	}
+	switch (rxheader->fc & IEEE802154_FC_TYPE_MASK) {
+	case IEEE802154_FC_TYPE_BEACON:  // IEEE802.15.4eパケットのビーコンは受信
+	case IEEE802154_FC_TYPE_DATA:    // IEEE802.15.4eパケットのデータも受信
+	status = !0;
+	printk(KERN_INFO"%s %s %d %04x\n",__FILE__,__func__,__LINE__,rxheader->fc);
+	break;
+	}                                    // その他は全て破棄
+	 */
 error:
-    return status;
+	return status;
 }
 
 /* ACKを返信するかの判定とACKフレーム生成
@@ -850,21 +843,21 @@ error:
  * 戻り値: 0=ACK送信不要, 0以外=ACK送信必要
  */
 static int make_rx_sendack(ML7396_Header *rxheader, uint16_t myaddr, ML7396_Buffer *ack) {
-    int status = 0;
-    uint8_t *payload;
+	int status = 0;
+	uint8_t *payload;
 
-    if (rxheader->fc & IEEE802154_FC_ACKREQ && rxheader->dstaddr == myaddr) {  /* ACK要求が付いていて自機アドレス宛てならばACK返信 */
-        /* 受信データのACK要求フラグを落としてテータタイプをACKに変更したMACヘッダを返信 */
-        rxheader->fc &= ~(IEEE802154_FC_TYPE_MASK|IEEE802154_FC_ACKREQ);
-        rxheader->fc |= IEEE802154_FC_TYPE_ACK;
-        payload = make_data(ack->data, ack->capacity, rxheader);
-        if (payload == NULL)
-            goto error;
-        ack->size = payload - ack->data;
-        status = !0;
-    }
+	if (rxheader->fc & IEEE802154_FC_ACKREQ && rxheader->dstaddr == myaddr) {  /* ACK要求が付いていて自機アドレス宛てならばACK返信 */
+		/* 受信データのACK要求フラグを落としてテータタイプをACKに変更したMACヘッダを返信 */
+		rxheader->fc &= ~(IEEE802154_FC_TYPE_MASK|IEEE802154_FC_ACKREQ);
+		rxheader->fc |= IEEE802154_FC_TYPE_ACK;
+		payload = make_data(ack->data, ack->capacity, rxheader);
+		if (payload == NULL)
+			goto error;
+		ack->size = payload - ack->data;
+		status = !0;
+	}
 error:
-    return status;
+	return status;
 }
 
 /* ACK待ちをすべきかの判定と待ち条件保持
@@ -874,15 +867,15 @@ error:
  * 戻り値: 0=ACK待ち不要, 0以外=ACK待ち必要
  */
 static int is_tx_waitack(const ML7396_Buffer *tx, ML7396_Header *ackheader) {
-    int status = 0;
+	int status = 0;
 
-    ASSERT(tx->status >= 0);
-    if (parse_data(tx->data, tx->status, ackheader) == NULL)
-        goto error;                            /* 解析不能なデータはACKでないと判定 */
-    if (ackheader->fc & IEEE802154_FC_ACKREQ)  /* ACK要求がついていればACK待ちをする */
-        status = !0;
+	ASSERT(tx->status >= 0);
+	if (parse_data(tx->data, tx->status, ackheader) == NULL)
+		goto error;                            /* 解析不能なデータはACKでないと判定 */
+	if (ackheader->fc & IEEE802154_FC_ACKREQ)  /* ACK要求がついていればACK待ちをする */
+		status = !0;
 error:
-    return status;
+	return status;
 }
 
 /* 待っているACKを受信したかの判定
@@ -892,29 +885,29 @@ error:
  * 戻り値: 0=待っているACKではない, 0以外=待っているACKを受信した
  */
 static int is_tx_recvack(const ML7396_Buffer *ack, const ML7396_Header *ackheader) {
-    int status = 0;
-    ML7396_Header header;
+	int status = 0;
+	ML7396_Header header;
 
-    ASSERT(ack->status >= 0);
-    if (parse_data(ack->data, ack->status, &header) == NULL)
-        goto error;                                    /* 解析不能なデータはACKでないと判定 */
-    switch (header.fc & IEEE802154_FC_TYPE_MASK) {
-    case IEEE802154_FC_TYPE_ACK:                       /* データタイプがACKであり */
-//      if (header.seq == ackheader->seq &&            /* 送信データとヘッダ情報が一致するならそのACK返信と判定 */
-//          header.dstpanid == ackheader->dstpanid &&
-//          header.dstaddr == ackheader->dstaddr &&
-//          header.srcpanid == ackheader->srcpanid &&
-//          header.srcaddr == ackheader->srcaddr )
-//          status = !0;
-// 2015.05.07 Eiichi Saito : ACK Frame analysis is corrected.
-        if (header.seq == ackheader->seq &&            /* 送信データとヘッダ情報が一致するならそのACK返信と判定 */
-            header.dstpanid == ackheader->dstpanid &&
-            header.dstaddr == ackheader->srcaddr )
-            status = !0;
-        break;
-    }
+	ASSERT(ack->status >= 0);
+	if (parse_data(ack->data, ack->status, &header) == NULL)
+		goto error;                                    /* 解析不能なデータはACKでないと判定 */
+	switch (header.fc & IEEE802154_FC_TYPE_MASK) {
+		case IEEE802154_FC_TYPE_ACK:                       /* データタイプがACKであり */
+			//      if (header.seq == ackheader->seq &&            /* 送信データとヘッダ情報が一致するならそのACK返信と判定 */
+			//          header.dstpanid == ackheader->dstpanid &&
+			//          header.dstaddr == ackheader->dstaddr &&
+			//          header.srcpanid == ackheader->srcpanid &&
+			//          header.srcaddr == ackheader->srcaddr )
+			//          status = !0;
+			// 2015.05.07 Eiichi Saito : ACK Frame analysis is corrected.
+			if (header.seq == ackheader->seq &&            /* 送信データとヘッダ情報が一致するならそのACK返信と判定 */
+					header.dstpanid == ackheader->dstpanid &&
+					header.dstaddr == ackheader->srcaddr )
+				status = !0;
+			break;
+	}
 error:
-    return status;
+	return status;
 }
 
 
@@ -922,30 +915,30 @@ error:
  */
 // 2015.07.31 Eiichi Saito : Duplicate SequneceNumber is not notified to a higher layer.
 typedef struct {
-    uint16_t myaddr;          /* 自機アドレス */
-    uint16_t mypanid;         /* 自機PANID */
-    uint16_t last_seq;        /* 重複SequneceNumberチェック */
-    ML7396_State state;       /* イベントマシンの状態 */
-    ML7396_Buffer *rx;        /* パケット受信バッファ */
-    ML7396_Buffer *tx;        /* パケット送信バッファ */
-    ML7396_Buffer ack;        /* ACK送受信バッファ */
-    ML7396_Header ackheader;  /* ACKを識別するヘッダ情報 */
-    struct {                  /* リトライカウンタ */
-        uint8_t ack;            /* 再送 */
-        uint8_t cca;            /* CCAチェック */
-    } count;
-    // 2016.03.14 tx send event
-    uint32_t store_hw_event;    /* ステートマシン高速化　*/
-    // 2016.05.20 Eiichi Saito :Position measurement: Cca result 
-    uint8_t cca_rslt;
+	uint16_t myaddr;          /* 自機アドレス */
+	uint16_t mypanid;         /* 自機PANID */
+	uint16_t last_seq;        /* 重複SequneceNumberチェック */
+	ML7396_State state;       /* イベントマシンの状態 */
+	ML7396_Buffer *rx;        /* パケット受信バッファ */
+	ML7396_Buffer *tx;        /* パケット送信バッファ */
+	ML7396_Buffer ack;        /* ACK送受信バッファ */
+	ML7396_Header ackheader;  /* ACKを識別するヘッダ情報 */
+	struct {                  /* リトライカウンタ */
+		uint8_t ack;            /* 再送 */
+		uint8_t cca;            /* CCAチェック */
+	} count;
+	// 2016.03.14 tx send event
+	uint32_t store_hw_event;    /* ステートマシン高速化　*/
+	// 2016.05.20 Eiichi Saito :Position measurement: Cca result 
+	uint8_t cca_rslt;
 } EM_Data;
 
 // 2016.06.30 Eiichi Saito: cca idle
 typedef enum {
-    CCA_STOP=0,                  /* CCA強制停止 */
-    CCA_FAST,                    /* 初回ＣＣＡ */
-    IDLE_DETECT,                 /* アイドル検出モードCCA */
-    CCA_RETRY                    /* BACKOFF 付きCCA */
+	CCA_STOP=0,                  /* CCA強制停止 */
+	CCA_FAST,                    /* 初回ＣＣＡ */
+	IDLE_DETECT,                 /* アイドル検出モードCCA */
+	CCA_RETRY                    /* BACKOFF 付きCCA */
 } CCA_State;
 
 /** イベントフラグ
@@ -978,22 +971,22 @@ typedef enum {
 
 /* 各状態における割り込み許可状況 */
 static const uint32_t event_enable[] = {
-    0,                                                                             /* ML7396_StateReset */
-    HW_EVENT_RX_DONE|HW_EVENT_FIFO_FULL|HW_EVENT_CRC_ERROR,                   /* ML7396_StateIdle */
-    HW_EVENT_TX_DONE|HW_EVENT_FIFO_EMPTY,                                     /* ML7396_StateSendACK */
-    HW_EVENT_TX_DONE|HW_EVENT_FIFO_EMPTY|HW_EVENT_CCA_DONE|HW_EVENT_TIMEOUT,  /* ML7396_StateSending */
-    HW_EVENT_RX_DONE|HW_EVENT_FIFO_FULL|HW_EVENT_CRC_ERROR|HW_EVENT_TIMEOUT,  /* ML7396_StateWaitACK */
-    0                                                                              /* ML7396_StateSleep */
+	0,                                                                             /* ML7396_StateReset */
+	HW_EVENT_RX_DONE|HW_EVENT_FIFO_FULL|HW_EVENT_CRC_ERROR,                   /* ML7396_StateIdle */
+	HW_EVENT_TX_DONE|HW_EVENT_FIFO_EMPTY,                                     /* ML7396_StateSendACK */
+	HW_EVENT_TX_DONE|HW_EVENT_FIFO_EMPTY|HW_EVENT_CCA_DONE|HW_EVENT_TIMEOUT,  /* ML7396_StateSending */
+	HW_EVENT_RX_DONE|HW_EVENT_FIFO_FULL|HW_EVENT_CRC_ERROR|HW_EVENT_TIMEOUT,  /* ML7396_StateWaitACK */
+	0                                                                              /* ML7396_StateSleep */
 };
 
 /* 状態移行と同時にそれに必要な割り込みを許可 */
 #define SWITCH_STATE(_state) \
-    do { \
-        uint32_t inten; \
-        em_data->state = (_state); \
-        inten = event_enable[em_data->state]; \
-        REG_INTEN(inten); \
-    } while (0)
+	do { \
+		uint32_t inten; \
+		em_data->state = (_state); \
+		inten = event_enable[em_data->state]; \
+		REG_INTEN(inten); \
+	} while (0)
 
 
 /** ソフトウェアイベント処理
@@ -1003,7 +996,7 @@ static const uint32_t event_enable[] = {
  *  ソフトウェア待ち時間ループ時に実行される
  */
 static void idle(void) {
-    /* 処理なし */
+	/* 処理なし */
 }
 
 /* 初期化
@@ -1014,9 +1007,9 @@ static void idle(void) {
  * Idle, TRXOFF of RXON
  */
 static void ml7396_setAckTimerEnable(uint8_t ack) {
-    int status = ML7396_STATUS_UNKNOWN;
+	int status = ML7396_STATUS_UNKNOWN;
 	if(ack) REG_WRB(REG_ADR_ACK_TIMER_EN, 0x20);
-     else REG_WRB(REG_ADR_ACK_TIMER_EN, 0x10);
+	else REG_WRB(REG_ADR_ACK_TIMER_EN, 0x10);
 error:
 	return;
 }
@@ -1027,102 +1020,102 @@ error:
 
 static void backoffTimer(EM_Data *em_data){
 
-    uint16_t cca_wait;
-    cca_wait = (rand()&em_data->tx->opt.tx.cca.wait) * UNIT_BAKOFF_PERIOD;
-    if (!cca_wait) cca_wait = DEFAUL_BAKOF;
-    HAL_delayMicroseconds(cca_wait);
+	uint16_t cca_wait;
+	cca_wait = (rand()&em_data->tx->opt.tx.cca.wait) * UNIT_BAKOFF_PERIOD;
+	if (!cca_wait) cca_wait = DEFAUL_BAKOF;
+	HAL_delayMicroseconds(cca_wait);
 }
 
 static int em_setup(EM_Data *em_data, void *data) {
-    int status = ML7396_STATUS_UNKNOWN;
-    uint8_t reg_data;
-    uint32_t intsrc;
-    uint8_t get_my_addr[4];
+	int status = ML7396_STATUS_UNKNOWN;
+	uint8_t reg_data;
+	uint32_t intsrc;
+	uint8_t get_my_addr[4];
 
-    switch (em_data->state) {
-    case ML7396_StateReset:
-        ON_ERROR_STATUS(ml7396_hwif_init(), ML7396_STATUS_EINIT);
-        regbank(0xff);
-        /* クロック安定待ち */
-        do {
-            idle();
-            REG_RDB(REG_ADR_CLK_SET, reg_data);
-        } while (!(reg_data & 0x80));
-        // 2015.10.26 Eiichi Saito   addition random backoff
-        // 2016.6.8 Eiichi Saito: SubGHz API common
-        // HAL_I2C_read(0x50, 0x26, get_my_addr, 2);
-        HAL_I2C_read(0x26, get_my_addr, 2);
-        srand(n2u16(get_my_addr));
-        /* break無し */
-    default:
-        SWITCH_STATE(ML7396_StateReset);  /* Resetステートへ移行 */
-        REG_PHYRST();  /* PHYをリセット */
-        em_data->rx = NULL, em_data->tx = NULL;
-        ml7396_hwif_regset(data);  /* レジスタ設定 */
-        /* IEEE802.15.4gパケット, 自動送信ON, 受信データにEDを付加, Whiteningを行う */
-        REG_RDB(REG_ADR_PACKET_MODE_SET, reg_data);
-     // 2016.06.30 Eiichi Saito: cca idle
-     // reg_data |=  0x1e;
-        reg_data |=  0x1a;
-        REG_WRB(REG_ADR_PACKET_MODE_SET, reg_data);
-        /* 送受信時にCRC16を演算 */
-        REG_RDB(REG_ADR_FEC_CRC_SET, reg_data);
-        reg_data |=  0x0b, reg_data &= ~0x04;
-        REG_WRB(REG_ADR_FEC_CRC_SET, reg_data);
-        /* FIFO_MARGIN*2 バイト分FIFOに書き込んだ時点で自動で TX_ON へ移行 */
-// 2016.4.21 Eiichi Saito: FAST_TX disable
-//      REG_WRB(REG_ADR_FAST_TX_SET, FIFO_MARGIN<<1);
-        /* 送信完了で自動で TRX_OFF へ移行 */
-        // 2015.12.14 Eiichi Saito: enable TX_DONERX 
-//      REG_WRB(REG_ADR_ACK_TIMER_EN, 0x10);
-//      REG_WRB(REG_ADR_ACK_TIMER_EN, 0x20);
-        /* FIFO_MARGIN バイト分余裕を持ってFIFOを読み書きする設定 */
-// 2016.06.30 Eiichi Saito: cca idle
-//      REG_WRB(REG_ADR_TX_ALARM_LH, FIFO_MARGIN);      /* 未使用だが設定しておく必要あり 255では何故かFIFOアクセスエラーが発生する */
-//      REG_WRB(REG_ADR_TX_ALARM_HL, FIFO_MARGIN);      /* 送信FIFOの残りデータ数が FIFO_MARGIN になれば割り込み発生 */
-//      REG_WRB(REG_ADR_RX_ALARM_LH, 256-FIFO_MARGIN);  /* 受信FIFOの空き領域が FIFO_MARGIN になれば割り込み発生 */
-//      REG_WRB(REG_ADR_RX_ALARM_HL, 256-FIFO_MARGIN);  /* 未使用だが設定しておく必要あり */
-        REG_WRB(REG_ADR_TX_ALARM_LH, 0x00);      /* 未使用だが設定しておく必要あり 255では何故かFIFOアクセスエラーが発生する */
-        REG_WRB(REG_ADR_TX_ALARM_HL, 0x00);      /* 送信FIFOの残りデータ数が FIFO_MARGIN になれば割り込み発生 */
-        REG_WRB(REG_ADR_RX_ALARM_LH, 0x00);  /* 受信FIFOの空き領域が FIFO_MARGIN になれば割り込み発生 */
-        REG_WRB(REG_ADR_RX_ALARM_HL, 0x00);  /* 未使用だが設定しておく必要あり */
-        /* FIFOの制御仕様
-         *
-         * 送信:
-         *  T1) 256-n バイト分(サイズがそれ未満の場合は全て)書き込む。
-         *  T2) b まで( or 全てを)書き込んだタイミングで送信開始。
-         *  T3) 残りデータが有る場合、a を切ったタイミングで 256-n バイ
-         *      ト分のデータ(サイズがそれ未満の場合は全て)を書き込む。
-         *  T4) 全データを書き込むまで T3 を繰り返す。
-         *
-         * 受信:
-         *  R1) c を超えた(or 全データ受信した)タイミングで 256-n バイ
-         *      ト分(or 全て)読み出す。
-         *  R2) 全データを読み出すまで R1 を繰り返す。
-         *
-         * FIFO:
-         *   +---+ 255
-         *  c|---| 256-n (RX_ALARM_LH レジスタ設定値)
-         *   |   |
-         *  b|---| n*2   (FAST_TX_SET レジスタ設定値)
-         *  a|---| n     (TX_ALARM_HL レジスタ設定値)
-         *   +---+ 0
-         *    n=FIFO_MARGIN
-         */
-        /* VCOキャリブレーション */
-        // 2015.07.10 Eiichi Saito : After a VCO calibration clears all the interruption.
-        REG_INTCLR(0x00000000);
-        REG_WRB(REG_ADR_VCO_CAL_START, 0x01);
-        do {
-            idle();
-            REG_INTSRC(intsrc);
-        } while (!(intsrc & 0x00000004));
-        REG_INTCLR(0x00000004);
-        SWITCH_STATE(ML7396_StateIdle);  /* Idelステートへ移行 */
-        status = ML7396_STATUS_OK;
-    }
+	switch (em_data->state) {
+		case ML7396_StateReset:
+			ON_ERROR_STATUS(ml7396_hwif_init(), ML7396_STATUS_EINIT);
+			regbank(0xff);
+			/* クロック安定待ち */
+			do {
+				idle();
+				REG_RDB(REG_ADR_CLK_SET, reg_data);
+			} while (!(reg_data & 0x80));
+			// 2015.10.26 Eiichi Saito   addition random backoff
+			// 2016.6.8 Eiichi Saito: SubGHz API common
+			// HAL_I2C_read(0x50, 0x26, get_my_addr, 2);
+			HAL_I2C_read(0x26, get_my_addr, 2);
+			srand(n2u16(get_my_addr));
+			/* break無し */
+		default:
+			SWITCH_STATE(ML7396_StateReset);  /* Resetステートへ移行 */
+			REG_PHYRST();  /* PHYをリセット */
+			em_data->rx = NULL, em_data->tx = NULL;
+			ml7396_hwif_regset(data);  /* レジスタ設定 */
+			/* IEEE802.15.4gパケット, 自動送信ON, 受信データにEDを付加, Whiteningを行う */
+			REG_RDB(REG_ADR_PACKET_MODE_SET, reg_data);
+			// 2016.06.30 Eiichi Saito: cca idle
+			// reg_data |=  0x1e;
+			reg_data |=  0x1a;
+			REG_WRB(REG_ADR_PACKET_MODE_SET, reg_data);
+			/* 送受信時にCRC16を演算 */
+			REG_RDB(REG_ADR_FEC_CRC_SET, reg_data);
+			reg_data |=  0x0b, reg_data &= ~0x04;
+			REG_WRB(REG_ADR_FEC_CRC_SET, reg_data);
+			/* FIFO_MARGIN*2 バイト分FIFOに書き込んだ時点で自動で TX_ON へ移行 */
+			// 2016.4.21 Eiichi Saito: FAST_TX disable
+			//      REG_WRB(REG_ADR_FAST_TX_SET, FIFO_MARGIN<<1);
+			/* 送信完了で自動で TRX_OFF へ移行 */
+			// 2015.12.14 Eiichi Saito: enable TX_DONERX 
+			//      REG_WRB(REG_ADR_ACK_TIMER_EN, 0x10);
+			//      REG_WRB(REG_ADR_ACK_TIMER_EN, 0x20);
+			/* FIFO_MARGIN バイト分余裕を持ってFIFOを読み書きする設定 */
+			// 2016.06.30 Eiichi Saito: cca idle
+			//      REG_WRB(REG_ADR_TX_ALARM_LH, FIFO_MARGIN);      /* 未使用だが設定しておく必要あり 255では何故かFIFOアクセスエラーが発生する */
+			//      REG_WRB(REG_ADR_TX_ALARM_HL, FIFO_MARGIN);      /* 送信FIFOの残りデータ数が FIFO_MARGIN になれば割り込み発生 */
+			//      REG_WRB(REG_ADR_RX_ALARM_LH, 256-FIFO_MARGIN);  /* 受信FIFOの空き領域が FIFO_MARGIN になれば割り込み発生 */
+			//      REG_WRB(REG_ADR_RX_ALARM_HL, 256-FIFO_MARGIN);  /* 未使用だが設定しておく必要あり */
+			REG_WRB(REG_ADR_TX_ALARM_LH, 0x00);      /* 未使用だが設定しておく必要あり 255では何故かFIFOアクセスエラーが発生する */
+			REG_WRB(REG_ADR_TX_ALARM_HL, 0x00);      /* 送信FIFOの残りデータ数が FIFO_MARGIN になれば割り込み発生 */
+			REG_WRB(REG_ADR_RX_ALARM_LH, 0x00);  /* 受信FIFOの空き領域が FIFO_MARGIN になれば割り込み発生 */
+			REG_WRB(REG_ADR_RX_ALARM_HL, 0x00);  /* 未使用だが設定しておく必要あり */
+			/* FIFOの制御仕様
+			 *
+			 * 送信:
+			 *  T1) 256-n バイト分(サイズがそれ未満の場合は全て)書き込む。
+			 *  T2) b まで( or 全てを)書き込んだタイミングで送信開始。
+			 *  T3) 残りデータが有る場合、a を切ったタイミングで 256-n バイ
+			 *      ト分のデータ(サイズがそれ未満の場合は全て)を書き込む。
+			 *  T4) 全データを書き込むまで T3 を繰り返す。
+			 *
+			 * 受信:
+			 *  R1) c を超えた(or 全データ受信した)タイミングで 256-n バイ
+			 *      ト分(or 全て)読み出す。
+			 *  R2) 全データを読み出すまで R1 を繰り返す。
+			 *
+			 * FIFO:
+			 *   +---+ 255
+			 *  c|---| 256-n (RX_ALARM_LH レジスタ設定値)
+			 *   |   |
+			 *  b|---| n*2   (FAST_TX_SET レジスタ設定値)
+			 *  a|---| n     (TX_ALARM_HL レジスタ設定値)
+			 *   +---+ 0
+			 *    n=FIFO_MARGIN
+			 */
+			/* VCOキャリブレーション */
+			// 2015.07.10 Eiichi Saito : After a VCO calibration clears all the interruption.
+			REG_INTCLR(0x00000000);
+			REG_WRB(REG_ADR_VCO_CAL_START, 0x01);
+			do {
+				idle();
+				REG_INTSRC(intsrc);
+			} while (!(intsrc & 0x00000004));
+			REG_INTCLR(0x00000004);
+			SWITCH_STATE(ML7396_StateIdle);  /* Idelステートへ移行 */
+			status = ML7396_STATUS_OK;
+	}
 error:
-    return status;
+	return status;
 }
 
 /* パケット受信待ち開始
@@ -1133,18 +1126,18 @@ error:
  * Idle, TRXOFF or RXON
  */
 static int em_rxstart(EM_Data *em_data, ML7396_Buffer *buffer) {
-    int status = ML7396_STATUS_UNKNOWN;
+	int status = ML7396_STATUS_UNKNOWN;
 
-    if (em_data->rx != NULL) {  /* 既に待ち状態 */
-        status = ML7396_STATUS_EINVALID;
-        GOTO_ERROR;
-    }
-    buffer->status = ML7396_BUFFER_INIT;  /* 受信バッファクリア */
-    em_data->rx = buffer;  /* 受信バッファ登録 */
-    REG_RXON();
-    status = ML7396_STATUS_OK;
+	if (em_data->rx != NULL) {  /* 既に待ち状態 */
+		status = ML7396_STATUS_EINVALID;
+		GOTO_ERROR;
+	}
+	buffer->status = ML7396_BUFFER_INIT;  /* 受信バッファクリア */
+	em_data->rx = buffer;  /* 受信バッファ登録 */
+	REG_RXON();
+	status = ML7396_STATUS_OK;
 error:
-    return status;
+	return status;
 }
 
 /* パケット受信待ち停止
@@ -1155,19 +1148,19 @@ error:
  * Idle, RXON or TRXOFF
  */
 static int em_rxstop(EM_Data *em_data, void *data) {
-    int status = ML7396_STATUS_UNKNOWN;
+	int status = ML7396_STATUS_UNKNOWN;
 
-    if (em_data->rx == NULL) {  /* 既に待ち状態でない */
-        status = ML7396_STATUS_EINVALID;
-        GOTO_ERROR;
-    }
-    REG_TRXOFF();
-    em_data->rx->status = ML7396_BUFFER_ESTOP;
-    BUFFER_DONE(em_data->rx);
-    em_data->rx = NULL;  /* 受信バッファ削除 */
-    status = ML7396_STATUS_OK;
+	if (em_data->rx == NULL) {  /* 既に待ち状態でない */
+		status = ML7396_STATUS_EINVALID;
+		GOTO_ERROR;
+	}
+	REG_TRXOFF();
+	em_data->rx->status = ML7396_BUFFER_ESTOP;
+	BUFFER_DONE(em_data->rx);
+	em_data->rx = NULL;  /* 受信バッファ削除 */
+	status = ML7396_STATUS_OK;
 error:
-    return status;
+	return status;
 }
 
 /* パケット送信開始
@@ -1184,37 +1177,37 @@ error:
  * Idle, RXON or TRXOFF
  */
 static int em_txstart(EM_Data *em_data, ML7396_Buffer *buffer) {
-    int status = ML7396_STATUS_UNKNOWN;
+	int status = ML7396_STATUS_UNKNOWN;
 
-    if (em_data->rx != NULL)
-        REG_TRXOFF();
-    em_data->count.ack = 0, em_data->count.cca = 0;
-    buffer->status = ML7396_BUFFER_INIT;  /* 送信バッファ未送信状態 */
-    em_data->tx = buffer;  /* 送信バッファ登録 */
-    SWITCH_STATE(ML7396_StateSending);
-    if (is_tx_waitack(em_data->tx, &em_data->ackheader))
+	if (em_data->rx != NULL)
+		REG_TRXOFF();
+	em_data->count.ack = 0, em_data->count.cca = 0;
+	buffer->status = ML7396_BUFFER_INIT;  /* 送信バッファ未送信状態 */
+	em_data->tx = buffer;  /* 送信バッファ登録 */
+	SWITCH_STATE(ML7396_StateSending);
+	if (is_tx_waitack(em_data->tx, &em_data->ackheader))
 		ml7396_setAckTimerEnable(1);			//ACKを返す時、送信完了後にRXONする
 	else
 		ml7396_setAckTimerEnable(0);		//ACKを返さない時、送信完了後はTXOFFする。
-    
-    // 2016.06.30 Eiichi Saito: cca idle
-    REG_FORCE_TRXOFF();
-    REG_TXSTART(em_data->tx);
-    if (IS_ERROR(em_data->tx->status)) {  /* 送信パケットサイズが異常 */
-        REG_PHYRST();
-        BUFFER_DONE(em_data->tx);
-        em_data->tx = NULL;
-        SWITCH_STATE(ML7396_StateIdle);
-        if (em_data->rx != NULL)
-            REG_RXON();
-    }else{
-        REG_TXCONTINUE(em_data->tx);
-        REG_CCAEN(CCA_FAST);
-        REG_RXON();
-    }
-    status = ML7396_STATUS_OK;
+
+	// 2016.06.30 Eiichi Saito: cca idle
+	REG_FORCE_TRXOFF();
+	REG_TXSTART(em_data->tx);
+	if (IS_ERROR(em_data->tx->status)) {  /* 送信パケットサイズが異常 */
+		REG_PHYRST();
+		BUFFER_DONE(em_data->tx);
+		em_data->tx = NULL;
+		SWITCH_STATE(ML7396_StateIdle);
+		if (em_data->rx != NULL)
+			REG_RXON();
+	}else{
+		REG_TXCONTINUE(em_data->tx);
+		REG_CCAEN(CCA_FAST);
+		REG_RXON();
+	}
+	status = ML7396_STATUS_OK;
 error:
-    return status;
+	return status;
 }
 
 /* 省電力状態へ移行
@@ -1225,26 +1218,26 @@ error:
  * Idle, RXON or TRXOFF
  */
 static int em_sleep(EM_Data *em_data, void *data) {
-    int status = ML7396_STATUS_UNKNOWN;
-    uint8_t reg_data;
+	int status = ML7396_STATUS_UNKNOWN;
+	uint8_t reg_data;
 
-    if (em_data->rx != NULL)
-        REG_TRXOFF();
-    SWITCH_STATE(ML7396_StateSleep);
-	
+	if (em_data->rx != NULL)
+		REG_TRXOFF();
+	SWITCH_STATE(ML7396_StateSleep);
+
 	/* 省電力状態へ移行 */
-    REG_RDB(REG_ADR_CLK_SET, reg_data);
-//	HAL_GPIO_disableInterrupt();
+	REG_RDB(REG_ADR_CLK_SET, reg_data);
+	//	HAL_GPIO_disableInterrupt();
 	reg_data |=  0x20;
-    REG_WRB(REG_ADR_CLK_SET, reg_data);
-    status = ML7396_STATUS_OK;
-	
+	REG_WRB(REG_ADR_CLK_SET, reg_data);
+	status = ML7396_STATUS_OK;
+
 	// 待機電流の削減のための設定追加  16.05.16
-    REG_WRB(REG_ADR_2DIV_CNTRL, 0x00);
-	
+	REG_WRB(REG_ADR_2DIV_CNTRL, 0x00);
+
 
 error:
-    return status;
+	return status;
 }
 
 /* 省電力状態から復帰
@@ -1255,24 +1248,24 @@ error:
  * Sleep, TRXOFF
  */
 static int em_wakeup(EM_Data *em_data, void *data) {
-    int status = ML7396_STATUS_UNKNOWN;
-    uint8_t reg_data;
+	int status = ML7396_STATUS_UNKNOWN;
+	uint8_t reg_data;
 
-    /* 省電力状態から復帰 */
-    REG_RDB(REG_ADR_CLK_SET, reg_data);
-    reg_data &= ~0x20;
-    REG_WRB(REG_ADR_CLK_SET, reg_data);
-    /* クロック安定待ち */
-    do {
-        idle();
-        REG_RDB(REG_ADR_CLK_SET, reg_data);
-    } while (!(reg_data & 0x80));
-    SWITCH_STATE(ML7396_StateIdle);
-    if (em_data->rx != NULL)
-        REG_RXON();
-    status = ML7396_STATUS_OK;
+	/* 省電力状態から復帰 */
+	REG_RDB(REG_ADR_CLK_SET, reg_data);
+	reg_data &= ~0x20;
+	REG_WRB(REG_ADR_CLK_SET, reg_data);
+	/* クロック安定待ち */
+	do {
+		idle();
+		REG_RDB(REG_ADR_CLK_SET, reg_data);
+	} while (!(reg_data & 0x80));
+	SWITCH_STATE(ML7396_StateIdle);
+	if (em_data->rx != NULL)
+		REG_RXON();
+	status = ML7396_STATUS_OK;
 error:
-    return status;
+	return status;
 }
 
 
@@ -1284,127 +1277,127 @@ error:
  * Idle, RXON
  */
 static int em_rx_datarecv(EM_Data *em_data, const uint32_t *hw_event) {
-    int status = ML7396_STATUS_UNKNOWN;
-    ML7396_Header rxheader;
+	int status = ML7396_STATUS_UNKNOWN;
+	ML7396_Header rxheader;
 
-    ASSERT(em_data->rx != NULL);
-    switch (em_data->rx->status) {
-    case ML7396_BUFFER_INIT:  /* 先頭データならばパケットサイズ情報を取得 */
-        REG_RXSTART(em_data->rx);
-        if (IS_ERROR(em_data->rx->status)) {  /* 受信パケットサイズが異常 */
-            BUFFER_DONE(em_data->rx);
+	ASSERT(em_data->rx != NULL);
+	switch (em_data->rx->status) {
+		case ML7396_BUFFER_INIT:  /* 先頭データならばパケットサイズ情報を取得 */
+			REG_RXSTART(em_data->rx);
+			if (IS_ERROR(em_data->rx->status)) {  /* 受信パケットサイズが異常 */
+				BUFFER_DONE(em_data->rx);
 #if 1
-            // 2016.07.05 Eiichi Saito: Position measurement: Two beacons and four transmission are good.
-            em_data->rx->status = ML7396_BUFFER_INIT;
-            REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
-            REG_PHYRST();
-            REG_RXON();
+				// 2016.07.05 Eiichi Saito: Position measurement: Two beacons and four transmission are good.
+				em_data->rx->status = ML7396_BUFFER_INIT;
+				REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
+				REG_PHYRST();
+				REG_RXON();
 #else
-            em_data->rx = em_data->rx->opt.rx.next;
-            if (em_data->rx != NULL) {
-                em_data->rx->status = ML7396_BUFFER_INIT;  /* 受信バッファをクリア */
-                REG_RXON();
-            }
+				em_data->rx = em_data->rx->opt.rx.next;
+				if (em_data->rx != NULL) {
+					em_data->rx->status = ML7396_BUFFER_INIT;  /* 受信バッファをクリア */
+					REG_RXON();
+				}
 #endif
-            break;
-        }
-        /* break無し */
-    default:
-        #ifndef SNIFFER
-        if (*hw_event & HW_EVENT_CRC_ERROR) {  /* CRCエラー */
-            em_data->rx->status = ML7396_BUFFER_ECRC;
-            BUFFER_DONE(em_data->rx);
+				break;
+			}
+			/* break無し */
+		default:
+#ifndef SNIFFER
+			if (*hw_event & HW_EVENT_CRC_ERROR) {  /* CRCエラー */
+				em_data->rx->status = ML7396_BUFFER_ECRC;
+				BUFFER_DONE(em_data->rx);
 #if 1
-            // 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
-            em_data->rx->status = ML7396_BUFFER_INIT;
-            REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
-            REG_PHYRST();
-            REG_RXON();
+				// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
+				em_data->rx->status = ML7396_BUFFER_INIT;
+				REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
+				REG_PHYRST();
+				REG_RXON();
 #else
-            em_data->rx = em_data->rx->opt.rx.next;
-            if (em_data->rx != NULL)
-                em_data->rx->status = ML7396_BUFFER_INIT;  // 受信バッファをクリア
-            else
-                REG_TRXOFF();
+				em_data->rx = em_data->rx->opt.rx.next;
+				if (em_data->rx != NULL)
+					em_data->rx->status = ML7396_BUFFER_INIT;  // 受信バッファをクリア
+				else
+					REG_TRXOFF();
 #endif
-            break;
-        }
-        #endif
-        REG_RXCONTINUE(em_data->rx);
-        if (*hw_event & HW_EVENT_RX_DONE) {  /* 受信完了 */
-            REG_RXDONE(em_data->rx);  /* ED値を取得 */
-            #ifndef SNIFFER
-            // 2015.07.10 Eiichi Saito : The conditions for an address filter are changed.
-            // アドレス判定しておかないとACK送信モードになる。
-            if (!is_rx_recvdata(em_data->rx, &rxheader) ||  /* 受信/破棄の判定 */
-                ((em_data->rx->opt.rx.filter != NULL) && !em_data->rx->opt.rx.filter(&rxheader)))  /* フィルタリングチェック */
-            {
-                // 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
-                em_data->rx->status = ML7396_BUFFER_INIT;
-                REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
-                REG_PHYRST();
-                REG_RXON();
-            }
-            else if (make_rx_sendack(&rxheader, em_data->myaddr, &em_data->ack)) {  /* ACKを送信するかの判定とACKフレーム生成 */
-                em_data->ack.status = ML7396_BUFFER_INIT;
-                switch (em_data->ack.status) {
-                case ML7396_BUFFER_INIT:  /* アルゴリズム上必ずここへ入る */
-                    // 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
-                    REG_FORCE_TRXOFF();
-                    REG_TXSTART(&em_data->ack);
-                    if (IS_ERROR(em_data->ack.status)) {  /* ACKパケットサイズが異常 */
-                        /* ACK送信は諦めて正常受信の処理をする */
-                        BUFFER_DONE(em_data->rx);
+				break;
+			}
+#endif
+			REG_RXCONTINUE(em_data->rx);
+			if (*hw_event & HW_EVENT_RX_DONE) {  /* 受信完了 */
+				REG_RXDONE(em_data->rx);  /* ED値を取得 */
+#ifndef SNIFFER
+				// 2015.07.10 Eiichi Saito : The conditions for an address filter are changed.
+				// アドレス判定しておかないとACK送信モードになる。
+				if (!is_rx_recvdata(em_data->rx, &rxheader) ||  /* 受信/破棄の判定 */
+						((em_data->rx->opt.rx.filter != NULL) && !em_data->rx->opt.rx.filter(&rxheader)))  /* フィルタリングチェック */
+				{
+					// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
+					em_data->rx->status = ML7396_BUFFER_INIT;
+					REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
+					REG_PHYRST();
+					REG_RXON();
+				}
+				else if (make_rx_sendack(&rxheader, em_data->myaddr, &em_data->ack)) {  /* ACKを送信するかの判定とACKフレーム生成 */
+					em_data->ack.status = ML7396_BUFFER_INIT;
+					switch (em_data->ack.status) {
+						case ML7396_BUFFER_INIT:  /* アルゴリズム上必ずここへ入る */
+							// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
+							REG_FORCE_TRXOFF();
+							REG_TXSTART(&em_data->ack);
+							if (IS_ERROR(em_data->ack.status)) {  /* ACKパケットサイズが異常 */
+								/* ACK送信は諦めて正常受信の処理をする */
+								BUFFER_DONE(em_data->rx);
 #if 1
-                        // 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
-                        em_data->rx->status = ML7396_BUFFER_INIT;
-                        REG_PHYRST();
-                        REG_RXON();
+								// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
+								em_data->rx->status = ML7396_BUFFER_INIT;
+								REG_PHYRST();
+								REG_RXON();
 #else
-                        em_data->rx = em_data->rx->opt.rx.next;
-                        if (em_data->rx != NULL)
-                            em_data->rx->status = ML7396_BUFFER_INIT;  /* 受信バッファをクリア */
-                        else
-                            REG_TRXOFF();
+								em_data->rx = em_data->rx->opt.rx.next;
+								if (em_data->rx != NULL)
+									em_data->rx->status = ML7396_BUFFER_INIT;  /* 受信バッファをクリア */
+								else
+									REG_TRXOFF();
 #endif
-                    }
-                    else {
-                        SWITCH_STATE(ML7396_StateSendACK);
-                        // 2015.12.14 Eiichi Saito adjusted 2msec from receiveing data to starting ack
-                        REG_TXCONTINUE(&em_data->ack);
-                        HAL_delayMicroseconds(600);
-                        // 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
-                        REG_TXON();
-                    }
-                    break;
-                default:  /* コンパイラの最適化でこの分岐は消えると思われる */
-                    ASSERT(0);
-                }
-            }
-            else
-            #endif
-            {
-                /* 受信完了 */
-                BUFFER_DONE(em_data->rx);
+							}
+							else {
+								SWITCH_STATE(ML7396_StateSendACK);
+								// 2015.12.14 Eiichi Saito adjusted 2msec from receiveing data to starting ack
+								REG_TXCONTINUE(&em_data->ack);
+								HAL_delayMicroseconds(600);
+								// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
+								REG_TXON();
+							}
+							break;
+						default:  /* コンパイラの最適化でこの分岐は消えると思われる */
+							ASSERT(0);
+					}
+				}
+				else
+#endif
+				{
+					/* 受信完了 */
+					BUFFER_DONE(em_data->rx);
 #if 1
-                // 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
-                em_data->rx->status = ML7396_BUFFER_INIT;
-                REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
-                REG_PHYRST();
-                REG_RXON();
+					// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
+					em_data->rx->status = ML7396_BUFFER_INIT;
+					REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
+					REG_PHYRST();
+					REG_RXON();
 #else
-                em_data->rx = em_data->rx->opt.rx.next;
-                if (em_data->rx != NULL)
-                    em_data->rx->status = ML7396_BUFFER_INIT;  /* 受信バッファをクリア */
-                else
-                    REG_TRXOFF();
+					em_data->rx = em_data->rx->opt.rx.next;
+					if (em_data->rx != NULL)
+						em_data->rx->status = ML7396_BUFFER_INIT;  /* 受信バッファをクリア */
+					else
+						REG_TRXOFF();
 #endif
-            }
-        }
-    }
-    status = ML7396_STATUS_OK;
+				}
+			}
+	}
+	status = ML7396_STATUS_OK;
 error:
-    return status;
+	return status;
 }
 
 /* ACK送信(パケット受信完了に対する)
@@ -1412,15 +1405,15 @@ error:
  * SendAck, TXON
  */
 static int em_rx_acksend(EM_Data *em_data, const uint32_t *hw_event) {
-    int status = ML7396_STATUS_UNKNOWN;
+	int status = ML7396_STATUS_UNKNOWN;
 
-    switch (em_data->ack.status) {
-    default:
-        REG_TXCONTINUE(&em_data->ack);
-    }
-    status = ML7396_STATUS_OK;
+	switch (em_data->ack.status) {
+		default:
+			REG_TXCONTINUE(&em_data->ack);
+	}
+	status = ML7396_STATUS_OK;
 error:
-    return status;
+	return status;
 }
 
 /* ACK送信完了(パケット受信完了に対する)
@@ -1429,35 +1422,35 @@ error:
  */
 // 2015.07.31 Eiichi Saito : Duplicate SequneceNumber is not notified to a higher layer.
 static int em_rx_ackdone(EM_Data *em_data, const uint32_t *hw_event) {
-    int status = ML7396_STATUS_UNKNOWN;
+	int status = ML7396_STATUS_UNKNOWN;
 
-    ML7396_Header *header = (ML7396_Header *)em_data->ack.data;
+	ML7396_Header *header = (ML7396_Header *)em_data->ack.data;
 
-    // __asm("nop"); // for debug
-    ASSERT(em_data->rx != NULL);
-    if ((uint8_t)em_data->last_seq != (uint8_t)header->seq)
-        BUFFER_DONE(em_data->rx);
-    em_data->last_seq = header->seq;
+	// __asm("nop"); // for debug
+	ASSERT(em_data->rx != NULL);
+	if ((uint8_t)em_data->last_seq != (uint8_t)header->seq)
+		BUFFER_DONE(em_data->rx);
+	em_data->last_seq = header->seq;
 
 #if 1
-    // 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
-    em_data->rx = em_data->rx->opt.rx.next;
-    SWITCH_STATE(ML7396_StateIdle);
-    em_data->rx->status = ML7396_BUFFER_INIT;
-    REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
-    REG_PHYRST();
-    REG_RXON();
+	// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
+	em_data->rx = em_data->rx->opt.rx.next;
+	SWITCH_STATE(ML7396_StateIdle);
+	em_data->rx->status = ML7396_BUFFER_INIT;
+	REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
+	REG_PHYRST();
+	REG_RXON();
 #else
-    em_data->rx = em_data->rx->opt.rx.next;
-    SWITCH_STATE(ML7396_StateIdle);
-    if (em_data->rx != NULL) {
-        em_data->rx->status = ML7396_BUFFER_INIT;  /* 受信バッファをクリア */
-        REG_RXON();
-    }
+	em_data->rx = em_data->rx->opt.rx.next;
+	SWITCH_STATE(ML7396_StateIdle);
+	if (em_data->rx != NULL) {
+		em_data->rx->status = ML7396_BUFFER_INIT;  /* 受信バッファをクリア */
+		REG_RXON();
+	}
 #endif
-    status = ML7396_STATUS_OK;
+	status = ML7396_STATUS_OK;
 error:
-    return status;
+	return status;
 }
 
 /* CCA完了(パケット送信前の)
@@ -1465,57 +1458,57 @@ error:
  * Sending, RXON
  */
 static int em_tx_ccadone(EM_Data *em_data, const uint32_t *hw_event) {
-    int status = ML7396_STATUS_UNKNOWN;
+	int status = ML7396_STATUS_UNKNOWN;
 
-    ASSERT(em_data->tx != NULL);
-// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
-    REG_FORCE_TRXOFF();
-// 2016.05.20 Eiichi Saito :Position measurement: Cca result 
-//  REG_RDB(REG_ADR_CCA_CNTRL, reg_data);  /* CCA_RSLT読み出し */
-    // 2015.07.29 Eiichi Saito : not synchronize in CCA
-    REG_WRB(REG_ADR_DEMSET3, 0x64);
-    REG_WRB(REG_ADR_DEMSET14, 0x27);
-// 2016.05.20 Eiichi Saito :Position measurement: Cca result 
-//  switch (reg_data & 0x03) {
-    switch (em_data->cca_rslt) {
-    case 0x00:  /* キャリアなし */
-        // 2016.06.30 Eiichi Saito: cca idle
-        REG_TXON();
-        break;
-    case 0x01:  /* キャリアあり */
-        ++em_data->count.cca;
-        if (em_data->count.cca < em_data->tx->opt.tx.cca.retry) {
-            // Odd: IDLE_DETECT else Even: CCA_RETRY
-            if (em_data->count.cca <= 0x01){
-                REG_CCAEN(IDLE_DETECT);
-                /* アイドル検出のアボードタイマ設定 */
-                ON_ERROR_STATUS(ml7396_hwif_timer_start(500), ML7396_STATUS_ETIMSTART);
-            }else
-            {
-                backoffTimer(em_data);
-                REG_CCAEN(CCA_RETRY);
-            }
-            REG_RXON();
-        }
-        else {
-            em_data->tx->status = ML7396_BUFFER_ECCA;
-            BUFFER_DONE(em_data->tx);
-            em_data->tx = NULL;
-            SWITCH_STATE(ML7396_StateIdle);
-            if (em_data->rx != NULL)
-                REG_RXON();
-            // 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
-            REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
-            REG_PHYRST();
-            REG_RXON();
-        }
-        break;
-    default:
-        ASSERT(0);
-    }
-    status = ML7396_STATUS_OK;
+	ASSERT(em_data->tx != NULL);
+	// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
+	REG_FORCE_TRXOFF();
+	// 2016.05.20 Eiichi Saito :Position measurement: Cca result 
+	//  REG_RDB(REG_ADR_CCA_CNTRL, reg_data);  /* CCA_RSLT読み出し */
+	// 2015.07.29 Eiichi Saito : not synchronize in CCA
+	REG_WRB(REG_ADR_DEMSET3, 0x64);
+	REG_WRB(REG_ADR_DEMSET14, 0x27);
+	// 2016.05.20 Eiichi Saito :Position measurement: Cca result 
+	//  switch (reg_data & 0x03) {
+	switch (em_data->cca_rslt) {
+		case 0x00:  /* キャリアなし */
+			// 2016.06.30 Eiichi Saito: cca idle
+			REG_TXON();
+			break;
+		case 0x01:  /* キャリアあり */
+			++em_data->count.cca;
+			if (em_data->count.cca < em_data->tx->opt.tx.cca.retry) {
+				// Odd: IDLE_DETECT else Even: CCA_RETRY
+				if (em_data->count.cca <= 0x01){
+					REG_CCAEN(IDLE_DETECT);
+					/* アイドル検出のアボードタイマ設定 */
+					ON_ERROR_STATUS(ml7396_hwif_timer_start(500), ML7396_STATUS_ETIMSTART);
+				}else
+				{
+					backoffTimer(em_data);
+					REG_CCAEN(CCA_RETRY);
+				}
+				REG_RXON();
+			}
+			else {
+				em_data->tx->status = ML7396_BUFFER_ECCA;
+				BUFFER_DONE(em_data->tx);
+				em_data->tx = NULL;
+				SWITCH_STATE(ML7396_StateIdle);
+				if (em_data->rx != NULL)
+					REG_RXON();
+				// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
+				REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
+				REG_PHYRST();
+				REG_RXON();
+			}
+			break;
+		default:
+			ASSERT(0);
+	}
+	status = ML7396_STATUS_OK;
 error:
-    return status;
+	return status;
 }
 
 /* CCAリトライタイムアウト
@@ -1523,29 +1516,29 @@ error:
  * Sending, RXON
  */
 static int em_tx_ccatimeout(EM_Data *em_data, const uint32_t *hw_event) {
-    int status = ML7396_STATUS_UNKNOWN;
+	int status = ML7396_STATUS_UNKNOWN;
 
-    ASSERT(em_data->tx != NULL);
-    ON_ERROR_STATUS(ml7396_hwif_timer_stop(), ML7396_STATUS_ETIMSTOP);  /* タイマ割り込み停止 */
-// 2016.06.30 Eiichi Saito: cca idle
-//  REG_TRXOFF();
-//  REG_CCAEN();
-//  REG_RXON();
-    REG_CCAEN(CCA_STOP);
-    em_data->tx->status = ML7396_BUFFER_ECCA;
-    BUFFER_DONE(em_data->tx);
-    em_data->tx = NULL;
-    SWITCH_STATE(ML7396_StateIdle);
-    if (em_data->rx != NULL)
-        REG_RXON();
-    // 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
-    REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
-    REG_PHYRST();
-    REG_RXON();
+	ASSERT(em_data->tx != NULL);
+	ON_ERROR_STATUS(ml7396_hwif_timer_stop(), ML7396_STATUS_ETIMSTOP);  /* タイマ割り込み停止 */
+	// 2016.06.30 Eiichi Saito: cca idle
+	//  REG_TRXOFF();
+	//  REG_CCAEN();
+	//  REG_RXON();
+	REG_CCAEN(CCA_STOP);
+	em_data->tx->status = ML7396_BUFFER_ECCA;
+	BUFFER_DONE(em_data->tx);
+	em_data->tx = NULL;
+	SWITCH_STATE(ML7396_StateIdle);
+	if (em_data->rx != NULL)
+		REG_RXON();
+	// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
+	REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
+	REG_PHYRST();
+	REG_RXON();
 
-    status = ML7396_STATUS_OK;
+	status = ML7396_STATUS_OK;
 error:
-    return status;
+	return status;
 }
 
 
@@ -1554,17 +1547,17 @@ error:
  * Sending, TXON
  */
 static int em_tx_datasend(EM_Data *em_data, const uint32_t *hw_event) {
-    int status = ML7396_STATUS_UNKNOWN;
+	int status = ML7396_STATUS_UNKNOWN;
 
-    ASSERT(em_data->tx != NULL);
-// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
-//  switch (em_data->tx->status) {
-//  default:
-//      REG_TXCONTINUE(em_data->tx);
-//  }
-    status = ML7396_STATUS_OK;
-// error:
-    return status;
+	ASSERT(em_data->tx != NULL);
+	// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
+	//  switch (em_data->tx->status) {
+	//  default:
+	//      REG_TXCONTINUE(em_data->tx);
+	//  }
+	status = ML7396_STATUS_OK;
+	// error:
+	return status;
 }
 
 /* パケット送信完了
@@ -1572,73 +1565,73 @@ static int em_tx_datasend(EM_Data *em_data, const uint32_t *hw_event) {
  * Sending, TXON->TRXOFF
  */
 static int em_tx_datadone(EM_Data *em_data, const uint32_t *hw_event) {
-    int status = ML7396_STATUS_UNKNOWN;
+	int status = ML7396_STATUS_UNKNOWN;
 
-    ASSERT(em_data->tx != NULL);
-    switch (em_data->tx->status) {
-    default:
-        ASSERT(em_data->tx->status >= 0);
-        em_data->tx->opt.tx.ed = 0;
-        if (is_tx_waitack(em_data->tx, &em_data->ackheader)) {  /* ACK待ちをすべきかの判定と待条件保持 */
-            em_data->ack.status = ML7396_BUFFER_INIT;
-            SWITCH_STATE(ML7396_StateWaitACK);
-            // 2015.12.14 Eiichi Saito: for preference of SubGHz
-            // 2016.6.8 Eiichi Saito: SubGHz API common
-            // HAL_EX_disableInterrupt();
-            ON_ERROR_STATUS(ml7396_hwif_timer_start(em_data->tx->opt.tx.ack.wait), ML7396_STATUS_ETIMSTART);  /* タイマ割り込み設定 */
-        }
-        else {
-            BUFFER_DONE(em_data->tx);
-            // 2016.8.17 delete tx.next
-            /*
-            em_data->tx = em_data->tx->opt.tx.next;
-            if (em_data->tx != NULL) {
-                em_data->count.ack = 0, em_data->count.cca = 0;
-                em_data->tx->status = ML7396_BUFFER_INIT;
-                // 2016.06.30 Eiichi Saito: cca idle
-                // REG_CCAEN();
-                // REG_RXON();
-                REG_FORCE_TRXOFF();
-                REG_TXSTART(em_data->tx);
-                if (IS_ERROR(em_data->tx->status)) {  // 送信パケットサイズが異常
-                    REG_PHYRST();
-                    BUFFER_DONE(em_data->tx);
-                    em_data->tx = NULL;
-                    SWITCH_STATE(ML7396_StateIdle);
-                    if (em_data->rx != NULL)
-                        REG_RXON();
-                }else{
-                    REG_TXCONTINUE(em_data->tx);
-                    REG_CCAEN(CCA_FAST);
-                    REG_RXON();
-                }
-            }
-            else
-            */
-            {
-                SWITCH_STATE(ML7396_StateIdle);
-                // 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
-                em_data->tx->status = ML7396_BUFFER_INIT;
-                REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
-                REG_PHYRST();
-                if (em_data->rx != NULL)
-                    REG_RXON();
-                HAL_delayMicroseconds(128);
-                /*
-                while (1) {
-                    REG_RDB(REG_ADR_RF_STATUS, reg_data);
-                    if (reg_data & 0x80){
-                        break;
-                    }
-                    __asm("nop");
-                }
-                */
-            }
-        }
-    }
-    status = ML7396_STATUS_OK;
+	ASSERT(em_data->tx != NULL);
+	switch (em_data->tx->status) {
+		default:
+			ASSERT(em_data->tx->status >= 0);
+			em_data->tx->opt.tx.ed = 0;
+			if (is_tx_waitack(em_data->tx, &em_data->ackheader)) {  /* ACK待ちをすべきかの判定と待条件保持 */
+				em_data->ack.status = ML7396_BUFFER_INIT;
+				SWITCH_STATE(ML7396_StateWaitACK);
+				// 2015.12.14 Eiichi Saito: for preference of SubGHz
+				// 2016.6.8 Eiichi Saito: SubGHz API common
+				// HAL_EX_disableInterrupt();
+				ON_ERROR_STATUS(ml7396_hwif_timer_start(em_data->tx->opt.tx.ack.wait), ML7396_STATUS_ETIMSTART);  /* タイマ割り込み設定 */
+			}
+			else {
+				BUFFER_DONE(em_data->tx);
+				// 2016.8.17 delete tx.next
+				/*
+				   em_data->tx = em_data->tx->opt.tx.next;
+				   if (em_data->tx != NULL) {
+				   em_data->count.ack = 0, em_data->count.cca = 0;
+				   em_data->tx->status = ML7396_BUFFER_INIT;
+				// 2016.06.30 Eiichi Saito: cca idle
+				// REG_CCAEN();
+				// REG_RXON();
+				REG_FORCE_TRXOFF();
+				REG_TXSTART(em_data->tx);
+				if (IS_ERROR(em_data->tx->status)) {  // 送信パケットサイズが異常
+				REG_PHYRST();
+				BUFFER_DONE(em_data->tx);
+				em_data->tx = NULL;
+				SWITCH_STATE(ML7396_StateIdle);
+				if (em_data->rx != NULL)
+				REG_RXON();
+				}else{
+				REG_TXCONTINUE(em_data->tx);
+				REG_CCAEN(CCA_FAST);
+				REG_RXON();
+				}
+				}
+				else
+				 */
+				{
+					SWITCH_STATE(ML7396_StateIdle);
+					// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
+					em_data->tx->status = ML7396_BUFFER_INIT;
+					REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
+					REG_PHYRST();
+					if (em_data->rx != NULL)
+						REG_RXON();
+					HAL_delayMicroseconds(128);
+					/*
+					   while (1) {
+					   REG_RDB(REG_ADR_RF_STATUS, reg_data);
+					   if (reg_data & 0x80){
+					   break;
+					   }
+					   __asm("nop");
+					   }
+					 */
+				}
+			}
+	}
+	status = ML7396_STATUS_OK;
 error:
-    return status;
+	return status;
 }
 
 /* ACK受信(パケット送信後の)
@@ -1646,85 +1639,85 @@ error:
  * WaitACK, RXON
  */
 static int em_tx_ackrecv(EM_Data *em_data, const uint32_t *hw_event) {
-    int status = ML7396_STATUS_UNKNOWN;
+	int status = ML7396_STATUS_UNKNOWN;
 
-    switch (em_data->ack.status) {
-    case ML7396_BUFFER_INIT:  /* 先頭データならばパケットサイズ情報を取得 */
-        REG_RXSTART(&em_data->ack);
-        if (IS_ERROR(em_data->ack.status)) {  /* ACKパケットサイズが異常 */
-            em_data->ack.status = ML7396_BUFFER_INIT;  /* 受信データを破棄して引き続き次を受信 */
-            // 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
-            REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
-            REG_PHYRST();
-            REG_RXON();
-            break;
-        }
-        /* break無し */
-    default:
-        if (*hw_event & HW_EVENT_CRC_ERROR) {  /* CRCエラー */
-            em_data->ack.status = ML7396_BUFFER_INIT;  /* 受信データを破棄して引き続き次を受信 */
-            // 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
-            REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
-            REG_PHYRST();
-            REG_RXON();
-            break;
-        }
-        REG_RXCONTINUE(&em_data->ack);
-        if (*hw_event & HW_EVENT_RX_DONE) {  /* 受信完了 */
-            REG_RXDONE(em_data->tx);  /* ED値を取得 */
-            if (is_tx_recvack(&em_data->ack, &em_data->ackheader)) {  /* 待っているACKを受信したかの判定 */
-                // 2015.12.14 Eiichi Saito: for preference of SubGHz
-                // 2016.6.8 Eiichi Saito: SubGHz API common
-                // HAL_EX_enableInterrupt();
-                ON_ERROR_STATUS(ml7396_hwif_timer_stop(), ML7396_STATUS_ETIMSTOP);  /* タイマ割り込み停止 */
-                BUFFER_DONE(em_data->tx);
-                // 2016.8.17 delete tx.next
-                /*
-                em_data->tx = em_data->tx->opt.tx.next;
-                if (em_data->tx != NULL) {
-                    em_data->count.ack = 0, em_data->count.cca = 0;
-                    em_data->tx->status = ML7396_BUFFER_INIT;
-                    SWITCH_STATE(ML7396_StateSending);
-                    // 2016.06.30 Eiichi Saito: cca idle
-                    // REG_CCAEN();
-                    // REG_RXON();
-                    REG_FORCE_TRXOFF();
-                    REG_TXSTART(em_data->tx);
-                    if (IS_ERROR(em_data->tx->status)) {  // 送信パケットサイズが異常
-                        REG_PHYRST();
-                        BUFFER_DONE(em_data->tx);
-                        em_data->tx = NULL;
-                        SWITCH_STATE(ML7396_StateIdle);
-                        if (em_data->rx != NULL)
-                            REG_RXON();
-                    }else{
-                        REG_TXCONTINUE(em_data->tx);
-                        REG_CCAEN(CCA_FAST);
-                    	REG_RXON();
-                	}
-                } else
-                */
-                {
-                    SWITCH_STATE(ML7396_StateIdle);
-                    // 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
-                    em_data->ack.status = ML7396_BUFFER_INIT;
-                    REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
-                    REG_PHYRST();
-                    if (em_data->rx != NULL)
-                        REG_RXON();
-                }
-            }
-            else  /* ACKでない */
-                em_data->ack.status = ML7396_BUFFER_INIT;  /* 受信データを破棄して引き続き次を受信 */
-                // 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
-                REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
-                REG_PHYRST();
-                REG_RXON();
-        }
-    }
-    status = ML7396_STATUS_OK;
+	switch (em_data->ack.status) {
+		case ML7396_BUFFER_INIT:  /* 先頭データならばパケットサイズ情報を取得 */
+			REG_RXSTART(&em_data->ack);
+			if (IS_ERROR(em_data->ack.status)) {  /* ACKパケットサイズが異常 */
+				em_data->ack.status = ML7396_BUFFER_INIT;  /* 受信データを破棄して引き続き次を受信 */
+				// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
+				REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
+				REG_PHYRST();
+				REG_RXON();
+				break;
+			}
+			/* break無し */
+		default:
+			if (*hw_event & HW_EVENT_CRC_ERROR) {  /* CRCエラー */
+				em_data->ack.status = ML7396_BUFFER_INIT;  /* 受信データを破棄して引き続き次を受信 */
+				// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
+				REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
+				REG_PHYRST();
+				REG_RXON();
+				break;
+			}
+			REG_RXCONTINUE(&em_data->ack);
+			if (*hw_event & HW_EVENT_RX_DONE) {  /* 受信完了 */
+				REG_RXDONE(em_data->tx);  /* ED値を取得 */
+				if (is_tx_recvack(&em_data->ack, &em_data->ackheader)) {  /* 待っているACKを受信したかの判定 */
+					// 2015.12.14 Eiichi Saito: for preference of SubGHz
+					// 2016.6.8 Eiichi Saito: SubGHz API common
+					// HAL_EX_enableInterrupt();
+					ON_ERROR_STATUS(ml7396_hwif_timer_stop(), ML7396_STATUS_ETIMSTOP);  /* タイマ割り込み停止 */
+					BUFFER_DONE(em_data->tx);
+					// 2016.8.17 delete tx.next
+					/*
+					   em_data->tx = em_data->tx->opt.tx.next;
+					   if (em_data->tx != NULL) {
+					   em_data->count.ack = 0, em_data->count.cca = 0;
+					   em_data->tx->status = ML7396_BUFFER_INIT;
+					   SWITCH_STATE(ML7396_StateSending);
+					// 2016.06.30 Eiichi Saito: cca idle
+					// REG_CCAEN();
+					// REG_RXON();
+					REG_FORCE_TRXOFF();
+					REG_TXSTART(em_data->tx);
+					if (IS_ERROR(em_data->tx->status)) {  // 送信パケットサイズが異常
+					REG_PHYRST();
+					BUFFER_DONE(em_data->tx);
+					em_data->tx = NULL;
+					SWITCH_STATE(ML7396_StateIdle);
+					if (em_data->rx != NULL)
+					REG_RXON();
+					}else{
+					REG_TXCONTINUE(em_data->tx);
+					REG_CCAEN(CCA_FAST);
+					REG_RXON();
+					}
+					} else
+					 */
+					{
+						SWITCH_STATE(ML7396_StateIdle);
+						// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
+						em_data->ack.status = ML7396_BUFFER_INIT;
+						REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
+						REG_PHYRST();
+						if (em_data->rx != NULL)
+							REG_RXON();
+					}
+				}
+				else  /* ACKでない */
+					em_data->ack.status = ML7396_BUFFER_INIT;  /* 受信データを破棄して引き続き次を受信 */
+				// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
+				REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
+				REG_PHYRST();
+				REG_RXON();
+			}
+	}
+	status = ML7396_STATUS_OK;
 error:
-    return status;
+	return status;
 }
 
 /* ACK待ちタイムアウト
@@ -1732,56 +1725,56 @@ error:
  * WaitACK, RXON
  */
 static int em_tx_acktimeout(EM_Data *em_data, const uint32_t *hw_event) {
-    int status = ML7396_STATUS_UNKNOWN;
+	int status = ML7396_STATUS_UNKNOWN;
 
-    ASSERT(em_data->tx != NULL);
-// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
-    REG_FORCE_TRXOFF();
-    if (em_data->count.ack < em_data->tx->opt.tx.ack.retry) {  /* リトライ回数が残っている? */
-        ++em_data->count.ack, em_data->count.cca = 0;
-        em_data->tx->status = ML7396_BUFFER_INIT;  /* 送信バッファを未送信状態に戻す */
-        SWITCH_STATE(ML7396_StateSending);
-        // 2016.06.30 Eiichi Saito: cca idle
-        // REG_CCAEN();
-        // REG_RXON();
-        REG_FORCE_TRXOFF();
-        REG_TXSTART(em_data->tx);
-        if (IS_ERROR(em_data->tx->status)) {  /* 送信パケットサイズが異常 */
-            BUFFER_DONE(em_data->tx);
-            em_data->tx = NULL;
-            SWITCH_STATE(ML7396_StateIdle);
-            if (em_data->rx != NULL)
-                REG_RXON();
-            // 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
-            REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
-            REG_PHYRST();
-            REG_RXON();
-        }else{
-            REG_TXCONTINUE(em_data->tx);
-            REG_CCAEN(CCA_FAST);
-            REG_RXON();
-    	}
-    }
-    else {
-        // 2015.12.14 Eiichi Saito: for preference of SubGHz
-        // 2016.6.8 Eiichi Saito: SubGHz API common
-        // HAL_EX_enableInterrupt();
-        // 2015.12.01 Eiichi Saito : SugGHz timer chaneged from TM01 to TM67.
-        ON_ERROR_STATUS(ml7396_hwif_timer_stop(), ML7396_STATUS_ETIMSTOP);  /* タイマ割り込み停止 */
-        em_data->tx->status = ML7396_BUFFER_ERETRY;
-        BUFFER_DONE(em_data->tx);
-        em_data->tx = NULL;
-        SWITCH_STATE(ML7396_StateIdle);
-        if (em_data->rx != NULL)
-            REG_RXON();
-        // 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
-        REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
-        REG_PHYRST();
-        REG_RXON();
-    }
-    status = ML7396_STATUS_OK;
+	ASSERT(em_data->tx != NULL);
+	// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
+	REG_FORCE_TRXOFF();
+	if (em_data->count.ack < em_data->tx->opt.tx.ack.retry) {  /* リトライ回数が残っている? */
+		++em_data->count.ack, em_data->count.cca = 0;
+		em_data->tx->status = ML7396_BUFFER_INIT;  /* 送信バッファを未送信状態に戻す */
+		SWITCH_STATE(ML7396_StateSending);
+		// 2016.06.30 Eiichi Saito: cca idle
+		// REG_CCAEN();
+		// REG_RXON();
+		REG_FORCE_TRXOFF();
+		REG_TXSTART(em_data->tx);
+		if (IS_ERROR(em_data->tx->status)) {  /* 送信パケットサイズが異常 */
+			BUFFER_DONE(em_data->tx);
+			em_data->tx = NULL;
+			SWITCH_STATE(ML7396_StateIdle);
+			if (em_data->rx != NULL)
+				REG_RXON();
+			// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
+			REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
+			REG_PHYRST();
+			REG_RXON();
+		}else{
+			REG_TXCONTINUE(em_data->tx);
+			REG_CCAEN(CCA_FAST);
+			REG_RXON();
+		}
+	}
+	else {
+		// 2015.12.14 Eiichi Saito: for preference of SubGHz
+		// 2016.6.8 Eiichi Saito: SubGHz API common
+		// HAL_EX_enableInterrupt();
+		// 2015.12.01 Eiichi Saito : SugGHz timer chaneged from TM01 to TM67.
+		ON_ERROR_STATUS(ml7396_hwif_timer_stop(), ML7396_STATUS_ETIMSTOP);  /* タイマ割り込み停止 */
+		em_data->tx->status = ML7396_BUFFER_ERETRY;
+		BUFFER_DONE(em_data->tx);
+		em_data->tx = NULL;
+		SWITCH_STATE(ML7396_StateIdle);
+		if (em_data->rx != NULL)
+			REG_RXON();
+		// 2016.07.05 Eiichi Saito: Position measurement: Two beacons receive and four transmission are good.
+		REG_WRB(REG_ADR_INT_SOURCE_GRP3, 0x00);
+		REG_PHYRST();
+		REG_RXON();
+	}
+	status = ML7396_STATUS_OK;
 error:
-    return status;
+	return status;
 }
 
 
@@ -1794,139 +1787,139 @@ error:
  * *hw_done: イベントマシンメインで処理したハードウェア要因イベント
  */
 static int em_main(EM_Data *em_data, void *data, int sw_event, uint32_t hw_event, uint32_t *hw_done) {
-    int status = ML7396_STATUS_UNKNOWN;
-    uint32_t event;
+	int status = ML7396_STATUS_UNKNOWN;
+	uint32_t event;
 
-    ASSERT(em_data != NULL);
-    switch (em_data->state) {
-    case ML7396_StateReset:
-        switch (sw_event) {
-        case SW_EVENT_SETUP:  /* 初期化 */
-            status = em_setup(em_data, data);
-            break;
-        case 0:
-            status = ML7396_STATUS_OK;
-            break;
-        default:
-            status = ML7396_STATUS_EINVALID;
-        }
-        break;
-    case ML7396_StateIdle:
-        switch (sw_event) {
-        case SW_EVENT_SETUP:  /* 初期化 */
-            status = em_setup(em_data, data);
-            break;
-        case SW_EVENT_RXSTART:  /* パケット受信待ち開始 */
-            status = em_rxstart(em_data, data);
-            break;
-        case SW_EVENT_RXSTOP:  /* パケット受信待ち停止 */
-            status = em_rxstop(em_data, data);
-            break;
-        case SW_EVENT_TXSTART:  /* パケット送信開始 */
-            status = em_txstart(em_data, data);
-            break;
-        case SW_EVENT_SLEEP:  /* 省電力状態へ移行 */
-            status = em_sleep(em_data, data);
-            break;
-        case 0:
-            event = hw_event & (HW_EVENT_RX_DONE|HW_EVENT_FIFO_FULL|HW_EVENT_CRC_ERROR);  /* パケット受信 */
-            if (event) {
-                em_rx_datarecv(em_data, &event);
-             // 2016.05.20 Eiichi Saito :Position measurement: All interruption clear
-             // *hw_done |= event | HW_EVENT_FIFO_EMPTY | (event & HW_EVENT_CRC_ERROR) >> 14;  /* クリアする処理済割り込みフラグとFIFOバッファを指定 */
-                *hw_done = ~(HW_EVENT_FIFO_CLEAR|HW_EVENT_TX_FIFO_DONE); //　送信関連の割込みを残さないとACK送信がクリアされてしまう。
-            }
-            status = ML7396_STATUS_OK;
-            break;
-        default:
-            status = ML7396_STATUS_EINVALID;
-        }
-        break;
-    case ML7396_StateSendACK:
-        switch (sw_event) {
-        case 0:
-            event = hw_event & HW_EVENT_FIFO_EMPTY;  /* ACK送信 */
-            if (event) {
-                em_rx_acksend(em_data, &event);
-                *hw_done |= event | HW_EVENT_FIFO_FULL;  /* クリアする処理済割り込みフラグを指定 */
-            }
-            event = hw_event & HW_EVENT_TX_DONE;  /* ACK送信完了 */
-            if (event) {
-                em_rx_ackdone(em_data, &event);
-                *hw_done |= event;  /* クリアする処理済割り込みフラグを指定 */
-            }
-            status = ML7396_STATUS_OK;
-            break;
-        default:
-            status = ML7396_STATUS_EINVALID;
-        }
-        break;
-    case ML7396_StateSending:
-        switch (sw_event) {
-        case 0:
-            event = hw_event & HW_EVENT_CCA_DONE;  /* CCA検出完了 */
-            if (event) {
-                em_tx_ccadone(em_data, &event);
-                *hw_done |= event;  /* クリアする処理済割り込みフラグを指定 */
-            }
-            event = hw_event & HW_EVENT_TIMEOUT;  /* CCAリトライタイムアウト */
-            if (event) {
-                em_tx_ccatimeout(em_data, &event);
-                *hw_done |= event;  /* クリアする処理済割り込みフラグを指定 */
-            }
-            event = hw_event & HW_EVENT_FIFO_EMPTY;  /* パケット送信  */
-            if (event) {
-                em_tx_datasend(em_data, &event);
-                *hw_done |= event | HW_EVENT_FIFO_FULL;  /* クリアする処理済割り込みフラグを指定 */
-            }
-            event = hw_event & HW_EVENT_TX_DONE;  /* パケット送信完了 */
-            if (event) {
-                em_tx_datadone(em_data, &event);
-                *hw_done |= event;  /* クリアする処理済割り込みフラグを指定 */
-            }
-            status = ML7396_STATUS_OK;
-            break;
-        default:
-            status = ML7396_STATUS_EINVALID;
-        }
-        break;
-    case ML7396_StateWaitACK:
-        switch (sw_event) {
-        case 0:
-            event = hw_event & (HW_EVENT_RX_DONE|HW_EVENT_FIFO_FULL|HW_EVENT_CRC_ERROR);  /* ACK受信 */
-            if (event) {
-                em_tx_ackrecv(em_data, &event);
-             // 2016.05.20 Eiichi Saito :Position measurement: All interruption clear
-             // *hw_done |= event | HW_EVENT_FIFO_EMPTY | (event & HW_EVENT_CRC_ERROR) >> 14;  /* クリアする処理済割り込みフラグとFIFOバッファを指定 */
-                *hw_done = ~HW_EVENT_FIFO_CLEAR;
-            }
-            event = hw_event & HW_EVENT_TIMEOUT;  /* ACK待ちタイムアウト */
-            if (event) {
-                em_tx_acktimeout(em_data, &event);
-                *hw_done |= event;  /* クリアする処理済割り込みフラグを指定 */
-            }
-            status = ML7396_STATUS_OK;
-            break;
-        default:
-            status = ML7396_STATUS_EINVALID;
-        }
-        break;
-    case ML7396_StateSleep:
-        switch (sw_event) {
-        case SW_EVENT_WAKEUP:  /* 省電力状態から復帰 */
-            status = em_wakeup(em_data, data);
-            break;
-        case 0:
-            status = ML7396_STATUS_OK;
-            break;
-        default:
-            status = ML7396_STATUS_EINVALID;
-        }
-        break;
-    default:
-        ASSERT(0);
-    }
-    return status;
+	ASSERT(em_data != NULL);
+	switch (em_data->state) {
+		case ML7396_StateReset:
+			switch (sw_event) {
+				case SW_EVENT_SETUP:  /* 初期化 */
+					status = em_setup(em_data, data);
+					break;
+				case 0:
+					status = ML7396_STATUS_OK;
+					break;
+				default:
+					status = ML7396_STATUS_EINVALID;
+			}
+			break;
+		case ML7396_StateIdle:
+			switch (sw_event) {
+				case SW_EVENT_SETUP:  /* 初期化 */
+					status = em_setup(em_data, data);
+					break;
+				case SW_EVENT_RXSTART:  /* パケット受信待ち開始 */
+					status = em_rxstart(em_data, data);
+					break;
+				case SW_EVENT_RXSTOP:  /* パケット受信待ち停止 */
+					status = em_rxstop(em_data, data);
+					break;
+				case SW_EVENT_TXSTART:  /* パケット送信開始 */
+					status = em_txstart(em_data, data);
+					break;
+				case SW_EVENT_SLEEP:  /* 省電力状態へ移行 */
+					status = em_sleep(em_data, data);
+					break;
+				case 0:
+					event = hw_event & (HW_EVENT_RX_DONE|HW_EVENT_FIFO_FULL|HW_EVENT_CRC_ERROR);  /* パケット受信 */
+					if (event) {
+						em_rx_datarecv(em_data, &event);
+						// 2016.05.20 Eiichi Saito :Position measurement: All interruption clear
+						// *hw_done |= event | HW_EVENT_FIFO_EMPTY | (event & HW_EVENT_CRC_ERROR) >> 14;  /* クリアする処理済割り込みフラグとFIFOバッファを指定 */
+						*hw_done = ~(HW_EVENT_FIFO_CLEAR|HW_EVENT_TX_FIFO_DONE); //　送信関連の割込みを残さないとACK送信がクリアされてしまう。
+					}
+					status = ML7396_STATUS_OK;
+					break;
+				default:
+					status = ML7396_STATUS_EINVALID;
+			}
+			break;
+		case ML7396_StateSendACK:
+			switch (sw_event) {
+				case 0:
+					event = hw_event & HW_EVENT_FIFO_EMPTY;  /* ACK送信 */
+					if (event) {
+						em_rx_acksend(em_data, &event);
+						*hw_done |= event | HW_EVENT_FIFO_FULL;  /* クリアする処理済割り込みフラグを指定 */
+					}
+					event = hw_event & HW_EVENT_TX_DONE;  /* ACK送信完了 */
+					if (event) {
+						em_rx_ackdone(em_data, &event);
+						*hw_done |= event;  /* クリアする処理済割り込みフラグを指定 */
+					}
+					status = ML7396_STATUS_OK;
+					break;
+				default:
+					status = ML7396_STATUS_EINVALID;
+			}
+			break;
+		case ML7396_StateSending:
+			switch (sw_event) {
+				case 0:
+					event = hw_event & HW_EVENT_CCA_DONE;  /* CCA検出完了 */
+					if (event) {
+						em_tx_ccadone(em_data, &event);
+						*hw_done |= event;  /* クリアする処理済割り込みフラグを指定 */
+					}
+					event = hw_event & HW_EVENT_TIMEOUT;  /* CCAリトライタイムアウト */
+					if (event) {
+						em_tx_ccatimeout(em_data, &event);
+						*hw_done |= event;  /* クリアする処理済割り込みフラグを指定 */
+					}
+					event = hw_event & HW_EVENT_FIFO_EMPTY;  /* パケット送信  */
+					if (event) {
+						em_tx_datasend(em_data, &event);
+						*hw_done |= event | HW_EVENT_FIFO_FULL;  /* クリアする処理済割り込みフラグを指定 */
+					}
+					event = hw_event & HW_EVENT_TX_DONE;  /* パケット送信完了 */
+					if (event) {
+						em_tx_datadone(em_data, &event);
+						*hw_done |= event;  /* クリアする処理済割り込みフラグを指定 */
+					}
+					status = ML7396_STATUS_OK;
+					break;
+				default:
+					status = ML7396_STATUS_EINVALID;
+			}
+			break;
+		case ML7396_StateWaitACK:
+			switch (sw_event) {
+				case 0:
+					event = hw_event & (HW_EVENT_RX_DONE|HW_EVENT_FIFO_FULL|HW_EVENT_CRC_ERROR);  /* ACK受信 */
+					if (event) {
+						em_tx_ackrecv(em_data, &event);
+						// 2016.05.20 Eiichi Saito :Position measurement: All interruption clear
+						// *hw_done |= event | HW_EVENT_FIFO_EMPTY | (event & HW_EVENT_CRC_ERROR) >> 14;  /* クリアする処理済割り込みフラグとFIFOバッファを指定 */
+						*hw_done = ~HW_EVENT_FIFO_CLEAR;
+					}
+					event = hw_event & HW_EVENT_TIMEOUT;  /* ACK待ちタイムアウト */
+					if (event) {
+						em_tx_acktimeout(em_data, &event);
+						*hw_done |= event;  /* クリアする処理済割り込みフラグを指定 */
+					}
+					status = ML7396_STATUS_OK;
+					break;
+				default:
+					status = ML7396_STATUS_EINVALID;
+			}
+			break;
+		case ML7396_StateSleep:
+			switch (sw_event) {
+				case SW_EVENT_WAKEUP:  /* 省電力状態から復帰 */
+					status = em_wakeup(em_data, data);
+					break;
+				case 0:
+					status = ML7396_STATUS_OK;
+					break;
+				default:
+					status = ML7396_STATUS_EINVALID;
+			}
+			break;
+		default:
+			ASSERT(0);
+	}
+	return status;
 }
 
 
@@ -1936,10 +1929,10 @@ static  /* デバッグ時は外部公開 */
 #endif  /* #ifndef DEBUG */
 // 2015.07.31 Eiichi Saito : Duplicate SequneceNumber is not notified to a higher layer.
 EM_Data em_data = {
-    0x0000,            /* 自機アドレス */
-    0x0000,            /* 自機PANID */
-    0xffff,            /* 重複SequneceNumberチェック */
-    ML7396_StateReset  /* 初期ステート */
+	0x0000,            /* 自機アドレス */
+	0x0000,            /* 自機PANID */
+	0xffff,            /* 重複SequneceNumberチェック */
+	ML7396_StateReset  /* 初期ステート */
 };
 
 
@@ -1947,53 +1940,53 @@ EM_Data em_data = {
  */
 /* ML7396によるイベント */
 static void sint_handler(void) {
-    uint32_t hw_event, hw_done;
+	uint32_t hw_event, hw_done;
 
-    ml7396_hwif_timer_di();  /* em_main() と em_data の排他制御 */
-    /* 割り込み要因取得 */
-    REG_INTSRC(hw_event);
+	ml7396_hwif_timer_di();  /* em_main() と em_data の排他制御 */
+	/* 割り込み要因取得 */
+	REG_INTSRC(hw_event);
 	printk(KERN_INFO"%s %s %d %08x\n",__FILE__,__func__,__LINE__,hw_event);
-    // 2016.03.14 tx send event
-    hw_done = 0;
-    em_data.store_hw_event = 0;
+	// 2016.03.14 tx send event
+	hw_done = 0;
+	em_data.store_hw_event = 0;
 
-    /* イベントマシン呼び出し */
-    // 2016.03.14 tx send event
-    #ifdef LAZURITE_IDE   // 本制御が0のとき従来の割込み処理となる。
-    if((em_data.state == ML7396_StateSending) &&
-                hw_event&(HW_EVENT_CCA_DONE|
-                    HW_EVENT_FIFO_EMPTY|HW_EVENT_TX_DONE)) {
+	/* イベントマシン呼び出し */
+	// 2016.03.14 tx send event
+#ifdef LAZURITE_IDE   // 本制御が0のとき従来の割込み処理となる。
+	if((em_data.state == ML7396_StateSending) &&
+			hw_event&(HW_EVENT_CCA_DONE|
+				HW_EVENT_FIFO_EMPTY|HW_EVENT_TX_DONE)) {
 
-        em_data.store_hw_event = hw_event;
-        // 2016.05.20 Eiichi Saito :Position measurement: Cca result 
-        if(hw_event & HW_EVENT_CCA_DONE){
-            ml7396_regread(REG_ADR_CCA_CNTRL, &em_data.cca_rslt, 1);
-            em_data.cca_rslt &= 0x03;
-        }
-        /* 処理済の割り込み要因をクリア */
-        // 2016.06.30 Eiichi Saito: cca idle
-        hw_event &= ~HW_EVENT_TX_FIFO_DONE;
-        REG_INTCLR(hw_event);
-    }else
-    #endif
-    {
-    	em_main(&em_data, NULL, 0, hw_event, &hw_done);
-        /* 処理済の割り込み要因をクリア */
-        REG_INTCLR(hw_done);
-    }
-    ml7396_hwif_timer_ei();  /* em_main() と em_data の排他制御 */
+		em_data.store_hw_event = hw_event;
+		// 2016.05.20 Eiichi Saito :Position measurement: Cca result 
+		if(hw_event & HW_EVENT_CCA_DONE){
+			ml7396_regread(REG_ADR_CCA_CNTRL, &em_data.cca_rslt, 1);
+			em_data.cca_rslt &= 0x03;
+		}
+		/* 処理済の割り込み要因をクリア */
+		// 2016.06.30 Eiichi Saito: cca idle
+		hw_event &= ~HW_EVENT_TX_FIFO_DONE;
+		REG_INTCLR(hw_event);
+	}else
+#endif
+	{
+		em_main(&em_data, NULL, 0, hw_event, &hw_done);
+		/* 処理済の割り込み要因をクリア */
+		REG_INTCLR(hw_done);
+	}
+	ml7396_hwif_timer_ei();  /* em_main() と em_data の排他制御 */
 }
 
 /* タイマーによるイベント */
 static void timer_handler(void) {
-    uint32_t hw_event, hw_done;
+	uint32_t hw_event, hw_done;
 
-    ml7396_hwif_sint_di();  /* em_main() と em_data の排他制御 */
-    /* ハードウェア要因のイベントフラグ生成 */
-    hw_event = HW_EVENT_TIMEOUT, hw_done = 0;
-    /* イベントマシン呼び出し */
-    em_main(&em_data, NULL, 0, hw_event, &hw_done);
-    ml7396_hwif_sint_ei();  /* em_main() と em_data の排他制御 */
+	ml7396_hwif_sint_di();  /* em_main() と em_data の排他制御 */
+	/* ハードウェア要因のイベントフラグ生成 */
+	hw_event = HW_EVENT_TIMEOUT, hw_done = 0;
+	/* イベントマシン呼び出し */
+	em_main(&em_data, NULL, 0, hw_event, &hw_done);
+	ml7396_hwif_sint_ei();  /* em_main() と em_data の排他制御 */
 }
 
 
@@ -2003,16 +1996,16 @@ static void timer_handler(void) {
 /* 内部データ強制リセット
  */
 int ml7396_reset(void) {
-    int status = ML7396_STATUS_UNKNOWN;
-    static uint8_t data[ACK_BUFFER_CAPACITY];
+	int status = ML7396_STATUS_UNKNOWN;
+	static uint8_t data[ACK_BUFFER_CAPACITY];
 
-    ASSERT(ACK_BUFFER_CAPACITY <= ML7396_BUFFER_CAPACITY);
-    em_data.myaddr  = 0x0000;           /* 自機アドレス */
-    em_data.mypanid = 0x0000;           /* 自機PANID */
-    em_data.state = ML7396_StateReset;  /* 初期ステート */
-    em_data.ack.data = data, em_data.ack.capacity = ACK_BUFFER_CAPACITY;  /* ACK送受信データ領域設定 */
-    status = ML7396_STATUS_OK;
-    return status;
+	ASSERT(ACK_BUFFER_CAPACITY <= ML7396_BUFFER_CAPACITY);
+	em_data.myaddr  = 0x0000;           /* 自機アドレス */
+	em_data.mypanid = 0x0000;           /* 自機PANID */
+	em_data.state = ML7396_StateReset;  /* 初期ステート */
+	em_data.ack.data = data, em_data.ack.capacity = ACK_BUFFER_CAPACITY;  /* ACK送受信データ領域設定 */
+	status = ML7396_STATUS_OK;
+	return status;
 }
 
 /* 初期化
@@ -2020,15 +2013,15 @@ int ml7396_reset(void) {
  * *data: 各種設定値
  */
 int ml7396_setup(void *data) {
-    int status = ML7396_STATUS_UNKNOWN;
-    uint32_t hw_event, hw_done;
+	int status = ML7396_STATUS_UNKNOWN;
+	uint32_t hw_event, hw_done;
 
-    ml7396_hwif_sint_di(), ml7396_hwif_timer_di();  /* em_main() と em_data の排他制御 */
-    ml7396_hwif_sint_handler(sint_handler), ml7396_hwif_timer_handler(timer_handler);  /* 割り込みハンドラ関数登録 */
-    hw_event = 0, hw_done = 0;  /* ハードウェア要因のイベントフラグ生成 */
-    status = em_main(&em_data, data, SW_EVENT_SETUP, hw_event, &hw_done);  /* イベントマシン呼び出し */
-    ml7396_hwif_sint_ei(), ml7396_hwif_timer_ei();  /* em_main() と em_data の排他制御 */
-    return status;
+	ml7396_hwif_sint_di(), ml7396_hwif_timer_di();  /* em_main() と em_data の排他制御 */
+	ml7396_hwif_sint_handler(sint_handler), ml7396_hwif_timer_handler(timer_handler);  /* 割り込みハンドラ関数登録 */
+	hw_event = 0, hw_done = 0;  /* ハードウェア要因のイベントフラグ生成 */
+	status = em_main(&em_data, data, SW_EVENT_SETUP, hw_event, &hw_done);  /* イベントマシン呼び出し */
+	ml7396_hwif_sint_ei(), ml7396_hwif_timer_ei();  /* em_main() と em_data の排他制御 */
+	return status;
 }
 
 /* 受信待ち開始
@@ -2036,29 +2029,29 @@ int ml7396_setup(void *data) {
  * buffer: 受信データバッファポインタ
  */
 int ml7396_rxstart(ML7396_Buffer *buffer) {
-    int status = ML7396_STATUS_UNKNOWN;
-    uint32_t hw_event, hw_done;
+	int status = ML7396_STATUS_UNKNOWN;
+	uint32_t hw_event, hw_done;
 
-    hw_event = 0, hw_done = 0;  /* ハードウェア要因のイベントフラグ生成 */
-    ml7396_hwif_sint_di(), ml7396_hwif_timer_di();  /* em_main() と em_data の排他制御 */
-    status = em_main(&em_data, buffer, SW_EVENT_RXSTART, hw_event, &hw_done);  /* イベントマシン呼び出し */
-    ml7396_hwif_sint_ei(), ml7396_hwif_timer_ei();  /* em_main() と em_data の排他制御 */
-    return status;
+	hw_event = 0, hw_done = 0;  /* ハードウェア要因のイベントフラグ生成 */
+	ml7396_hwif_sint_di(), ml7396_hwif_timer_di();  /* em_main() と em_data の排他制御 */
+	status = em_main(&em_data, buffer, SW_EVENT_RXSTART, hw_event, &hw_done);  /* イベントマシン呼び出し */
+	ml7396_hwif_sint_ei(), ml7396_hwif_timer_ei();  /* em_main() と em_data の排他制御 */
+	return status;
 }
 
 /* 受信待ち停止
  */
 int ml7396_rxstop(void) {
-    int status = ML7396_STATUS_UNKNOWN;
-    uint32_t hw_event, hw_done;
+	int status = ML7396_STATUS_UNKNOWN;
+	uint32_t hw_event, hw_done;
 
-    /* ハードウェア要因のイベントフラグ生成 */
-    hw_event = 0, hw_done = 0;
-    /* イベントマシン呼び出し */
-    ml7396_hwif_sint_di(), ml7396_hwif_timer_di();  /* em_main() と em_data の排他制御 */
-    status = em_main(&em_data, NULL, SW_EVENT_RXSTOP, hw_event, &hw_done);
-    ml7396_hwif_sint_ei(), ml7396_hwif_timer_ei();  /* em_main() と em_data の排他制御 */
-    return status;
+	/* ハードウェア要因のイベントフラグ生成 */
+	hw_event = 0, hw_done = 0;
+	/* イベントマシン呼び出し */
+	ml7396_hwif_sint_di(), ml7396_hwif_timer_di();  /* em_main() と em_data の排他制御 */
+	status = em_main(&em_data, NULL, SW_EVENT_RXSTOP, hw_event, &hw_done);
+	ml7396_hwif_sint_ei(), ml7396_hwif_timer_ei();  /* em_main() と em_data の排他制御 */
+	return status;
 }
 
 /* 送信開始
@@ -2072,16 +2065,16 @@ int ml7396_rxstop(void) {
  *   buffer->opt.tx.cca.retry: CCAチェック回数
  */
 int ml7396_txstart(ML7396_Buffer *buffer) {
-    int status = ML7396_STATUS_UNKNOWN;
-    uint32_t hw_event, hw_done;
+	int status = ML7396_STATUS_UNKNOWN;
+	uint32_t hw_event, hw_done;
 
-    /* ハードウェア要因のイベントフラグ生成 */
-    hw_event = 0, hw_done = 0;
-    /* イベントマシン呼び出し */
-    ml7396_hwif_sint_di(), ml7396_hwif_timer_di();  /* em_main() と em_data の排他制御 */
-    status = em_main(&em_data, buffer, SW_EVENT_TXSTART, hw_event, &hw_done);
-    ml7396_hwif_sint_ei(), ml7396_hwif_timer_ei();  /* em_main() と em_data の排他制御 */
-    return status;
+	/* ハードウェア要因のイベントフラグ生成 */
+	hw_event = 0, hw_done = 0;
+	/* イベントマシン呼び出し */
+	ml7396_hwif_sint_di(), ml7396_hwif_timer_di();  /* em_main() と em_data の排他制御 */
+	status = em_main(&em_data, buffer, SW_EVENT_TXSTART, hw_event, &hw_done);
+	ml7396_hwif_sint_ei(), ml7396_hwif_timer_ei();  /* em_main() と em_data の排他制御 */
+	return status;
 }
 
 
@@ -2091,94 +2084,94 @@ int ml7396_txstart(ML7396_Buffer *buffer) {
  */
 // 2016.03.14 tx send event
 void ml7396_txidle(void ) {
-    /* ハードウェア要因のイベントフラグ生成 */
-    uint32_t hw_done = 0;
+	/* ハードウェア要因のイベントフラグ生成 */
+	uint32_t hw_done = 0;
 
-    if (em_data.store_hw_event) {
-        /* イベントマシン呼び出し */
-        ml7396_hwif_sint_di(), ml7396_hwif_timer_di();  /* em_main() と em_data の排他制御 */
-        em_main(&em_data, NULL, 0, em_data.store_hw_event, &hw_done);
-        ml7396_hwif_sint_ei(), ml7396_hwif_timer_ei();  /* em_main() と em_data の排他制御 */
-        em_data.store_hw_event = 0;
-    }
+	if (em_data.store_hw_event) {
+		/* イベントマシン呼び出し */
+		ml7396_hwif_sint_di(), ml7396_hwif_timer_di();  /* em_main() と em_data の排他制御 */
+		em_main(&em_data, NULL, 0, em_data.store_hw_event, &hw_done);
+		ml7396_hwif_sint_ei(), ml7396_hwif_timer_ei();  /* em_main() と em_data の排他制御 */
+		em_data.store_hw_event = 0;
+	}
 }
 
 
 /* 省電力状態へ移行
  */
 int ml7396_sleep(void) {
-    int status = ML7396_STATUS_UNKNOWN;
-    uint32_t hw_event, hw_done;
+	int status = ML7396_STATUS_UNKNOWN;
+	uint32_t hw_event, hw_done;
 
-    /* ハードウェア要因のイベントフラグ生成 */
-    hw_event = 0, hw_done = 0;
-    /* イベントマシン呼び出し */
-    ml7396_hwif_sint_di(), ml7396_hwif_timer_di();  /* em_main() と em_data の排他制御 */
-    status = em_main(&em_data, NULL, SW_EVENT_SLEEP, hw_event, &hw_done);
-//    ml7396_hwif_sint_ei(), ml7396_hwif_timer_ei();  /* em_main() と em_data の排他制御 */
-    return status;
+	/* ハードウェア要因のイベントフラグ生成 */
+	hw_event = 0, hw_done = 0;
+	/* イベントマシン呼び出し */
+	ml7396_hwif_sint_di(), ml7396_hwif_timer_di();  /* em_main() と em_data の排他制御 */
+	status = em_main(&em_data, NULL, SW_EVENT_SLEEP, hw_event, &hw_done);
+	//    ml7396_hwif_sint_ei(), ml7396_hwif_timer_ei();  /* em_main() と em_data の排他制御 */
+	return status;
 }
 
 /* 省電力状態から復帰
  */
 int ml7396_wakeup(void) {
-    int status = ML7396_STATUS_UNKNOWN;
-    uint32_t hw_event, hw_done;
+	int status = ML7396_STATUS_UNKNOWN;
+	uint32_t hw_event, hw_done;
 
-    /* ハードウェア要因のイベントフラグ生成 */
-    hw_event = 0, hw_done = 0;
-    /* イベントマシン呼び出し */
-    ml7396_hwif_sint_di(), ml7396_hwif_timer_di();  /* em_main() と em_data の排他制御 */
-    status = em_main(&em_data, NULL, SW_EVENT_WAKEUP, hw_event, &hw_done);
-    ml7396_hwif_sint_ei(), ml7396_hwif_timer_ei();  /* em_main() と em_data の排他制御 */
-    return status;
+	/* ハードウェア要因のイベントフラグ生成 */
+	hw_event = 0, hw_done = 0;
+	/* イベントマシン呼び出し */
+	ml7396_hwif_sint_di(), ml7396_hwif_timer_di();  /* em_main() と em_data の排他制御 */
+	status = em_main(&em_data, NULL, SW_EVENT_WAKEUP, hw_event, &hw_done);
+	ml7396_hwif_sint_ei(), ml7396_hwif_timer_ei();  /* em_main() と em_data の排他制御 */
+	return status;
 }
 
 /* アドレスフィルタ設定
  */
 void ml7396_setAddrFilter(uint8_t *rx_filter){
 
-    uint8_t reg_data[2];
+	uint8_t reg_data[2];
 
-    reg_data[0] = 0x1A;
-    ml7396_regwrite(REG_ADR_ADDFIL_CNTRL, reg_data, 1);
-    reg_data[0] = *(rx_filter);
-    reg_data[1] = *(++rx_filter);
-    ml7396_regwrite(REG_ADR_PANID_L, reg_data, 2);
-    reg_data[0] = *(++rx_filter);
-    reg_data[1] = *(++rx_filter);
-    ml7396_regwrite(REG_ADR_SHT_ADDR0_L, reg_data, 2);
-    reg_data[0] = *(++rx_filter);
-    reg_data[1] = *(++rx_filter);
-    ml7396_regwrite(REG_ADR_SHT_ADDR1_L, reg_data, 2);
+	reg_data[0] = 0x1A;
+	ml7396_regwrite(REG_ADR_ADDFIL_CNTRL, reg_data, 1);
+	reg_data[0] = *(rx_filter);
+	reg_data[1] = *(++rx_filter);
+	ml7396_regwrite(REG_ADR_PANID_L, reg_data, 2);
+	reg_data[0] = *(++rx_filter);
+	reg_data[1] = *(++rx_filter);
+	ml7396_regwrite(REG_ADR_SHT_ADDR0_L, reg_data, 2);
+	reg_data[0] = *(++rx_filter);
+	reg_data[1] = *(++rx_filter);
+	ml7396_regwrite(REG_ADR_SHT_ADDR1_L, reg_data, 2);
 }
 
 /* 自機アドレスのポインタを取得
  */
 uint16_t *ml7396_myaddr(void) {
-    return &em_data.myaddr;
+	return &em_data.myaddr;
 }
 
 /* 自機PANIDのポインタを取得
  */
 uint16_t *ml7396_mypanid(void) {
-    return &em_data.mypanid;
+	return &em_data.mypanid;
 }
 
 /* ドライバの状態を取得
  */
 ML7396_State ml7396_state(void) {
-    return em_data.state;
+	return em_data.state;
 }
 
 /* 送信中のバッファを取得
  */
 ML7396_Buffer *ml7396_txbuffer(void) {
-    return em_data.tx;
+	return em_data.tx;
 }
 
 /* 受信中のバッファを取得
  */
 ML7396_Buffer *ml7396_rxbuffer(void) {
-    return em_data.rx;
+	return em_data.rx;
 }

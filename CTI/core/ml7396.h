@@ -81,30 +81,59 @@ typedef enum {
 #define ML7396_HEADER_ADDRNONE  0x0000  /* アドレス指定なし */
 #define ML7396_HEADER_PANIDNONE 0x0000  /* PANID指定なし */
 #define ML7396_HEADER_SEQNONE   -1      /* シーケンス番号なし */
+
+// macro to set paramters in frame control
+#define SET_FRAME_TYPE(a,b)		a=((a & (~0x0007)) | ((uint16_t)b << 0))
+#define SET_SEC_ENB(a,b)		a=((a & (~0x0008)) | ((uint16_t)b << 3))
+#define SET_PENDING(a,b)		a=((a & (~0x0010)) | ((uint16_t)b << 4))
+#define SET_ACK_REQ(a,b)		a=((a & (~0x0020)) | ((uint16_t)b << 5))
+#define SET_PANID_COMP(a,b)		a=((a & (~0x0040)) | ((uint16_t)b << 6))
+#define SET_SEQ_COMP(a,b)		a=((a & (~0x0100)) | ((uint16_t)b << 8))
+#define SET_IELIST(a,b)			a=((a & (~0x0200)) | ((uint16_t)b << 9))
+#define SET_TX_ADDR_TYPE(a,b)	a=((a & (~0x0C00)) | ((uint16_t)b << 10))
+#define SET_FRAME_VER(a,b)		a=((a & (~0x3000)) | ((uint16_t)b << 12))
+#define SET_RX_ADDR_TYPE(a,b)	a=((a & (~0xC000)) | ((uint16_t)b << 14))
+
+// macro to get paramters in frame control
+#define GET_FRAME_TYPE(fc)		((fc >> 0) & 0x0007)
+#define GET_SEC_ENB(fc) 		((fc >> 3) & 0x0001)
+#define GET_PENDING(fc) 		((fc >> 4) & 0x0001)
+#define GET_ACK_REQ(fc) 		((fc >> 5) & 0x0001)
+#define GET_PANID_COMP(fc) 		((fc >> 6) & 0x0001)
+#define GET_SEQ_COMP(fc) 		((fc >> 8) & 0x0001)
+#define GET_IELIST(fc) 			((fc >> 9) & 0x0001)
+#define GET_TX_ADDR_TYPE(fc) 	((fc >> 10) & 0x0002)
+#define GET_FRAME_VER(fc) 		((fc >> 12) & 0x0002)
+#define GET_RX_ADDR_TYPE(fc) 	((fc >> 14) & 0x0002)
+
 typedef struct {
-    uint16_t fc;        /* ヘッダのフレームコントロール */
-    int16_t seq;        /* シーケンス番号 */
-    uint16_t dstpanid;  /* 宛て先PANID */
-    uint16_t dstaddr;   /* 宛て先アドレス */
-	/*
-	uint8_t dstaddr_mode;
+	uint8_t enb;
+	uint16_t panid;
+} MAC_PANID;
+
+typedef struct {
+	uint8_t mode;
 	union {
 		uint8_t addr8;
 		uint16_t addr16;
 		uint8_t addr64[8];
-	}dstaddr;
-	*/
-    uint16_t srcpanid;  /* 送り元PANID */
-    uint16_t srcaddr;   /* 送り元アドレス */
-	/*
-	uint8_t srcaddr_mode
-	union {
-		uint8_t addr8;
-		uint16_t addr16;
-		uint8_t addr64[8];
-	}srcaddr;
-	*/
-} ML7396_Header;
+	} addr;
+} MAC_ADDR;
+
+typedef struct {
+	uint16_t len;
+	uint8_t *data;
+}MAC_PAYLOAD;
+typedef struct {
+    int16_t seq;        	// sequence number
+    uint16_t fc;        	// framce control
+    uint8_t addr_type;      // address type
+    MAC_PANID dstpanid;  	// distination panid
+	MAC_ADDR dstaddr;		// distination address
+    MAC_PANID srcpanid; 	// source panid
+	MAC_ADDR srcaddr;		// source address
+	MAC_PAYLOAD payload;	// payload
+} MAC_Header;
 
 /* 送受信バッファ
  *
@@ -141,7 +170,7 @@ typedef struct ml7396_buffer {
             uint8_t ed;                                  /* ED値 */
             void (*done)(struct ml7396_buffer *buffer);  /* 受信完了コールバック関数 */
             struct ml7396_buffer *next;                  /* 連続受信時の次のバッファポインタ(NULL=最後のバッファ) */
-            int (*filter)(const ML7396_Header *header);  /* 受信フィルタ関数（戻り値: 真=受信, 偽=破棄) */
+            int (*filter)(const MAC_Header *header);  /* 受信フィルタ関数（戻り値: 真=受信, 偽=破棄) */
         } rx;
         struct {                                       /* データ送信パラメータ */
             uint8_t ed;                                  /* ACK受信時のED値 */
