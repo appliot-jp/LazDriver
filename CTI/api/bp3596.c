@@ -34,6 +34,8 @@
 #include "../core/endian.h"
 #include "../core/ieee802154.h"
 #include "bp3596.h"
+#include "../phy.h"
+//#include "mac.h"
 #include "aes.h"
 
 #ifdef DEBUG_AES
@@ -51,19 +53,26 @@
 
 /* APIグローバル変数
  */
+typedef struct {
+	uint8_t *buf;
+	int16_t size;
+}RF_Buffer;
 static struct {
 	bool flag;
 	MAC_PANID myPanid;
 	MAC_ADDR myAddr;
 	MAC_PANID dstPanid;
 	MAC_ADDR dstAddr;
+	PHY_INIT_PARAM phy;
 	uint8_t seq;
     struct {
-        ML7396_Buffer buffer;
+        //ML7396_Buffer buffer;
+		RF_Buffer buf;
         void (*done)(const uint8_t *data, uint8_t rssi, int status);  /* コールバック関数 */
     } rx;
     struct {
-        ML7396_Buffer buffer;
+        //ML7396_Buffer buffer;
+		RF_Buffer buf;
         void (*done)(uint8_t rssi, int status);  /* コールバック関数 */
     } tx;
 } api = {
@@ -150,11 +159,12 @@ static int rxfilter(const MAC_Header *header) {
 		   |----------+---------+----------+---------+---------|-----------|
 		   |   ff     |   ff    |   ---    |  ---    | no ack  | broadcast |
 		   |  ---     |   ff    |   ---    |  ---    | no ack  | groupcast |
-		   |  ---     |   no    |   ---    |  ---    | no ack  | ???????   |
-		   |   ff     |  ---    |          |  ---    | ??????  | ???????   |
-		   |  ---     |  ---    |    ff    |  ---    | ??????  | ???????   |
-		   |  ---     |  ---    |   ---    |   ff    | ??????  | unicast   |
-		   |  ---     |  ---    |   ---    |   no    | no ack  | unicast   |
+		   |  ---     |   no    |   ---    |  ---    |  ack    | unicast   |
+		   |   ff     |  64bit  |          |  ---    |  ack    | unicast   |
+		   | ff/no    |  0/8/16 |          |  ---    | no ack  |  error    |
+		   |  ---     |  ---    |    ff    |  ---    |  ack    | unicast   |
+		   |  ---     |  ---    |   ---    |   ff    |  ack    | unicast   |
+		   |  ---     |  ---    |   ---    |   no    |  ack    | unicast   |
 	 ******************************************************************************/
 static bool make_mac_header(uint8_t *data, uint16_t *size, MAC_Header *header) {
 	uint16_t offset=2;
@@ -202,10 +212,20 @@ static bool make_mac_header(uint8_t *data, uint16_t *size, MAC_Header *header) {
 				goto error;
 				break;
 			case 1:
+				if((header->dstpanid.panid == 0xffff) ||(header->dstpanid.enb == false))
+				{
+					isValid = false;
+					goto error;
+				}
 				data[offset] = header->dstaddr.addr.addr8,offset++;
 				if(header->dstaddr.addr.addr8 != 0xff) broadcast = false;
 				break;
 			case 2:
+				if((header->dstpanid.panid == 0xffff) ||(header->dstpanid.enb == false))
+				{
+					isValid = false;
+					goto error;
+				}
 				u2v16_set(header->dstaddr.addr.addr16, data+offset), offset+=2;
 				if(header->dstaddr.addr.addr16 != 0xffff) broadcast = false;
 				break;
@@ -256,8 +276,6 @@ static bool make_mac_header(uint8_t *data, uint16_t *size, MAC_Header *header) {
 				}
 				break;
 		}
-	}else {
-		SET_ACK_REQ(header->fc,0);
 	}
 	isValid = true;
 

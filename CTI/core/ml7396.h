@@ -169,13 +169,13 @@ typedef struct ml7396_buffer {
         struct {                                       /* データ受信パラメータ */
             uint8_t ed;                                  /* ED値 */
             void (*done)(struct ml7396_buffer *buffer);  /* 受信完了コールバック関数 */
-            struct ml7396_buffer *next;                  /* 連続受信時の次のバッファポインタ(NULL=最後のバッファ) */
+//            struct ml7396_buffer *next;                  /* 連続受信時の次のバッファポインタ(NULL=最後のバッファ) */
             int (*filter)(const MAC_Header *header);  /* 受信フィルタ関数（戻り値: 真=受信, 偽=破棄) */
         } rx;
         struct {                                       /* データ送信パラメータ */
             uint8_t ed;                                  /* ACK受信時のED値 */
             void (*done)(struct ml7396_buffer *buffer);  /* 送信完了コールバック関数 */
-            struct ml7396_buffer *next;                  /* 連続送信時の次のバッファポインタ(NULL=最後のバッファ) */
+//            struct ml7396_buffer *next;                  /* 連続送信時の次のバッファポインタ(NULL=最後のバッファ) */
             struct {                                     /* 再送とCCAの設定 */
                 uint16_t wait;                             /* ACK待ち時間/CCAチェック間隔 [msec単位] */
                 uint8_t retry;                             /* 再送/CCAチェックリトライ回数 */
@@ -185,7 +185,7 @@ typedef struct ml7396_buffer {
         struct {                                       /* データ送受信共通パラメータ */
             uint8_t ed;                                  /* データ受信時のED値 */
             void (*done)(struct ml7396_buffer *buffer);  /* 処理完了コールバック関数 */
-            struct ml7396_buffer *next;                  /* 次のバッファポインタ(NULL=最後のバッファ) */
+//            struct ml7396_buffer *next;                  /* 次のバッファポインタ(NULL=最後のバッファ) */
         } common;
     } opt;
 } ML7396_Buffer;
