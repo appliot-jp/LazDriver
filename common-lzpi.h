@@ -32,5 +32,4 @@
 }
 #endif
 
-
 #endif // _COMMON_802154E_H_

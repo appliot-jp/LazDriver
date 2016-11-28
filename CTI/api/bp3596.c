@@ -364,7 +364,7 @@ error:
 
 int BP3596_reset(void) {
 	int status = BP3596_STATUS_UNKNOWN;
-	static uint8_t rxdata[RXBUFFER_CAPACITY], txdata[TXBUFFER_CAPACITY];  /* 送受信バッファ */
+	//static uint8_t rxdata[RXBUFFER_CAPACITY], txdata[TXBUFFER_CAPACITY];  /* 送受信バッファ */
 
 	ml7396_reset();
 	memset(&api, 0, sizeof(api));  /* API共有データをクリア */

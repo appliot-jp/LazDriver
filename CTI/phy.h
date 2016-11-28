@@ -23,7 +23,30 @@
 
 typedef struct {
 	uint8_t id;
-	uint16_t fifo_size;
-} PHY_INIT_PARAM;
+	uint16_t size;
+	uint8_t *in;
+	uint8_t *out;
+} PHY_PARAM;
 
+extern int phy_start(void);
+extern int phy_stop(void);
+extern int phy_xmit_sync(BUFFER buff);
+extern int phy_xmit_async(BUFFER buff);
+extern int phy_ed(uint8_t level);
+extern int phy_set_channel(uint8_t page);
+extern int phy_set_hw_addr_filt(struct ieee802154_hw_addr_filt *filt,unsigned long changed);
+extern int phy_set_txpower(uint32_t mbm);
+extern int	phy_set_lbt(struct ieee802154_hw *hw, bool on);
+extern int	phy_set_cca_mode(const struct wpan_phy_cca *cca);
+extern int	phy_set_cca_ed_level(uint32_t mbm);
+extern int	phy_set_csma_params(uint8_t min_be, uint8_t max_be, uint8_t retries);
+extern int	phy_set_frame_retries(s8 retries);
+extern int phy_set_promiscuous_mode(const bool on);
+
+enum ieee802154_hw_addr_filt_flags {
+	IEEE802154_AFILT_SADDR_CHANGED		= BIT(0),
+	IEEE802154_AFILT_IEEEADDR_CHANGED	= BIT(1),
+	IEEE802154_AFILT_PANID_CHANGED		= BIT(2),
+	IEEE802154_AFILT_PANC_CHANGED		= BIT(3),
+};
 #endif

@@ -106,35 +106,6 @@ typedef enum {
 #define GET_FRAME_VER(fc) 		((fc >> 12) & 0x0002)
 #define GET_RX_ADDR_TYPE(fc) 	((fc >> 14) & 0x0002)
 
-typedef struct {
-	uint8_t enb;
-	uint16_t panid;
-} MAC_PANID;
-
-typedef struct {
-	uint8_t mode;
-	union {
-		uint8_t addr8;
-		uint16_t addr16;
-		uint8_t addr64[8];
-	} addr;
-} MAC_ADDR;
-
-typedef struct {
-	uint16_t len;
-	uint8_t *data;
-}MAC_PAYLOAD;
-typedef struct {
-    int16_t seq;        	// sequence number
-    uint16_t fc;        	// framce control
-    uint8_t addr_type;      // address type
-    MAC_PANID dstpanid;  	// distination panid
-	MAC_ADDR dstaddr;		// distination address
-    MAC_PANID srcpanid; 	// source panid
-	MAC_ADDR srcaddr;		// source address
-	MAC_PAYLOAD payload;	// payload
-} MAC_Header;
-
 /* 送受信バッファ
  *
  * パラメータの使われ方は送信か受信かによって異なる
