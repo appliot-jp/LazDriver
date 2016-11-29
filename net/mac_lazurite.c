@@ -42,29 +42,43 @@ int mac_stop() {
 int mac_setup(uint8_t ch, uint8_t rate, uint8_t txPower, uint8_t senseTime,uint8_t txRetry,uint16_t txInterval, uint8_t ccaWait) {
 	uint8_t pages;
 	int status;
-	switch (rate)
+	// set baudrate
+	if (rate==50) pages = 1;
+	else if (rate == 100) pages = 2;
+	else 
 	{
-		case 50:
-		pages = 1;
-		case 100:
-		pages = 2;
+		status = -1;
+		goto error;
 	}
+
+	// set channel
 	if(phy_set_channel(pages,ch) != STATUS_OK){
 		status = -1; 
 		goto error;
 	}
-	
+
+	// @issue check relation between parameters and setting
+	// set setting CCA
+	phy_set_txpower(pwr);
+
+	// set setting CCA
+	phy_set_csma_params(min_be,max_be,txRetry);
+	phy_frame_retries(txRetry);
+	phy_ch_scan(uint32_t duration);				// add 
+	phy_set_cca_mode(const struct wpan_phy_cca *cca);
+	phy_set_cca_ed_level(uint32_t mbm);
+	phy_set_csma_params(uint8_t min_be, uint8_t max_be, uint8_t retries);
+
+
 	// @issue check conversion fron pwr to mbm
-int	phy_set_txpower(mbm);
-int	phy_set_cca_mode(const struct wpan_phy_cca *cca);
-int	phy_set_cca_ed_level(uint32_t mbm);
-int	phy_set_csma_params(uint8_t min_be, uint8_t max_be, uint8_t retries);
-int	phy_set_frame_retries(int8_t retries);
+	int	phy_set_cca_mode(const struct wpan_phy_cca *cca);
+	int	phy_set_cca_ed_level(uint32_t mbm);
+	int	phy_set_csma_params(uint8_t min_be, uint8_t max_be, uint8_t retries);
 error:
 
 	return status;
 }
 
 
-int mac_setup(uint8_t ch, uint8_t rate, uint8_t txPower, uint8_t senseTime,uint8_t txRetry,uint16_t txInterval, uint8_t ccaWait) {
+int mac_tx() {
 }

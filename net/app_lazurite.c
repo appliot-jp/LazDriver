@@ -26,7 +26,7 @@ int rf_init()
 {
 	int status = STATUS_OK;
 	memset(&app,0,sizeof(SUBGHZ_APP));
-	app.mac = mac_init();
+	app.macinfo = mac_init();
 	if(app.mac == NULL) status = -1;
 	return status;
 }
