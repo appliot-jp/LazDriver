@@ -23,7 +23,7 @@
 
 typedef struct {
 	uint8_t id;
-	uint16_t size;
+	uint16_t buf_size;
 	uint8_t *in;
 	uint8_t *out;
 } PHY_PARAM;
@@ -44,6 +44,10 @@ extern int	phy_set_cca_ed_level(uint32_t mbm);
 extern int	phy_set_csma_params(uint8_t min_be, uint8_t max_be, uint8_t retries);
 extern int	phy_set_frame_retries(int8_t retries);
 extern int	phy_set_promiscuous_mode(const bool on);
+extern int	phy_rx_irq(BUFFER *rx);
+
+extern int	phy_sleep(bool on);
+extern int	get_mac_addr(uint8_t *macaddr);
 
 enum ieee802154_hw_addr_filt_flags {
 	IEEE802154_AFILT_SADDR_CHANGED		= BIT(0),

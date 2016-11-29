@@ -1,5 +1,4 @@
-
-/* mac_lazurite.c - MAC for lazurite
+/* app_lazurite.c - MAC for lazurite
  *
  * Copyright (c) 2015  Lapis Semiconductor Co.,Ltd
  * All rights reserved.
@@ -18,14 +17,20 @@
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/>
  */
+ 
 
-static MAC_PARAM mac;
+SUBGHZ_APP app;
+static struct {
 
-int lazurite_start() {
-	// initialize mac
-	memset(mac,0,sizeof(mac));
-
-	// initialize phy  <== ml7396_reset();
-	mac.status = phy_start(&mac.phy);
+int rf_init()
+{
+	int status = STATUS_OK;
+	memset(&app,0,sizeof(SUBGHZ_APP));
+	app.mac = mac_init();
+	if(app.mac == NULL) status = -1;
 	return status;
+}
+
+int rf_send(uint8_t ch, uint16_t mypanid, uint8_t rate, uint8_t pwr)
+{
 }

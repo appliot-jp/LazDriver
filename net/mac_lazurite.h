@@ -23,42 +23,44 @@
 #define _MAC_LAZURITE_H_
 #include "phy_lazurite.h"
 
-typedef struct {
-	uint8_t enb;
-	uint16_t panid;
-} MAC_PANID;
 
 typedef struct {
-	uint8_t mode;
-	union {
-		uint8_t addr8;
+	struct {
+		uint8_t enb;
+		uint16_t data;
+	} panid;
+	struct {
+		uint8_t mode;
 		uint16_t addr16;
 		uint8_t addr64[8];
-	} addr;
+	}addr;
 } MAC_ADDR;
 
 typedef struct {
 	uint8_t *data;
 	uint16_t len;
-} MAC_DATA;
+} BUFFER;
 
 typedef struct {
     int16_t seq;        	// sequence number
     uint16_t fc;        	// framce control
     uint8_t addr_type;      // address type
-    MAC_PANID dstpanid;  	// distination panid
 	MAC_ADDR dstaddr;		// distination address
-    MAC_PANID srcpanid; 	// source panid
 	MAC_ADDR srcaddr;		// source address
 	MAC_PAYLOAD payload;	// payload
 } MAC_Header;
 
 typedef struct {
 	int status;
-	PHY_PARAM phy;
+	PHY_PARAM *phy;
 	MAC_DATA tx;
 	MAC_DATA rx;
 	MAC_Header header;
+	uint8_t tx_retry;
+	uint16_t tx_interval;
+
 } MAC_PARAM;
 
+extern MAC_PARAM *mac_init(void);
+extern int mac_sleep(bool on);
 #endif
