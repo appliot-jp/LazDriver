@@ -39,6 +39,7 @@ typedef struct {
 typedef struct {
 	uint8_t *data;
 	uint16_t len;
+	int size;			// size < 0 : size unknown
 } BUFFER;
 
 typedef struct {
@@ -51,14 +52,13 @@ typedef struct {
 } MAC_Header;
 
 typedef struct {
-	int status;
 	PHY_PARAM *phy;
 	MAC_DATA tx;
 	MAC_DATA rx;
+	MAC_DATA ack:
 	MAC_Header header;
 	uint8_t tx_retry;
 	uint16_t tx_interval;
-
 } MAC_PARAM;
 
 extern MAC_PARAM *mac_init(void);
