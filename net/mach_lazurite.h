@@ -45,18 +45,17 @@ typedef struct {
 typedef struct {
     int16_t seq;        	// sequence number
     uint16_t fc;        	// framce control
-    uint8_t addr_type;      // address type
-	MAC_ADDR dstaddr;		// distination address
-	MAC_ADDR srcaddr;		// source address
-	MAC_PAYLOAD payload;	// payload
+    uint8_t type;      // address type
+	BUFFER buf;		// source address
+	uint8_t rssi;		// source address
 } MAC_Header;
 
 typedef struct {
 	PHY_PARAM *phy;
-	MAC_DATA tx;
-	MAC_DATA rx;
-	MAC_DATA ack:
-	MAC_Header header;
+	MAC_ADDR  myAddr;
+	MAC_Header tx;
+	MAC_Header rx;
+	MAC_Header ack;
 	uint8_t tx_retry;
 	uint16_t tx_interval;
 } MAC_PARAM;

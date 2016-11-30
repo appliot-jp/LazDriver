@@ -19,8 +19,13 @@
  * <http://www.gnu.org/licenses/>
  */
 
-// local parameters
+/*! @struct MACH_PARAM
+  @brief  parameter for mac high layer
+  */
 static MACH_PARAM mach;
+/*! @uint8_t ackbuf[32]
+  @brief  data buffer to make ack data
+  */
 static uint8_t ackbuf[32];
 
 // local functions
@@ -45,16 +50,16 @@ static uint8_t ackbuf[32];
   @exception none
   @issue     move to mac
   @issue     check ack condision
-  | dstpanid | dstaddr | srcpanid | srcaddr | ack     | tx mode   |
-  |----------+---------+----------+---------+---------|-----------|
-  |   ff     |   ff    |   ---    |  ---    | no ack  | broadcast |
-  |  ---     |   ff    |   ---    |  ---    | no ack  | groupcast |
-  |  ---     |   no    |   ---    |  ---    |  ack    | unicast   |
-  |   ff     |  64bit  |          |  ---    |  ack    | unicast   |
-  | ff/no    |  0/8/16 |          |  ---    | no ack  |  error    |
-  |  ---     |  ---    |    ff    |  ---    |  ack    | unicast   |
-  |  ---     |  ---    |   ---    |   ff    |  ack    | unicast   |
-  |  ---     |  ---    |   ---    |   no    |  ack    | unicast   |
+   dstpanid | dstaddr | srcpanid | srcaddr | ack     | tx mode   
+  ----------|---------|----------|---------|---------|-----------
+     ff     |   ff    |   ---    |  ---    | no ack  | broadcast 
+    ---     |   ff    |   ---    |  ---    | no ack  | groupcast 
+    ---     |   no    |   ---    |  ---    |  ack    | unicast   
+     ff     |  64bit  |          |  ---    |  ack    | unicast   
+   ff/no    |  0/8/16 |          |  ---    | no ack  |  error    
+    ---     |  ---    |    ff    |  ---    |  ack    | unicast   
+    ---     |  ---    |   ---    |   ff    |  ack    | unicast   
+    ---     |  ---    |   ---    |   no    |  ack    | unicast   
  ******************************************************************************/
 static bool mach_make_header(uint8_t *data, uint16_t *size, MAC_Header *header) {
 	uint16_t offset=2;
@@ -271,12 +276,12 @@ error:
 return isValid;
 }
 
-/******************************************************************************/
+/*********************************************************************/
 /*! @brief mach init 
   mac high layer initialization
   @return    pointer of MACH_PARAM
   @exception  return NULL
- ******************************************************************************/
+ *********************************************************************/
 MACH_PARAM *mach_init(void)
 {
 	memset(mac,0,sizeof(MACH_PARAM));
@@ -292,18 +297,23 @@ MACH_PARAM *mach_init(void)
 	return &mac;
 }
 
-/******************************************************************************/
+/********************************************************************/
 /*! @brief mach start 
   mac high layer rx on
-  @return    pointer of MACH_PARAM
+  @return     0=STATUS_OK, other = error
   @exception  return NULL
- ******************************************************************************/
+ ********************************************************************/
 int mach_start() {
 	// initialize phy  <== ml7396_reset();
-	// l
 	return status;
 }
 
+/********************************************************************/
+/*! @brief mach stop 
+  mac high layer rx off
+  @return    0=STATUS_OK, other = error
+  @exception  return NULL
+ ********************************************************************/
 int mach_stop() {
 }
 
@@ -341,9 +351,29 @@ error:
 	return status;
 }
 
-int mach_tx64(uint8_t *dstAddr, uint8_t @payload, uint16_t size,uint8_t addrType,void txCallback(uint8_t rssi, int16_t status)) {
+/********************************************************************/
+/*! @brief tx in mac high layer
+  @param[in]	*dstAddr	64bit distination address
+  @param[in]	*payload	start pointer of payload
+  @param[in]	size		size of payload
+  @param[in]	addrType	address type
+  @param[in]	txCallback	callback at end of tx
+  @return    0=STATUS_OK, other = error
+  @exception  return NULL
+ ********************************************************************/
+int mach_set_dst_addr64(uint8_t *addr)
+{
+	memcpy(mac.header.dst.addr.addr64,dstAddr,sizeof(8));
 
+	return STATUS_OK;
 }
-int mach_tx(uint8_t panid, uint16_t dstAddr, uint8_t *payload, uint16_t size, uint8_t addrType,void (*txCallback(uint8_t rssi, int16_t status))) {
-
+void mach_set_dst_addr(uint16_t panid,uint16_t addr)
+{
+	mac.header.dst.panid.id = panid;
+	mac.header.dst.addr.addr16 = addr;
+}
+void mach_set_my_saddr(uint16_t panid,uint16_t addr)
+{
+	mac.header.my.panid.id = panid;
+	mac.header.my.addr.addr16 = addr;
 }
