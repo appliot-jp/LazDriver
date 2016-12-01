@@ -1,6 +1,6 @@
-/* phy_lazurite.h - 
+/* endian.h
  *
- * Copyright (c) 2015  LAPIS Semiconductor Co.,Ltd.
+ * Copyright (c) 2015  Lapis Semiconductor Co.,Ltd.
  * All rights reserved.
  *
  * This program is free software: you can redistribute it and/or
@@ -19,30 +19,23 @@
  */
 
 
-#ifndef _PHY_H_
-#define _PHY_H_
+#ifndef	_ENDIAN_H_
+#define _ENDIAN_H_
 
-#ifdef LAZURITE_IDE
-#include "lazurite.h"
-#include "hal.h"
-#include "string.h"
-#include "lp_manage.h"
-#include "driver_irq.h"
-#else
-#include <linux/string.h>
-#include <linux/sched.h>
-#include <linux/wait.h>
+#define LITTLE_ENDIAN
+// #define BIG_ENDIAN
+
+#ifdef LITTLE_ENDIAN
+#define htons(s)  s
+#define htonl(l)  l
+#define ntohs(s)  s
+#define ntohl(l)  l
 #endif
-
-#define INIT_SLEEP
-//#define TEST_SEND_INTERVAL
-
-
-typedef struct {
-	uint8_t id;
-	uint16_t buf_size;
-	uint8_t *in;
-	uint8_t *out;
-} PHY_PARAM;
+#ifdef BIG_ENDIAN
+#define htons(s)  s
+#define htonl(l)  l
+#define ntohs(s)  s
+#define ntohl(l)  l
+#endif
 
 #endif

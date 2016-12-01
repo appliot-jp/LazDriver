@@ -20,11 +20,41 @@
 
 #ifndef _MAC_LAZURITE_H_
 #define _MAC_LAZURITE_H_
+
+#ifdef LAZURITE_IDE
+#include "lazurite.h"
+#include "hal.h"
+#include "string.h"
+#include "lp_manage.h"
+#include "driver_irq.h"
+#else
+#include <linux/string.h>
+#include <linux/sched.h>
+#include <linux/wait.h>
+#endif
+
+#define INIT_SLEEP
+//#define TEST_SEND_INTERVAL
+
 #include "phy_lazurite.h"
+#include "common_lazurite.h"
+
+#define MACH_FC_TYPE			0x0007
+#define MACH_FC_SEC_ENB			0x0008
+#define MACH_FC_PENDING			0x0010
+#define MACH_FC_ACK_REG			0x0020
+#define MACH_FC_PANID_COMP		0x0040
+#define MACH_FC_SEQ_COMP		0x0100
+#define MACH_FC_IE_LIST			0x0200
+#define MACH_FC_SRC_ADDR		0x0C00
+#define MACH_FC_VER				0x3000
+#define MACH_FC_DST_ADDR		0xC000
 
 typedef struct {
-	bool panid_comp;
-	uint16_t pan_id;
+	struct {
+		bool isValid;
+		uint16_t data;
+	} panid;
 	bool addr_mode;
 	union {
 		uint16_t short_addr;
@@ -40,11 +70,35 @@ typedef struct
 	bool		pan_coord;				// common
 } MACH_ADDR;
 
+/*! @struct s_MAC_HEADER_BIT_ALIGNMENT
+  @brief  abstruct
+  internal use only
+  bit alightment of mac header
+  */
+typedef struct {
+	uint8_t frame_type:3;
+	uint8_t sec_enb:1;
+	uint8_t pending:1;
+	uint8_t ack_req:1;
+	uint8_t panid_comp:1;
+	uint8_t nop:1;
+	uint8_t seq_comp:1;
+	uint8_t ielist:1;
+	uint8_t rx_addr_type:2;
+	uint8_t frame_ver:2;
+	uint8_t tx_addr_type:2;
+} s_MAC_HEADER_BIT_ALIGNMENT;
+
+typedef union {
+	uint8_t fc8[2];
+	uint16_t fc16;
+	s_MAC_HEADER_BIT_ALIGNMENT fc_bit;
+} u_MAC_HEADER;
 
 typedef struct {
-    int16_t seq;        	// sequence number
-    uint16_t fc;        	// framce control
-    uint8_t type;      // address type
+	int16_t seq;        	// sequence number
+	u_MAC_HEADER fc;		// frame control
+	uint8_t addr_type;      // address type
 	BUFFER buf;		// source address
 	uint8_t rssi;		// source address
 	MACH_HEADER_ADDR dst;

@@ -32,7 +32,7 @@
 #include "common-lzpi.h"
 #include "subghz_api.h"
 #include "drv-lazurite.h"
-#include "CTI/hwif/hal.h"
+#include "hwif/hal.h"
 
 #define DATA_SIZE		256+16
 #define DRV_NAME		"lzgw"

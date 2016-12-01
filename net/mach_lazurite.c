@@ -22,11 +22,26 @@
 /*! @struct MACH_PARAM
   @brief  local parameter for mac high layer
   */
+#include "mach_lazurite.h"
+#include "errno.h"
+#include "endian.h"
+
 static MACH_PARAM mach;
 /*! @uint8_t ackbuf[32]
   @brief  data buffer to make ack data
   */
 static uint8_t ackbuf[32];
+
+/******************************************************************************/
+/*! @brief enb_dst_panid
+  enb/dis of dst_panid/src_panid at each addrType
+  0bit : addrType=0
+  1bit : addrType=1
+  ...
+ */
+const uint8_t enb_dst_panid = 0x04;
+const uint8_t enb_src_panid = 0x52;
+const uint8_t addr_len[] = {0x00,0x01,0x02,0x08};
 
 // local functions
 /******************************************************************************/
@@ -47,7 +62,7 @@ static uint8_t ackbuf[32];
   ack_reg (1: auto, 0: no ack)
   ielist
   @return    false= invalid data, true valid data
-  @exception none
+  @exception panid is invalid. but mode is set with panid
   @issue     move to mac
   @issue     check ack condision
   dstpanid | dstaddr | srcpanid | srcaddr | ack     | tx mode   
@@ -61,38 +76,33 @@ static uint8_t ackbuf[32];
   ---     |  ---    |   ---    |   ff    |  ack    | unicast   
   ---     |  ---    |   ---    |   no    |  ack    | unicast   
  ******************************************************************************/
-static bool mach_make_header(uint8_t *data, uint16_t *size, MAC_Header *header) {
-	uint16_t offset=2;
-	bool isValid=false;
+
+
+static bool mach_make_header(uint8_t *data, uint16_t *size, MACH_Header *header) {
+	uint16_t offset;
+	bool status=false;
 	bool broadcast = true;
 	int i;
-	// input param = addr_mode
-	// enb_addr_bit		4bit:	dstaddr
-	// 					3bit:	srcaddr
-	// 					2bit:	panid_comp
-	// 					1bit:	dstpanid
-	// 					0bit:	srcpanid
-	const uint8_t enb_addr_bit[] = {0x00,0x06,0x09,0x0c,0x12,0x14,0x1a,0x1c};
-	const uint8_t addr_len[] = {0x00,0x01,0x02,0x08};
 
 	// set panid comp
-	SET_PANID_COMP(header->fc,((enb_addr_bit[header->addr_type] & 0x04) ? 1:0));
+	// panidcomp is as same as 0 bit of addrType
+	header->fc.fc_bit.panid_comp = (header->addr_type&0x01) ? 1:0;
 
+	offset = 2;			// temporary skip frame control
 	// sequence number
-	if(!GET_SEQ_COMP(header->fc)) {
+	if(!header->fc.fc_bit.seq_comp) {
 		data[offset] = header->seq,offset++;
-
 	}
 
 	// dst panid
-	if(enb_addr_bit[header->addr_type] & 0x02)
+	if(enb_dst_panid&BIT(header->addr_type))
 	{
-		if(header->dstpanid.enb == 0)
+		if(!header->dst.panid.isValid)
 		{
-			isValid = false;
+			status = -EINVAL;
 			goto error;
 		} else {
-			u2v16_set(header->dstpanid.panid, data+offset), offset+=2;
+			*(uint16_t *)(&data[offset])=htons(header->dst.panid.data), offset+=2;
 		}
 	}
 

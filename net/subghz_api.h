@@ -50,14 +50,14 @@ typedef enum {
 
 // rate parameters
 typedef enum {
-	SUBGHZ_100KBPS = BP3596_RATE_100KBPS,
-	SUBGHZ_50KBPS  = BP3596_RATE_50KBPS
+	SUBGHZ_100KBPS = 100,
+	SUBGHZ_50KBPS  = 50
 } SUBGHZ_RATE;
 
 // txPower parameters
 typedef enum {
-	SUBGHZ_PWR_20MW = BP3596_POWER_20MW,
-	SUBGHZ_PWR_1MW = BP3596_POWER_1MW
+	SUBGHZ_PWR_20MW = 20,
+	SUBGHZ_PWR_1MW = 1
 } SUBGHZ_POWER;
 
 typedef struct
