@@ -1,4 +1,4 @@
-/* app_lazurite.h - 
+/* common_lazurite.h - 
  *
  * Copyright (c) 2015  LAPIS Semiconductor Co.,Ltd.
  * All rights reserved.
@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _APP_LAZURITE_H_
-#define _APP_LAZURITE_H_
+#ifndef _COMMON_LAZURITE_H_
+#define _COMMON_LAZURITE_H_
 
 #ifdef LAZURITE_IDE
 #include "lazurite.h"
@@ -31,25 +31,18 @@
 #include <linux/sched.h>
 #include <linux/wait.h>
 #endif
-#include "common_lazurite.h"
-#include "mach_lazurite.h"
 
-/*! @brief params for MAC application layer
- @struct SUBGHZ_APP
- @brief internal use only
- mac data format
+/*! @brief buffer definision for subghz common 
+ @struct BUFFER
+	@uint8_t *data	starting pointer of data buffer
+	@uint16_t len	length of data
+	@int16_t size	buffer size
  */
 typedef struct {
-	struct {
-		BUFFER buf;
-		void (*callback)(uint8_t *buf, int16_t status, uint8_t rssi);
-	}tx;
-	struct {
-		BUFFER buf;
-		void (*callback)(uint8_t *buf, int16_t status, uint8_t rssi);
-	}rx;
-	MACH_PARAM *mach;
-}SUBGHZ_APP;
+	uint8_t *data;
+	uint16_t len;
+	int size;			// size < 0 : size unknown
+} BUFFER;
 
 
 #endif

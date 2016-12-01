@@ -1,6 +1,6 @@
-/* error.h
+/* hal.h - HALヘッダファイル
  *
- * Copyright (c) 2015  Lapis Semiconductor Co.,Ltd.
+ * Copyright (c) 2015  Communication Technology Inc.,
  * All rights reserved.
  *
  * This program is free software: you can redistribute it and/or
@@ -18,16 +18,14 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef	_ERROR_H_
-#define _ERROR_H_
 
-#define STATUS_OK	0
+#ifndef _HAL_LZPI_H_
+#define _HAL_LZPI_H_
 
-#define EIO			5			// hardware error
-#define ENOMEM		12			// data size error
-#define EFAULT		14			// bad pointer
-#define EBUSY		16			// resource busy(CCA)
-#define EINVAL		22			// invalid parameters
-#define ETIMEDOUT	110			// no ack
 
-#endif
+#define GPIO_RESETN 27  // 
+#define GPIO_SINTN  18  //
+#define GPIO_TX_LED  6 //
+#define GPIO_RX_LED  13  //
+
+#endif  /* #ifndef _HAL_LZPI_H_ */

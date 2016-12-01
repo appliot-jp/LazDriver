@@ -1,4 +1,3 @@
-
 /* mac_lazurite.h - 
  *
  * Copyright (c) 2015  LAPIS Semiconductor Co.,Ltd.
@@ -23,24 +22,24 @@
 #define _MAC_LAZURITE_H_
 #include "phy_lazurite.h"
 
-
 typedef struct {
-	struct {
-		uint8_t enb;
-		uint16_t data;
-	} panid;
-	struct {
-		uint8_t mode;
-		uint16_t addr16;
-		uint8_t addr64[8];
+	bool panid_comp;
+	uint16_t pan_id;
+	bool addr_mode;
+	union {
+		uint16_t short_addr;
+		uint8_t ieee_addr[8];
 	}addr;
-} MAC_ADDR;
+} MACH_HEADER_ADDR;
+//
+typedef struct
+{
+	uint16_t	pan_id;					// for lazurite
+	uint16_t	short_addr;				// for lazurite
+	uint8_t		ieee_addr[8];			// for lazurite
+	bool		pan_coord;				// common
+} MACH_ADDR;
 
-typedef struct {
-	uint8_t *data;
-	uint16_t len;
-	int size;			// size < 0 : size unknown
-} BUFFER;
 
 typedef struct {
     int16_t seq;        	// sequence number
@@ -48,18 +47,21 @@ typedef struct {
     uint8_t type;      // address type
 	BUFFER buf;		// source address
 	uint8_t rssi;		// source address
-} MAC_Header;
+	MACH_HEADER_ADDR dst;
+	MACH_HEADER_ADDR src;
+} MACH_Header;
 
 typedef struct {
 	PHY_PARAM *phy;
-	MAC_ADDR  myAddr;
-	MAC_Header tx;
-	MAC_Header rx;
-	MAC_Header ack;
+	MACH_ADDR  myAddr;
+	MACH_Header tx;
+	MACH_Header rx;
+	MACH_Header ack;
+	bool promiscuous;
 	uint8_t tx_retry;
 	uint16_t tx_interval;
-} MAC_PARAM;
+} MACH_PARAM;
 
-extern MAC_PARAM *mac_init(void);
-extern int mac_sleep(bool on);
+extern MACH_PARAM *mac_init(void);
+extern int mach_sleep(bool on);
 #endif

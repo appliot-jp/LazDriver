@@ -17,20 +17,35 @@
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/>
  */
- 
+
+#ifdef LAZURITE_IDE
+#include "lazurite.h"
+#include "hal.h"
+#include "string.h"
+#include "lp_manage.h"
+#include "driver_irq.h"
+#else
+#include <linux/string.h>
+#include <linux/sched.h>
+#include <linux/wait.h>
+#endif
+#include "app_lazurite.h"
+#include "errno.h"
 
 SUBGHZ_APP app;
-static struct {
 
-int rf_init()
+int rf_init(void)
 {
 	int status = STATUS_OK;
 	memset(&app,0,sizeof(SUBGHZ_APP));
-	app.macinfo = mac_init();
-	if(app.mac == NULL) status = -1;
+	app.mach = mac_init();
+	if(app.mach == NULL) status = -1;
 	return status;
 }
 
 int rf_send(uint8_t ch, uint16_t mypanid, uint8_t rate, uint8_t pwr)
 {
+	int status;
+	status = STATUS_OK;
+	return status;
 }

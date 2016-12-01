@@ -20,7 +20,7 @@
  */
 
 /*! @struct MACH_PARAM
-  @brief  parameter for mac high layer
+  @brief  local parameter for mac high layer
   */
 static MACH_PARAM mach;
 /*! @uint8_t ackbuf[32]
@@ -50,16 +50,16 @@ static uint8_t ackbuf[32];
   @exception none
   @issue     move to mac
   @issue     check ack condision
-   dstpanid | dstaddr | srcpanid | srcaddr | ack     | tx mode   
+  dstpanid | dstaddr | srcpanid | srcaddr | ack     | tx mode   
   ----------|---------|----------|---------|---------|-----------
-     ff     |   ff    |   ---    |  ---    | no ack  | broadcast 
-    ---     |   ff    |   ---    |  ---    | no ack  | groupcast 
-    ---     |   no    |   ---    |  ---    |  ack    | unicast   
-     ff     |  64bit  |          |  ---    |  ack    | unicast   
-   ff/no    |  0/8/16 |          |  ---    | no ack  |  error    
-    ---     |  ---    |    ff    |  ---    |  ack    | unicast   
-    ---     |  ---    |   ---    |   ff    |  ack    | unicast   
-    ---     |  ---    |   ---    |   no    |  ack    | unicast   
+  ff     |   ff    |   ---    |  ---    | no ack  | broadcast 
+  ---     |   ff    |   ---    |  ---    | no ack  | groupcast 
+  ---     |   no    |   ---    |  ---    |  ack    | unicast   
+  ff     |  64bit  |          |  ---    |  ack    | unicast   
+  ff/no    |  0/8/16 |          |  ---    | no ack  |  error    
+  ---     |  ---    |    ff    |  ---    |  ack    | unicast   
+  ---     |  ---    |   ---    |   ff    |  ack    | unicast   
+  ---     |  ---    |   ---    |   no    |  ack    | unicast   
  ******************************************************************************/
 static bool mach_make_header(uint8_t *data, uint16_t *size, MAC_Header *header) {
 	uint16_t offset=2;
@@ -81,6 +81,7 @@ static bool mach_make_header(uint8_t *data, uint16_t *size, MAC_Header *header) 
 	// sequence number
 	if(!GET_SEQ_COMP(header->fc)) {
 		data[offset] = header->seq,offset++;
+
 	}
 
 	// dst panid
@@ -235,45 +236,47 @@ static bool parse_data(const uint8_t *data, uint16_t size, ML7396_Header *header
 	}
 
 	// packet length check
-	if(GET_SEQ_ENB(header->seq)) min_len+=1;
-}
-min_len += addr_len[header->srcaddr.mode];
-min_len += addr_len[header->dstaddr.mode];
-if(min_len > size) goto error;
-else isValid = true;
+	if(GET_SEQ_ENB(header->seq))
+	{
+		min_len+=1;
+	}
+	min_len += addr_len[header->srcaddr.mode];
+	min_len += addr_len[header->dstaddr.mode];
+	if(min_len > size) goto error;
+	else isValid = true;
 
-// sequence number
-if (GET_SEC_ENB(header->fc)) {
-	header->seq = *ptr,ptr++,offset++;
-} else {
-	header->seq = -1;
-}
-// dst panid
-if(header->dstpanid.enb)
-{
-	header->dstpanid.panid = v2u16(ptr), ptr+=2,offset+=2;
-}
-// dst addr
-memset(header->dstaddr.addr.addr64,0,8);
-for(i=0;i< addr_len[header->dstaddr.mode];i++)
-{
-	header->dstaddr.addr.addr64[i] = *(ptr), ptr++,offset++;
-}
-// src panid
-if(header->srcpanid.enb)
-{
-	header->srcpanid.panid = v2u16(ptr), ptr+=2,offset+=2;
-}
-// src addr
-memset(header->srcaddr.addr.addr64,0,8);
-for(i=0;i< addr_len[header->srcaddr.mode];i++)
-{
-	header->srcaddr.addr.addr64[i] = *(ptr), ptr++,offset++;
-}
-header->payload.data = ptr;
-header->payload.len = size-offset;
+	// sequence number
+	if (GET_SEC_ENB(header->fc)) {
+		header->seq = *ptr,ptr++,offset++;
+	} else {
+		header->seq = -1;
+	}
+	// dst panid
+	if(header->dstpanid.enb)
+	{
+		header->dstpanid.panid = v2u16(ptr), ptr+=2,offset+=2;
+	}
+	// dst addr
+	memset(header->dstaddr.addr.addr64,0,8);
+	for(i=0;i< addr_len[header->dstaddr.mode];i++)
+	{
+		header->dstaddr.addr.addr64[i] = *(ptr), ptr++,offset++;
+	}
+	// src panid
+	if(header->srcpanid.enb)
+	{
+		header->srcpanid.panid = v2u16(ptr), ptr+=2,offset+=2;
+	}
+	// src addr
+	memset(header->srcaddr.addr.addr64,0,8);
+	for(i=0;i< addr_len[header->srcaddr.mode];i++)
+	{
+		header->srcaddr.addr.addr64[i] = *(ptr), ptr++,offset++;
+	}
+	header->payload.data = ptr;
+	header->payload.len = size-offset;
 error:
-return isValid;
+	return isValid;
 }
 
 /*********************************************************************/
@@ -285,7 +288,7 @@ return isValid;
 MACH_PARAM *mach_init(void)
 {
 	memset(mac,0,sizeof(MACH_PARAM));
-	get_mac_addr(&mac.dstaddr.addr.addr64);
+	get_mac_addr(&mac.my.addr.addr64);
 	mac.phy = macl_init();
 	if(mach.phy == NULL) return NULL;
 
@@ -347,7 +350,6 @@ int mach_setup(uint8_t ch, uint8_t rate, uint8_t txPower, uint8_t senseTime,uint
 	macl_set_cca_ed_level(uint32_t mbm);
 	macl_set_csma_params(uint8_t min_be, uint8_t max_be, uint8_t retries);
 error:
-
 	return status;
 }
 
@@ -361,19 +363,52 @@ error:
   @return    0=STATUS_OK, other = error
   @exception  return NULL
  ********************************************************************/
-int mach_set_dst_addr64(uint8_t *addr)
+void mach_set_dst_addr64(uint8_t *addr)
 {
-	memcpy(mac.header.dst.addr.addr64,dstAddr,sizeof(8));
-
-	return STATUS_OK;
+	memcpy(mac.header.dst.addr.ieee_addr,dstAddr,sizeof(8));
 }
+
 void mach_set_dst_addr(uint16_t panid,uint16_t addr)
 {
 	mac.header.dst.panid.id = panid;
 	mac.header.dst.addr.addr16 = addr;
 }
-void mach_set_my_saddr(uint16_t panid,uint16_t addr)
+
+/********************************************************************/
+/*! @brief set my short address
+  panid == 0xffff, 0xfffe	--> pan_coord is false
+  panid == others			--> pan_coord is true
+  @param[in]	panid	64bit distination address
+  @param[in]	addr	start pointer of payload
+  @return		status = STATUS_OK
+  @exception	EINVAL: panid == 0xffff
+ ********************************************************************/
+int mach_set_my_addr16(uint16_t panid,uint16_t addr)
 {
-	mac.header.my.panid.id = panid;
-	mac.header.my.addr.addr16 = addr;
+	int status=STATUS_OK;
+	ieee802154_hw_addr_filt filt;
+	if(panid == 0xffff) 
+	{
+		isValid = -EINVAL;
+		goto error;
+	}
+	mac.myAddr.pan_id = panid;
+	mac.myAddr.short_addr = addr;
+	if( (addr == 0xffff) ||					// global address
+			(addr == 0xfffe)) {				// address none
+		mac.pan_coord = false;
+	} else {
+		mac.pan_coord = true;
+	}
+	if(!promiscuous)
+	{
+		macl_set_hw_addr_filt(&mac.myAddr,0x0x0f);			// update all of addr filter
+	}
+	return STATUS_OK;
+}
+int mach_set_promiscuous(bool on)
+{
+	mach.promiscuous = on;
+	macl_set_promiscuous(on);
+	return STATUS_OK;
 }
