@@ -62,7 +62,8 @@ const uint8_t addr_len[] = {0x00,0x01,0x02,0x08};
   ack_reg (1: auto, 0: no ack)
   ielist
   @return    false= invalid data, true valid data
-  @exception panid is invalid. but mode is set with panid
+  @exception EINVAL panid is invalid. but mode is set with panid<br>
+  					addr is empty, even though needed.
   @issue     move to mac
   @issue     check ack condision
   dstpanid | dstaddr | srcpanid | srcaddr | ack     | tx mode   
@@ -86,7 +87,7 @@ static bool mach_make_header(uint8_t *data, uint16_t *size, MACH_Header *header)
 
 	// set panid comp
 	// panidcomp is as same as 0 bit of addrType
-	header->fc.fc_bit.panid_comp = (header->addr_type&0x01) ? 1:0;
+	header->fc.fc_bit.panid_comp = (header->addr_type&BIT(0)) ? 1:0;
 
 	offset = 2;			// temporary skip frame control
 	// sequence number
@@ -102,25 +103,26 @@ static bool mach_make_header(uint8_t *data, uint16_t *size, MACH_Header *header)
 			status = -EINVAL;
 			goto error;
 		} else {
-			*(uint16_t *)(&data[offset])=htons(header->dst.panid.data), offset+=2;
+			H2BLS(data[offset],header->dst.panid.data), offset+=2;
 		}
 	}
 
 	// dst addr
-	if(enb_addr_bit[header->addr_type] & 0x10)
+	// 2bit of addr type shows dst addr
+	if(header->addr_type&BIT(2))
 	{
 		int i;
 		bool broadcast = true;
-		switch(header->dstaddr.mode)
+		switch(header->dst.addr_mode)
 		{
 			case 0:
-				isValid = false;
+				status = -EINVAL;
 				goto error;
 				break;
 			case 1:
-				if((header->dstpanid.panid == 0xffff) ||(header->dstpanid.enb == false))
+				if((header->dst.panid.data == 0xffff) ||(header->dst.panid.enb == false))
 				{
-					isValid = false;
+					status = -EINVAL;
 					goto error;
 				}
 				data[offset] = header->dstaddr.addr.addr8,offset++;
@@ -129,7 +131,7 @@ static bool mach_make_header(uint8_t *data, uint16_t *size, MACH_Header *header)
 			case 2:
 				if((header->dstpanid.panid == 0xffff) ||(header->dstpanid.enb == false))
 				{
-					isValid = false;
+					status = -EINVAL;
 					goto error;
 				}
 				u2v16_set(header->dstaddr.addr.addr16, data+offset), offset+=2;

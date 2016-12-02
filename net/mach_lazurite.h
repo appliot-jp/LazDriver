@@ -38,6 +38,7 @@
 
 #include "phy_lazurite.h"
 #include "common_lazurite.h"
+#include "endian.h"
 
 #define MACH_FC_TYPE			0x0007
 #define MACH_FC_SEC_ENB			0x0008
@@ -52,7 +53,7 @@
 
 typedef struct {
 	struct {
-		bool isValid;
+		bool enb;
 		uint16_t data;
 	} panid;
 	bool addr_mode;
@@ -75,6 +76,7 @@ typedef struct
   internal use only
   bit alightment of mac header
   */
+#ifdef LITTLE_ENDIAN
 typedef struct {
 	uint8_t frame_type:3;
 	uint8_t sec_enb:1;
@@ -88,6 +90,7 @@ typedef struct {
 	uint8_t frame_ver:2;
 	uint8_t tx_addr_type:2;
 } s_MAC_HEADER_BIT_ALIGNMENT;
+#endif
 
 typedef union {
 	uint8_t fc8[2];
