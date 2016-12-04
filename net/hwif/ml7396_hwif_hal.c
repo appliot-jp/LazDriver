@@ -23,15 +23,14 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "hal.h"
-#include "../core/ml7396_hwif.h"
-#include "../core/ml7396_reg.h"
-#include "../core/endian.h"
+#include "hwif/ml7396_hwif.h"
+#include "hwif/core/ml7396_reg.h"
+#include "endian.h"
 #else
 #include <linux/stddef.h>
 #include "hal.h"
-#include "../core/ml7396_hwif.h"
-#include "../core/ml7396_reg.h"
-#include "../core/endian.h"
+#include "ml7396_reg.h"
+#include "../endian.h"
 #endif
 
 static volatile struct {

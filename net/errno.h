@@ -28,6 +28,6 @@
 #define EFAULT		14			// bad pointer
 #define EBUSY		16			// resource busy(CCA)
 #define EINVAL		22			// invalid parameters
+#define EFBIG		27			// File too large
 #define ETIMEDOUT	110			// no ack
-
 #endif

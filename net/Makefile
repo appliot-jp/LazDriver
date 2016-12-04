@@ -1,5 +1,5 @@
 KERNEL_SRC=/lib/modules/$(shell uname -r)/build
-CFILES = app_lazurite.c  drv-lazurite.c  mach_lazurite.c  net_lazurite.c  subghz_api.c hal/SPI0.c  hal/Wire0.c  hal/hal-lzpi.c  hal/random.c  hal/spi-lzpi.c hal/hal_lazurite.c hal/i2c-lzpi.c hal/ml7396_hwif_hal.c 
+CFILES = drv-lazurite.c subghz_api.c aes/aes.c mach_lazurite.c  macl_lazurite.c hwif/hal-lzpi.c  hwif/random.c  hwif/spi-lzpi.c hwif/i2c-lzpi.c 
 
 obj-m += lazdriver.o
 lazdriver-objs := $(CFILES:.c=.o)

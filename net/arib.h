@@ -1,4 +1,4 @@
-/* app_lazurite.h - 
+/* arib_lazurite.h - 
  *
  * Copyright (c) 2015  LAPIS Semiconductor Co.,Ltd.
  * All rights reserved.
@@ -18,38 +18,20 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _APP_LAZURITE_H_
-#define _APP_LAZURITE_H_
+#ifndef _ARIB_LAZURITE_H_
+#define _ARIB_LAZURITE_H_
 
 #ifdef LAZURITE_IDE
 #include "lazurite.h"
-#include "hal.h"
 #include "string.h"
-#include "driver_irq.h"
 #else
 #include <linux/string.h>
 #include <linux/sched.h>
 #include <linux/wait.h>
 #endif
-#include "common_lazurite.h"
-#include "mach_lazurite.h"
-
-/*! @brief params for MAC application layer
- @struct SUBGHZ_APP
- @brief internal use only
- mac data format
- */
-typedef struct {
-	struct {
-		BUFFER buf;
-		void (*callback)(uint8_t *buf, int16_t status, uint8_t rssi);
-	}tx;
-	struct {
-		BUFFER buf;
-		void (*callback)(uint8_t *buf, int16_t status, uint8_t rssi);
-	}rx;
-	MACH_PARAM *mach;
-}SUBGHZ_APP;
 
 
+extern void arib_init(void);
+extern void arib_tx_end(uint8_t pages, uint16_t size);
+extern bool arib_tx_check(uint8_t pages, uint16_t size);
 #endif

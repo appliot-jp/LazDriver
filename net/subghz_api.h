@@ -26,6 +26,8 @@
 #include "common.h"
 #include "lazurite.h"
 #endif
+#include "common_lazurite.h"
+#include "mach_lazurite.h"
 
 typedef enum {
 	SUBGHZ_OK = 0,
@@ -77,6 +79,7 @@ typedef struct
 	uint16_t ccaWait;
 } SUBGHZ_PARAM;
 
+/*
 typedef struct {
 	uint8_t frame_type:3;
 	uint8_t sec_enb:1;
@@ -95,6 +98,7 @@ typedef union {
 	uint16_t header;
 	s_MAC_HEADER_BIT_ALIGNMENT alignment;
 } u_MAC_HEADER;
+*/
 typedef struct
 {
 	u_MAC_HEADER mac_header;

@@ -41,7 +41,7 @@
 typedef struct {
 	uint8_t *data;
 	uint16_t len;
-	int size;			// size < 0 : size unknown
+	int size;			// size <= 0 : size unknown
 } BUFFER;
 
 

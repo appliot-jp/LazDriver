@@ -21,6 +21,9 @@
 #ifndef _MACL_H_
 #define _MACL_H_
 
+#include "common_lazurite.h"
+#include "phy_lazurite.h"
+
 typedef struct {
 	uint8_t pages;
 	uint8_t ch;
@@ -30,45 +33,9 @@ typedef struct {
 	bool promiscuous;
 	uint16_t txInterval;
 	uint16_t ccaInterval;
-	MACL_PARAM *macl;
+	PHY_PARAM *phy;
 } MACL_PARAM;
 
-extern int	macl_init(PHY_PARAM *param);									// 
-extern int	macl_start(void);											// rxon
-extern int	macl_stop(void);												// rxoff
-extern int	macl_xmit_sync(BUFFER buff);									// tx
-//extern int	macl_xmit_async(BUFFER buff);								// for linux. does not support
-extern int	macl_ed(uint8_t *level);
-extern int	macl_set_channel(uint8_t page,uint8_t ch);
-extern int	macl_set_hw_addr_filt(struct ieee802154_hw_addr_filt *filt,unsigned long changed);
-extern int	macl_set_txpower(uint32_t mbm);
-//extern int	macl_set_lbt(struct ieee802154_hw *hw, bool on);				// does not support
-extern int	macl_ch_scan(uint32_t duration);				// add 
-extern int	macl_set_cca_mode(const struct wpan_phy_cca *cca);
-extern int	macl_set_cca_ed_level(uint32_t mbm);
-extern int	macl_set_csma_params(uint8_t min_be, uint8_t max_be, uint8_t retries);
-extern int	macl_set_frame_retries(int8_t retries);
-extern int	macl_set_promiscuous_mode(const bool on);
-extern int	macl_rx_irq(BUFFER *rx);
-
-extern int	macl_sleep(bool on);
-extern int	get_mac_addr(uint8_t *macaddr);
-
-enum ieee802154_hw_addr_filt_flags {
-	IEEE802154_AFILT_SADDR_CHANGED		= BIT(0),
-	IEEE802154_AFILT_IEEEADDR_CHANGED	= BIT(1),
-	IEEE802154_AFILT_PANID_CHANGED		= BIT(2),
-	IEEE802154_AFILT_PANC_CHANGED		= BIT(3),
-};
-struct ieee802154_hw_addr_filt {
-	//	__le16	pan_id;					//  for linux
-	//	__le16	short_addr;				// for linux
-	//	__le64	ieee_addr;				// for linux
-	uint16_t	pan_id;					// for lazurite
-	uint16_t	short_addr;				// for lazurite
-	uint8_t		ieee_addr[8];			// for lazurite
-	bool		pan_coord;				// common
-};
 /**
  * enum nl802154_cca_modes - cca modes
  *
@@ -111,9 +78,47 @@ enum nl802154_cca_opts {
 	__NL802154_CCA_OPT_ATTR_AFTER_LAST,
 	NL802154_CCA_OPT_ATTR_MAX = __NL802154_CCA_OPT_ATTR_AFTER_LAST - 1
 };
+
 struct wpan_phy_cca {
 	enum nl802154_cca_modes mode;
 	enum nl802154_cca_opts opt;
 };
+
+enum ieee802154_hw_addr_filt_flags {
+	IEEE802154_AFILT_SADDR_CHANGED		= BIT(0),
+	IEEE802154_AFILT_IEEEADDR_CHANGED	= BIT(1),
+	IEEE802154_AFILT_PANID_CHANGED		= BIT(2),
+	IEEE802154_AFILT_PANC_CHANGED		= BIT(3),
+};
+
+struct ieee802154_hw_addr_filt {
+	//	__le16	pan_id;					//  for linux
+	//	__le16	short_addr;				// for linux
+	//	__le64	ieee_addr;				// for linux
+	uint16_t	pan_id;					// for lazurite
+	uint16_t	short_addr;				// for lazurite
+	uint8_t		ieee_addr[8];			// for lazurite
+	bool		pan_coord;				// common
+};
+extern MACL_PARAM* macl_init(void);									// 
+extern int	macl_start(void);											// rxon
+extern int	macl_stop(void);												// rxoff
+extern int	macl_xmit_sync(BUFFER buff);									// tx
+//extern int	macl_xmit_async(BUFFER buff);								// for linux. does not support
+extern int	macl_ed(uint8_t *level);
+extern int	macl_set_channel(uint8_t page,uint8_t ch);
+extern int	macl_set_hw_addr_filt(struct ieee802154_hw_addr_filt *filt,unsigned long changed);
+extern int	macl_set_txpower(uint32_t mbm);
+//extern int	macl_set_lbt(struct ieee802154_hw *hw, bool on);				// does not support
+extern int	macl_ch_scan(uint32_t duration);				// add 
+extern int	macl_set_cca_mode(const struct wpan_phy_cca *cca);
+extern int	macl_set_cca_ed_level(uint32_t mbm);
+extern int	macl_set_csma_params(uint8_t min_be, uint8_t max_be, uint8_t retries);
+extern int	macl_set_frame_retries(int8_t retries);
+extern int	macl_set_promiscuous_mode(const bool on);
+extern int	macl_rx_irq(BUFFER *rx);
+
+extern int	macl_sleep(bool on);
+extern int	get_mac_addr(uint8_t *macaddr);
 
 #endif
