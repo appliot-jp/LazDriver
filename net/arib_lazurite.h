@@ -32,6 +32,6 @@
 
 
 extern void arib_init(void);
-extern void arib_tx_end(uint8_t pages, uint16_t size);
-extern bool arib_tx_check(uint8_t pages, uint16_t size);
+extern void arib_tx_end(uint8_t pages, uint8_t ch, uint16_t size);
+extern bool arib_tx_check(uint8_t pages, uint8_t ch, uint16_t size);
 #endif

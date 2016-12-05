@@ -1,4 +1,3 @@
-
 /* mach_lazurite.c - MAC(High level) for lazurite
  *
  * Copyright (c) 2015  Lapis Semiconductor Co.,Ltd
@@ -26,7 +25,7 @@
 #include "macl_lazurite.h"
 #include "errno.h"
 #include "endian.h"
-#include "arib.h"
+#include "arib_lazurite.h"
 
 static MACH_PARAM mach;
 /*! @uint8_t ackbuf[32]
@@ -418,12 +417,12 @@ int mach_send(BUFFER *txbuf)
 	if((status = mach_make_header(txbuf->data,txbuf->len,&mach.tx))==STATUS_OK) {
 		goto error;
 	}
-	if((arib_tx_check(mach.rf.pages,mach.tx.raw.len))==false) {
+	if((arib_tx_check(mach.rf.pages,mach.rf.ch,mach.tx.raw.len))==false) {
 		goto error;
 	}
 	status = macl_xmit_sync(mach.tx.raw);
 	if(status == STATUS_OK)
-		arib_tx_end(mach.rf.pages,mach.tx.raw.len);
+		arib_tx_end(mach.rf.pages,mach.rf.ch,mach.tx.raw.len);
 
 error:
 	return status;
