@@ -94,6 +94,7 @@ static SUBGHZ_MSG subghz_init(void)
 	subghz_param.rf.cca_opt = NL802154_CCA_OPT_ENERGY_CARRIER_AND;
 	subghz_param.rf.tx_retry = 3;
 	subghz_param.rf.tx_interval = 500;
+	subghz_param.rf.tx_interval = 500;
     AES128_setAes(NULL,NULL);
 	
 	// reset
@@ -124,9 +125,9 @@ error:
 
 static SUBGHZ_MSG subghz_remove(void)
 {
-	SUBGHZ_MSG msg;
+	SUBGHZ_MSG msg=0;
 
-	msg = HAL_remove();
+	//msg = HAL_remove();
 
 	return msg;
 }

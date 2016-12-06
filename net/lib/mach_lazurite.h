@@ -50,23 +50,6 @@
 #define MACH_FC_DST_ADDR		0xC000
 */
 // @issue check parameter. interval may not be needed.
-typedef struct {
-	uint8_t ch;
-	uint8_t pages;
-	uint8_t cca_min_be;
-	uint8_t cca_max_be;
-	uint8_t cca_level;
-	uint8_t cca_duration;
-	uint8_t cca_retry;
-	uint8_t tx_min_be;
-	uint8_t tx_max_be;
-	uint8_t tx_retry;
-	uint32_t cca_interval;
-	uint32_t tx_power;
-	uint32_t tx_interval;
-	enum nl802154_cca_modes cca_mode;
-	enum nl802154_cca_opts cca_opt;
-} RF_PARAM;
 
 typedef struct {
 	struct {
@@ -128,6 +111,34 @@ typedef struct {
 } MACH_Header;
 
 typedef struct {
+	uint8_t ch;
+	uint8_t pages;
+	uint8_t cca_min_be;
+	uint8_t cca_max_be;
+	uint8_t cca_level;
+	uint8_t cca_duration;
+	uint8_t cca_retry;
+	uint8_t tx_min_be;
+	uint8_t tx_max_be;
+	uint8_t tx_retry;
+	uint32_t cca_interval;
+	uint32_t tx_power;
+	uint32_t tx_interval;
+	enum nl802154_cca_modes cca_mode;
+	enum nl802154_cca_opts cca_opt;
+	struct 
+	{
+		uint8_t type:1;
+		uint8_t ver:1;
+	} header_filter;
+	struct 
+	{
+		uint8_t type:2;
+		uint8_t ver:2;
+	} header_init;
+} RF_PARAM;
+
+typedef struct {
 	MACL_PARAM *macl;
 	MACH_ADDR  myAddr;
 	MACH_Header tx;
@@ -136,6 +147,7 @@ typedef struct {
 	bool promiscuous;
 	RF_PARAM rf;
 } MACH_PARAM;
+
 
 extern MACH_PARAM *mach_init(void);
 extern int mach_sleep(bool on);

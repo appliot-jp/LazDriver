@@ -20,7 +20,7 @@
 #include <linux/i2c.h>
 #include "i2c-lzpi.h"
 #ifndef LAZURITE_IDE
-#include "../../common-lzpi.h"
+#include "../common-lzpi.h"
 #endif
 
 #define I2C_BUFFERSIZE 16

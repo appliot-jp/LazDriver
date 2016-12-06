@@ -408,7 +408,7 @@ int mach_set_promiscuous(bool on)
 	return STATUS_OK;
 }
 
-int mach_send(BUFFER *txbuf)
+int mach_tx(BUFFER *txbuf)
 {
 	int status = STATUS_OK;
 
@@ -426,4 +426,18 @@ int mach_send(BUFFER *txbuf)
 
 error:
 	return status;
+}
+int mach_ed(uint8_t *ed)
+{
+	return macl_ed(ed);
+}
+
+int mach_sleep(bool on)
+{
+	return macl_sleep(on);
+}
+
+int mach_set_rf_param(RF_PARAM *rf)
+{
+	return STATUS_OK;
 }
