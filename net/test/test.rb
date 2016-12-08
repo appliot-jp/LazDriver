@@ -3,7 +3,7 @@
 # Function:
 #   Lazurite Sub-GHz/Lazurite Pi Gateway Sample program
 #   SerialMonitor.rb
-require_relative 'LazGem/lib/LazGem'
+require_relative './LazGem/lib/LazGem'
 require 'minitest'
 require 'minitest/autorun'
 require 'minitest/reporters'
@@ -46,7 +46,6 @@ class TestClass < Minitest::Test
 		assert_equal 7, packet.fetch("cca_wait")
 		assert_equal 100,@@laz.get_bps()
 		assert_equal 36,@@laz.get_ch()
-'''
 		assert_raises (Errno::EINVAL) {@@laz.set_ch(23)}
 		assert_equal 24,@@laz.set_ch(24)
 		assert_equal 31,@@laz.set_ch(31)
@@ -95,10 +94,10 @@ class TestClass < Minitest::Test
 
 		#check address
 		#assert_equal 0x2301,@@laz.get_my_addr0()
-		assert_equal 0xac4e,@@laz.get_my_addr0()
-		assert_raises (Errno::EFAULT) {@@laz.get_my_addr1()}
-		assert_raises (Errno::EFAULT) {@@laz.get_my_addr2()}
-		assert_raises (Errno::EFAULT) {@@laz.get_my_addr3()}
+		#assert_equal 0xac4e,@@laz.get_my_addr0()
+		#assert_raises (Errno::EFAULT) {@@laz.get_my_addr1()}
+		#assert_raises (Errno::EFAULT) {@@laz.get_my_addr2()}
+		#assert_raises (Errno::EFAULT) {@@laz.get_my_addr3()}
 		assert_equal 0xffff,@@laz.get_tx_addr0()
 		assert_equal 0xffff,@@laz.get_tx_addr1()
 		assert_equal 0xffff,@@laz.get_tx_addr2()
@@ -124,9 +123,8 @@ class TestClass < Minitest::Test
 		assert_equal 0xff,@@laz.set_pwr(0xff)		#check default
 		assert_equal 0xff,@@laz.set_my_addr0(0xff)		#check default
 		assert_equal 0xff,@@laz.set_addr_type(0xff)		#check default
-		assert_equal 0xff,@@laz.set_addr_size(0xff)		#check default
+		#assert_equal 0xff,@@laz.set_addr_size(0xff)		#check default
 
-'''
 		@@laz.remove()
 	end
 end
