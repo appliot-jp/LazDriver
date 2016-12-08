@@ -33,7 +33,10 @@ class TestClass < Minitest::Test
 	end
 
 	def test_drviver
-		@@laz.init()
+		@@laz.init(module_test = 0xff00)
+		cmd = `dmesg | tail -n 3`
+		p cmd
+
 		#check ch of 100kbps
 		packet = @@laz.getSendMode()
 		assert_equal 6, packet.fetch("addr_type")

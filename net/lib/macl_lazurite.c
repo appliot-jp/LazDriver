@@ -19,16 +19,23 @@
  */
 
 
+#include <linux/module.h>
 #include "common_lazurite.h"
 #include "phy_lazurite.h"
 #include "macl_lazurite.h"
 #include "errno.h"
 #include "endian.h"
+#include "common-lzpi.h"
 
 MACL_PARAM macl;
 MACL_PARAM* macl_init(void)
 {
 	memset(&macl,0,sizeof(MACL_PARAM));
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) {
+		printk(KERN_INFO"macl_init\n");
+	}
+#endif
 	return &macl;
 }
 int	macl_start(void)
@@ -107,6 +114,11 @@ int	macl_rx_irq(BUFFER *rx)
 int	macl_sleep(bool on)
 {
 	int status=STATUS_OK;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) {
+		printk(KERN_INFO"macl_sleep\n");
+	}
+#endif
 	return status;
 }
 

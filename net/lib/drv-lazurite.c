@@ -40,6 +40,9 @@
 wait_queue_head_t tx_done;
 extern int que_th2ex;
 
+int module_test=0;
+module_param(module_test,int,S_IRUGO | S_IWUSR);
+		
 struct list_data {				
 	uint8_t	data[DATA_SIZE];
 	int		len;

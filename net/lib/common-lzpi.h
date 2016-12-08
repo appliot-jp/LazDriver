@@ -3,16 +3,16 @@
 
 
 #define	MODE_NORMAL			0x0000
-#define	MODE_INVALID_MAC	0x0001
-#define	MODE_STREAM			0x0002
 #define MODE_DRV_DEBUG		0x8000
-#define MODE_MAC_DEBUG		0x4000
-#define MODE_PHY_DEBUG		0x2000
-#define MODE_TEST			0x1000
+#define MODE_MACH_DEBUG		0x4000
+#define MODE_MACL_DEBUG		0x2000
+#define MODE_PHY_DEBUG		0x1000
 #define MODE_PA_TEST		0x0800
-#define MODE_REG_DUMP		0x0400
-#define MODE_STREAM_DEBUG	0x0200
-#define MODE_DEBUG			( MODE_DRV_DEBUG | MODE_MAC_DEBUG | MODE_PHY_DEBUG )
+
+// for linux driver test mode
+//#ifndef LAZURITE_IDE
+extern int module_test;
+//#endif
 
 #ifndef PAYLOADDUMP
 #define PAYLOADDUMP( data, size ) {                                                   \

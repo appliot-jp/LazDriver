@@ -23,6 +23,7 @@ __attribute__((section("__versions"))) = {
 	{ 0x9395b19c, __VMLINUX_SYMBOL_STR(i2c_master_send) },
 	{ 0xb8b5974, __VMLINUX_SYMBOL_STR(kmalloc_caches) },
 	{ 0xf9a482f9, __VMLINUX_SYMBOL_STR(msleep) },
+	{ 0x1494ad7b, __VMLINUX_SYMBOL_STR(param_ops_int) },
 	{ 0x2e5810c6, __VMLINUX_SYMBOL_STR(__aeabi_unwind_cpp_pr1) },
 	{ 0x6c09c2a4, __VMLINUX_SYMBOL_STR(del_timer) },
 	{ 0x10782160, __VMLINUX_SYMBOL_STR(i2c_del_driver) },
@@ -89,4 +90,4 @@ __attribute__((section(".modinfo"))) =
 
 MODULE_ALIAS("i2c:lzpi_i2c");
 
-MODULE_INFO(srcversion, "1ECDB7CA8957017A03D5E5F");
+MODULE_INFO(srcversion, "2ABFCD95C8DC844461B054B");
