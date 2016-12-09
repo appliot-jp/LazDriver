@@ -126,16 +126,6 @@ typedef struct {
 	uint32_t tx_interval;
 	enum nl802154_cca_modes cca_mode;
 	enum nl802154_cca_opts cca_opt;
-	struct 
-	{
-		uint8_t type:1;
-		uint8_t ver:1;
-	} header_filter;
-	struct 
-	{
-		uint8_t type:2;
-		uint8_t ver:2;
-	} header_init;
 } RF_PARAM;
 
 typedef struct {
@@ -145,13 +135,13 @@ typedef struct {
 	MACH_Header rx;
 	MACH_Header ack;
 	bool promiscuous;
-	RF_PARAM rf;
+	RF_PARAM *rf;
 } MACH_PARAM;
 
 
 extern MACH_PARAM *mach_init(void);
 extern int mach_sleep(bool on);
-extern int mach_set_rf_param(RF_PARAM *rf);
+extern int mach_setup(RF_PARAM *rf);
 extern int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr);
 extern void mach_set_dst_short_addr(uint16_t panid,uint16_t short_addr);
 extern int mach_tx(BUFFER *txbuf);

@@ -33,7 +33,7 @@ MACL_PARAM* macl_init(void)
 	memset(&macl,0,sizeof(MACL_PARAM));
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) {
-		printk(KERN_INFO"macl_init\n");
+		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 	}
 #endif
 	return &macl;
@@ -41,11 +41,21 @@ MACL_PARAM* macl_init(void)
 int	macl_start(void)
 {
 	int status=STATUS_OK;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) {
+		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	}
+#endif
 	return status;
 }
 int	macl_stop(void)
 {
 	int status=STATUS_OK;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) {
+		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	}
+#endif
 	return status;
 }
 int	macl_xmit_sync(BUFFER buff)
@@ -57,52 +67,115 @@ int	macl_xmit_sync(BUFFER buff)
 int	macl_ed(uint8_t *level)
 {
 	int status=STATUS_OK;
+	*level = 0xa5;
 	return status;
 }
 int	macl_set_channel(uint8_t page,uint8_t ch)
 {
 	int status=STATUS_OK;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,page,ch);
+	}
+#endif
 	return status;
 }
 int	macl_set_hw_addr_filt(struct ieee802154_hw_addr_filt *filt,unsigned long changed)
 {
 	int status=STATUS_OK;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) {
+		printk(KERN_INFO"%s,%s, %02x%02x%02x%02x%02x%02x%02x%02x,%04x,%04x,%d\n",
+				__FILE__,
+				__func__,
+				filt->ieee_addr[7],
+				filt->ieee_addr[6],
+				filt->ieee_addr[5],
+				filt->ieee_addr[4],
+				filt->ieee_addr[3],
+				filt->ieee_addr[2],
+				filt->ieee_addr[1],
+				filt->ieee_addr[0],
+				filt->pan_id,
+				filt->short_addr,
+				filt->pan_coord
+				);
+	}
+#endif
 	return status;
 }
 int	macl_set_txpower(uint32_t mbm)
 {
 	int status=STATUS_OK;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,mbm);
+	}
+#endif
 	return status;
 }
 //extern int	macl_set_lbt(struct ieee802154_hw *hw, bool on);				// does not support
 int	macl_ch_scan(uint32_t duration)
 {
 	int status=STATUS_OK;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,duration);
+	}
+#endif
 	return status;
 }
 int	macl_set_cca_mode(const struct wpan_phy_cca *cca)
 {
 	int status=STATUS_OK;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,
+				cca->mode,
+				cca->opt
+				);
+	}
+#endif
 	return status;
 }
 int	macl_set_cca_ed_level(uint32_t mbm)
 {
 	int status=STATUS_OK;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,mbm);
+	}
+#endif
 	return status;
 }
 int	macl_set_csma_params(uint8_t min_be, uint8_t max_be, uint8_t retries)
 {
 	int status=STATUS_OK;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,min_be,max_be);
+	}
+#endif
 	return status;
 }
 int	macl_set_frame_retries(int8_t retries)
 {
 	int status=STATUS_OK;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,retries);
+	}
+#endif
 	return status;
 }
 int	macl_set_promiscuous_mode(const bool on)
 {
 	int status=STATUS_OK;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,on);
+	}
+#endif
 	return status;
 }
 int	macl_rx_irq(BUFFER *rx)
@@ -116,16 +189,11 @@ int	macl_sleep(bool on)
 	int status=STATUS_OK;
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) {
-		printk(KERN_INFO"macl_sleep\n");
+		printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,on);
 	}
 #endif
 	return status;
 }
 
-int	get_mac_addr(uint8_t *macaddr)
-{
-	int status=STATUS_OK;
-	return status;
-}
 
 

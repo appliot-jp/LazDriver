@@ -345,12 +345,30 @@ int mach_stop(void) {
 int mach_setup(RF_PARAM *rf) {
 	int status;
 	struct wpan_phy_cca cca;
+	struct ieee802154_hw_addr_filt hw_filter;
 
 	// link parameter
 	mach.rf = rf;
 
 	// set channel
 	if((status = macl_set_channel(rf->pages,rf->ch)) != STATUS_OK){
+		goto error;
+	}
+
+	// set hw address filter
+	memcpy(hw_filter.ieee_addr,mach.myAddr.ieee_addr,8);
+	if((mach.myAddr.short_addr != 0xffff) &&
+			(mach.myAddr.short_addr != 0xfffe) &&
+			(mach.myAddr.pan_id != 0xffff) &&
+			(mach.myAddr.pan_id != 0xfffe))
+	{
+		hw_filter.pan_id = mach.myAddr.pan_id;
+		hw_filter.short_addr = mach.myAddr.short_addr;
+		hw_filter.pan_coord = true;
+	} else {
+		hw_filter.pan_coord = false;
+	}
+	if((status = macl_set_hw_addr_filt(&hw_filter,0x0f)) != STATUS_OK){
 		goto error;
 	}
 
@@ -365,6 +383,7 @@ int mach_setup(RF_PARAM *rf) {
 	cca.opt = rf->cca_opt;
 	macl_set_cca_mode(&cca);
 	macl_set_cca_ed_level(rf->cca_level);
+	macl_set_csma_params(rf->cca_min_be, rf->cca_max_be, rf->cca_retry);
 error:
 	return status;
 }
@@ -397,20 +416,24 @@ void mach_set_dst_short_addr(uint16_t panid,uint16_t addr)
   @param[in]	panid	64bit distination address
   @param[in]	addr	start pointer of payload
   @return		status = STATUS_OK
-  @exception	EINVAL: panid/short_addr == 0xffff,0xfffe
+  @exception	EINVAL: panid == 0xffff
  ********************************************************************/
 int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr)
 {
 	int status=STATUS_OK;
-	mach.myAddr.pan_id = panid;
-	mach.myAddr.short_addr = short_addr;
-	if((panid == 0xffff) || (panid == 0xfffe) || (short_addr == 0xffff) || (short_addr == 0xfffe))
+	if(panid == 0xffff) 
 	{
-		mach.myAddr.pan_coord = false;
 		status = -EINVAL;
+		goto error;
 	}
-	mach.myAddr.pan_coord = true;
-
+	mach.myAddr.pan_id= panid;
+	mach.myAddr.short_addr = short_addr;
+	if( (short_addr == 0xffff) ||					// global address
+			(short_addr == 0xfffe)) {				// address none
+		mach.myAddr.pan_coord = false;
+	} else {
+		mach.myAddr.pan_coord = true;
+	}
 	if(!mach.promiscuous)
 	{
 		struct ieee802154_hw_addr_filt filt;
@@ -420,6 +443,7 @@ int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr)
 		memcpy(filt.ieee_addr,mach.myAddr.ieee_addr,8);
 		macl_set_hw_addr_filt(&filt,0x0f);			// update all of addr filter
 	}
+error:
 	return status;
 }
 int mach_set_promiscuous(bool on)

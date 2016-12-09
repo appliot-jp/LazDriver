@@ -93,8 +93,6 @@ static SUBGHZ_MSG subghz_init(void)
 	subghz_param.rf.cca_mode = NL802154_CCA_CARRIER;
 	subghz_param.rf.cca_opt = NL802154_CCA_OPT_ENERGY_CARRIER_AND;
 	subghz_param.rf.tx_retry = 3;
-	subghz_param.rf.tx_interval = 500;
-	subghz_param.rf.tx_interval = 500;
     AES128_setAes(NULL,NULL);
 	
 	// reset
@@ -105,13 +103,7 @@ static SUBGHZ_MSG subghz_init(void)
 		goto error;
 	}
 	
-	// get my address for setting address filter
-	if((result = mach_sleep(true)) != STATUS_OK)
-	{
-		msg = SUBGHZ_SLEEP_FAIL;
-		goto error;
-	}
-	
+	// initializing parameters
 	subghz_param.sending = false;
 	subghz_param.read = false;
 	subghz_param.open = false;
@@ -150,7 +142,6 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 	//initializing parameter
 	subghz_param.sending = false;
 	subghz_param.read = false;
-	
 	// 
 	subghz_param.rf.ch = ch;
 	if(rate == 50) {
@@ -162,13 +153,12 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 		goto error;
 	}
 	
-	if((result = mach_set_rf_param(&subghz_param.rf)) != STATUS_OK) {
+	if((result = mach_setup(&subghz_param.rf)) != STATUS_OK) {
 		msg = SUBGHZ_SETUP_FAIL;
 		goto error;
 	}
 	
 	// data to myaddress and grobal address in specified PANID can be received.
-
 	short_addr = (uint16_t)subghz_param.mach->myAddr.ieee_addr[0] | 
 		((uint16_t)subghz_param.mach->myAddr.ieee_addr[1]<<8);
 	result = mach_set_my_short_addr(panid,short_addr);
