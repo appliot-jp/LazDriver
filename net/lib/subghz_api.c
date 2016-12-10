@@ -29,6 +29,7 @@
 #include <linux/string.h>
 #include <linux/sched.h>
 #include <linux/wait.h>
+#include "common-lzpi.h"
 #endif
 
 #include "subghz_api.h"
@@ -53,7 +54,7 @@ static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len);
 
 // local parameters
 static struct {
-	uint8_t addrType;
+	uint8_t addr_type;
 	SUBGHZ_STATUS tx_stat;
 	SUBGHZ_STATUS rx_stat;
 	volatile bool sending;
@@ -62,8 +63,8 @@ static struct {
 	void (*rx_callback2)(int status);		// change api
 	void (*tx_callback)(uint8_t rssi, int status);
 	bool read;
-	RF_PARAM rf;
-	MACH_PARAM *mach;
+	struct rf_param rf;
+	struct mach_param *mach;
 	BUFFER tx;
 	BUFFER rx;
 } subghz_param;
@@ -78,7 +79,7 @@ static SUBGHZ_MSG subghz_init(void)
 	memset(&subghz_param,0,sizeof(subghz_param));
 	// setting default value
 	// @issue check parameters
-	subghz_param.addrType = 6;
+	subghz_param.addr_type = 6;
 	subghz_param.rf.cca_min_be = 0;
 	subghz_param.rf.cca_max_be = 7;
 	subghz_param.rf.cca_duration = 7;
@@ -159,8 +160,8 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 	}
 	
 	// data to myaddress and grobal address in specified PANID can be received.
-	short_addr = (uint16_t)subghz_param.mach->myAddr.ieee_addr[0] | 
-		((uint16_t)subghz_param.mach->myAddr.ieee_addr[1]<<8);
+	short_addr = (uint16_t)subghz_param.mach->my_addr.ieee_addr[0] | 
+		((uint16_t)subghz_param.mach->my_addr.ieee_addr[1]<<8);
 	result = mach_set_my_short_addr(panid,short_addr);
 	if(result != STATUS_OK)
 	{
@@ -193,6 +194,7 @@ error:
 	return msg;
 }
 
+/*
 static void subghz_txdone(uint8_t rssi, int status)
 {
 	subghz_param.sending = false;
@@ -207,7 +209,7 @@ static void subghz_txdone(uint8_t rssi, int status)
 		subghz_param.tx_callback(rssi, status);
 	}
 }
-	
+*/
 SUBGHZ_MSG subghz_halt_until_complete(void)
 {
 	SUBGHZ_MSG msg = SUBGHZ_OK;
@@ -242,6 +244,7 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 	SUBGHZ_MSG msg;
 	int result;
 	uint8_t rssi;
+	struct mac_fc_alignment fc;
 	
 	// setting tx callback
 	/*
@@ -253,16 +256,28 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 		goto error_not_send;
 	}
 	*/
+	// initializing buffer
 	subghz_param.tx.data = data;
 	subghz_param.tx.size = len;
-	subghz_param.tx.len = 0;
+	subghz_param.tx.len = len;
 	subghz_param.tx_callback = callback;
 	
+	// initializing frame control
+	memset(&fc,0,sizeof(fc));
+	fc.frame_type = IEEE802154_FC_TYPE_DATA;
+	fc.frame_ver = IEEE802154_FC_VER_4E;
+	fc.ack_req = 1;
+	fc.seq_comp = 0;
+	fc.sec_enb = 0;
+	fc.nop = 0;
+	fc.ielist = 0;
+
 	mach_set_dst_short_addr(panid,dstAddr);
+	mach_set_src_short_addr(true);
 	subghz_param.sending = true;
-	result = mach_tx(&subghz_param.tx);
+	result = mach_tx(fc,subghz_param.addr_type,&subghz_param.tx);
 	mach_ed(&rssi);
-	subghz_txdone(rssi,result);
+	//subghz_txdone(rssi,result);
 	subghz_param.sending = false;
 
 	switch(result){
@@ -300,7 +315,7 @@ error:
 	return msg;
 }
 
-int mach_rx_isr(MACH_Header *rx,int status)
+int mach_rx_isr(struct mac_header *rx,int status)
 {
 	subghz_param.rx_stat.rssi = rx->rssi;
 	subghz_param.rx_stat.status = status;
@@ -466,15 +481,15 @@ static void subghz_getStatus(SUBGHZ_STATUS *tx, SUBGHZ_STATUS *rx)
 
 void subghz_get_my_ieee_addr(uint8_t *ieee_addr)
 {
-	memcpy(ieee_addr,subghz_param.mach->myAddr.ieee_addr,8);
+	memcpy(ieee_addr,subghz_param.mach->my_addr.ieee_addr,8);
 }
 void subghz_get_my_short_addr(uint16_t *short_addr)
 {
-	*short_addr = subghz_param.mach->myAddr.short_addr;
+	*short_addr = subghz_param.mach->my_addr.short_addr;
 }
 static uint16_t subghz_getMyAddress(void)
 {
-	return subghz_param.mach->myAddr.short_addr;
+	return subghz_param.mach->my_addr.short_addr;
 }
 
 #ifdef LAZURITE_IDE
@@ -534,31 +549,31 @@ no_error:
 
 static SUBGHZ_MSG subghz_getSendMode(SUBGHZ_PARAM *param)
 {
-	param->addrType = subghz_param.addrType;
+	param->addrType = subghz_param.addr_type;
 	param->senseTime = subghz_param.rf.cca_max_be;
 	param->txRetry = subghz_param.rf.tx_retry;
 	param->txInterval = subghz_param.rf.tx_max_be;
 	param->ccaWait = subghz_param.rf.cca_duration;
-	param->myAddress = subghz_param.mach->myAddr.short_addr; 
+	param->myAddress = subghz_param.mach->my_addr.short_addr; 
 
 	return SUBGHZ_OK;
 }
 
 static SUBGHZ_MSG subghz_setSendMode(SUBGHZ_PARAM *param)
 {
-	// check addrType
+	// check addr_type
 	if( param->addrType > 7 )
 	{
 		return SUBGHZ_ERR_ADDRTYPE;
 	}
 	// @issue check parameter. interval may not be needed.
 	// interval is calcurated from max_be.
-	subghz_param.addrType = param->addrType;
+	subghz_param.addr_type = param->addrType;
 	subghz_param.rf.cca_duration= param->senseTime;
 	subghz_param.rf.tx_retry = param->txRetry;
 	subghz_param.rf.tx_interval = param->txInterval;
 	subghz_param.rf.cca_interval = param->ccaWait;
-	subghz_param.mach->myAddr.short_addr = param->myAddress;
+	subghz_param.mach->my_addr.short_addr = param->myAddress;
 	
 	return SUBGHZ_OK;
 }
@@ -566,7 +581,7 @@ static SUBGHZ_MSG subghz_setSendMode(SUBGHZ_PARAM *param)
 
 static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len)
 {
-	MACH_Header header;
+	struct mac_header header;
 	mach_parse_data(raw,raw_len,&header);
 
 	mac->mac_header.fc16=header.fc.fc16;

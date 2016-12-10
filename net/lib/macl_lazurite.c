@@ -36,6 +36,7 @@ MACL_PARAM* macl_init(void)
 		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 	}
 #endif
+	macl.phy = phy_init();
 	return &macl;
 }
 int	macl_start(void)

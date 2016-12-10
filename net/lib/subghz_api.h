@@ -101,7 +101,7 @@ typedef union {
 */
 typedef struct
 {
-	u_MAC_HEADER mac_header;
+	union mac_frame_control mac_header;
 	uint8_t seq_num;
 	uint8_t addr_type;
 	uint16_t rx_panid;

@@ -407,6 +407,11 @@ void mach_set_dst_short_addr(uint16_t panid,uint16_t addr)
 {
 	mach.tx.dst.panid.data = panid;
 	mach.tx.dst.addr.short_addr = addr;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	}
+#endif
 }
 
 /********************************************************************/

@@ -21,14 +21,14 @@
 /*! @struct MACH_PARAM
   @brief  local parameter for mac high layer
   */
-#include "mach_lazurite.h"
-#include "macl_lazurite.h"
 #include "errno.h"
 #include "endian.h"
-#include "arib_lazurite.h"
 #include "common-lzpi.h"
+#include "mach_lazurite.h"
+#include "macl_lazurite.h"
+#include "arib_lazurite.h"
 
-static MACH_PARAM mach;
+static struct mach_param mach;
 /*! @uint8_t ackbuf[32]
   @brief  data buffer to make ack data
   */
@@ -41,8 +41,8 @@ static uint8_t ackbuf[32];
   1bit : addrType=1
   ...
  */
-const uint8_t enb_dst_panid = 0x04;
-const uint8_t enb_src_panid = 0x52;
+const uint8_t enb_dst_panid = 0x52;
+const uint8_t enb_src_panid = 0x04;
 const uint8_t addr_len[] = {0x00,0x01,0x02,0x08};
 
 int	get_mac_addr(uint8_t *macaddr)
@@ -64,22 +64,13 @@ int	get_mac_addr(uint8_t *macaddr)
 
 // local functions
 /******************************************************************************/
-/*! @brief make mac header
+/*! @brief make raw data
   @param[in] *data start pointer of output buffer
   @param[in] *size length of header
   @param[in] *header  pointer of mac header
-  mandatory
-  header->addr_type
-  header->dstpanid
-  header->srcpanid
-  header->dstaddr
-  header->srcaddr
-  header->fc
-  frame_type
-  sec_enb
-  pending
   ack_reg (1: auto, 0: no ack)
-  ielist
+  panid_comp,dst_addr_type,src_addr_type are generated from addr_type
+
   @return    false= invalid data, true valid data
   @exception	EINVAL data is not set according to addr_type
 
@@ -96,20 +87,34 @@ int	get_mac_addr(uint8_t *macaddr)
  ******************************************************************************/
 
 
-static int mach_make_header(uint8_t *data, uint16_t size, MACH_Header *header) {
-	uint16_t offset;
-	bool status=false;
+static int mach_make_header(struct mac_header *header) {
+	uint16_t offset = 2;
+	int status;
 	bool dst_ffff = true;
 	int i;
 
-	// set panid comp
-	// panidcomp is as same as 0 bit of addrType
-	header->fc.fc_bit.panid_comp = (header->addr_type&BIT(0)) ? 1:0;
+	// check data 
+	if((header->payload.data==NULL) || (header->raw.data==NULL)) {
+		printk(KERN_ERR"buffer error in %s,%s,%d,%lx,%lx\n",
+				__FILE__,
+				__func__,
+				__LINE__,
+				(long)header->payload.data,
+				(long)header->raw.data);
+		status = -ENOMEM;
+		goto error;
+	}
 
-	offset = 2;			// temporary skip frame control
 	// sequence number
 	if(!header->fc.fc_bit.seq_comp) {
-		data[offset] = header->seq,offset++;
+		if(header->raw.size >= (offset + 1)){
+			header->seq++;
+			header->raw.data[offset]=header->seq,offset++;
+		} else {
+			printk(KERN_ERR"buffer error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+			status = -ENOMEM;
+			goto error;
+		}
 	}
 
 	// dst panid
@@ -117,16 +122,23 @@ static int mach_make_header(uint8_t *data, uint16_t size, MACH_Header *header) {
 	{
 		if(!header->dst.panid.enb)
 		{
+			printk(KERN_ERR"dst panid error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 			status = -EINVAL;
 			goto error;
 		} else {
-			H2LBS(data[offset],header->dst.panid.data), offset+=2;
+			if(header->raw.size >= (offset + 2)){
+				H2LBS(header->raw.data[offset],header->dst.panid.data), offset+=2;
+			} else {
+				printk(KERN_ERR"buffer error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+				status = -ENOMEM;
+				goto error;
+			}
 		}
 	}
 
 	// dst addr
 	// 2bit of addr type shows dst addr
-	if(header->addr_type&BIT(2))
+	if(header->addr_type&BIT(1))
 	{
 		int i;
 		switch(header->dst.addr_mode)
@@ -141,8 +153,14 @@ static int mach_make_header(uint8_t *data, uint16_t size, MACH_Header *header) {
 					status = -EINVAL;
 					goto error;
 				}
-				data[offset] = header->dst.addr.ldd_addr,offset++;
-				if(header->dst.addr.ldd_addr != 0xff) dst_ffff = false;
+				if(header->raw.size >= (offset + addr_len[1])){
+					header->fc.fc_bit.dst_addr_type = IEEE802154_FC_ADDR_LDD;
+					header->raw.data[offset] = header->dst.addr.ldd_addr,offset++;
+					if(header->dst.addr.ldd_addr != 0xff) dst_ffff = false;
+				} else {
+					status = -ENOMEM;
+					goto error;
+				}
 				break;
 			case 2:
 				if((header->dst.panid.data == 0xffff) ||(header->dst.panid.enb == false))
@@ -150,18 +168,31 @@ static int mach_make_header(uint8_t *data, uint16_t size, MACH_Header *header) {
 					status = -EINVAL;
 					goto error;
 				}
-				H2LBS(data[offset],header->dst.addr.short_addr), offset+=2;
+				if(header->raw.size >= (offset + addr_len[2])){
+					header->fc.fc_bit.dst_addr_type = IEEE802154_FC_ADDR_SHORT;
+					H2LBS(header->raw.data[offset],header->dst.addr.short_addr), offset+=2;
+				} else {
+					status = -ENOMEM;
+					goto error;
+				}
 				if(header->dst.addr.short_addr != 0xffff) dst_ffff = false;
 				break;
 			case 3:
-				break;
-				for(i = 0;i<addr_len[header->dst.addr_mode];i++)
-				{
-					data[offset] = header->dst.addr.ieee_addr[i],offset++;
-					if(header->dst.addr.ieee_addr[i] != 0xff) dst_ffff = false;
+				if(header->raw.size >= (offset + addr_len[3])){
+					for(i = 0;i<addr_len[header->dst.addr_mode];i++)
+					{
+						header->raw.data[offset] = header->dst.addr.ieee_addr[i],offset++;
+						if(header->dst.addr.ieee_addr[i] != 0xff) dst_ffff = false;
+					}
+					header->fc.fc_bit.dst_addr_type = IEEE802154_FC_ADDR_IEEE;
+				} else {
+					status = -ENOMEM;
+					goto error;
 				}
 		}
 		if(dst_ffff) header->fc.fc_bit.ack_req=0;
+	} else {
+		header->fc.fc_bit.src_addr_type = IEEE802154_FC_ADDR_NONE;
 	}
 
 	// src panid
@@ -172,32 +203,84 @@ static int mach_make_header(uint8_t *data, uint16_t size, MACH_Header *header) {
 			status = -EINVAL;
 			goto error;
 		} else {
-			H2LBS(data[offset],header->src.panid.data), offset+=2;
+			if(header->raw.size >= (offset + sizeof(uint16_t))){
+				H2LBS(header->raw.data[offset],header->src.panid.data), offset+=2;
+			} else {
+				status = -ENOMEM;
+				goto error;
+			}
 		}
 	}
 	// src addr
-	if(header->addr_type & BIT(3))
+	if(header->addr_type & BIT(2))
 	{
 		switch(header->src.addr_mode)
 		{
 			case 0:
-				status = false;
+				status = -EINVAL;
 				goto error;
 				break;
 			case 1:
-				data[offset] = header->src.addr.ldd_addr,offset++;
+				if(header->raw.size >= (offset + addr_len[1])){
+					header->raw.data[offset] = header->src.addr.ldd_addr,offset++;
+					header->fc.fc_bit.src_addr_type = IEEE802154_FC_ADDR_LDD;
+				} else {
+					status = -ENOMEM;
+					goto error;
+				}
 				break;
 			case 2:
-				H2LBS(data[offset],header->src.addr.short_addr), offset+=2;
+				if(header->raw.size >= (offset + addr_len[2])){
+					H2LBS(header->raw.data[offset],header->src.addr.short_addr), offset+=2;
+					header->fc.fc_bit.src_addr_type = IEEE802154_FC_ADDR_SHORT;
+				} else {
+					status = -ENOMEM;
+					goto error;
+				}
 				break;
 			case 3:
-				for(i = 0;i<addr_len[header->dst.addr_mode];i++)
-				{
-					data[offset] = header->dst.addr.ieee_addr[i],offset++;
+				if(header->raw.size >= (offset + addr_len[3])){
+					for(i = 0;i<addr_len[header->dst.addr_mode];i++)
+					{
+						header->raw.data[offset] = header->dst.addr.ieee_addr[i],offset++;
+					}
+					header->fc.fc_bit.src_addr_type = IEEE802154_FC_ADDR_IEEE;
+				} else {
+					status = -ENOMEM;
+					goto error;
 				}
 				break;
 		}
+	} else {
+		header->fc.fc_bit.dst_addr_type = IEEE802154_FC_ADDR_NONE;
 	}
+
+	// copy payload to raw buffer
+	header->fc.fc_bit.panid_comp = header->addr_type & 0x01;
+	header->fc.fc_bit.nop = 0;
+	if(header->raw.size >= (offset + header->payload.len)){
+		memcpy(&header->raw.data[offset], header->payload.data, header->payload.len);
+		offset+=header->payload.len;
+		header->raw.len = offset;
+	} else {
+		status = -ENOMEM;
+		goto error;
+	}
+
+	// write mac header
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s,%04x\n",__FILE__,__func__,header->fc.fc16);
+	}
+#endif
+	H2LBS(header->raw.data[0],header->fc.fc16);
+
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+		PAYLOADDUMP(header->raw.data,header->raw.len);
+	}
+#endif
+
 	status = STATUS_OK;
 
 error:
@@ -213,7 +296,7 @@ error:
   @exception ENOMEM = data size error
   @issue  move to mac
  ******************************************************************************/
-int mach_parse_data(uint8_t *data, uint16_t size, MACH_Header *header) {
+int mach_parse_data(uint8_t *data, uint16_t size, struct mac_header *header) {
 
 	const uint8_t addr_len[] = {0,1,2,8};
 	uint16_t offset = 0;
@@ -224,7 +307,7 @@ int mach_parse_data(uint8_t *data, uint16_t size, MACH_Header *header) {
 	// framce control
 	if (size < 2)
 		status = -ENOMEM;
-		goto error;
+	goto error;
 	LB2HS(header->fc,data[offset]),offset+=2;
 
 	// addr type
@@ -287,9 +370,9 @@ error:
   @return    pointer of MACH_PARAM
   @exception  return NULL
  *********************************************************************/
-MACH_PARAM *mach_init(void)
+struct mach_param *mach_init(void)
 {
-	memset(&mach,0,sizeof(MACH_PARAM));
+	memset(&mach,0,sizeof(struct mach_param));
 	mach.macl = macl_init();
 	if(mach.macl == NULL) return NULL;
 
@@ -298,19 +381,19 @@ MACH_PARAM *mach_init(void)
 	mach.ack.raw.size = sizeof(ackbuf);
 	mach.ack.raw.len = 0;
 	macl_sleep(true);
-	get_mac_addr(mach.myAddr.ieee_addr);
+	get_mac_addr(mach.my_addr.ieee_addr);
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) {
 		printk(KERN_INFO"mach_setup,%02x%02x%02x%02x%02x%02x%02x%02x\n",
-				mach.myAddr.ieee_addr[7],
-				mach.myAddr.ieee_addr[6],
-				mach.myAddr.ieee_addr[5],
-				mach.myAddr.ieee_addr[4],
-				mach.myAddr.ieee_addr[3],
-				mach.myAddr.ieee_addr[2],
-				mach.myAddr.ieee_addr[1],
-				mach.myAddr.ieee_addr[0]
-				);
+				mach.my_addr.ieee_addr[7],
+				mach.my_addr.ieee_addr[6],
+				mach.my_addr.ieee_addr[5],
+				mach.my_addr.ieee_addr[4],
+				mach.my_addr.ieee_addr[3],
+				mach.my_addr.ieee_addr[2],
+				mach.my_addr.ieee_addr[1],
+				mach.my_addr.ieee_addr[0]
+			  );
 	}
 #endif
 
@@ -342,7 +425,7 @@ int mach_stop(void) {
 	return macl_stop();
 }
 
-int mach_setup(RF_PARAM *rf) {
+int mach_setup(struct rf_param *rf) {
 	int status;
 	struct wpan_phy_cca cca;
 
@@ -384,10 +467,36 @@ void mach_set_dst_ieee_addr(uint8_t *addr)
 	memcpy(mach.tx.dst.addr.ieee_addr,addr,sizeof(8));
 }
 
+void mach_set_src_short_addr(bool on)
+{
+	if(on) {
+		mach.tx.src.panid.enb = true;
+		mach.tx.src.panid.data = mach.my_addr.pan_id;
+		mach.tx.src.addr_mode = IEEE802154_FC_ADDR_SHORT;
+		mach.tx.src.addr.short_addr = mach.my_addr.short_addr;
+	} else {
+		mach.tx.src.panid.enb = false;
+		mach.tx.src.panid.data = mach.my_addr.pan_id;
+		mach.tx.src.addr_mode = IEEE802154_FC_ADDR_IEEE;
+		memcpy(mach.tx.src.addr.ieee_addr, mach.my_addr.ieee_addr,8);
+	}
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	}
+#endif
+}
 void mach_set_dst_short_addr(uint16_t panid,uint16_t addr)
 {
+	mach.tx.dst.panid.enb = true;
 	mach.tx.dst.panid.data = panid;
+	mach.tx.dst.addr_mode = IEEE802154_FC_ADDR_SHORT;
 	mach.tx.dst.addr.short_addr = addr;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	}
+#endif
 }
 
 /********************************************************************/
@@ -402,22 +511,22 @@ void mach_set_dst_short_addr(uint16_t panid,uint16_t addr)
 int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr)
 {
 	int status=STATUS_OK;
-	mach.myAddr.pan_id = panid;
-	mach.myAddr.short_addr = short_addr;
+	mach.my_addr.pan_id = panid;
+	mach.my_addr.short_addr = short_addr;
 	if((panid == 0xffff) || (panid == 0xfffe) || (short_addr == 0xffff) || (short_addr == 0xfffe))
 	{
-		mach.myAddr.pan_coord = false;
+		mach.my_addr.pan_coord = false;
 		status = -EINVAL;
 	}
-	mach.myAddr.pan_coord = true;
+	mach.my_addr.pan_coord = true;
 
 	if(!mach.promiscuous)
 	{
 		struct ieee802154_hw_addr_filt filt;
-		filt.pan_id = mach.myAddr.pan_id;
-		filt.pan_coord = mach.myAddr.pan_coord;
-		filt.short_addr = mach.myAddr.short_addr;
-		memcpy(filt.ieee_addr,mach.myAddr.ieee_addr,8);
+		filt.pan_id = mach.my_addr.pan_id;
+		filt.pan_coord = mach.my_addr.pan_coord;
+		filt.short_addr = mach.my_addr.short_addr;
+		memcpy(filt.ieee_addr,mach.my_addr.ieee_addr,8);
 		macl_set_hw_addr_filt(&filt,0x0f);			// update all of addr filter
 	}
 	return status;
@@ -436,13 +545,20 @@ int mach_set_promiscuous(bool on)
 	return STATUS_OK;
 }
 
-int mach_tx(BUFFER *txbuf)
+int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 {
 	int status = STATUS_OK;
 
-	mach.tx.raw.data = mach.macl->phy->out;
-	mach.tx.raw.size = mach.macl->phy->buf_size;
-	if((status = mach_make_header(txbuf->data,txbuf->len,&mach.tx))==STATUS_OK) {
+	// initializing buffer
+	mach.tx.raw.data = mach.macl->phy->out.data;
+	mach.tx.raw.size = mach.macl->phy->out.size;
+	mach.tx.payload.data = txbuf->data;
+	mach.tx.payload.size = txbuf->size;
+	mach.tx.payload.len = txbuf->len;
+	mach.tx.addr_type = addr_type;
+	memcpy(&mach.tx.fc.fc_bit,&fc,sizeof(fc)) ;
+
+	if((status = mach_make_header(&mach.tx))!=STATUS_OK) {
 		goto error;
 	}
 	if((arib_tx_check(mach.rf->pages,mach.rf->ch,mach.tx.raw.len))==false) {

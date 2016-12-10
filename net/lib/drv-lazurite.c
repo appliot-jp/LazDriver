@@ -597,6 +597,7 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 			goto error;
 		}
 		EXT_set_tx_led(0);
+
 		status = SubGHz.send(p.tx_panid,tx_addr,payload,count,tx_callback);
 		p.tx_status = status;
 		if(status == SUBGHZ_OK)
@@ -688,7 +689,7 @@ static int __init drv_param_init(void) {
 	   EXT_I2C_read(0x25,p.my_addr[2],1);
 	   EXT_I2C_read(0x26,p.my_addr[1],1);
 	   EXT_I2C_read(0x27,p.my_addr[0],1);
-	 */
+	   */
 
 	printk(KERN_INFO "[drv-lazurite] End of init\n");
 	mutex_init( &chrdev.lock );

@@ -130,6 +130,7 @@ class TestClass < Minitest::Test
 	def test_subghz_setup
 		@@laz.init(module_test = 0xff00)
 		@@laz.begin(48,0xabcd,100,20)
+		@@laz.send(0xabcd,0x1234,"hello")
 		@@laz.remove()
 	end
 end

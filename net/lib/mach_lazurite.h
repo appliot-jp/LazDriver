@@ -37,21 +37,9 @@
 #include "common_lazurite.h"
 #include "endian.h"
 
-/*
-#define MACH_FC_TYPE			0x0007
-#define MACH_FC_SEC_ENB			0x0008
-#define MACH_FC_PENDING			0x0010
-#define MACH_FC_ACK_REG			0x0020
-#define MACH_FC_PANID_COMP		0x0040
-#define MACH_FC_SEQ_COMP		0x0100
-#define MACH_FC_IE_LIST			0x0200
-#define MACH_FC_SRC_ADDR		0x0C00
-#define MACH_FC_VER				0x3000
-#define MACH_FC_DST_ADDR		0xC000
-*/
 // @issue check parameter. interval may not be needed.
 
-typedef struct {
+struct mac_addr {
 	struct {
 		bool enb;
 		uint16_t data;
@@ -62,23 +50,28 @@ typedef struct {
 		uint16_t ldd_addr;
 		uint8_t ieee_addr[8];
 	}addr;
-} MACH_HEADER_ADDR;
+};
 //
-typedef struct
-{
-	uint16_t	pan_id;					// for lazurite
-	uint16_t	short_addr;				// for lazurite
-	uint8_t		ieee_addr[8];			// for lazurite
-	bool		pan_coord;				// common
-} MACH_ADDR;
 
-/*! @struct s_MAC_HEADER_BIT_ALIGNMENT
+#define IEEE802154_FC_TYPE_BEACON	0
+#define IEEE802154_FC_TYPE_DATA		1
+#define IEEE802154_FC_TYPE_ACK		2
+#define IEEE802154_FC_TYPE_CMD		3
+#define IEEE802154_FC_VER_2003		0
+#define IEEE802154_FC_VER_2006		1
+#define IEEE802154_FC_VER_4E		2
+#define IEEE802154_FC_ADDR_NONE		0
+#define IEEE802154_FC_ADDR_LDD		1
+#define IEEE802154_FC_ADDR_SHORT	2
+#define IEEE802154_FC_ADDR_IEEE		3
+
+/*! @struct mac_fc_alignment
   @brief  abstruct
   internal use only
   bit alightment of mac header
   */
 #ifdef LITTLE_ENDIAN
-typedef struct {
+struct mac_fc_alignment{
 	uint8_t frame_type:3;
 	uint8_t sec_enb:1;
 	uint8_t pending:1;
@@ -87,30 +80,30 @@ typedef struct {
 	uint8_t nop:1;
 	uint8_t seq_comp:1;
 	uint8_t ielist:1;
-	uint8_t dst_addr_type:2;
-	uint8_t frame_ver:2;
 	uint8_t src_addr_type:2;
-} s_MAC_HEADER_BIT_ALIGNMENT;
+	uint8_t frame_ver:2;
+	uint8_t dst_addr_type:2;
+};
 #endif
 
-typedef union {
+union mac_frame_control {
 	uint8_t fc8[2];
 	uint16_t fc16;
-	s_MAC_HEADER_BIT_ALIGNMENT fc_bit;
-} u_MAC_HEADER;
+	struct mac_fc_alignment fc_bit;
+};
 
-typedef struct {
+struct mac_header{
 	int16_t seq;        	// sequence number
-	u_MAC_HEADER fc;		// frame control
-	MACH_HEADER_ADDR dst;
-	MACH_HEADER_ADDR src;
+	union mac_frame_control fc;		// frame control
+	struct mac_addr dst;
+	struct mac_addr src;
 	uint8_t addr_type;      // address type
 	BUFFER payload;		// source address
 	BUFFER raw;		// source address
 	uint8_t rssi;		// source address
-} MACH_Header;
+};
 
-typedef struct {
+struct rf_param {
 	uint8_t ch;
 	uint8_t pages;
 	uint8_t cca_min_be;
@@ -126,28 +119,33 @@ typedef struct {
 	uint32_t tx_interval;
 	enum nl802154_cca_modes cca_mode;
 	enum nl802154_cca_opts cca_opt;
-} RF_PARAM;
+};
 
-typedef struct {
+struct mach_param {
 	MACL_PARAM *macl;
-	MACH_ADDR  myAddr;
-	MACH_Header tx;
-	MACH_Header rx;
-	MACH_Header ack;
+	struct {
+		uint16_t	pan_id;					// for lazurite
+		uint16_t	short_addr;				// for lazurite
+		uint8_t		ieee_addr[8];			// for lazurite
+		bool		pan_coord;				// common
+	} my_addr;
+	struct mac_header tx;
+	struct mac_header rx;
+	struct mac_header ack;
 	bool promiscuous;
-	RF_PARAM *rf;
-} MACH_PARAM;
+	struct rf_param *rf;
+};
 
-
-extern MACH_PARAM *mach_init(void);
+extern struct mach_param *mach_init(void);
 extern int mach_sleep(bool on);
-extern int mach_setup(RF_PARAM *rf);
+extern int mach_setup(struct rf_param *rf);
 extern int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr);
 extern void mach_set_dst_short_addr(uint16_t panid,uint16_t short_addr);
-extern int mach_tx(BUFFER *txbuf);
+extern void mach_set_src_short_addr(bool on);
+extern int mach_tx(struct mac_fc_alignment,uint8_t addr_type,BUFFER *txbuf);
 extern int mach_start(BUFFER *rxbuf);
 extern int mach_stop(void);
-extern int mach_parse_data(uint8_t *data, uint16_t size, MACH_Header *header);
+extern int mach_parse_data(uint8_t *data, uint16_t size, struct mac_header *header);
 extern int mach_ed(uint8_t *ed);
-extern int mach_rx_isr(MACH_Header *rx,int status);
+extern int mach_rx_isr(struct mac_header *rx,int status);
 #endif

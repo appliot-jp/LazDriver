@@ -1,6 +1,6 @@
-/* phy_lazurite.h - 
+/* mach_lazurite.c - MAC(High level) for lazurite
  *
- * Copyright (c) 2015  LAPIS Semiconductor Co.,Ltd.
+ * Copyright (c) 2015  Lapis Semiconductor Co.,Ltd
  * All rights reserved.
  *
  * This program is free software: you can redistribute it and/or
@@ -15,37 +15,32 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/>.
+ * <http://www.gnu.org/licenses/>
  */
 
-
-#ifndef _PHY_H_
-#define _PHY_H_
-
-#ifdef LAZURITE_IDE
-#include "lazurite.h"
-#include "hal.h"
-#include "string.h"
-#include "lp_manage.h"
-#include "driver_irq.h"
-#else
-#include <linux/string.h>
-#include <linux/sched.h>
-#include <linux/wait.h>
-#endif
+#include "errno.h"
+#include "endian.h"
 #include "common_lazurite.h"
+#include "common-lzpi.h"
+#include "phy_lazurite.h"
 
-#define INIT_SLEEP
-//#define TEST_SEND_INTERVAL
+#define BUFFER_SIZE 256
+static uint8_t inbuf[256];
+static uint8_t outbuf[256];
+static PHY_PARAM phy;
 
+PHY_PARAM *phy_init(void)
+{
 
-typedef struct {
-	uint8_t id;
-	uint16_t buf_size;
-	BUFFER in;
-	BUFFER out;
-} PHY_PARAM;
+	memset(inbuf,0,sizeof(inbuf));
+	memset(outbuf,0,sizeof(inbuf));
+	phy.in.size = BUFFER_SIZE;
+	phy.in.data = inbuf;
+	phy.in.len = 0;
+	phy.out.size = BUFFER_SIZE;
+	phy.out.len = 0;
+	phy.out.data = outbuf;
 
-extern PHY_PARAM *phy_init(void);
+	return &phy;
+}
 
-#endif
