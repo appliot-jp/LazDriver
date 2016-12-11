@@ -267,13 +267,9 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 	fc.frame_type = IEEE802154_FC_TYPE_DATA;
 	fc.frame_ver = IEEE802154_FC_VER_4E;
 	fc.ack_req = 1;
-	fc.seq_comp = 0;
-	fc.sec_enb = 0;
-	fc.nop = 0;
-	fc.ielist = 0;
 
 	mach_set_dst_short_addr(panid,dstAddr);
-	mach_set_src_short_addr(true);
+	mach_set_src_addr(IEEE802154_FC_ADDR_SHORT);
 	subghz_param.sending = true;
 	result = mach_tx(fc,subghz_param.addr_type,&subghz_param.tx);
 	mach_ed(&rssi);
@@ -582,7 +578,7 @@ static SUBGHZ_MSG subghz_setSendMode(SUBGHZ_PARAM *param)
 static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len)
 {
 	struct mac_header header;
-	mach_parse_data(raw,raw_len,&header);
+	mach_parse_data(&header);
 
 	mac->mac_header.fc16=header.fc.fc16;
 	mac->seq_num=header.seq;

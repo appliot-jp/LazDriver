@@ -39,12 +39,26 @@ MACL_PARAM* macl_init(void)
 	macl.phy = phy_init();
 	return &macl;
 }
+
 int	macl_start(void)
 {
 	int status=STATUS_OK;
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) {
+		const uint8_t test1[]={
+			0x21,0xAC,0x01,0xCD, 0xAB,0x34,0x12,0x34,
+			0x12,0x68,0x65,0x6C, 0x6C,0x6F};
+		const uint8_t test2[]={
+			0x21,0xAC,0x01,0xCD, 0xAB,0x34,0x12,0x0C,
+			0x60,0x63,0x00,0x90, 0x12,0x1D,0x00,0x68,
+			0x65,0x6C,0x6C,0x6F};
 		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+		memcpy(macl.phy->in.data,test1,sizeof(test1));
+		macl.phy->in.len=sizeof(test1);
+		macl_rx_irq(&macl.phy->in);
+		memcpy(macl.phy->in.data,test2,sizeof(test2));
+		macl.phy->in.len=sizeof(test2);
+		macl_rx_irq(&macl.phy->in);
 	}
 #endif
 	return status;
@@ -100,7 +114,7 @@ int	macl_set_hw_addr_filt(struct ieee802154_hw_addr_filt *filt,unsigned long cha
 				filt->pan_id,
 				filt->short_addr,
 				filt->pan_coord
-				);
+			  );
 	}
 #endif
 	return status;
@@ -134,7 +148,7 @@ int	macl_set_cca_mode(const struct wpan_phy_cca *cca)
 		printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,
 				cca->mode,
 				cca->opt
-				);
+			  );
 	}
 #endif
 	return status;
@@ -179,11 +193,6 @@ int	macl_set_promiscuous_mode(const bool on)
 #endif
 	return status;
 }
-int	macl_rx_irq(BUFFER *rx)
-{
-	int status=STATUS_OK;
-	return status;
-}
 
 int	macl_sleep(bool on)
 {
@@ -196,5 +205,10 @@ int	macl_sleep(bool on)
 	return status;
 }
 
+int	macl_rx_irq(BUFFER *rx)
+{
+	int status=STATUS_OK;
+	mach_rx_irq(rx);
 
-
+	return status;
+}

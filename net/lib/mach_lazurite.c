@@ -111,7 +111,7 @@ static int mach_make_header(struct mac_header *header) {
 			header->seq++;
 			header->raw.data[offset]=header->seq,offset++;
 		} else {
-			printk(KERN_ERR"buffer error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+			printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 			status = -ENOMEM;
 			goto error;
 		}
@@ -122,14 +122,14 @@ static int mach_make_header(struct mac_header *header) {
 	{
 		if(!header->dst.panid.enb)
 		{
-			printk(KERN_ERR"dst panid error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+			printk(KERN_ERR"dst panid is invalid in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 			status = -EINVAL;
 			goto error;
 		} else {
 			if(header->raw.size >= (offset + 2)){
 				H2LBS(header->raw.data[offset],header->dst.panid.data), offset+=2;
 			} else {
-				printk(KERN_ERR"buffer error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+				printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 				status = -ENOMEM;
 				goto error;
 			}
@@ -144,12 +144,16 @@ static int mach_make_header(struct mac_header *header) {
 		switch(header->dst.addr_mode)
 		{
 			case 0:
+				printk(KERN_ERR"dst address is not set in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 				status = -EINVAL;
 				goto error;
 				break;
 			case 1:
-				if((header->dst.panid.data == 0xffff) ||(header->dst.panid.enb == false))
+				if((header->dst.panid.data == 0xffff) ||
+						(header->dst.panid.data == 0xfffe)||
+						(header->dst.panid.enb == false))
 				{
+					printk(KERN_ERR"invalid panid for short address.%s,%s,%d\n", __FILE__, __func__, __LINE__);
 					status = -EINVAL;
 					goto error;
 				}
@@ -158,13 +162,17 @@ static int mach_make_header(struct mac_header *header) {
 					header->raw.data[offset] = header->dst.addr.ldd_addr,offset++;
 					if(header->dst.addr.ldd_addr != 0xff) dst_ffff = false;
 				} else {
+					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 					status = -ENOMEM;
 					goto error;
 				}
 				break;
 			case 2:
-				if((header->dst.panid.data == 0xffff) ||(header->dst.panid.enb == false))
+				if((header->dst.panid.data == 0xffff) ||
+						(header->dst.panid.data == 0xfffe) ||
+						(header->dst.panid.enb == false))
 				{
+					printk(KERN_ERR"invalid panid for short address.%s,%s,%d\n", __FILE__, __func__, __LINE__);
 					status = -EINVAL;
 					goto error;
 				}
@@ -172,6 +180,7 @@ static int mach_make_header(struct mac_header *header) {
 					header->fc.fc_bit.dst_addr_type = IEEE802154_FC_ADDR_SHORT;
 					H2LBS(header->raw.data[offset],header->dst.addr.short_addr), offset+=2;
 				} else {
+					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 					status = -ENOMEM;
 					goto error;
 				}
@@ -186,6 +195,7 @@ static int mach_make_header(struct mac_header *header) {
 					}
 					header->fc.fc_bit.dst_addr_type = IEEE802154_FC_ADDR_IEEE;
 				} else {
+					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 					status = -ENOMEM;
 					goto error;
 				}
@@ -200,12 +210,14 @@ static int mach_make_header(struct mac_header *header) {
 	{
 		if(header->src.panid.enb == 0)
 		{
+			printk(KERN_ERR"src panid is invalid in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 			status = -EINVAL;
 			goto error;
 		} else {
 			if(header->raw.size >= (offset + sizeof(uint16_t))){
 				H2LBS(header->raw.data[offset],header->src.panid.data), offset+=2;
 			} else {
+				printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 				status = -ENOMEM;
 				goto error;
 			}
@@ -221,34 +233,45 @@ static int mach_make_header(struct mac_header *header) {
 				goto error;
 				break;
 			case 1:
-				if(header->raw.size >= (offset + addr_len[1])){
-					header->raw.data[offset] = header->src.addr.ldd_addr,offset++;
-					header->fc.fc_bit.src_addr_type = IEEE802154_FC_ADDR_LDD;
-				} else {
+				if(header->raw.size < (offset + addr_len[1])){
+					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 					status = -ENOMEM;
 					goto error;
 				}
+				if(header->src.addr.ldd_addr==0xff){
+					printk(KERN_ERR"invalid src LDD address. %s,%s,%d\n", __FILE__, __func__, __LINE__);
+					status = -EINVAL;
+					goto error;
+				}
+				header->raw.data[offset] = header->src.addr.ldd_addr,offset++;
+				header->fc.fc_bit.src_addr_type = IEEE802154_FC_ADDR_LDD;
 				break;
 			case 2:
-				if(header->raw.size >= (offset + addr_len[2])){
+				if(header->raw.size < (offset + addr_len[2])){
+					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+					status = -ENOMEM;
+					goto error;
+				}
+					if(header->src.addr.short_addr==0xffff)
+					{
+						printk(KERN_ERR"invalid src short address. %s,%s,%d\n", __FILE__, __func__, __LINE__);
+						status = -EINVAL;
+						goto error;
+					}
 					H2LBS(header->raw.data[offset],header->src.addr.short_addr), offset+=2;
 					header->fc.fc_bit.src_addr_type = IEEE802154_FC_ADDR_SHORT;
-				} else {
-					status = -ENOMEM;
-					goto error;
-				}
 				break;
 			case 3:
-				if(header->raw.size >= (offset + addr_len[3])){
-					for(i = 0;i<addr_len[header->dst.addr_mode];i++)
-					{
-						header->raw.data[offset] = header->dst.addr.ieee_addr[i],offset++;
-					}
-					header->fc.fc_bit.src_addr_type = IEEE802154_FC_ADDR_IEEE;
-				} else {
+				if(header->raw.size < (offset + addr_len[3])){
+					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 					status = -ENOMEM;
 					goto error;
 				}
+				for(i = 0;i<addr_len[header->src.addr_mode];i++)
+				{
+					header->raw.data[offset] = header->src.addr.ieee_addr[i],offset++;
+				}
+				header->fc.fc_bit.src_addr_type = IEEE802154_FC_ADDR_IEEE;
 				break;
 		}
 	} else {
@@ -296,19 +319,18 @@ error:
   @exception ENOMEM = data size error
   @issue  move to mac
  ******************************************************************************/
-int mach_parse_data(uint8_t *data, uint16_t size, struct mac_header *header) {
+int mach_parse_data(struct mac_header *header) {
 
-	const uint8_t addr_len[] = {0,1,2,8};
 	uint16_t offset = 0;
 	int status;
 	int i;
 	uint16_t min_len = 2;
 
 	// framce control
-	if (size < 2)
+	if (header->payload.size < 2)
 		status = -ENOMEM;
 	goto error;
-	LB2HS(header->fc,data[offset]),offset+=2;
+	LB2HS(header->fc,header->raw.data[offset]),offset+=2;
 
 	// addr type
 	header->addr_type = header->fc.fc_bit.panid_comp;
@@ -408,10 +430,14 @@ struct mach_param *mach_init(void)
  ********************************************************************/
 int mach_start(BUFFER *rxbuf) {
 	int status = STATUS_OK;
+
 	// initialize phy  <== ml7396_reset();
-	mach.rx.raw.data = rxbuf->data;
-	mach.rx.raw.size = rxbuf->size;
-	mach.rx.raw.len = 0;
+	mach.rx.payload.data = rxbuf->data;
+	mach.rx.payload.size = rxbuf->size;
+	mach.rx.payload.len = 0;
+
+	macl_start();
+
 	return status;
 }
 
@@ -462,31 +488,52 @@ error:
   @return    0=STATUS_OK, other = error
   @exception  return NULL
  ********************************************************************/
-void mach_set_dst_ieee_addr(uint8_t *addr)
+int mach_set_dst_ieee_addr(uint8_t *addr)
 {
 	memcpy(mach.tx.dst.addr.ieee_addr,addr,sizeof(8));
+	return STATUS_OK;
 }
 
-void mach_set_src_short_addr(bool on)
+int mach_set_src_addr(uint8_t addr_mode)
 {
-	if(on) {
-		mach.tx.src.panid.enb = true;
-		mach.tx.src.panid.data = mach.my_addr.pan_id;
-		mach.tx.src.addr_mode = IEEE802154_FC_ADDR_SHORT;
-		mach.tx.src.addr.short_addr = mach.my_addr.short_addr;
-	} else {
-		mach.tx.src.panid.enb = false;
-		mach.tx.src.panid.data = mach.my_addr.pan_id;
-		mach.tx.src.addr_mode = IEEE802154_FC_ADDR_IEEE;
-		memcpy(mach.tx.src.addr.ieee_addr, mach.my_addr.ieee_addr,8);
+	int status=STATUS_OK;
+	switch(addr_mode)
+	{
+		case 0:
+			mach.tx.src.panid.enb = true;
+			mach.tx.src.panid.data = mach.my_addr.pan_id;
+			mach.tx.src.addr_mode = IEEE802154_FC_ADDR_NONE;
+			break;
+		case 1:
+			mach.tx.src.panid.enb = true;
+			mach.tx.src.panid.data = mach.my_addr.pan_id;
+			mach.tx.src.addr_mode = IEEE802154_FC_ADDR_LDD;
+			mach.tx.src.addr.short_addr = mach.my_addr.ldd_addr;
+			break;
+		case 2:
+			mach.tx.src.panid.enb = true;
+			mach.tx.src.panid.data = mach.my_addr.pan_id;
+			mach.tx.src.addr_mode = IEEE802154_FC_ADDR_SHORT;
+			mach.tx.src.addr.short_addr = mach.my_addr.short_addr;
+			break;
+		case 3:
+			mach.tx.src.panid.enb = mach.my_addr.pan_coord;
+			mach.tx.src.panid.data = mach.my_addr.pan_id;
+			mach.tx.src.addr_mode = IEEE802154_FC_ADDR_IEEE;
+			memcpy(mach.tx.src.addr.ieee_addr, mach.my_addr.ieee_addr,8);
+			break;
+		default:
+			status = -EINVAL;
+			break;
 	}
+	return status;
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) {
 		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 	}
 #endif
 }
-void mach_set_dst_short_addr(uint16_t panid,uint16_t addr)
+int mach_set_dst_short_addr(uint16_t panid,uint16_t addr)
 {
 	mach.tx.dst.panid.enb = true;
 	mach.tx.dst.panid.data = panid;
@@ -497,6 +544,7 @@ void mach_set_dst_short_addr(uint16_t panid,uint16_t addr)
 		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 	}
 #endif
+	return STATUS_OK;
 }
 
 /********************************************************************/
@@ -579,5 +627,22 @@ int mach_ed(uint8_t *ed)
 int mach_sleep(bool on)
 {
 	return macl_sleep(on);
+}
+int mach_rx_irq(BUFFER *rx)
+{
+	int status = STATUS_OK;
+
+	mach.rx.raw.data = rx->data;
+	mach.rx.raw.size = rx->size;
+	mach.rx.raw.len = rx->len;
+
+	mach_parse_data(&mach.rx);
+
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+		PAYLOADDUMP(header->raw.data,header->raw.len);
+	}
+#endif
+	return status;
 }
 

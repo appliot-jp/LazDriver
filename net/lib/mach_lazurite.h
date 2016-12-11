@@ -125,6 +125,7 @@ struct mach_param {
 	MACL_PARAM *macl;
 	struct {
 		uint16_t	pan_id;					// for lazurite
+		uint8_t		ldd_addr;				// for lazurite
 		uint16_t	short_addr;				// for lazurite
 		uint8_t		ieee_addr[8];			// for lazurite
 		bool		pan_coord;				// common
@@ -140,12 +141,13 @@ extern struct mach_param *mach_init(void);
 extern int mach_sleep(bool on);
 extern int mach_setup(struct rf_param *rf);
 extern int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr);
-extern void mach_set_dst_short_addr(uint16_t panid,uint16_t short_addr);
-extern void mach_set_src_short_addr(bool on);
+extern int mach_set_dst_ieee_addr(uint8_t *addr);
+extern int mach_set_dst_short_addr(uint16_t panid,uint16_t short_addr);
+extern int mach_set_src_addr(uint8_t addr_mode);
 extern int mach_tx(struct mac_fc_alignment,uint8_t addr_type,BUFFER *txbuf);
 extern int mach_start(BUFFER *rxbuf);
 extern int mach_stop(void);
-extern int mach_parse_data(uint8_t *data, uint16_t size, struct mac_header *header);
+extern int mach_parse_data(struct mac_header *header);
 extern int mach_ed(uint8_t *ed);
 extern int mach_rx_isr(struct mac_header *rx,int status);
 #endif
