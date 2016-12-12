@@ -141,7 +141,7 @@ static int mach_make_header(struct mac_header *header) {
 	if(header->addr_type&BIT(1))
 	{
 		int i;
-		switch(header->dst.addr_mode)
+		switch(header->dst.addr_type)
 		{
 			case 0:
 				printk(KERN_ERR"dst address is not set in %s,%s,%d\n", __FILE__, __func__, __LINE__);
@@ -188,7 +188,7 @@ static int mach_make_header(struct mac_header *header) {
 				break;
 			case 3:
 				if(header->raw.size >= (offset + addr_len[3])){
-					for(i = 0;i<addr_len[header->dst.addr_mode];i++)
+					for(i = 0;i<addr_len[header->dst.addr_type];i++)
 					{
 						header->raw.data[offset] = header->dst.addr.ieee_addr[i],offset++;
 						if(header->dst.addr.ieee_addr[i] != 0xff) dst_ffff = false;
@@ -226,7 +226,7 @@ static int mach_make_header(struct mac_header *header) {
 	// src addr
 	if(header->addr_type & BIT(2))
 	{
-		switch(header->src.addr_mode)
+		switch(header->src.addr_type)
 		{
 			case 0:
 				status = -EINVAL;
@@ -267,7 +267,7 @@ static int mach_make_header(struct mac_header *header) {
 					status = -ENOMEM;
 					goto error;
 				}
-				for(i = 0;i<addr_len[header->src.addr_mode];i++)
+				for(i = 0;i<addr_len[header->src.addr_type];i++)
 				{
 					header->raw.data[offset] = header->src.addr.ieee_addr[i],offset++;
 				}
@@ -311,7 +311,7 @@ error:
 }
 
 /******************************************************************************/
-/*! @brief parse mac header
+/*! @brief prawarse mac header
   @param[in] *data start pointer of receiving data
   @param[in] size length of data
   @param[in] *header  pointer of mac header
@@ -324,63 +324,57 @@ int mach_parse_data(struct mac_header *header) {
 	uint16_t offset = 0;
 	int status;
 	int i;
-	uint16_t min_len = 2;
+
+	// Buffer size check
+	if(header->raw.size < header->input.len)
+	{
+		status = -ENOMEM;
+		goto error;
+	}
+	memcpy(header->raw.data,header->input.data,header->input.len);
 
 	// framce control
-	if (header->payload.size < 2)
-		status = -ENOMEM;
-	goto error;
 	LB2HS(header->fc,header->raw.data[offset]),offset+=2;
 
 	// addr type
 	header->addr_type = header->fc.fc_bit.panid_comp;
-	header->addr_type += (header->src.addr_mode ? 2: 0);
-	header->addr_type += (header->dst.addr_mode ? 4: 0);
+	header->addr_type += (header->fc.fc_bit.src_addr_type ? 2: 0);
+	header->addr_type += (header->fc.fc_bit.dst_addr_type ? 4: 0);
+	header->src.addr_type = header->fc.fc_bit.src_addr_type;
+	header->dst.addr_type = header->fc.fc_bit.dst_addr_type;
 
 	// panid enb
 	header->dst.panid.enb = (enb_dst_panid & BIT(header->addr_type)) ? 1: 0;
 	header->src.panid.enb = (enb_src_panid & BIT(header->addr_type)) ? 1: 0;
 
-	// packet length check
-	if(header->dst.panid.enb) min_len+=2;
-	if(header->src.panid.enb) min_len+=2;
-	if(!header->fc.fc_bit.seq_comp) min_len+=1;
-	min_len += addr_len[header->fc.fc_bit.src_addr_type];
-	min_len += addr_len[header->fc.fc_bit.dst_addr_type];
-	if(min_len > size)
-	{
-		status = -ENOMEM;
-		goto error;
-	}
-
 	// sequence number
 	if (header->fc.fc_bit.seq_comp) {
-		header->seq = data[offset],offset++;
+		header->seq = header->raw.data[offset],offset++;
 	}
 	// dst panid
 	if(header->dst.panid.enb)
 	{
-		LB2HS(header->dst.panid.data,header->dst.panid.data),offset+=2;
+		LB2HS(header->dst.panid.data,header->raw.data[offset]),offset+=2;
 	}
 	// dst addr
 	memset(header->dst.addr.ieee_addr,0,8);
 	for(i=0;i< addr_len[header->fc.fc_bit.dst_addr_type];i++)
 	{
-		header->dst.addr.ieee_addr[i] = data[offset],offset++;
+		header->dst.addr.ieee_addr[i] = header->raw.data[offset],offset++;
 	}
 	// src panid
 	if(header->src.panid.enb)
 	{
-		LB2HS(header->src.panid.data,data[offset]),offset+=2;
+		LB2HS(header->src.panid.data,header->raw.data[offset]),offset+=2;
 	}
 	// src addr
 	memset(header->src.addr.ieee_addr,0,8);
 	for(i=0;i< addr_len[header->fc.fc_bit.src_addr_type];i++)
 	{
-		header->src.addr.ieee_addr[i] = data[offset],offset++;
+		header->src.addr.ieee_addr[i] = header->raw.data[offset],offset++;
 	}
-	header->payload.data = &data[offset];
-	header->payload.len = size-offset;
+	header->payload.data = &header->raw.data[offset];
+	header->payload.len = header->raw.len - offset;
 	status = STATUS_OK;
 error:
 	return status;
@@ -432,7 +426,10 @@ int mach_start(BUFFER *rxbuf) {
 	int status = STATUS_OK;
 
 	// initialize phy  <== ml7396_reset();
-	mach.rx.payload.data = rxbuf->data;
+	mach.rx.raw.data = rxbuf->data;
+	mach.rx.raw.size = rxbuf->size;
+	mach.rx.raw.len = 0;
+	mach.rx.payload.data = NULL;
 	mach.rx.payload.size = rxbuf->size;
 	mach.rx.payload.len = 0;
 
@@ -502,24 +499,24 @@ int mach_set_src_addr(uint8_t addr_mode)
 		case 0:
 			mach.tx.src.panid.enb = true;
 			mach.tx.src.panid.data = mach.my_addr.pan_id;
-			mach.tx.src.addr_mode = IEEE802154_FC_ADDR_NONE;
+			mach.tx.src.addr_type = IEEE802154_FC_ADDR_NONE;
 			break;
 		case 1:
 			mach.tx.src.panid.enb = true;
 			mach.tx.src.panid.data = mach.my_addr.pan_id;
-			mach.tx.src.addr_mode = IEEE802154_FC_ADDR_LDD;
+			mach.tx.src.addr_type = IEEE802154_FC_ADDR_LDD;
 			mach.tx.src.addr.short_addr = mach.my_addr.ldd_addr;
 			break;
 		case 2:
 			mach.tx.src.panid.enb = true;
 			mach.tx.src.panid.data = mach.my_addr.pan_id;
-			mach.tx.src.addr_mode = IEEE802154_FC_ADDR_SHORT;
+			mach.tx.src.addr_type = IEEE802154_FC_ADDR_SHORT;
 			mach.tx.src.addr.short_addr = mach.my_addr.short_addr;
 			break;
 		case 3:
 			mach.tx.src.panid.enb = mach.my_addr.pan_coord;
 			mach.tx.src.panid.data = mach.my_addr.pan_id;
-			mach.tx.src.addr_mode = IEEE802154_FC_ADDR_IEEE;
+			mach.tx.src.addr_type = IEEE802154_FC_ADDR_IEEE;
 			memcpy(mach.tx.src.addr.ieee_addr, mach.my_addr.ieee_addr,8);
 			break;
 		default:
@@ -537,7 +534,7 @@ int mach_set_dst_short_addr(uint16_t panid,uint16_t addr)
 {
 	mach.tx.dst.panid.enb = true;
 	mach.tx.dst.panid.data = panid;
-	mach.tx.dst.addr_mode = IEEE802154_FC_ADDR_SHORT;
+	mach.tx.dst.addr_type = IEEE802154_FC_ADDR_SHORT;
 	mach.tx.dst.addr.short_addr = addr;
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) {
@@ -632,17 +629,24 @@ int mach_rx_irq(BUFFER *rx)
 {
 	int status = STATUS_OK;
 
-	mach.rx.raw.data = rx->data;
-	mach.rx.raw.size = rx->size;
-	mach.rx.raw.len = rx->len;
+	mach.rx.input.data = rx->data;
+	mach.rx.input.size = rx->size;
+	mach.rx.input.len = rx->len;
 
 	mach_parse_data(&mach.rx);
 
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) {
-		PAYLOADDUMP(header->raw.data,header->raw.len);
+		PAYLOADDUMP(rx->data,rx->len);
 	}
 #endif
 	return status;
 }
 
+int	macl_rx_irq(BUFFER *rx)
+{
+	int status=STATUS_OK;
+	mach_rx_irq(rx);
+
+	return status;
+}

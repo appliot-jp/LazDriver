@@ -44,7 +44,7 @@ struct mac_addr {
 		bool enb;
 		uint16_t data;
 	} panid;
-	uint8_t addr_mode;
+	uint8_t addr_type;
 	union {
 		uint16_t short_addr;
 		uint16_t ldd_addr;
@@ -100,6 +100,7 @@ struct mac_header{
 	uint8_t addr_type;      // address type
 	BUFFER payload;		// source address
 	BUFFER raw;		// source address
+	BUFFER input;		// source address
 	uint8_t rssi;		// source address
 };
 
@@ -149,5 +150,5 @@ extern int mach_start(BUFFER *rxbuf);
 extern int mach_stop(void);
 extern int mach_parse_data(struct mac_header *header);
 extern int mach_ed(uint8_t *ed);
-extern int mach_rx_isr(struct mac_header *rx,int status);
+extern int mach_rx_irq(BUFFER* rx);
 #endif

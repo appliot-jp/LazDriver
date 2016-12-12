@@ -205,10 +205,3 @@ int	macl_sleep(bool on)
 	return status;
 }
 
-int	macl_rx_irq(BUFFER *rx)
-{
-	int status=STATUS_OK;
-	mach_rx_irq(rx);
-
-	return status;
-}
