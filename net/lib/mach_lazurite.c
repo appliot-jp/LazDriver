@@ -333,6 +333,7 @@ int mach_parse_data(struct mac_header *header) {
 	}
 
 	memcpy(header->raw.data,header->input.data,header->input.len);
+	header->raw.len = header->input.len;
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"%s,%s,%d,%04x\n",__FILE__,__func__,__LINE__,
 		header->input.len);
@@ -414,8 +415,8 @@ int mach_parse_data(struct mac_header *header) {
 	{
 		header->src.addr.ieee_addr[i] = header->raw.data[offset],offset++;
 	}
-	//header->payload.data = header->raw.data+offset;
-	//header->payload.len = header->raw.len - offset;
+	header->payload.data = (uint8_t *)(header->raw.data+offset);
+	header->payload.len = header->raw.len - offset;
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) {
 		//header->payload.data[header->payload.len] = 0;
@@ -429,10 +430,15 @@ int mach_parse_data(struct mac_header *header) {
 				header->src.addr.ieee_addr[1],
 				header->src.addr.ieee_addr[0],
 				__FILE__,__func__);
+		printk(KERN_INFO"%d,%d in %s,%s\n",
+				header->raw.len,
+				header->payload.len,
+				__FILE__,__func__);
+		PAYLOADDUMP(header->payload.data,header->payload.len);
 	}
 #endif
 
-		status = STATUS_OK;
+	status = STATUS_OK;
 error:
 	return status;
 }
@@ -685,41 +691,26 @@ int mach_sleep(bool on)
 int mach_rx_irq(BUFFER *rx)
 {
 	int status = STATUS_OK;
-
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-	}
-#endif
-	mach.rx.input.data = rx->data;
-	mach.rx.input.size = rx->size;
-	mach.rx.input.len = rx->len;
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-	}
-#endif
-
-	mach_parse_data(&mach.rx);
-
 	return status;
 }
 
 int	macl_rx_irq(BUFFER *rx)
 {
 	int status=STATUS_OK;
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-	}
-#endif
-	mach_rx_irq(rx);
 
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-	}
-#endif
+	mach.rx.input.data = rx->data;
+	mach.rx.input.size = rx->size;
+	mach.rx.input.len = rx->len;
+
+	// parse raw data
+	status = mach_parse_data(&mach.rx);
+
+	// check sequence number
+	status = mach_check_rx_data();
+	status = mach_update_rx_data();
+
+	status = mach_rx_irq(rx);
+
 	return status;
 }
 

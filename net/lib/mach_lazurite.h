@@ -133,6 +133,7 @@ struct mach_param {
 	} my_addr;
 	struct mac_header tx;
 	struct mac_header rx;
+	struct mac_header rx_prev;
 	struct mac_header ack;
 	bool promiscuous;
 	struct rf_param *rf;
