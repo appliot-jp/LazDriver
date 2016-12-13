@@ -331,10 +331,20 @@ int mach_parse_data(struct mac_header *header) {
 		status = -ENOMEM;
 		goto error;
 	}
+
 	memcpy(header->raw.data,header->input.data,header->input.len);
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"%s,%s,%d,%04x\n",__FILE__,__func__,__LINE__,
+		header->input.len);
+#endif
 
 	// framce control
 	LB2HS(header->fc,header->raw.data[offset]),offset+=2;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"%s,%s,%d,%04x\n",__FILE__,__func__,__LINE__,
+		header->fc.fc16
+		);
+#endif
 
 	// addr type
 	header->addr_type = header->fc.fc_bit.panid_comp;
@@ -343,25 +353,48 @@ int mach_parse_data(struct mac_header *header) {
 	header->src.addr_type = header->fc.fc_bit.src_addr_type;
 	header->dst.addr_type = header->fc.fc_bit.dst_addr_type;
 
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"%s,%s,%d,%04x\n",__FILE__,__func__,__LINE__,
+		header->addr_type
+		);
+#endif
 	// panid enb
 	header->dst.panid.enb = (enb_dst_panid & BIT(header->addr_type)) ? 1: 0;
 	header->src.panid.enb = (enb_src_panid & BIT(header->addr_type)) ? 1: 0;
 
 	// sequence number
-	if (header->fc.fc_bit.seq_comp) {
+	if (!header->fc.fc_bit.seq_comp) {
 		header->seq = header->raw.data[offset],offset++;
 	}
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"%s,%s,%d,%04x\n",__FILE__,__func__,__LINE__,header->seq);
+#endif
 	// dst panid
 	if(header->dst.panid.enb)
 	{
 		LB2HS(header->dst.panid.data,header->raw.data[offset]),offset+=2;
 	}
 	// dst addr
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"%s,%s,%d,%04x\n",__FILE__,__func__,__LINE__,header->dst.panid.data);
+#endif
 	memset(header->dst.addr.ieee_addr,0,8);
 	for(i=0;i< addr_len[header->fc.fc_bit.dst_addr_type];i++)
 	{
 		header->dst.addr.ieee_addr[i] = header->raw.data[offset],offset++;
 	}
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"%s,%s,%d,%02x%02x%02x%02x%02x%02x%02x%02x\n",__FILE__,__func__,__LINE__,
+			header->dst.addr.ieee_addr[7],
+			header->dst.addr.ieee_addr[6],
+			header->dst.addr.ieee_addr[5],
+			header->dst.addr.ieee_addr[4],
+			header->dst.addr.ieee_addr[3],
+			header->dst.addr.ieee_addr[2],
+			header->dst.addr.ieee_addr[1],
+			header->dst.addr.ieee_addr[0]
+			);
+#endif
 	// src panid
 	if(header->src.panid.enb)
 	{
@@ -369,13 +402,37 @@ int mach_parse_data(struct mac_header *header) {
 	}
 	// src addr
 	memset(header->src.addr.ieee_addr,0,8);
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG)
+		printk(KERN_INFO"%s,%s,%d,%d,%d\n",__FILE__,__func__,__LINE__,
+				addr_len[header->fc.fc_bit.src_addr_type],
+				header->fc.fc_bit.src_addr_type
+			  );
+#endif
+
 	for(i=0;i< addr_len[header->fc.fc_bit.src_addr_type];i++)
 	{
 		header->src.addr.ieee_addr[i] = header->raw.data[offset],offset++;
 	}
-	header->payload.data = &header->raw.data[offset];
-	header->payload.len = header->raw.len - offset;
-	status = STATUS_OK;
+	//header->payload.data = header->raw.data+offset;
+	//header->payload.len = header->raw.len - offset;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+		//header->payload.data[header->payload.len] = 0;
+		printk(KERN_INFO"%02x%02x%02x%02x%02x%02x%02x%02x in %s,%s\n",
+				header->src.addr.ieee_addr[7],
+				header->src.addr.ieee_addr[6],
+				header->src.addr.ieee_addr[5],
+				header->src.addr.ieee_addr[4],
+				header->src.addr.ieee_addr[3],
+				header->src.addr.ieee_addr[2],
+				header->src.addr.ieee_addr[1],
+				header->src.addr.ieee_addr[0],
+				__FILE__,__func__);
+	}
+#endif
+
+		status = STATUS_OK;
 error:
 	return status;
 }
@@ -629,24 +686,40 @@ int mach_rx_irq(BUFFER *rx)
 {
 	int status = STATUS_OK;
 
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	}
+#endif
 	mach.rx.input.data = rx->data;
 	mach.rx.input.size = rx->size;
 	mach.rx.input.len = rx->len;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	}
+#endif
 
 	mach_parse_data(&mach.rx);
 
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) {
-		PAYLOADDUMP(rx->data,rx->len);
-	}
-#endif
 	return status;
 }
 
 int	macl_rx_irq(BUFFER *rx)
 {
 	int status=STATUS_OK;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	}
+#endif
 	mach_rx_irq(rx);
 
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	}
+#endif
 	return status;
 }
+

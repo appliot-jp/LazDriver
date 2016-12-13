@@ -46,7 +46,7 @@ int	macl_start(void)
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) {
 		const uint8_t test1[]={
-			0x21,0xAC,0x01,0xCD, 0xAB,0x34,0x12,0x34,
+			0x21,0xA8,0x01,0xCD, 0xAB,0x34,0x12,0x34,
 			0x12,0x68,0x65,0x6C, 0x6C,0x6F};
 		const uint8_t test2[]={
 			0x21,0xAC,0x01,0xCD, 0xAB,0x34,0x12,0x0C,
@@ -55,9 +55,19 @@ int	macl_start(void)
 		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 		memcpy(macl.phy->in.data,test1,sizeof(test1));
 		macl.phy->in.len=sizeof(test1);
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) {
+		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	}
+#endif
 		macl_rx_irq(&macl.phy->in);
 		memcpy(macl.phy->in.data,test2,sizeof(test2));
 		macl.phy->in.len=sizeof(test2);
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) {
+		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	}
+#endif
 		macl_rx_irq(&macl.phy->in);
 	}
 #endif
