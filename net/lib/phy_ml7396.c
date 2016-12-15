@@ -18,6 +18,7 @@
  * <http://www.gnu.org/licenses/>
  */
 
+
 #ifdef LAZURITE_IDE
 #include <stddef.h>
 #include <stdint.h>
@@ -151,7 +152,6 @@ static void timer_handler(void) {
 }
 #endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
 
-// 2016.6.8 Eiichi Saito: SubGHz API common
 //static void idle(void) {
 //     // 1) 最適化で消えない事
 //     // 2) アイドル期間中に実行したい短い処理が在ればここに追加
@@ -166,7 +166,6 @@ int ml7396_hwif_init(void) {
     hwif.timer.active = Disable;
     hwif.timer.call_count = 0;
 #endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
-// 2016.6.8 Eiichi Saito: SubGHz API common
     status = HAL_init(0x50,8);
 	if(status != 0) return status;
 //  HAL_SPI_setup();
@@ -177,7 +176,6 @@ int ml7396_hwif_init(void) {
     status = 0;
     return status;
 }
-
 
 int ml7396_hwif_spi_transfer(const uint8_t *wdata, uint8_t *rdata, uint8_t size) {
 
@@ -307,12 +305,9 @@ typedef struct {
     uint8_t channel;
     uint8_t rate;
     uint8_t txPower;
-    uint8_t device_id; // 2015.09.08 Eiichi Saito
+    uint8_t device_id;
     uint16_t address;
 } Setup;
-
-
-
 
 
 #define DEIVE_ID_ROHM  0x90
@@ -399,12 +394,11 @@ static const REGSET regset_50kbps = {
     FIXQ(1.440, 14, uint16_t), 0x034b,  /* coef_cca = 1.440, ref_cca */
     0x02d8,                             /* fdev */
     0x24,                               /* reg1 */
-    0x11                                /* div = 0x11以上 */
+    0x11                                /* div = more than 0x11 */
 };
 static const REGSET regset_100kbps = {
     0x11,                               /* rate */
     {                                   /* freq[] (帯域幅400kHz) */
-        // 2015.05.19 Eiichi Saito added to channel from 24 to 33
         FIXQ(920.7, 20, uint32_t),        /* Channel=24,25 */
         FIXQ(920.9, 20, uint32_t),        /* Channel=25,26 */
         FIXQ(921.1, 20, uint32_t),        /* Channel=26,27 */
@@ -413,7 +407,7 @@ static const REGSET regset_100kbps = {
         FIXQ(921.7, 20, uint32_t),        /* Channel=29,30 */
         FIXQ(921.9, 20, uint32_t),        /* Channel=30,31 */
         FIXQ(922.1, 20, uint32_t),        /* Channel=31,32 */
-        FIXQ(922.3, 20, uint32_t),        /* Channel=32,33 2015.05.19 Eiichi Saito can not channel */
+        FIXQ(922.3, 20, uint32_t),        /* Channel=32,33 Reserved channel */
         FIXQ(922.5, 20, uint32_t),        /* Channel=33,34 */
         FIXQ(922.7, 20, uint32_t),        /* Channel=34,35 */
         FIXQ(922.9, 20, uint32_t),        /* Channel=35,36 */
@@ -451,7 +445,7 @@ static const REGSET regset_100kbps = {
     FIXQ(0.480, 14, uint16_t), 0x0119,  /* coef_cca = 1.000, ref_cca */
     0x05b0,                             /* fdev */
     0x27,                               /* reg1 */
-    0x16                                /* div = 0x16以上 */
+    0x16                                /* div = more than 0x16 */
 };
 
 /* BP3596用ML7396レジスタ設定
@@ -462,6 +456,7 @@ int ml7396_hwif_regset(void *data) {
     const REGSET *regset;
     uint8_t reg_data[4];
 
+    /* 個体識別コード取得 */
     HAL_I2C_read(0x23, reg_data, 1), setup->device_id = reg_data[0];
 
     /* 固定値設定 */
@@ -469,14 +464,15 @@ int ml7396_hwif_regset(void *data) {
     reg_data[0] = 0x22, ml7396_regwrite(REG_ADR_RX_PR_LEN_SFD_LEN,   reg_data, 1);
     reg_data[0] = 0x00, ml7396_regwrite(REG_ADR_SYNC_CONDITION,      reg_data, 1);
 #ifdef LAZURITE_MINI
-    reg_data[0] = 0x02, ml7396_regwrite(REG_ADR_2DIV_CNTRL,          reg_data, 1);  /* 0x04 CRCエラー発生し難くなった */
+    reg_data[0] = 0x02, ml7396_regwrite(REG_ADR_2DIV_CNTRL,          reg_data, 1);
+    /* 0x04 CRCエラー発生し難くなった */
 #else
-    // 2015.09.08 Eiichi Saito
+    /* 0x04 CRCエラー発生し難くなった */
     if (setup->device_id == DEIVE_ID_LAPIS)
-        // 2015.07.28 Eiichi Saito : Set Fly ANT 
-        reg_data[0] = 0x0A, ml7396_regwrite(REG_ADR_2DIV_CNTRL,          reg_data, 1);  /* 0x04 CRCエラー発生し難くなった */
+        reg_data[0] = 0x0A, ml7396_regwrite(REG_ADR_2DIV_CNTRL,          reg_data, 1);
+    /* 0x04 CRCエラー発生し難くなった */
     else
-        reg_data[0] = 0x04, ml7396_regwrite(REG_ADR_2DIV_CNTRL,          reg_data, 1);  /* 0x04 CRCエラー発生し難くなった */
+        reg_data[0] = 0x04, ml7396_regwrite(REG_ADR_2DIV_CNTRL,          reg_data, 1);
 #endif
     reg_data[0] = 0x04, ml7396_regwrite(REG_ADR_SYNC_MODE,           reg_data, 1);
     reg_data[0] = 0x10, ml7396_regwrite(REG_ADR_RAMP_CNTRL,          reg_data, 1);
@@ -547,7 +543,6 @@ int ml7396_hwif_regset(void *data) {
     reg_data[0] = 0x1f, ml7396_regwrite(REG_ADR_RSSI_LPF_ADJ,        reg_data, 1);
     reg_data[0] = 0x44, ml7396_regwrite(REG_ADR_PLL_CP_ADJ,          reg_data, 1);
     HAL_I2C_read(0x2d, reg_data, 1), ml7396_regwrite(REG_ADR_OSC_ADJ, reg_data, 1);  /* XA */
-// 2015.07.28 Eiichi Saito : Packet loss correction
     if (setup->device_id == DEIVE_ID_LAPIS) {
         HAL_I2C_read(0x80, reg_data, 1), ml7396_regwrite(REG_ADR_OSC_ADJ2, reg_data, 1);  /* XA */
     //  reg_data[0] = 0x06, ml7396_regwrite(REG_ADR_OSC_ADJ2, reg_data, 1);  /* XA */
@@ -575,13 +570,10 @@ int ml7396_hwif_regset(void *data) {
         uint8_t n4, a;
         uint32_t f;
 
-        // 2015.05.19 Eiichi Saito added to channel
-//      if (setup->channel < 33 || setup->channel > 61)
         if (setup->channel < 24 || setup->channel > 61)
             goto error;
         if (setup->rate == 100 && setup->channel == 32)
             goto error;
-        // 2015.07.30 Eiichi Saito for ARIB 5ms:idle_wait=on, 128us:idle_wait=off
         /* CCA IDLE WAIT時間設定 */
         if (setup->channel <= 32) {
             reg_data[0] = 0x01, ml7396_regwrite(REG_ADR_IDLE_WAIT_H, reg_data, 1);
@@ -589,11 +581,10 @@ int ml7396_hwif_regset(void *data) {
         } else
         if (setup->channel <= 61 ) {
             reg_data[0] = 0x00, ml7396_regwrite(REG_ADR_IDLE_WAIT_H, reg_data, 1);
-        // 2015.05.23 Eiichi Saito ARIB 5ms:idle_wait=on, 1.7us:idle_wait=off
+        // ARIB 5ms:idle_wait=on, 1.7us:idle_wait=off
             reg_data[0] = 0x64, ml7396_regwrite(REG_ADR_IDLE_WAIT_L, reg_data, 1);
         }
 
-        // 2015.05.19 Eiichi Saito added to channel
 //      freq_ch0 = regset->freq[setup->channel - 33];  /* チャネル番号の周波数を取得 */
         freq_ch0 = regset->freq[setup->channel - 24];  /* チャネル番号の周波数を取得 */
         freq_min = freq_ch0 - FIXQ(2.0, 20, uint32_t);  /* CH0周波数より2MHz低い値をキャリブレーション下限値とする (浮動小数点演算はCPUでは処理せず全てコンパイラに任せる) */
@@ -612,8 +603,10 @@ int ml7396_hwif_regset(void *data) {
         f = (freq_min - ((n4 + a) << 20)) & 0x0fffff;
         reg_data[0] = f >>  0 & 0xff, reg_data[1] = f >>  8 & 0xff, reg_data[2] = f >> 16 & 0x0f;
         reg_data[3] = n4 << 2 | a;  /* このデータは使われない */
-        ml7396_regwrite(REG_ADR_VCO_CAL_MIN_FL, reg_data, 3);  /* 特殊コマンド: bp.param[BP_PARAM_MIN_FL]の値を設定 */
-        reg_data[0] = 0x07, ml7396_regwrite(REG_ADR_VCO_CAL_MAX_N, reg_data, 1);  /* 帯域幅 400kHz */
+        /* 特殊コマンド: bp.param[BP_PARAM_MIN_FL]の値を設定 */
+        ml7396_regwrite(REG_ADR_VCO_CAL_MIN_FL, reg_data, 3);
+        /* 帯域幅 400kHz */
+        reg_data[0] = 0x07, ml7396_regwrite(REG_ADR_VCO_CAL_MAX_N, reg_data, 1);
     }
     {
         uint16_t n;
@@ -641,23 +634,25 @@ int ml7396_hwif_regset(void *data) {
         else
             n = regset->ref - (uint16_t)INTQ((uint32_t)(bpf & 0x7f) * regset->coef, 14);
         reg_data[0] = n >> 8 & 0xff, reg_data[1] = n >> 0 & 0xff;
-        ml7396_regwrite(REG_ADR_BPF_ADJ_H,     reg_data, 2);  /* REG_ADR_BPF_ADJ_H と REG_ADR_BPF_ADJ_L に書き込む */
-        ml7396_regwrite(REG_ADR_BPF_AFC_ADJ_H, reg_data, 2);  /* REG_ADR_BPF_AFC_ADJ_H と REG_ADR_BPF_AFC_ADJ_L に書き込む */
+        /* REG_ADR_BPF_ADJ_H と REG_ADR_BPF_ADJ_L に書き込む */
+        ml7396_regwrite(REG_ADR_BPF_ADJ_H,     reg_data, 2);
+        /* REG_ADR_BPF_AFC_ADJ_H と REG_ADR_BPF_AFC_ADJ_L に書き込む */
+        ml7396_regwrite(REG_ADR_BPF_AFC_ADJ_H, reg_data, 2);
         if (bpf & 0x80)
             n = regset->ref_cca + (uint16_t)INTQ((uint32_t)(bpf & 0x7f) * regset->coef_cca, 14);
         else
             n = regset->ref_cca - (uint16_t)INTQ((uint32_t)(bpf & 0x7f) * regset->coef_cca, 14);
         reg_data[0] = n >> 8 & 0xff, reg_data[1] = n >> 0 & 0xff;
-        ml7396_regwrite(REG_ADR_BPF_CCA_ADJ_H, reg_data, 2);  /* REG_ADR_BPF_CCA_ADJ_H と REG_ADR_BPF_CCA_ADJ_L に書き込む */
+        /* REG_ADR_BPF_CCA_ADJ_H と REG_ADR_BPF_CCA_ADJ_L に書き込む */
+        ml7396_regwrite(REG_ADR_BPF_CCA_ADJ_H, reg_data, 2);
     }
 
-    // 2015.05.21 Eiichi Saito
     reg_data[0] = 0x2c, ml7396_regwrite(REG_ADR_PRIVATE_BPF_CAP1,  reg_data, 1);
     reg_data[0] = 0xc0, ml7396_regwrite(REG_ADR_PRIVATE_BPF_CAP2,  reg_data, 1);
     reg_data[0] = 0x17, ml7396_regwrite(REG_ADR_PRIVATE_BPF_ADJ1,  reg_data, 1);
     reg_data[0] = 0x17, ml7396_regwrite(REG_ADR_PRIVATE_BPF_ADJ2,  reg_data, 1);
 
-    /* GFSK周波数偏位設定 */
+    /* GFSK Frequency shift setting */
     reg_data[0] = regset->fdev >> 0 & 0xff, reg_data[1] = regset->fdev >> 8 & 0xff;
     reg_data[0] = 0xb0, ml7396_regwrite(REG_ADR_F_DEV_L, reg_data, 2);
     /* 隠しレジスタ設定 */
@@ -666,12 +661,6 @@ int ml7396_hwif_regset(void *data) {
     reg_data[0] = regset->div, ml7396_regwrite(REG_ADR_2DIV_SEARCH, reg_data, 1);
 
     /* 自機器アドレス取得 */
-/*
- #define n2u16(_n16) \
-    ((uint16_t)((uint8_t *)(_n16))[0] << 8 | \
-     (uint16_t)((uint8_t *)(_n16))[1] << 0 )
-     HAL_I2C_read(0x26, reg_data, 2), setup->address = n2u16(reg_data);
-*/
     HAL_I2C_read(0x26, reg_data, 2), setup->address = H2LS(*reg_data);
 
     status = 0;
