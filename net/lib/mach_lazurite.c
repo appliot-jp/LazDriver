@@ -37,10 +37,10 @@ static uint8_t ackbuf[32];
 /******************************************************************************/
 /*! @brief enb_dst_panid
   enb/dis of dst_panid/src_panid at each addrType
-  0bit : addrType=0
-  1bit : addrType=1
-  ...
- */
+0bit : addrType=0
+1bit : addrType=1
+...
+*/
 const uint8_t enb_dst_panid = 0x52;
 const uint8_t enb_src_panid = 0x04;
 const uint8_t addr_len[] = {0x00,0x01,0x02,0x08};
@@ -53,7 +53,7 @@ int	get_mac_addr(uint8_t *macaddr)
 		0x00,0x1d,0x12,0x90,
 		0x00,0x63,0x60,0x0c,
 	};
-	
+
 	for (i=0;i<8;i++)
 	{
 		macaddr[i] = from_eeprom[7-i];
@@ -252,14 +252,14 @@ static int mach_make_header(struct mac_header *header) {
 					status = -ENOMEM;
 					goto error;
 				}
-					if(header->src.addr.short_addr==0xffff)
-					{
-						printk(KERN_ERR"invalid src short address. %s,%s,%d\n", __FILE__, __func__, __LINE__);
-						status = -EINVAL;
-						goto error;
-					}
-					H2LBS(header->raw.data[offset],header->src.addr.short_addr), offset+=2;
-					header->fc.fc_bit.src_addr_type = IEEE802154_FC_ADDR_SHORT;
+				if(header->src.addr.short_addr==0xffff)
+				{
+					printk(KERN_ERR"invalid src short address. %s,%s,%d\n", __FILE__, __func__, __LINE__);
+					status = -EINVAL;
+					goto error;
+				}
+				H2LBS(header->raw.data[offset],header->src.addr.short_addr), offset+=2;
+				header->fc.fc_bit.src_addr_type = IEEE802154_FC_ADDR_SHORT;
 				break;
 			case 3:
 				if(header->raw.size < (offset + addr_len[3])){
@@ -337,15 +337,15 @@ int mach_parse_data(struct mac_header *header) {
 	header->raw.len = header->input.len;
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"%s,%s,%d,%04x\n",__FILE__,__func__,__LINE__,
-		header->input.len);
+			header->input.len);
 #endif
 
 	// framce control
 	LB2HS(header->fc,header->raw.data[offset]),offset+=2;
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"%s,%s,%d,%04x\n",__FILE__,__func__,__LINE__,
-		header->fc.fc16
-		);
+			header->fc.fc16
+			);
 #endif
 
 	// addr type
@@ -357,8 +357,8 @@ int mach_parse_data(struct mac_header *header) {
 
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"%s,%s,%d,%04x\n",__FILE__,__func__,__LINE__,
-		header->addr_type
-		);
+			header->addr_type
+			);
 #endif
 	// panid enb
 	header->dst.panid.enb = (enb_dst_panid & BIT(header->addr_type)) ? 1: 0;
@@ -448,7 +448,8 @@ bool mach_match_seq_num(void)
 {
 	bool result=true;
 	int i;
-	if((mach.rx.seq == mach.rx_prev.seq) &&
+	if(!(mach.rx.fc.fc_bit.seq_comp) &&
+			(mach.rx.seq == mach.rx_prev.seq) &&
 			(mach.rx.src.panid.data == mach.rx_prev.src.panid.data) &&
 			(mach.rx.src.addr_type == mach.rx_prev.src.addr_type))
 	{
@@ -471,54 +472,62 @@ bool mach_match_seq_num(void)
   @param[in] *rx mac header of receiving data
   @return    STATUS_OK
   @exception EINVAL		can not return ack
-   rx.dst.addr | rx.src.addr | my.pancoord | coord.pancoord | rx    | ack
+  rx.dst.addr | rx.src.addr | my.pancoord | coord.pancoord | rx    | ack
   -----------------------------------------------------------------------
-     ieee      |     none    |  don't care |  don't care    | yes   |  no
-   short/omit  |     none    |   true      |  don't care    | yes   |  no
-   short/omit  |     none    |  false      |  don't care    | No    |  no
+  ieee      |     none    |  don't care |  don't care    | yes   |  no
+  short/omit  |     none    |   true      |  don't care    | yes   |  no
+  short/omit  |     none    |  false      |  don't care    | No    |  no
 
-     ieee      |     ieee    |  don't care |  don't care    | yes   |  yes
-   short/omit  |     ieee    |   true      |  don't care    | yes   |  yes
-   short/omit  |     ieee    |  false      |  don't care    | No    |   no
+  ieee      |     ieee    |  don't care |  don't care    | yes   |  yes
+  short/omit  |     ieee    |   true      |  don't care    | yes   |  yes
+  short/omit  |     ieee    |  false      |  don't care    | No    |   no
 
-     ieee      |  short/omit |  don't care |    true        | yes   |  yes
-   short/omit  |  short/omit |   true      |    true        | yes   |  yes
-   short/omit  |  short/omit |  false      |    true        | No    |   no
+  ieee      |  short/omit |  don't care |    true        | yes   |  yes
+  short/omit  |  short/omit |   true      |    true        | yes   |  yes
+  short/omit  |  short/omit |  false      |    true        | No    |   no
 
-     ieee      |  short/omit |  don't care |    false        | yes  |  no
-   short/omit  |  short/omit |   true      |    false        | yes  |  no
-   short/omit  |  short/omit |  false      |    false        | No   |  no
+  ieee      |  short/omit |  don't care |    false        | yes  |  no
+  short/omit  |  short/omit |   true      |    false        | yes  |  no
+  short/omit  |  short/omit |  false      |    false        | No   |  no
  ******************************************************************************/
 #define ACK_ENB	0x06
-int mach_make_ack_header(struct mac_header *ack, struct mac_header *rx) {
+int mach_make_ack_header(void) {
 
 	bool ack_condition=false;
-	int offset = 0;
 
-	if( rx->addr_type & ACK_ENB)
-	/*
-	if( (rx->addr_type & ACK_ENB) &&
-			!(mach_addr_global(&rx.src,mach.)) &&
-			!(mach_addr_global(&rx.dst)) )
-			*/
-	{
-		ack->fc.fc_bit.frame_type = IEEE802154_FC_TYPE_ACK;
-		ack->fc.fc_bit.sec_enb = 0;
-		ack->fc.fc_bit.pending = 0;
-		ack->fc.fc_bit.ack_req = 0;
-		ack->fc.fc_bit.panid_comp = 1;
-		ack->fc.fc_bit.nop = 0;
-		ack->fc.fc_bit.seq_comp = rx->fc.fc_bit.seq_comp;
-		ack->fc.fc_bit.ielist = 0;
-		ack->fc.fc_bit.dst_addr_type = 0;
-		ack->fc.fc_bit.frame_ver = rx->fc.fc_bit.frame_ver;
-		ack->fc.fc_bit.src_addr_type = 0;
+	if((!(mach.rx.addr_type & ACK_ENB)) &&
+			(mach.my_addr.pan_coord == true) &&
+			(mach.coord_addr.pan_coord == true) &&
+			((mach.rx.dst.addr.short_addr == 0xFFFF) ||
+			 (mach.rx.dst.addr.short_addr == 0xFFFE) )&&
+			((mach.rx.src.addr.short_addr == 0xFFFF) ||
+			 (mach.rx.src.addr.short_addr == 0xFFFE) ))
+		goto noack;
+	if( (mach.rx.fc.fc_bit.panid_comp == 1) &&
+			(mach.my_addr.pan_id != mach.coord_addr.pan_id))
+		goto noack;
+	if( (mach.rx.fc.fc_bit.panid_comp == 0) &&
+			(mach.my_addr.pan_id != mach.rx.dst.panid.data))
+		goto noack;
+
+	// genenrate ack data
+	mach.ack.fc.fc16 = 0;
+	mach.ack.fc.fc_bit.frame_type = IEEE802154_FC_TYPE_ACK;
+	mach.ack.fc.fc_bit.panid_comp = 1;
+	mach.ack.fc.fc_bit.seq_comp = mach.rx.fc.fc_bit.seq_comp;
+	mach.ack.fc.fc_bit.frame_ver = mach.rx.fc.fc_bit.frame_ver;
+	ack_condition = true;
+
+	// output mac header to memory
+	H2LBS(mach.ack.raw.data,mach.ack.fc.fc16);
+
+	// output sequence number
+	H2LBS(mach.ack.raw.data,mach.ack.fc.fc16);
+	if(mach.ack.fc.fc_bit.seq_comp) {
+		mach.ack.seq = mach.rx.seq;
+		mach.ack.raw.data[2] = mach.ack.seq;
 	}
-
-	if(rx->fc.fc_bit.seq_comp) {
-		ack->seq = rx->seq;
-	}
-
+noack:
 	return ack_condition;
 }
 int mach_update_rx_data(void)
@@ -813,6 +822,17 @@ int mach_rx_irq(BUFFER *rx)
 	return status;
 }
 
+int macl_ack_tx(BUFFER *data)
+{
+	int status=STATUS_OK;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	}
+#endif
+	return status;
+}
+
 int	macl_rx_irq(BUFFER *rx,BUFFER *ack)
 {
 	int status=STATUS_OK;
@@ -826,25 +846,25 @@ int	macl_rx_irq(BUFFER *rx,BUFFER *ack)
 		goto error;
 	}
 
-	// check sequence number
-	if(mach_match_seq_num()!=true) {
-		// rx data is copy to previous
-		memcpy(&mach.rx_prev,&mach.rx,sizeof(mach.rx));
 
-		// check ack data
-		if((mach.rx.fc.fc_bit.ack_req) &&
-				(!mach.promiscuous) &&
-				((mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_DATA) ||
-				 (mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_CMD)))
+	// check frame type
+	if ((mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_DATA) ||
+			(mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_CMD)) {
+		// check sequence number
+		if(mach_match_seq_num()!=true) {
+			// rx data is copy to previous
+			memcpy(&mach.rx_prev,&mach.rx,sizeof(mach.rx));
+		}
+		if ((mach.rx.fc.fc_bit.ack_req) && (!mach.promiscuous) )
 		{
-			mach_make_ack_header(&mach.ack,&mach.rx);
-			ack->data = mach.ack.raw.data;
-			ack->len = mach.ack.raw.len;
-			ack->size = mach.ack.raw.size;
+			if(mach_make_ack_header())
+				macl_ack_tx(&mach.ack.raw);							// send ack
 		} else {
 			ack->data = NULL;
 			ack->len = 0;
 		}
+	} else if (mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_ACK) {
+		if(mach.rx.seq == mach.rx_prev.seq) status = 1;				// check ack
 	}
 
 error:
