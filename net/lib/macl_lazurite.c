@@ -43,6 +43,7 @@ MACL_PARAM* macl_init(void)
 int	macl_start(void)
 {
 	int status=STATUS_OK;
+	BUFFER ack;
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) {
 		const uint8_t test1[]={
@@ -60,7 +61,7 @@ int	macl_start(void)
 		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 	}
 #endif
-		macl_rx_irq(&macl.phy->in);
+		macl_rx_irq(&macl.phy->in,&ack);
 		memcpy(macl.phy->in.data,test2,sizeof(test2));
 		macl.phy->in.len=sizeof(test2);
 #ifndef LAZURITE_IDE
@@ -68,7 +69,7 @@ int	macl_start(void)
 		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 	}
 #endif
-		macl_rx_irq(&macl.phy->in);
+		macl_rx_irq(&macl.phy->in,&ack);
 	}
 #endif
 	return status;

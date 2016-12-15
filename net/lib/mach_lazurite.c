@@ -159,8 +159,8 @@ static int mach_make_header(struct mac_header *header) {
 				}
 				if(header->raw.size >= (offset + addr_len[1])){
 					header->fc.fc_bit.dst_addr_type = IEEE802154_FC_ADDR_LDD;
-					header->raw.data[offset] = header->dst.addr.ldd_addr,offset++;
-					if(header->dst.addr.ldd_addr != 0xff) dst_ffff = false;
+					header->raw.data[offset] = header->dst.addr.lddn_addr,offset++;
+					if(header->dst.addr.lddn_addr != 0xff) dst_ffff = false;
 				} else {
 					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 					status = -ENOMEM;
@@ -238,12 +238,12 @@ static int mach_make_header(struct mac_header *header) {
 					status = -ENOMEM;
 					goto error;
 				}
-				if(header->src.addr.ldd_addr==0xff){
+				if(header->src.addr.lddn_addr==0xff){
 					printk(KERN_ERR"invalid src LDD address. %s,%s,%d\n", __FILE__, __func__, __LINE__);
 					status = -EINVAL;
 					goto error;
 				}
-				header->raw.data[offset] = header->src.addr.ldd_addr,offset++;
+				header->raw.data[offset] = header->src.addr.lddn_addr,offset++;
 				header->fc.fc_bit.src_addr_type = IEEE802154_FC_ADDR_LDD;
 				break;
 			case 2:
@@ -281,8 +281,10 @@ static int mach_make_header(struct mac_header *header) {
 	// copy payload to raw buffer
 	header->fc.fc_bit.panid_comp = header->addr_type & 0x01;
 	header->fc.fc_bit.nop = 0;
-	if(header->raw.size >= (offset + header->payload.len)){
-		memcpy(&header->raw.data[offset], header->payload.data, header->payload.len);
+	if(header->raw.size >= (offset + header->payload.len)) {
+		if(header->payload.len != 0) {
+			memcpy(&header->raw.data[offset], header->payload.data, header->payload.len);
+		}
 		offset+=header->payload.len;
 		header->raw.len = offset;
 	} else {
@@ -317,7 +319,6 @@ error:
   @param[in] *header  pointer of mac header
   @return    STATUS_OK, error num
   @exception ENOMEM = data size error
-  @issue  move to mac
  ******************************************************************************/
 int mach_parse_data(struct mac_header *header) {
 
@@ -443,6 +444,89 @@ error:
 	return status;
 }
 
+bool mach_match_seq_num(void)
+{
+	bool result=true;
+	int i;
+	if((mach.rx.seq == mach.rx_prev.seq) &&
+			(mach.rx.src.panid.data == mach.rx_prev.src.panid.data) &&
+			(mach.rx.src.addr_type == mach.rx_prev.src.addr_type))
+	{
+		for(i=0;i< addr_len[mach.rx.src.addr_type];i++) {
+			if(mach.rx.src.addr.ieee_addr[i] != mach.rx_prev.src.addr.ieee_addr[i]) {
+				result = false;
+				break;
+			}
+		}
+	} else {
+		result = false;
+	}
+
+	return result;
+}
+
+/******************************************************************************/
+/*! @brief make ack header
+  @param[in] *ack mac header of ack
+  @param[in] *rx mac header of receiving data
+  @return    STATUS_OK
+  @exception EINVAL		can not return ack
+   rx.dst.addr | rx.src.addr | my.pancoord | coord.pancoord | rx    | ack
+  -----------------------------------------------------------------------
+     ieee      |     none    |  don't care |  don't care    | yes   |  no
+   short/omit  |     none    |   true      |  don't care    | yes   |  no
+   short/omit  |     none    |  false      |  don't care    | No    |  no
+
+     ieee      |     ieee    |  don't care |  don't care    | yes   |  yes
+   short/omit  |     ieee    |   true      |  don't care    | yes   |  yes
+   short/omit  |     ieee    |  false      |  don't care    | No    |   no
+
+     ieee      |  short/omit |  don't care |    true        | yes   |  yes
+   short/omit  |  short/omit |   true      |    true        | yes   |  yes
+   short/omit  |  short/omit |  false      |    true        | No    |   no
+
+     ieee      |  short/omit |  don't care |    false        | yes  |  no
+   short/omit  |  short/omit |   true      |    false        | yes  |  no
+   short/omit  |  short/omit |  false      |    false        | No   |  no
+ ******************************************************************************/
+#define ACK_ENB	0x06
+int mach_make_ack_header(struct mac_header *ack, struct mac_header *rx) {
+
+	bool ack_condition=false;
+	int offset = 0;
+
+	if( rx->addr_type & ACK_ENB)
+	/*
+	if( (rx->addr_type & ACK_ENB) &&
+			!(mach_addr_global(&rx.src,mach.)) &&
+			!(mach_addr_global(&rx.dst)) )
+			*/
+	{
+		ack->fc.fc_bit.frame_type = IEEE802154_FC_TYPE_ACK;
+		ack->fc.fc_bit.sec_enb = 0;
+		ack->fc.fc_bit.pending = 0;
+		ack->fc.fc_bit.ack_req = 0;
+		ack->fc.fc_bit.panid_comp = 1;
+		ack->fc.fc_bit.nop = 0;
+		ack->fc.fc_bit.seq_comp = rx->fc.fc_bit.seq_comp;
+		ack->fc.fc_bit.ielist = 0;
+		ack->fc.fc_bit.dst_addr_type = 0;
+		ack->fc.fc_bit.frame_ver = rx->fc.fc_bit.frame_ver;
+		ack->fc.fc_bit.src_addr_type = 0;
+	}
+
+	if(rx->fc.fc_bit.seq_comp) {
+		ack->seq = rx->seq;
+	}
+
+	return ack_condition;
+}
+int mach_update_rx_data(void)
+{
+	int status = STATUS_OK;
+
+	return status;
+}
 /*********************************************************************/
 /*! @brief mach init 
   mac high layer initialization
@@ -482,8 +566,8 @@ struct mach_param *mach_init(void)
 /********************************************************************/
 /*! @brief mach start 
   mac high layer rx on
-  @return     0=STATUS_OK, other = error
-  @exception  return NULL
+  @return     STATUS_OK
+  @exception  depends on macl_start
  ********************************************************************/
 int mach_start(BUFFER *rxbuf) {
 	int status = STATUS_OK;
@@ -496,7 +580,7 @@ int mach_start(BUFFER *rxbuf) {
 	mach.rx.payload.size = rxbuf->size;
 	mach.rx.payload.len = 0;
 
-	macl_start();
+	status = macl_start();
 
 	return status;
 }
@@ -504,8 +588,8 @@ int mach_start(BUFFER *rxbuf) {
 /********************************************************************/
 /*! @brief mach stop 
   mac high layer rx off
-  @return    0=STATUS_OK
-  @exception  EINVAL	invalid parameter
+  @return    STATUS_OK
+  @exception  depends on macl_stop
  ********************************************************************/
 int mach_stop(void) {
 	return macl_stop();
@@ -540,13 +624,9 @@ error:
 
 /********************************************************************/
 /*! @brief tx in mac high layer
-  @param[in]	*dstAddr	64bit distination address
-  @param[in]	*payload	start pointer of payload
-  @param[in]	size		size of payload
-  @param[in]	addrType	address type
-  @param[in]	txCallback	callback at end of tx
-  @return    0=STATUS_OK, other = error
-  @exception  return NULL
+  @param[in]	*addr	64bit distination address
+  @return    STATUS_OK
+  @exception none
  ********************************************************************/
 int mach_set_dst_ieee_addr(uint8_t *addr)
 {
@@ -568,7 +648,7 @@ int mach_set_src_addr(uint8_t addr_mode)
 			mach.tx.src.panid.enb = true;
 			mach.tx.src.panid.data = mach.my_addr.pan_id;
 			mach.tx.src.addr_type = IEEE802154_FC_ADDR_LDD;
-			mach.tx.src.addr.short_addr = mach.my_addr.ldd_addr;
+			mach.tx.src.addr.short_addr = mach.my_addr.lddn_addr;
 			break;
 		case 2:
 			mach.tx.src.panid.enb = true;
@@ -615,6 +695,13 @@ int mach_set_dst_short_addr(uint16_t panid,uint16_t addr)
   @param[in]	addr	start pointer of payload
   @return		status = STATUS_OK
   @exception	EINVAL: panid/short_addr == 0xffff,0xfffe
+  my.panid | my.short_addr | pan_coord
+  ---    |     ---       | false (init)
+  0xffff   |     ---       | false
+  0xfffe   |     ---       | false
+  ---    |     0xffff    | false
+  ---    |     0xfffe    | false
+  other  |     other     | true
  ********************************************************************/
 int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr)
 {
@@ -639,6 +726,38 @@ int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr)
 	}
 	return status;
 }
+/********************************************************************/
+/*! @brief set coord short address
+  @param[in]	panid	panid of coordinator
+  @param[in]	addr	address of coordinator
+  @param[in]	ieee_addr	64bit address
+  @return		status = STATUS_OK
+  @exception	EINVAL: panid/short_addr == 0xffff,0xfffe
+  coord.panid | coord.short_addr | pan_coord
+  ---    |     ---       | false (init)
+  0xffff   |     ---       | false
+  0xfffe   |     ---       | false
+  ---    |     0xffff    | false
+  ---    |     0xfffe    | false
+  other  |     other     | true
+ ********************************************************************/
+int mach_set_coord_addr(uint16_t panid,uint16_t short_addr,uint8_t *ieee_addr)
+{
+	int status=STATUS_OK;
+
+	mach.coord_addr.pan_id = panid;
+	mach.coord_addr.short_addr = short_addr;
+	if(ieee_addr) memcpy(mach.coord_addr.ieee_addr,ieee_addr,8);
+	if((panid == 0xffff) || (panid == 0xfffe) || (short_addr == 0xffff) || (short_addr == 0xfffe))
+	{
+		mach.coord_addr.pan_coord = false;
+		status = -EINVAL;
+	}
+	mach.coord_addr.pan_coord = true;
+
+	return status;
+}
+
 int mach_set_promiscuous(bool on)
 {
 	int status;
@@ -694,7 +813,7 @@ int mach_rx_irq(BUFFER *rx)
 	return status;
 }
 
-int	macl_rx_irq(BUFFER *rx)
+int	macl_rx_irq(BUFFER *rx,BUFFER *ack)
 {
 	int status=STATUS_OK;
 
@@ -703,14 +822,32 @@ int	macl_rx_irq(BUFFER *rx)
 	mach.rx.input.len = rx->len;
 
 	// parse raw data
-	status = mach_parse_data(&mach.rx);
+	if((status = mach_parse_data(&mach.rx))!= STATUS_OK) {
+		goto error;
+	}
 
 	// check sequence number
-	status = mach_check_rx_data();
-	status = mach_update_rx_data();
+	if(mach_match_seq_num()!=true) {
+		// rx data is copy to previous
+		memcpy(&mach.rx_prev,&mach.rx,sizeof(mach.rx));
 
-	status = mach_rx_irq(rx);
+		// check ack data
+		if((mach.rx.fc.fc_bit.ack_req) &&
+				(!mach.promiscuous) &&
+				((mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_DATA) ||
+				 (mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_CMD)))
+		{
+			mach_make_ack_header(&mach.ack,&mach.rx);
+			ack->data = mach.ack.raw.data;
+			ack->len = mach.ack.raw.len;
+			ack->size = mach.ack.raw.size;
+		} else {
+			ack->data = NULL;
+			ack->len = 0;
+		}
+	}
 
+error:
 	return status;
 }
 

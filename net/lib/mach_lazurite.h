@@ -39,7 +39,7 @@
 
 // @issue check parameter. interval may not be needed.
 
-struct mac_addr {
+struct fc_addr {
 	struct {
 		bool enb;
 		uint16_t data;
@@ -47,7 +47,7 @@ struct mac_addr {
 	uint8_t addr_type;
 	union {
 		uint16_t short_addr;
-		uint16_t ldd_addr;
+		uint16_t lddn_addr;
 		uint8_t ieee_addr[8];
 	}addr;
 };
@@ -80,9 +80,9 @@ struct mac_fc_alignment{
 	uint8_t nop:1;
 	uint8_t seq_comp:1;
 	uint8_t ielist:1;
-	uint8_t src_addr_type:2;
-	uint8_t frame_ver:2;
 	uint8_t dst_addr_type:2;
+	uint8_t frame_ver:2;
+	uint8_t src_addr_type:2;
 };
 #endif
 
@@ -95,8 +95,8 @@ union mac_frame_control {
 struct mac_header{
 	int16_t seq;        	// sequence number
 	union mac_frame_control fc;		// frame control
-	struct mac_addr dst;
-	struct mac_addr src;
+	struct fc_addr dst;
+	struct fc_addr src;
 	uint8_t addr_type;      // address type
 	BUFFER payload;		// source address
 	BUFFER raw;		// source address
@@ -122,20 +122,23 @@ struct rf_param {
 	enum nl802154_cca_opts cca_opt;
 };
 
+struct mac_addr {
+	bool		pan_coord;				// common
+	uint8_t		lddn_addr;				// for lazurite
+	uint16_t	pan_id;					// for lazurite
+	uint16_t	short_addr;				// for lazurite
+	uint8_t		ieee_addr[8];			// for lazurite
+};
 struct mach_param {
 	MACL_PARAM *macl;
-	struct {
-		uint16_t	pan_id;					// for lazurite
-		uint8_t		ldd_addr;				// for lazurite
-		uint16_t	short_addr;				// for lazurite
-		uint8_t		ieee_addr[8];			// for lazurite
-		bool		pan_coord;				// common
-	} my_addr;
+	struct mac_addr my_addr;
+	struct mac_addr coord_addr;
 	struct mac_header tx;
 	struct mac_header rx;
 	struct mac_header rx_prev;
 	struct mac_header ack;
 	bool promiscuous;
+	bool coordinator;
 	struct rf_param *rf;
 };
 

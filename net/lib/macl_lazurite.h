@@ -116,7 +116,8 @@ extern int	macl_set_cca_ed_level(uint32_t mbm);
 extern int	macl_set_csma_params(uint8_t min_be, uint8_t max_be, uint8_t retries);
 extern int	macl_set_frame_retries(int8_t retries);
 extern int	macl_set_promiscuous_mode(const bool on);
-extern int	macl_rx_irq(BUFFER *rx);
+extern int	macl_rx_irq(BUFFER *rx,BUFFER *ack);
+extern int	macl_rx_irq_notification(void);
 
 extern int	macl_sleep(bool on);
 
