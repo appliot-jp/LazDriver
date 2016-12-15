@@ -46,6 +46,15 @@ typedef struct {
 	BUFFER out;
 } PHY_PARAM;
 
+#define PHY_ST_FORCE_TRXOFF      0x03
+#define PHY_ST_RXON              0x06
+#define PHY_ST_TXON              0x09
+#define PHY_ST_TRXOFF            0x08
+
 extern PHY_PARAM *phy_init(void);
+extern int phy_set_trx(uint8_t state);
+extern int phy_get_trx(void);
+extern int phy_set_cca(void);
+extern int phy_get_ed(void);
 
 #endif

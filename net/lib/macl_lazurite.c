@@ -40,6 +40,12 @@ MACL_PARAM* macl_init(void)
 	return &macl;
 }
 
+/********************************************************************/
+/*! @brief macl start 
+  mac low layer rx on
+  @return     0=STATUS_OK, other = error
+  @exception  return NULL
+ ********************************************************************/
 int	macl_start(void)
 {
 	int status=STATUS_OK;
