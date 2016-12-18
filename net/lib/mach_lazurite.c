@@ -32,7 +32,7 @@ static struct mach_param mach;
 /*! @uint8_t ackbuf[32]
   @brief  data buffer to make ack data
   */
-static uint8_t ackbuf[32];
+static uint8_t ackbuf[8];
 
 /******************************************************************************/
 /*! @brief enb_dst_panid
@@ -314,11 +314,13 @@ error:
 
 /******************************************************************************/
 /*! @brief prawarse mac header
-  @param[in] *data start pointer of receiving data
-  @param[in] size length of data
-  @param[in] *header  pointer of mac header
+  @param[in] header pointer of mac header
+		input = input buffer
+		raw   = output buffer
+		payload = pointer/length of payload
   @return    STATUS_OK, error num
   @exception ENOMEM = data size error
+  	in case of rx disable, this error is occured, when any data is received,
  ******************************************************************************/
 int mach_parse_data(struct mac_header *header) {
 
@@ -326,27 +328,8 @@ int mach_parse_data(struct mac_header *header) {
 	int status;
 	int i;
 
-	// Buffer size check
-	if(header->raw.size < header->input.len)
-	{
-		status = -ENOMEM;
-		goto error;
-	}
-
-	memcpy(header->raw.data,header->input.data,header->input.len);
-	header->raw.len = header->input.len;
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"%s,%s,%d,%04x\n",__FILE__,__func__,__LINE__,
-			header->input.len);
-#endif
-
 	// framce control
-	LB2HS(header->fc,header->raw.data[offset]),offset+=2;
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"%s,%s,%d,%04x\n",__FILE__,__func__,__LINE__,
-			header->fc.fc16
-			);
-#endif
+	LB2HS(header->fc,header->input.data[offset]),offset+=2;
 
 	// addr type
 	header->addr_type = header->fc.fc_bit.panid_comp;
@@ -355,92 +338,55 @@ int mach_parse_data(struct mac_header *header) {
 	header->src.addr_type = header->fc.fc_bit.src_addr_type;
 	header->dst.addr_type = header->fc.fc_bit.dst_addr_type;
 
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"%s,%s,%d,%04x\n",__FILE__,__func__,__LINE__,
-			header->addr_type
-			);
-#endif
 	// panid enb
 	header->dst.panid.enb = (enb_dst_panid & BIT(header->addr_type)) ? 1: 0;
 	header->src.panid.enb = (enb_src_panid & BIT(header->addr_type)) ? 1: 0;
 
 	// sequence number
 	if (!header->fc.fc_bit.seq_comp) {
-		header->seq = header->raw.data[offset],offset++;
+		header->seq = header->input.data[offset],offset++;
 	}
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"%s,%s,%d,%04x\n",__FILE__,__func__,__LINE__,header->seq);
-#endif
 	// dst panid
 	if(header->dst.panid.enb)
 	{
-		LB2HS(header->dst.panid.data,header->raw.data[offset]),offset+=2;
+		LB2HS(header->dst.panid.data,header->input.data[offset]),offset+=2;
 	}
 	// dst addr
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"%s,%s,%d,%04x\n",__FILE__,__func__,__LINE__,header->dst.panid.data);
-#endif
 	memset(header->dst.addr.ieee_addr,0,8);
 	for(i=0;i< addr_len[header->fc.fc_bit.dst_addr_type];i++)
 	{
-		header->dst.addr.ieee_addr[i] = header->raw.data[offset],offset++;
+		header->dst.addr.ieee_addr[i] = header->input.data[offset],offset++;
 	}
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"%s,%s,%d,%02x%02x%02x%02x%02x%02x%02x%02x\n",__FILE__,__func__,__LINE__,
-			header->dst.addr.ieee_addr[7],
-			header->dst.addr.ieee_addr[6],
-			header->dst.addr.ieee_addr[5],
-			header->dst.addr.ieee_addr[4],
-			header->dst.addr.ieee_addr[3],
-			header->dst.addr.ieee_addr[2],
-			header->dst.addr.ieee_addr[1],
-			header->dst.addr.ieee_addr[0]
-			);
-#endif
 	// src panid
 	if(header->src.panid.enb)
 	{
-		LB2HS(header->src.panid.data,header->raw.data[offset]),offset+=2;
+		LB2HS(header->src.panid.data,header->input.data[offset]),offset+=2;
 	}
 	// src addr
 	memset(header->src.addr.ieee_addr,0,8);
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG)
-		printk(KERN_INFO"%s,%s,%d,%d,%d\n",__FILE__,__func__,__LINE__,
-				addr_len[header->fc.fc_bit.src_addr_type],
-				header->fc.fc_bit.src_addr_type
-			  );
-#endif
 
 	for(i=0;i< addr_len[header->fc.fc_bit.src_addr_type];i++)
 	{
-		header->src.addr.ieee_addr[i] = header->raw.data[offset],offset++;
+		header->src.addr.ieee_addr[i] = header->input.data[offset],offset++;
 	}
-	header->payload.data = (uint8_t *)(header->raw.data+offset);
-	header->payload.len = header->raw.len - offset;
+
+	// copy data, if output buffer is available.
+	if(header->raw.size >= header->input.len)
+	{
+		memcpy(header->raw.data,header->input.data,header->input.len);
+		header->raw.len = header->input.len;
+		header->payload.data = (uint8_t *)(header->raw.data+offset);
+		header->payload.len = header->raw.len - offset;
+	} else {
+	}
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) {
-		//header->payload.data[header->payload.len] = 0;
-		printk(KERN_INFO"%02x%02x%02x%02x%02x%02x%02x%02x in %s,%s\n",
-				header->src.addr.ieee_addr[7],
-				header->src.addr.ieee_addr[6],
-				header->src.addr.ieee_addr[5],
-				header->src.addr.ieee_addr[4],
-				header->src.addr.ieee_addr[3],
-				header->src.addr.ieee_addr[2],
-				header->src.addr.ieee_addr[1],
-				header->src.addr.ieee_addr[0],
-				__FILE__,__func__);
-		printk(KERN_INFO"%d,%d in %s,%s\n",
-				header->raw.len,
-				header->payload.len,
-				__FILE__,__func__);
 		PAYLOADDUMP(header->payload.data,header->payload.len);
 	}
 #endif
 
 	status = STATUS_OK;
-error:
+
 	return status;
 }
 
@@ -491,9 +437,10 @@ bool mach_match_seq_num(void)
   short/omit  |  short/omit |  false      |    false        | No   |  no
  ******************************************************************************/
 #define ACK_ENB	0x06
-int mach_make_ack_header(void) {
+bool mach_make_ack_header(void) {
 
 	bool ack_condition=false;
+	uint16_t offset = 0;
 
 	if((!(mach.rx.addr_type & ACK_ENB)) &&
 			(mach.my_addr.pan_coord == true) &&
@@ -519,14 +466,16 @@ int mach_make_ack_header(void) {
 	ack_condition = true;
 
 	// output mac header to memory
-	H2LBS(mach.ack.raw.data,mach.ack.fc.fc16);
+	H2LBS(mach.ack.raw.data[offset],mach.ack.fc.fc16), offset+=2;
 
 	// output sequence number
-	H2LBS(mach.ack.raw.data,mach.ack.fc.fc16);
-	if(mach.ack.fc.fc_bit.seq_comp) {
+	if(!mach.ack.fc.fc_bit.seq_comp) {
 		mach.ack.seq = mach.rx.seq;
-		mach.ack.raw.data[2] = mach.ack.seq;
+		mach.ack.raw.data[offset] = mach.ack.seq,offset++;
 	}
+	mach.ack.raw.len = offset;
+
+
 noack:
 	return ack_condition;
 }
@@ -676,12 +625,8 @@ int mach_set_src_addr(uint8_t addr_mode)
 			break;
 	}
 	return status;
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-	}
-#endif
 }
+
 int mach_set_dst_short_addr(uint16_t panid,uint16_t addr)
 {
 	mach.tx.dst.panid.enb = true;
@@ -757,8 +702,8 @@ int mach_set_coord_addr(uint16_t panid,uint16_t short_addr,uint8_t *ieee_addr)
 	mach.coord_addr.pan_id = panid;
 	mach.coord_addr.short_addr = short_addr;
 	if(ieee_addr) memcpy(mach.coord_addr.ieee_addr,ieee_addr,8);
-	if((panid == 0xffff) || (panid == 0xfffe) || (short_addr == 0xffff) || (short_addr == 0xfffe))
-	{
+	if((panid == 0xffff) || (panid == 0xfffe) ||
+			(short_addr == 0xffff) || (short_addr == 0xfffe)) {
 		mach.coord_addr.pan_coord = false;
 		status = -EINVAL;
 	}
@@ -785,6 +730,7 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 {
 	int status = STATUS_OK;
 
+	printk(KERN_INFO"***** TX TEST ******!!%s,%s,%d\n",__FILE__,__func__,__LINE__);
 	// initializing buffer
 	mach.tx.raw.data = mach.macl->phy->out.data;
 	mach.tx.raw.size = mach.macl->phy->out.size;
@@ -797,12 +743,18 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 	if((status = mach_make_header(&mach.tx))!=STATUS_OK) {
 		goto error;
 	}
-	if((arib_tx_check(mach.rf->pages,mach.rf->ch,mach.tx.raw.len))==false) {
-		goto error;
-	}
+	// @issue arib should be implemented later.
+	/*
+	   if((arib_tx_check(mach.rf->pages,mach.rf->ch,mach.tx.raw.len))==false) {
+	   goto error;
+	   }
+	   */
 	status = macl_xmit_sync(mach.tx.raw);
-	if(status == STATUS_OK)
-		arib_tx_end(mach.rf->pages,mach.rf->ch,mach.tx.raw.len);
+	// @issue arib should be implemented later.
+	/*
+	   if(status == STATUS_OK)
+	   arib_tx_end(mach.rf->pages,mach.rf->ch,mach.tx.raw.len);
+	   */
 
 error:
 	return status;
@@ -816,36 +768,40 @@ int mach_sleep(bool on)
 {
 	return macl_sleep(on);
 }
-int mach_rx_irq(BUFFER *rx)
+int mach_rx_irq(struct mac_header *rx)
 {
 	int status = STATUS_OK;
 	return status;
 }
 
-int macl_ack_tx(BUFFER *data)
+/********************************************************************/
+/*! @brief set coord short address
+  @param[in]	rx  pointer of rx buffer
+  when rx==NULL, end of sending ack
+  @param[out]	ack pointer when ack is return<br>
+  when no need, ack->data = NULL
+  when ack is required
+  @return		STATUS_OK<br>
+  1= data is ack
+  @exception	
+ ********************************************************************/
+int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 {
 	int status=STATUS_OK;
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-	}
-#endif
-	return status;
-}
 
-int	macl_rx_irq(BUFFER *rx,BUFFER *ack)
-{
-	int status=STATUS_OK;
+	// initialize ack buffer
+	ack->data = NULL;
+	ack->len = 0;
+	ack->size = mach.ack.raw.size;
 
 	mach.rx.input.data = rx->data;
-	mach.rx.input.size = rx->size;
 	mach.rx.input.len = rx->len;
-
+	mach.rx.input.size = rx->size;
+	
 	// parse raw data
 	if((status = mach_parse_data(&mach.rx))!= STATUS_OK) {
 		goto error;
 	}
-
 
 	// check frame type
 	if ((mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_DATA) ||
@@ -857,14 +813,14 @@ int	macl_rx_irq(BUFFER *rx,BUFFER *ack)
 		}
 		if ((mach.rx.fc.fc_bit.ack_req) && (!mach.promiscuous) )
 		{
-			if(mach_make_ack_header())
-				macl_ack_tx(&mach.ack.raw);							// send ack
-		} else {
-			ack->data = NULL;
-			ack->len = 0;
+			if(mach_make_ack_header()) {
+				ack->data = mach.ack.raw.data;
+				ack->len = mach.ack.raw.len;
+			}
 		}
 	} else if (mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_ACK) {
-		if(mach.rx.seq == mach.rx_prev.seq) status = 1;				// check ack
+		if(mach.rx.seq == mach.tx.seq) status = 1;				// check ack
+	} else {
 	}
 
 error:
