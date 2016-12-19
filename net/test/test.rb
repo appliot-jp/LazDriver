@@ -3,7 +3,7 @@
 # Function:
 #   Lazurite Sub-GHz/Lazurite Pi Gateway Sample program
 #   SerialMonitor.rb
-require_relative './LazGem/lib/LazGem'
+require_relative './lib/LazGem'
 require 'minitest'
 require 'minitest/autorun'
 require 'minitest/reporters'
