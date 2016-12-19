@@ -118,14 +118,14 @@ static void ml7396_regread(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t si
 }
 
 static volatile struct {
-    struct {                    /* タイマ関係パラメータ */
-        void (*handler)(void);    /* タイマの割り込みハンドラ */
+    struct {                      /* Timer-related parameter */
+        void (*handler)(void);    /* Interrupt handler of the timer */
 #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI
-        enum {                    /* 割り込み制御 */
-            Disable=0,              /* 許可 */
-            Enable                  /* 禁止 */
+        enum {
+            Disable=0,
+            Enable
         } active;
-        uint8_t call_count;       /* 割り込み禁止中のハンドラ呼び出し回数 */
+        uint8_t call_count;       /* The handler summons number of times that interrupts it, and is prohibiting it */
 #endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
     } timer;
 } hwif = {
@@ -152,11 +152,16 @@ static void timer_handler(void) {
 }
 #endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
 
-//static void idle(void) {
-//     // 1) 最適化で消えない事
-//     // 2) アイドル期間中に実行したい短い処理が在ればここに追加
-//}
-
+/******************************************************************************/
+/*! @brief Hardware interface function
+    Neighboring device initialization of the L7396 module
+    Preparations for SPI bus data communication
+    Preparations for SINTN interrupt control
+    Clear and start of the elapsed time timer
+    Preparations for time-out interrupt control
+    Hardware reset with the RESET termin
+   @return  more than 0=STATUS_OK, less than 0= error num
+ ******************************************************************************/
 int ml7396_hwif_init(void) {
     int status = -1;
     uint32_t wait_t;
@@ -172,11 +177,18 @@ int ml7396_hwif_init(void) {
 //  HAL_GPIO_setup();
     HAL_TIMER_setup();
 //  HAL_I2C_setup();
-    ml7396_hwif_timer_tick(&wait_t);  /* 時間待ち起点 - (A) */
+    ml7396_hwif_timer_tick(&wait_t);
     status = 0;
     return status;
 }
 
+/******************************************************************************/
+/*! @brief Register access of the ML7396 module
+   The reading and writing of the SPI bus
+   wdata[]: Data sequence to write in
+   size: The number of the data to read and write
+   rdata[]: Sequence to store the data which I began to read in
+ ******************************************************************************/
 int ml7396_hwif_spi_transfer(const uint8_t *wdata, uint8_t *rdata, uint8_t size) {
 
     int status = -1;
@@ -196,6 +208,11 @@ int ml7396_hwif_spi_transfer(const uint8_t *wdata, uint8_t *rdata, uint8_t size)
     return status;
 }
 
+
+/******************************************************************************/
+/*! @brief Interrupt handler registration of the ML7396 module
+ * @detail Handler of the interrupt that SINTN terminal generates at 'L' level
+ ******************************************************************************/
 int ml7396_hwif_sint_handler(void (*func)(void)) {
     int status = -1;
 
@@ -204,6 +221,10 @@ int ml7396_hwif_sint_handler(void (*func)(void)) {
     return status;
 }
 
+/******************************************************************************/
+/*! @brief Enable interrupt
+ * @detail Interrupt permission delay cancellation of the ML7396 module
+ ******************************************************************************/
 int ml7396_hwif_sint_ei(void) {
     int status = -1;
 
@@ -212,6 +233,11 @@ int ml7396_hwif_sint_ei(void) {
     return status;
 }
 
+/******************************************************************************/
+/*! @brief Disable interrupt
+ * @detail The delay that interrupt of the ML7396 module is prohibited in it.
+ *         I delay whether it is admitted again until I am cleared.
+ ******************************************************************************/
 int ml7396_hwif_sint_di(void) {
     int status = -1;
 
@@ -220,6 +246,11 @@ int ml7396_hwif_sint_di(void) {
     return status;
 }
 
+/******************************************************************************/
+/*! @brief time-out interrupt count start
+ * @detail I produce an interrupt after progress at designation time
+ * msec: Time before producing a time-out interrupt (appoint it by a msec unit)
+ ******************************************************************************/
 int ml7396_hwif_timer_start(uint16_t msec) {
     int status = -1;
 
@@ -229,9 +260,14 @@ int ml7396_hwif_timer_start(uint16_t msec) {
     HAL_TIMER_start(msec, hwif.timer.handler);
 #endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
     status = 0;
-    return status;
+    return status 
 }
 
+/******************************************************************************/
+/*! @brief time-out interrupt count start
+ * @detail I produce an interrupt after progress at designation time
+ * msec: Time before producing a time-out interrupt (appoint it by a msec unit)
+ ******************************************************************************/
 int ml7396_hwif_timer_stop(void) {
     int status = -1;
 
@@ -240,6 +276,10 @@ int ml7396_hwif_timer_stop(void) {
     return status;
 }
 
+/******************************************************************************/
+/*! @brief Time-out interrupt handler registration
+ * @detail func: Interrupt handler function
+ ******************************************************************************/
 int ml7396_hwif_timer_handler(void (*func)(void)) {
     int status = -1;
 
@@ -248,6 +288,11 @@ int ml7396_hwif_timer_handler(void (*func)(void)) {
     return status;
 }
 
+/******************************************************************************/
+/*! @brief Enable time-out interrupt
+ * @detail func: The delay that time-out interrupt is prohibited in it.
+           I delay whether it is admitted again until I am cleared.
+ ******************************************************************************/
 int ml7396_hwif_timer_ei(void) {
     int status = -1;
 
@@ -271,6 +316,11 @@ int ml7396_hwif_timer_ei(void) {
     return status;
 }
 
+/******************************************************************************/
+/*! @brief Disable time-out interrupt
+ * @detail The delay that time-out interrupt is prohibited in it.
+ I delay whether it is admitted again until I am cleared.
+ ******************************************************************************/
 int ml7396_hwif_timer_di(void) {
     int status = -1;
 
@@ -289,6 +339,12 @@ int ml7396_hwif_timer_di(void) {
     return status;
 }
 
+/******************************************************************************/
+/*! @brief Timer tick
+ * @detail The acquisition of the elapsed time timer.
+           I acquire an elapsed time from neighboring device initialization.
+           msec: The elapsed time when acquired it (msec unit).
+ ******************************************************************************/
 int ml7396_hwif_timer_tick(uint32_t *msec) {
     int status = -1;
 
@@ -299,8 +355,9 @@ int ml7396_hwif_timer_tick(uint32_t *msec) {
 
 
 
-/* レジスタ設定引数
- */
+/*
+Register setting argument
+*/
 typedef struct {
     uint8_t channel;
     uint8_t rate;
@@ -313,41 +370,42 @@ typedef struct {
 #define DEIVE_ID_ROHM  0x90
 #define DEIVE_ID_LAPIS 0xD0
 
-/* 浮動小数点数値をQフォーマット固定小数点数値に変換
- *
- * n: 浮動小数点数値 (固定値である事 そうでないと浮動小数点演算ライブラリがリンクされてしまう)
- * q: 小数点位置
- * type: 戻り値の型
- * 戻り値: 固定小数点数値
- */
+/*
+I convert floating point numerical value into Q format fixed-point numerical value
+
+ n: Floating point numerical value (when it is not so to be a fixation level, a floating point arithmetic library is linked)
+ q: Decimal point position
+ type: Model of the return value
+ A return value: Fixed-point numerical value
+*/
 #define FIXQ(n, q, type) ((type)((n) * ((type)1 << (q)) + .5))
 
-/* 固定小数点数値の整数部を取得
- *
- * n: 固定小数点数値
- * q: 小数点位置
- * 戻り値: 整数部
+/*
+I acquire integer region of the fixed-point numerical value
+ * n: Fixed-point numerical value
+ * q: Decimal point position
+ * A return value: Integer part
  */
 #define INTQ(n, q) ((n) >> (q))
 
-/* レジスタ設定定数
- */
+/* register setting fixed number */
+
 typedef struct {
-    uint8_t rate;                /* レート設定 */
-    uint32_t freq[38];           /* 周波数設定 */
-    uint32_t chspc;              /* 帯域幅設定 */
-    uint32_t iffreq;             /* IF周波数設定 */
-    uint32_t iffreq_cca;         /* IF周波数設定(CCA) */
-    uint16_t coef, ref;          /* BPF設定 */
-    uint16_t coef_cca, ref_cca;  /* BPF設定(CCA) */
-    uint16_t fdev;               /* GFSK周波数偏位設定 */
-    uint8_t reg1;                /* 隠しレジスタ設定 */
-    uint8_t div;                 /* ダイバーシティサーチ設定 */
+    uint8_t rate;                /* rate setting */
+    uint32_t freq[38];           /* frequency setting */
+    uint32_t chspc;              /* bandwidth setting */
+    uint32_t iffreq;             /* IF frequency setting */ 
+    uint32_t iffreq_cca;         /* IF frequency setting (CCA) */
+    uint16_t coef, ref;          /* BPF setting */
+    uint16_t coef_cca, ref_cca;  /* BPF setting (CCA) */
+    uint16_t fdev;               /* GFSK frequency shift setting */
+    uint8_t reg1;                /* Concealment of register setting */
+    uint8_t div;                 /* diversity search setting */
 } REGSET;
-/* 設定定数 (浮動小数点演算はCPUでは処理せず全てコンパイラに任せる) */
+/* setting fixed number (I do not handle the floating point arithmetic with the CPU and entrust all a compiler) */
 static const REGSET regset_50kbps = {
     0x10,                               /* rate */
-    {                                   /* freq[] (帯域幅200kHz) */
+    {                                   /* freq[] (bandwidth 200kHz) */
         FIXQ(920.6, 20, uint32_t),        /* Channel=24 */
         FIXQ(920.8, 20, uint32_t),        /* Channel=25 */
         FIXQ(921.0, 20, uint32_t),        /* Channel=26 */
@@ -398,7 +456,7 @@ static const REGSET regset_50kbps = {
 };
 static const REGSET regset_100kbps = {
     0x11,                               /* rate */
-    {                                   /* freq[] (帯域幅400kHz) */
+    {                                   /* freq[] (bandwidth 400kHz) */
         FIXQ(920.7, 20, uint32_t),        /* Channel=24,25 */
         FIXQ(920.9, 20, uint32_t),        /* Channel=25,26 */
         FIXQ(921.1, 20, uint32_t),        /* Channel=26,27 */
@@ -436,7 +494,7 @@ static const REGSET regset_100kbps = {
         FIXQ(927.5, 20, uint32_t),        /* Channel=58,59 */
         FIXQ(927.7, 20, uint32_t),        /* Channel=59,60 */
         FIXQ(927.9, 20, uint32_t),        /* Channel=60,61 */
-        FIXQ(927.9, 20, uint32_t)         /* Channel=60,61 (チャネル設定60と61は同等) */
+        FIXQ(927.9, 20, uint32_t)         /* Channel=60,61 (60 and 61 is same) */
     },
     FIXQ(0.400, 20, uint32_t),          /* chspc = 400kHz */
     FIXQ(0.180, 20, uint32_t),          /* iffreq = 180kHz */
@@ -448,29 +506,31 @@ static const REGSET regset_100kbps = {
     0x16                                /* div = more than 0x16 */
 };
 
-/* BP3596用ML7396レジスタ設定
- */
+/*
+ Register setting of ML7396
+   Channel setting
+   Bandwidth setting
+   Communication rate setting
+   Transmission output setting
+   Setting peculiar to other devices
+   awaiting first clock stability and the last calibration practice are unnecessary
+*/
+
 int ml7396_hwif_regset(void *data) {
     int status = -1;
     Setup *setup = (Setup *)data;
     const REGSET *regset;
     uint8_t reg_data[4];
 
-    /* 個体識別コード取得 */
     HAL_I2C_read(0x23, reg_data, 1), setup->device_id = reg_data[0];
-
-    /* 固定値設定 */
     reg_data[0] = 0x0f, ml7396_regwrite(REG_ADR_CLK_SET,             reg_data, 1);
     reg_data[0] = 0x22, ml7396_regwrite(REG_ADR_RX_PR_LEN_SFD_LEN,   reg_data, 1);
     reg_data[0] = 0x00, ml7396_regwrite(REG_ADR_SYNC_CONDITION,      reg_data, 1);
 #ifdef LAZURITE_MINI
     reg_data[0] = 0x02, ml7396_regwrite(REG_ADR_2DIV_CNTRL,          reg_data, 1);
-    /* 0x04 CRCエラー発生し難くなった */
 #else
-    /* 0x04 CRCエラー発生し難くなった */
     if (setup->device_id == DEIVE_ID_LAPIS)
         reg_data[0] = 0x0A, ml7396_regwrite(REG_ADR_2DIV_CNTRL,          reg_data, 1);
-    /* 0x04 CRCエラー発生し難くなった */
     else
         reg_data[0] = 0x04, ml7396_regwrite(REG_ADR_2DIV_CNTRL,          reg_data, 1);
 #endif
@@ -482,7 +542,7 @@ int ml7396_hwif_regset(void *data) {
     reg_data[0] = 0x02, ml7396_regwrite(REG_ADR_GAIN_MtoH,           reg_data, 1);
     reg_data[0] = 0x15, ml7396_regwrite(REG_ADR_RSSI_ADJ_M,          reg_data, 1);
     reg_data[0] = 0x2b, ml7396_regwrite(REG_ADR_RSSI_ADJ_L,          reg_data, 1);
-    reg_data[0] = 0x22, ml7396_regwrite(REG_ADR_RSSI_STABLE_TIME,    reg_data, 1);  //
+    reg_data[0] = 0x22, ml7396_regwrite(REG_ADR_RSSI_STABLE_TIME,    reg_data, 1);
     reg_data[0] = 0xd4, ml7396_regwrite(REG_ADR_RSSI_VAL_ADJ,        reg_data, 1);
     reg_data[0] = 0x01, ml7396_regwrite(REG_ADR_AFC_CNTRL,           reg_data, 1);
     reg_data[0] = 0xaa, ml7396_regwrite(REG_ADR_PREAMBLE_SET,        reg_data, 1);
@@ -495,7 +555,7 @@ int ml7396_hwif_regset(void *data) {
     reg_data[0] = 0xc6, ml7396_regwrite(REG_ADR_SFD2_SET3,           reg_data, 1);
     reg_data[0] = 0xb4, ml7396_regwrite(REG_ADR_SFD2_SET4,           reg_data, 1);
     reg_data[0] = 0xb6, ml7396_regwrite(REG_ADR_2DIV_GAIN_CNTRL,     reg_data, 1);
-    reg_data[0] = 0x84, ml7396_regwrite(1,0x39,                      reg_data, 1);  /* 隠しレジスタ */
+    reg_data[0] = 0x84, ml7396_regwrite(1,0x39,                      reg_data, 1);  /* Hidden register */
     reg_data[0] = 0x8f, ml7396_regwrite(REG_ADR_PLL_CTRL,            reg_data, 1);
     reg_data[0] = 0x32, ml7396_regwrite(REG_ADR_RX_ON_ADJ2,          reg_data, 1);
     reg_data[0] = 0x0f, ml7396_regwrite(REG_ADR_LNA_GAIN_ADJ_M,      reg_data, 1);
@@ -507,12 +567,12 @@ int ml7396_hwif_regset(void *data) {
     reg_data[0] = 0x04, ml7396_regwrite(REG_ADR_PA_ON_ADJ,           reg_data, 1);
     reg_data[0] = 0x0a, ml7396_regwrite(REG_ADR_RX_ON_ADJ,           reg_data, 1);
     reg_data[0] = 0x00, ml7396_regwrite(REG_ADR_RXD_ADJ,             reg_data, 1);
-    reg_data[0] = 0x2c, ml7396_regwrite(2,0x2d,                      reg_data, 1);  /* 隠しレジスタ */
-    reg_data[0] = 0xc0, ml7396_regwrite(2,0x2e,                      reg_data, 1);  /* 隠しレジスタ */
-    reg_data[0] = 0x17, ml7396_regwrite(2,0x2f,                      reg_data, 1);  /* 隠しレジスタ */
-    reg_data[0] = 0x17, ml7396_regwrite(2,0x30,                      reg_data, 1);  /* 隠しレジスタ */
-    HAL_I2C_read(0x2b, reg_data, 1), ml7396_regwrite(REG_ADR_PA_ADJ1, reg_data, 1);  /*  1mW粗調整 */
-    HAL_I2C_read(0x29, reg_data, 1), ml7396_regwrite(REG_ADR_PA_ADJ3, reg_data, 1);  /* 20mW粗調整 */
+    reg_data[0] = 0x2c, ml7396_regwrite(2,0x2d,                      reg_data, 1);  /* Hidden register */
+    reg_data[0] = 0xc0, ml7396_regwrite(2,0x2e,                      reg_data, 1);  /* Hidden register */
+    reg_data[0] = 0x17, ml7396_regwrite(2,0x2f,                      reg_data, 1);  /* Hidden register */
+    reg_data[0] = 0x17, ml7396_regwrite(2,0x30,                      reg_data, 1);  /* Hidden register */
+    HAL_I2C_read(0x2b, reg_data, 1), ml7396_regwrite(REG_ADR_PA_ADJ1, reg_data, 1);  /*  1mW rough adjustment */
+    HAL_I2C_read(0x29, reg_data, 1), ml7396_regwrite(REG_ADR_PA_ADJ3, reg_data, 1);  /* 20mW rough adjustment */
     switch (setup->txPower) {
     case  1:  /*  1mW */
         HAL_I2C_read(0x2c, reg_data, 1), ml7396_regwrite(REG_ADR_PA_REG_FINE_ADJ, reg_data, 1);
@@ -539,7 +599,7 @@ int ml7396_hwif_regset(void *data) {
     reg_data[0] = 0x01, ml7396_regwrite(REG_ADR_PA_REG_ADJ3,         reg_data, 1);
     reg_data[0] = 0x55, ml7396_regwrite(REG_ADR_CCA_LEVEL,           reg_data, 1);
 #endif
-    reg_data[0] = 0x04, ml7396_regwrite(REG_ADR_TX_PR_LEN,           reg_data, 1);  /* 0x04以上 */
+    reg_data[0] = 0x04, ml7396_regwrite(REG_ADR_TX_PR_LEN,           reg_data, 1);  /* more than 0x04 */
     reg_data[0] = 0x1f, ml7396_regwrite(REG_ADR_RSSI_LPF_ADJ,        reg_data, 1);
     reg_data[0] = 0x44, ml7396_regwrite(REG_ADR_PLL_CP_ADJ,          reg_data, 1);
     HAL_I2C_read(0x2d, reg_data, 1), ml7396_regwrite(REG_ADR_OSC_ADJ, reg_data, 1);  /* XA */
@@ -552,7 +612,7 @@ int ml7396_hwif_regset(void *data) {
 //    HAL_I2C_read(0x81, reg_data, 1), ml7396_regwrite(REG_ADR_PA_REG_ADJ3, reg_data, 1);
 //    HAL_I2C_read(0x82, reg_data, 1), ml7396_regwrite(REG_ADR_RF_CNTRL_SET, reg_data, 1);
 //#endif
-    /* 可変値設定 */
+    /* variableness level setting */
     switch (setup->rate) {
     case  50:  /*  50kbps */
         regset = &regset_50kbps;
@@ -563,9 +623,9 @@ int ml7396_hwif_regset(void *data) {
     default:
         goto error;
     }
-    /* レート設定 */
+    /* rate setting */
     reg_data[0] = regset->rate, ml7396_regwrite(REG_ADR_DATA_SET, reg_data, 1);
-    {  /* 周波数設定 */
+    {/* frequency setting */
         uint32_t freq_ch0, freq_min;
         uint8_t n4, a;
         uint32_t f;
@@ -574,7 +634,7 @@ int ml7396_hwif_regset(void *data) {
             goto error;
         if (setup->rate == 100 && setup->channel == 32)
             goto error;
-        /* CCA IDLE WAIT時間設定 */
+        /* CCA IDLE WAIT time setting */
         if (setup->channel <= 32) {
             reg_data[0] = 0x01, ml7396_regwrite(REG_ADR_IDLE_WAIT_H, reg_data, 1);
             reg_data[0] = 0x18, ml7396_regwrite(REG_ADR_IDLE_WAIT_L, reg_data, 1);
@@ -584,38 +644,39 @@ int ml7396_hwif_regset(void *data) {
         // ARIB 5ms:idle_wait=on, 1.7us:idle_wait=off
             reg_data[0] = 0x64, ml7396_regwrite(REG_ADR_IDLE_WAIT_L, reg_data, 1);
         }
-
-//      freq_ch0 = regset->freq[setup->channel - 33];  /* チャネル番号の周波数を取得 */
-        freq_ch0 = regset->freq[setup->channel - 24];  /* チャネル番号の周波数を取得 */
-        freq_min = freq_ch0 - FIXQ(2.0, 20, uint32_t);  /* CH0周波数より2MHz低い値をキャリブレーション下限値とする (浮動小数点演算はCPUでは処理せず全てコンパイラに任せる) */
+        freq_ch0 = regset->freq[setup->channel - 24];
+        /* which assumes a value having lower 2MHz than CH0 frequency a calibration lower limit level
+         * (does not handle the floating point arithmetic with the CPU, and entrusts all a compiler)
+         */
+        freq_min = freq_ch0 - FIXQ(2.0, 20, uint32_t);
         freq_ch0 /= 36;
         freq_min /= 36;
-        if (INTQ(freq_min, 20) != INTQ(freq_ch0, 20))  /* 36MHz 境界を跨ぐ設定は無効 */
+        if (INTQ(freq_min, 20) != INTQ(freq_ch0, 20))  /* invalid as for the setting to step over the 36MHz border */
             goto error;
-        n4 = (INTQ(freq_ch0 >> 2, 20) & 0x0f) << 2;  /* nの4倍値 */
+        n4 = (INTQ(freq_ch0 >> 2, 20) & 0x0f) << 2;  /* 4 times level of n */
         a = (INTQ(freq_ch0, 20) - n4) & 0x03;
         f = (freq_ch0 - ((n4 + a) << 20)) & 0x0fffff;
         reg_data[0] = f >>  0 & 0xff, reg_data[1] = f >>  8 & 0xff, reg_data[2] = f >> 16 & 0x0f;
         reg_data[3] = n4 << 2 | a;
-        ml7396_regwrite(REG_ADR_CH0_FL, reg_data, 4);  /* 特殊コマンド: bp.param[BP_PARAM_CH0_FL]の値を設定 */
-        n4 = (INTQ(freq_min >> 2, 20) & 0x0f) << 2;  /* nの4倍値 */
+        ml7396_regwrite(REG_ADR_CH0_FL, reg_data, 4);  /* A special command: I set a value of bp.param[BP_PARAM_CH0_FL] */
+        n4 = (INTQ(freq_min >> 2, 20) & 0x0f) << 2;  /* 4 times level of n */
         a = (INTQ(freq_min, 20) - n4) & 0x03;
         f = (freq_min - ((n4 + a) << 20)) & 0x0fffff;
         reg_data[0] = f >>  0 & 0xff, reg_data[1] = f >>  8 & 0xff, reg_data[2] = f >> 16 & 0x0f;
-        reg_data[3] = n4 << 2 | a;  /* このデータは使われない */
-        /* 特殊コマンド: bp.param[BP_PARAM_MIN_FL]の値を設定 */
+        reg_data[3] = n4 << 2 | a;  /* These data are not used */
+        /* A special command: I set a value of bp.param[BP_PARAM_MIN_FL] */
         ml7396_regwrite(REG_ADR_VCO_CAL_MIN_FL, reg_data, 3);
-        /* 帯域幅 400kHz */
+        /* bandwidth 400kHz */
         reg_data[0] = 0x07, ml7396_regwrite(REG_ADR_VCO_CAL_MAX_N, reg_data, 1);
     }
     {
         uint16_t n;
 
-        /* 帯域幅設定 */
+        /* bandwidth setting */
         n = regset->chspc / 36;
         reg_data[0] = n >>  0 & 0xff, reg_data[1] = n >>  8 & 0xff;
         ml7396_regwrite(REG_ADR_CH_SPACE_L, reg_data, 2);
-        /* IF周波数設定 */
+        /* IF frequency setting */
         n = regset->iffreq / 36;
         reg_data[0] = n >>  8 & 0xff, reg_data[1] = n >>  0 & 0xff;
         ml7396_regwrite(REG_ADR_IF_FREQ_H, reg_data, 2);
@@ -624,7 +685,7 @@ int ml7396_hwif_regset(void *data) {
         reg_data[0] = n >>  8 & 0xff, reg_data[1] = n >>  0 & 0xff;
         ml7396_regwrite(REG_ADR_IF_FREQ_CCA_H, reg_data, 2);
     }
-    {  /* BPF設定 */
+    {  /* BPF setting */
         uint8_t bpf;
         uint16_t n;
 
@@ -634,16 +695,13 @@ int ml7396_hwif_regset(void *data) {
         else
             n = regset->ref - (uint16_t)INTQ((uint32_t)(bpf & 0x7f) * regset->coef, 14);
         reg_data[0] = n >> 8 & 0xff, reg_data[1] = n >> 0 & 0xff;
-        /* REG_ADR_BPF_ADJ_H と REG_ADR_BPF_ADJ_L に書き込む */
         ml7396_regwrite(REG_ADR_BPF_ADJ_H,     reg_data, 2);
-        /* REG_ADR_BPF_AFC_ADJ_H と REG_ADR_BPF_AFC_ADJ_L に書き込む */
         ml7396_regwrite(REG_ADR_BPF_AFC_ADJ_H, reg_data, 2);
         if (bpf & 0x80)
             n = regset->ref_cca + (uint16_t)INTQ((uint32_t)(bpf & 0x7f) * regset->coef_cca, 14);
         else
             n = regset->ref_cca - (uint16_t)INTQ((uint32_t)(bpf & 0x7f) * regset->coef_cca, 14);
         reg_data[0] = n >> 8 & 0xff, reg_data[1] = n >> 0 & 0xff;
-        /* REG_ADR_BPF_CCA_ADJ_H と REG_ADR_BPF_CCA_ADJ_L に書き込む */
         ml7396_regwrite(REG_ADR_BPF_CCA_ADJ_H, reg_data, 2);
     }
 
@@ -655,12 +713,12 @@ int ml7396_hwif_regset(void *data) {
     /* GFSK Frequency shift setting */
     reg_data[0] = regset->fdev >> 0 & 0xff, reg_data[1] = regset->fdev >> 8 & 0xff;
     reg_data[0] = 0xb0, ml7396_regwrite(REG_ADR_F_DEV_L, reg_data, 2);
-    /* 隠しレジスタ設定 */
+    /* Hidden register setting */
     reg_data[0] = regset->reg1, ml7396_regwrite(2,0x0e, reg_data, 1);
-    /* ダイバーシティサーチ設定 */
+    /* diversity search setting */
     reg_data[0] = regset->div, ml7396_regwrite(REG_ADR_2DIV_SEARCH, reg_data, 1);
 
-    /* 自機器アドレス取得 */
+    /* own apparatus address acquisition */
     HAL_I2C_read(0x26, reg_data, 2), setup->address = H2LS(*reg_data);
 
     status = 0;
