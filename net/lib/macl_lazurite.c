@@ -72,7 +72,7 @@ int	macl_start(void)
 			printk(KERN_INFO"%s,%s,%d,%08lx,%d\n",__FILE__,__func__,__LINE__,
 					(unsigned long)ack.data,ack.len
 				  );
-			//PAYLOADDUMP(ack.data,ack.len);
+			PAYLOADDUMP(ack.data,ack.len);
 			macl_rx_irq(NULL,NULL);
 		} else {
 			printk(KERN_INFO"%s,%s,%d,NO ACK\n",__FILE__,__func__,__LINE__);
@@ -86,7 +86,7 @@ int	macl_start(void)
 			printk(KERN_INFO"%s,%s,%d,%08lx,%d\n",__FILE__,__func__,__LINE__,
 					(unsigned long)ack.data,ack.len
 				  );
-			//PAYLOADDUMP(ack.data,ack.len);
+			PAYLOADDUMP(ack.data,ack.len);
 			macl_rx_irq(NULL,NULL);
 		} else {
 			printk(KERN_INFO"%s,%s,%d,NO ACK\n",__FILE__,__func__,__LINE__);

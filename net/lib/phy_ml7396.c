@@ -260,7 +260,7 @@ int ml7396_hwif_timer_start(uint16_t msec) {
     HAL_TIMER_start(msec, hwif.timer.handler);
 #endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
     status = 0;
-    return status 
+    return status;
 }
 
 /******************************************************************************/

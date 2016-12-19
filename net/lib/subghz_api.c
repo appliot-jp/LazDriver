@@ -60,7 +60,6 @@ static struct {
 	volatile bool sending;
 	volatile bool open;
 	void (*rx_callback)(const uint8_t *data, uint8_t rssi, int status);		// change api
-	void (*rx_callback2)(int status);		// change api
 	void (*tx_callback)(uint8_t rssi, int status);
 	bool read;
 	struct rf_param rf;
@@ -311,13 +310,17 @@ error:
 	return msg;
 }
 
-int mach_rx_isr(struct mac_header *rx,int status)
+int mach_rx_irq(struct mac_header *rx)
 {
-	subghz_param.rx_stat.rssi = rx->rssi;
-	subghz_param.rx_stat.status = status;
 
+	printk(KERN_INFO"Receiving!! %s,%s,%d\n",__FILE__,__func__,__LINE__);
+	subghz_param.rx_stat.rssi = rx->rssi;
+	subghz_param.rx_stat.status = rx->raw.len;
+
+	printk(KERN_INFO"Receiving!! %s,%s,%d\n",__FILE__,__func__,__LINE__);
 	if(subghz_param.rx_callback != NULL) {
-		subghz_param.rx_callback(rx->raw.data, rx->rssi, status);
+		printk(KERN_INFO"Receiving!! %s,%s,%d\n",__FILE__,__func__,__LINE__);
+//		subghz_param.rx_callback(rx->raw.data, rx->rssi, rx->raw.len);
 	}
 	return STATUS_OK;
 }
