@@ -154,5 +154,5 @@ extern int mach_start(BUFFER *rxbuf);
 extern int mach_stop(void);
 extern int mach_parse_data(struct mac_header *header);
 extern int mach_ed(uint8_t *ed);
-extern int mach_rx_irq(BUFFER* rx);
+extern int mach_rx_irq(struct mac_header *rx);
 #endif

@@ -56,30 +56,61 @@ int	macl_start(void)
 			0x21,0xA8,0x01,0xCD, 0xAB,0x34,0x12,0x34,
 			0x12,0x68,0x65,0x6C, 0x6C,0x6F};
 		const uint8_t test2[]={
-			0x21,0xAC,0x01,0xCD, 0xAB,0x34,0x12,0x0C,
+			0x21,0xE8,0x01,0xCD, 0xAB,0x34,0x12,0x0C,
 			0x60,0x63,0x00,0x90, 0x12,0x1D,0x00,0x68,
 			0x65,0x6C,0x6C,0x6F};
-		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+		const uint8_t test3[]={
+			0x01,0xE8,0x01,0xCD, 0xAB,0x34,0x12,0x0C,
+			0x60,0x63,0x00,0x90, 0x12,0x1D,0x00,0x68,
+			0x65,0x6C,0x6C,0x6F};
+
+		// test of normal state
 		memcpy(macl.phy->in.data,test1,sizeof(test1));
 		macl.phy->in.len=sizeof(test1);
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) {
-		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-	}
-#endif
 		macl_rx_irq(&macl.phy->in,&ack);
+		if(ack.data) {
+			printk(KERN_INFO"%s,%s,%d,%08lx,%d\n",__FILE__,__func__,__LINE__,
+					(unsigned long)ack.data,ack.len
+				  );
+			//PAYLOADDUMP(ack.data,ack.len);
+			macl_rx_irq(NULL,NULL);
+		} else {
+			printk(KERN_INFO"%s,%s,%d,NO ACK\n",__FILE__,__func__,__LINE__);
+		}
+
+		// test of IEEE address
 		memcpy(macl.phy->in.data,test2,sizeof(test2));
 		macl.phy->in.len=sizeof(test2);
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) {
-		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-	}
-#endif
 		macl_rx_irq(&macl.phy->in,&ack);
+		if(ack.data) {
+			printk(KERN_INFO"%s,%s,%d,%08lx,%d\n",__FILE__,__func__,__LINE__,
+					(unsigned long)ack.data,ack.len
+				  );
+			//PAYLOADDUMP(ack.data,ack.len);
+			macl_rx_irq(NULL,NULL);
+		} else {
+			printk(KERN_INFO"%s,%s,%d,NO ACK\n",__FILE__,__func__,__LINE__);
+		}
+
+		// test of non ack
+		memcpy(macl.phy->in.data,test3,sizeof(test3));
+		macl.phy->in.len=sizeof(test3);
+		macl_rx_irq(&macl.phy->in,&ack);
+		if(ack.data) {
+			printk(KERN_INFO"%s,%s,%d,%08lx,%d\n",__FILE__,__func__,__LINE__,
+					(unsigned long)ack.data,ack.len
+				  );
+			PAYLOADDUMP(ack.data,ack.len);
+			macl_rx_irq(NULL,NULL);
+		} else {
+			printk(KERN_INFO"%s,%s,%d,NO ACK\n",__FILE__,__func__,__LINE__);
+		}
+
 	}
 #endif
 	return status;
 }
+
 int	macl_stop(void)
 {
 	int status=STATUS_OK;
@@ -93,6 +124,28 @@ int	macl_stop(void)
 int	macl_xmit_sync(BUFFER buff)
 {
 	int status=STATUS_OK;
+	BUFFER ack;
+	const uint8_t ackdata0[]={0x42,0x20,0x00};
+	const uint8_t ackdata1[]={0x42,0x20,0x01};
+
+	printk(KERN_INFO"***** ACK TEST ******!!%s,%s,%d\n",__FILE__,__func__,macl.phy->in.size);
+	memcpy(macl.phy->in.data,ackdata0,sizeof(ackdata0));
+	macl.phy->in.len=sizeof(ackdata0);
+	if(macl_rx_irq(&macl.phy->in,&ack)==1) {
+		printk(KERN_INFO"ACK Received!!%s,%s\n",__FILE__,__func__);
+	} else {
+		printk(KERN_INFO"not ACK Received!!%s,%s\n",__FILE__,__func__);
+	}
+	printk(KERN_INFO"***** ACK TEST2 ******!!%s,%s\n",__FILE__,__func__);
+	memcpy(macl.phy->in.data,ackdata1,sizeof(ackdata1));
+	macl.phy->in.len=sizeof(ackdata1);
+	if(macl_rx_irq(&macl.phy->in,&ack)==1) {
+		printk(KERN_INFO"ACK Received!!%s,%s\n",__FILE__,__func__);
+	} else {
+		printk(KERN_INFO"not ACK Received!!%s,%s\n",__FILE__,__func__);
+	}
+
+
 	return status;
 }
 //extern int	macl_xmit_async(BUFFER buff);								// for linux. does not support
