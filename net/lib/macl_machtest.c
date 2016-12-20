@@ -148,8 +148,8 @@ int	macl_xmit_sync(BUFFER buff)
 {
 	int status=STATUS_OK;
 	BUFFER ack;
-	const uint8_t ackdata0[]={0x42,0x20,0x00};
-	const uint8_t ackdata1[]={0x42,0x20,0x01};
+	const uint8_t ackdata0[]={0x42,0x20,0x00,0x55};
+	const uint8_t ackdata1[]={0x42,0x20,0x01,0xaa};
 
 	printk(KERN_INFO"***** ACK TEST ******!!%s,%s,%d\n",__FILE__,__func__,macl.phy->in.size);
 	memcpy(macl.phy->in.data,ackdata0,sizeof(ackdata0));

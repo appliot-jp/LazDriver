@@ -69,6 +69,7 @@ class LazGem::Device
     	if ((len == "") || (len == nil)) then # read result is empty
       		return 0
 		end
+    	size =  len.unpack("S*")[0]
 		return size
 	end
 

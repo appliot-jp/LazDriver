@@ -154,7 +154,8 @@ int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 void rx_callback(const uint8_t *data, uint8_t rssi, int status)
 {
 	if(status > 0) {
-		EXT_rx_led_flash(2);
+		//@issue temporary delete LED flash
+		//EXT_rx_led_flash(2);
 		write_list_data(data,status,rssi);
 	}
 	return;

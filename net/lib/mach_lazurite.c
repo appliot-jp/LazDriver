@@ -143,7 +143,11 @@ static int mach_make_header(struct mac_header *header) {
 		switch(header->dst.addr_type)
 		{
 			case 0:
-				printk(KERN_ERR"dst address is not set in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+#ifndef LAZURITE_IDE
+				if(module_test & MODE_MACH_DEBUG) {
+					printk(KERN_ERR"dst address is not set in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+				}
+#endif
 				status = -EINVAL;
 				goto error;
 				break;
@@ -152,7 +156,11 @@ static int mach_make_header(struct mac_header *header) {
 						(header->dst.panid.data == 0xfffe)||
 						(header->dst.panid.enb == false))
 				{
-					printk(KERN_ERR"invalid panid for short address.%s,%s,%d\n", __FILE__, __func__, __LINE__);
+#ifndef LAZURITE_IDE
+					if(module_test & MODE_MACH_DEBUG) {
+						printk(KERN_ERR"invalid panid for short address.%s,%s,%d\n", __FILE__, __func__, __LINE__);
+					}
+#endif
 					status = -EINVAL;
 					goto error;
 				}
@@ -171,7 +179,11 @@ static int mach_make_header(struct mac_header *header) {
 						(header->dst.panid.data == 0xfffe) ||
 						(header->dst.panid.enb == false))
 				{
-					printk(KERN_ERR"invalid panid for short address.%s,%s,%d\n", __FILE__, __func__, __LINE__);
+#ifndef LAZURITE_IDE
+					if(module_test & MODE_MACH_DEBUG) {
+						printk(KERN_ERR"invalid panid for short address.%s,%s,%d\n", __FILE__, __func__, __LINE__);
+					}
+#endif
 					status = -EINVAL;
 					goto error;
 				}
@@ -292,18 +304,7 @@ static int mach_make_header(struct mac_header *header) {
 	}
 
 	// write mac header
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s,%04x\n",__FILE__,__func__,header->fc.fc16);
-	}
-#endif
 	H2LBS(header->raw.data[0],header->fc.fc16);
-
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) {
-		PAYLOADDUMP(header->raw.data,header->raw.len);
-	}
-#endif
 
 	status = STATUS_OK;
 
@@ -314,12 +315,12 @@ error:
 /******************************************************************************/
 /*! @brief prawarse mac header
   @param[in] header pointer of mac header
-		input = input buffer
-		raw   = output buffer
-		payload = pointer/length of payload
+  input = input buffer
+  raw   = output buffer
+  payload = pointer/length of payload
   @return    STATUS_OK, error num
   @exception ENOMEM = data size error
-  	in case of rx disable, this error is occured, when any data is received,
+  in case of rx disable, this error is occured, when any data is received,
  ******************************************************************************/
 int mach_parse_data(struct mac_header *header) {
 
@@ -369,21 +370,11 @@ int mach_parse_data(struct mac_header *header) {
 		header->src.addr.ieee_addr[i] = header->input.data[offset],offset++;
 	}
 
-	// copy data, if output buffer is available.
-	if(header->raw.size >= header->input.len)
-	{
-		memcpy(header->raw.data,header->input.data,header->input.len);
-		header->raw.len = header->input.len;
-		header->payload.data = (uint8_t *)(header->raw.data+offset);
-		header->payload.len = header->raw.len - offset;
-	} else {
-	}
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,__LINE__);
-		PAYLOADDUMP(header->payload.data,header->payload.len);
-	}
-#endif
+	
+	header->raw.len = header->input.len; // last byte is rss
+	header->payload.data = (uint8_t *)(header->raw.data+offset);
+	header->payload.len = header->raw.len - offset - 1; // -1 means rssi attathed on raw
+	header->rssi = header->input.data[header->input.len];
 
 	status = STATUS_OK;
 
@@ -392,21 +383,11 @@ int mach_parse_data(struct mac_header *header) {
 
 bool mach_match_seq_num(void)
 {
-	bool result=true;
-	int i;
-	if(!(mach.rx.fc.fc_bit.seq_comp) &&
-			(mach.rx.seq == mach.rx_prev.seq) &&
-			(mach.rx.src.panid.data == mach.rx_prev.src.panid.data) &&
-			(mach.rx.src.addr_type == mach.rx_prev.src.addr_type))
-	{
-		for(i=0;i< addr_len[mach.rx.src.addr_type];i++) {
-			if(mach.rx.src.addr.ieee_addr[i] != mach.rx_prev.src.addr.ieee_addr[i]) {
-				result = false;
-				break;
-			}
-		}
-	} else {
-		result = false;
+	bool result=false;
+
+	if((mach.rx.seq == mach.rx_prev.seq) &&
+			memcmp(&mach.rx.src,&mach.rx_prev.src,sizeof(struct fc_addr))==0) {
+		result=true;
 	}
 
 	return result;
@@ -633,11 +614,7 @@ int mach_set_dst_short_addr(uint16_t panid,uint16_t addr)
 	mach.tx.dst.panid.data = panid;
 	mach.tx.dst.addr_type = IEEE802154_FC_ADDR_SHORT;
 	mach.tx.dst.addr.short_addr = addr;
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-	}
-#endif
+
 	return STATUS_OK;
 }
 
@@ -730,7 +707,6 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 {
 	int status = STATUS_OK;
 
-	printk(KERN_INFO"***** TX TEST ******!!%s,%s,%d\n",__FILE__,__func__,__LINE__);
 	// initializing buffer
 	mach.tx.raw.data = mach.macl->phy->out.data;
 	mach.tx.raw.size = mach.macl->phy->out.size;
@@ -750,6 +726,10 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 	   }
 	   */
 	status = macl_xmit_sync(mach.tx.raw);
+	if(status == STATUS_OK)
+	{
+		status = mach.rx.rssi;
+	}
 	// @issue arib should be implemented later.
 	/*
 	   if(status == STATUS_OK)
@@ -782,16 +762,14 @@ int mach_sleep(bool on)
 int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 {
 	int status=STATUS_OK;
+	uint8_t rssi;
 
-	// check rx buffer
+	// end of sending ack during rx
 	if(!rx) {
-		printk(KERN_INFO"Receiving!! %s,%s,%d\n",__FILE__,__func__,__LINE__);
-		PAYLOADDUMP(mach.rx.raw.data, mach.rx.raw.len);
-		mach_rx_irq(&mach.rx);
-		goto end;
+		goto update;
 	}
 
-	// rx disable
+	// receiving data during tx
 	if(ack) {
 		// initialize ack buffer
 		ack->data = NULL;
@@ -813,22 +791,42 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 	if ((mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_DATA) ||
 			(mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_CMD)) {
 		// check sequence number
-		if(mach_match_seq_num()!=true) {
-			// rx data is copy to previous
-			memcpy(&mach.rx_prev,&mach.rx,sizeof(mach.rx));
-		}
-		if ((mach.rx.fc.fc_bit.ack_req) &&
+		if ((mach.rx.fc.fc_bit.ack_req) &&		// ack is requested
 				(ack) &&
 				(!mach.promiscuous) ) {
 			if(mach_make_ack_header()) {
 				ack->data = mach.ack.raw.data;
 				ack->len = mach.ack.raw.len;
 				ack->size = mach.ack.raw.size;
+				goto end;
 			}
 		}
 	} else if (mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_ACK) {
 		if(mach.rx.seq == mach.tx.seq) status = 1;				// check ack
-	} else {
+		goto end;
+	} else {									// other data type
+	}
+
+update:
+	// copy data, if output buffer is available.
+	if(mach.rx.raw.size >= mach.rx.input.len)
+		memcpy(mach.rx.raw.data,mach.rx.input.data,mach.rx.input.len);
+	else
+		goto end;
+
+	if(mach_match_seq_num()==false) {		// check sequence number
+		// rx data is copy to previous
+		memcpy(&mach.rx_prev,&mach.rx,sizeof(mach.rx));
+
+		// get rssi
+		mach.rx.rssi = rssi;
+		mach_rx_irq(&mach.rx);
+	} else {								// match sequence number
+#ifdef LAZURITE_IDE
+		if(module_test & MODE_MACH_DEBUG) {
+			printk(KERN_INFO"Same sequence number!! %s,%s,%d\n",__FILE__,__func__,__LINE__);
+		}
+#endif
 	}
 
 end:

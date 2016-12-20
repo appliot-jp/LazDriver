@@ -242,7 +242,7 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 {
 	SUBGHZ_MSG msg;
 	int result;
-	uint8_t rssi;
+	//uint8_t rssi;
 	struct mac_fc_alignment fc;
 	
 	// setting tx callback
@@ -271,28 +271,17 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 	mach_set_src_addr(IEEE802154_FC_ADDR_SHORT);
 	subghz_param.sending = true;
 	result = mach_tx(fc,subghz_param.addr_type,&subghz_param.tx);
-	mach_ed(&rssi);
+	//mach_ed(&rssi);
 	//subghz_txdone(rssi,result);
 	subghz_param.sending = false;
 
-	switch(result){
-		case STATUS_OK:
-			msg = SUBGHZ_OK;
-			break;
-		case -EBUSY:
-			msg = SUBGHZ_TX_CCA_FAIL;
-			goto error;
-			break;
-		break;
-		case -ETIMEDOUT:
-			msg = SUBGHZ_TX_ACK_FAIL;
-			goto error;
-			break;
-		default:
-			msg = SUBGHZ_TX_FAIL;
-			goto error;
-			break;
+	if(result > 0){
+		msg = SUBGHZ_OK;
+		subghz_param.tx_stat.rssi = result;
+		subghz_param.tx_stat.status = result;
 	}
+	else if(result == -EBUSY) msg = SUBGHZ_TX_CCA_FAIL;
+	else if(result == -ETIMEDOUT) msg = SUBGHZ_TX_ACK_FAIL;
 
 	/*
 	 * @issue delete halt until complete. this function is set in phy.
@@ -306,21 +295,18 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 		goto error_not_send;
 	}
 	*/
-error:
+//error:
 	return msg;
 }
 
 int mach_rx_irq(struct mac_header *rx)
 {
 
-	printk(KERN_INFO"Receiving!! %s,%s,%d\n",__FILE__,__func__,__LINE__);
 	subghz_param.rx_stat.rssi = rx->rssi;
 	subghz_param.rx_stat.status = rx->raw.len;
 
-	printk(KERN_INFO"Receiving!! %s,%s,%d\n",__FILE__,__func__,__LINE__);
 	if(subghz_param.rx_callback != NULL) {
-		printk(KERN_INFO"Receiving!! %s,%s,%d\n",__FILE__,__func__,__LINE__);
-//		subghz_param.rx_callback(rx->raw.data, rx->rssi, rx->raw.len);
+		subghz_param.rx_callback(rx->raw.data, rx->rssi, rx->raw.len);
 	}
 	return STATUS_OK;
 }
