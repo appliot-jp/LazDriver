@@ -131,7 +131,18 @@ class TestClass < Minitest::Test
 		@@laz.init(module_test = 0xff00)
 		@@laz.begin(48,0xabcd,100,20)
 		@@laz.send(0xabcd,0x1234,"hello")
+		p @@laz.get_tx_rssi()
 		@@laz.rxEnable()
+		sleep 0.5
+		p @@laz.available()
+		rcv = @@laz.read()
+		p rcv
+		p @@laz.available()
+		rcv = @@laz.read()
+		p rcv
+		p @@laz.available()
+		rcv = @@laz.read()
+		p rcv
 		@@laz.remove()
 	end
 end
