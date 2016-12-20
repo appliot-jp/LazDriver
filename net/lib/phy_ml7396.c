@@ -265,9 +265,12 @@ static PHY_PARAM phy;
    size: The number of the data to read and write
    rdata[]: Sequence to store the data which I began to read in
  ******************************************************************************/
-static void ml7396_hwif_spi_transfer(const uint8_t *wdata, uint8_t *rdata, uint8_t size) {
-
+static void ml7396_hwif_spi_transfer(const uint8_t *wdata, uint8_t *rdata, uint8_t size)
+{
     uint8_t wsize, rsize;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
     if(wdata[0]&REG_ADR_WRITE_BIT) {
             wsize = size;
             rsize = 0;
@@ -290,6 +293,9 @@ static void ml7396_hwif_spi_transfer(const uint8_t *wdata, uint8_t *rdata, uint8
  * @exception ignore
  ******************************************************************************/
 static void regbank(uint8_t bank) {
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
     if (bank&0x0b){
         if (bank != reg.bank) {
             reg.wdata[0] = (0x00<<1)|0x01, reg.wdata[1] = bank&0x03;
@@ -310,8 +316,11 @@ static void regbank(uint8_t bank) {
  * data: write data
  * size: data size
  ******************************************************************************/
-static void ml7396_regwrite(uint8_t bank, uint8_t addr, const uint8_t *data, uint8_t size)
+static void reg_wr(uint8_t bank, uint8_t addr, const uint8_t *data, uint8_t size)
 {
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
 //	__DI();
     if (reg.lock++) {
         --reg.lock;
@@ -331,7 +340,11 @@ static void ml7396_regwrite(uint8_t bank, uint8_t addr, const uint8_t *data, uin
  * data: store readind data
  * size: data size
  ******************************************************************************/
-static void ml7396_regread(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
+static void reg_rd(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size)
+{
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
 //	__DI();
     if (reg.lock++) {
         --reg.lock;
@@ -364,7 +377,7 @@ static void sint_handler(void) {
 
 		em_data.store_hw_event = hw_event;
 		if(hw_event & HW_EVENT_CCA_DONE){
-			ml7396_regread(REG_ADR_CCA_CNTRL, &em_data.cca_rslt, 1);
+			reg_rd(REG_ADR_CCA_CNTRL, &em_data.cca_rslt, 1);
 			em_data.cca_rslt &= 0x03;
 		}
 		hw_event &= ~HW_EVENT_TX_FIFO_DONE;
@@ -399,42 +412,15 @@ static void timer_handler(void) {
  ******************************************************
  */
 /******************************************************************************/
-/*! @brief Hardware interface function
-    Neighboring device initialization of the L7396 module
-    Preparations for SPI bus data communication
-    Preparations for SINTN interrupt control
-    Clear and start of the elapsed time timer
-    Preparations for time-out interrupt control
-    Hardware reset with the RESET termin
-   @return  more than 0=STATUS_OK, less than 0= error num
- ******************************************************************************/
-int ml7396_hwif_init(void) {
-    int status = -1;
-    uint32_t wait_t;
-
-    hwif.timer.handler = NULL;
-#ifdef ML7396_HWIF_NOTHAVE_TIMER_DI
-    hwif.timer.active = Disable;
-    hwif.timer.call_count = 0;
-#endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
-    status = HAL_init(0x50,8);
-	if(status != 0) return status;
-//  HAL_SPI_setup();
-//  HAL_GPIO_setup();
-    HAL_TIMER_setup();
-//  HAL_I2C_setup();
-    ml7396_hwif_timer_tick(&wait_t);
-    status = 0;
-    return status;
-}
-
-/******************************************************************************/
 /*! @brief Interrupt handler registration of the ML7396 module
  * @detail Handler of the interrupt that SINTN terminal generates at 'L' level
  ******************************************************************************/
-int ml7396_hwif_sint_handler(void (*func)(void)) {
+int phy_sint_handler(void (*func)(void))
+{
     int status = -1;
-
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
     HAL_GPIO_setInterrupt(func);
     status = 0;
     return status;
@@ -444,9 +430,12 @@ int ml7396_hwif_sint_handler(void (*func)(void)) {
 /*! @brief Enable interrupt
  * @detail Interrupt permission delay cancellation of the ML7396 module
  ******************************************************************************/
-int ml7396_hwif_sint_ei(void) {
+int phy_sint_ei(void)
+{
     int status = -1;
-
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
     HAL_GPIO_enableInterrupt();
     status = 0;
     return status;
@@ -457,9 +446,12 @@ int ml7396_hwif_sint_ei(void) {
  * @detail The delay that interrupt of the ML7396 module is prohibited in it.
  *         I delay whether it is admitted again until I am cleared.
  ******************************************************************************/
-int ml7396_hwif_sint_di(void) {
+int phy_sint_di(void)
+{
     int status = -1;
-
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
     HAL_GPIO_disableInterrupt();
     status = 0;
     return status;
@@ -469,9 +461,12 @@ int ml7396_hwif_sint_di(void) {
 /*! @brief Time-out interrupt handler registration
  * @detail func: Interrupt handler function
  ******************************************************************************/
-int ml7396_hwif_timer_handler(void (*func)(void)) {
+int phy_timer_handler(void (*func)(void))
+{
     int status = -1;
-
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
     hwif.timer.handler = func;
     status = 0;
     return status;
@@ -482,9 +477,12 @@ int ml7396_hwif_timer_handler(void (*func)(void)) {
  * @detail func: The delay that time-out interrupt is prohibited in it.
            I delay whether it is admitted again until I am cleared.
  ******************************************************************************/
-int ml7396_hwif_timer_ei(void) {
+int phy_timer_ei(void)
+{
     int status = -1;
-
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
 #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI
     switch (hwif.timer.active) {
     case Disable:
@@ -510,9 +508,12 @@ int ml7396_hwif_timer_ei(void) {
  * @detail The delay that time-out interrupt is prohibited in it.
  I delay whether it is admitted again until I am cleared.
  ******************************************************************************/
-int ml7396_hwif_timer_di(void) {
+int phy_timer_di(void)
+{
     int status = -1;
-
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
 #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI
     switch (hwif.timer.active) {
     case Disable:
@@ -533,9 +534,12 @@ int ml7396_hwif_timer_di(void) {
  * @detail I produce an interrupt after progress at designation time
  * msec: Time before producing a time-out interrupt (appoint it by a msec unit)
  ******************************************************************************/
-int ml7396_hwif_timer_start(uint16_t msec) {
+int phy_timer_start(uint16_t msec)
+{
     int status = -1;
-
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
 #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI
     HAL_TIMER_start(msec, timer_handler);
 #else  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
@@ -550,9 +554,12 @@ int ml7396_hwif_timer_start(uint16_t msec) {
  * @detail I produce an interrupt after progress at designation time
  * msec: Time before producing a time-out interrupt (appoint it by a msec unit)
  ******************************************************************************/
-int ml7396_hwif_timer_stop(void) {
+int phy_timer_stop(void)
+{
     int status = -1;
-
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
     HAL_TIMER_stop();
     status = 0;
     return status;
@@ -564,18 +571,19 @@ int ml7396_hwif_timer_stop(void) {
            I acquire an elapsed time from neighboring device initialization.
            msec: The elapsed time when acquired it (msec unit).
  ******************************************************************************/
-int ml7396_hwif_timer_tick(uint32_t *msec) {
+int phy_timer_tick(uint32_t *msec)
+{
     int status = -1;
-
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
     HAL_TIMER_getTick(msec);
     status = 0;
     return status;
 }
 
-
-
 /******************************************************************************/
-/*! @brief Register setting of ML7396
+/*! @brief Register setting of phy
  * @detail 
        Channel setting
        Bandwidth setting
@@ -584,101 +592,104 @@ int ml7396_hwif_timer_tick(uint32_t *msec) {
        Setting peculiar to other devices
        awaiting first clock stability and the last calibration practice are unnecessary
  ******************************************************************************/
-int ml7396_hwif_regset(void *data) {
+int phy_regset(void *data)
+{
     int status = -1;
     Setup *setup = (Setup *)data;
     const REGSET *regset;
     uint8_t reg_data[4];
-
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
     HAL_I2C_read(0x23, reg_data, 1), setup->device_id = reg_data[0];
-    reg_data[0] = 0x0f, ml7396_regwrite(REG_ADR_CLK_SET,             reg_data, 1);
-    reg_data[0] = 0x22, ml7396_regwrite(REG_ADR_RX_PR_LEN_SFD_LEN,   reg_data, 1);
-    reg_data[0] = 0x00, ml7396_regwrite(REG_ADR_SYNC_CONDITION,      reg_data, 1);
+    reg_data[0] = 0x0f, reg_wr(REG_ADR_CLK_SET,             reg_data, 1);
+    reg_data[0] = 0x22, reg_wr(REG_ADR_RX_PR_LEN_SFD_LEN,   reg_data, 1);
+    reg_data[0] = 0x00, reg_wr(REG_ADR_SYNC_CONDITION,      reg_data, 1);
 #ifdef LAZURITE_MINI
-    reg_data[0] = 0x02, ml7396_regwrite(REG_ADR_2DIV_CNTRL,          reg_data, 1);
+    reg_data[0] = 0x02, reg_wr(REG_ADR_2DIV_CNTRL,          reg_data, 1);
 #else
     if (setup->device_id == DEIVE_ID_LAPIS)
-        reg_data[0] = 0x0A, ml7396_regwrite(REG_ADR_2DIV_CNTRL,          reg_data, 1);
+        reg_data[0] = 0x0A, reg_wr(REG_ADR_2DIV_CNTRL,          reg_data, 1);
     else
-        reg_data[0] = 0x04, ml7396_regwrite(REG_ADR_2DIV_CNTRL,          reg_data, 1);
+        reg_data[0] = 0x04, reg_wr(REG_ADR_2DIV_CNTRL,          reg_data, 1);
 #endif
-    reg_data[0] = 0x04, ml7396_regwrite(REG_ADR_SYNC_MODE,           reg_data, 1);
-    reg_data[0] = 0x10, ml7396_regwrite(REG_ADR_RAMP_CNTRL,          reg_data, 1);
-    reg_data[0] = 0x1e, ml7396_regwrite(REG_ADR_GAIN_MtoL,           reg_data, 1);
-    reg_data[0] = 0x02, ml7396_regwrite(REG_ADR_GAIN_LtoM,           reg_data, 1);
-    reg_data[0] = 0x9e, ml7396_regwrite(REG_ADR_GAIN_HtoM,           reg_data, 1);
-    reg_data[0] = 0x02, ml7396_regwrite(REG_ADR_GAIN_MtoH,           reg_data, 1);
-    reg_data[0] = 0x15, ml7396_regwrite(REG_ADR_RSSI_ADJ_M,          reg_data, 1);
-    reg_data[0] = 0x2b, ml7396_regwrite(REG_ADR_RSSI_ADJ_L,          reg_data, 1);
-    reg_data[0] = 0x22, ml7396_regwrite(REG_ADR_RSSI_STABLE_TIME,    reg_data, 1);
-    reg_data[0] = 0xd4, ml7396_regwrite(REG_ADR_RSSI_VAL_ADJ,        reg_data, 1);
-    reg_data[0] = 0x01, ml7396_regwrite(REG_ADR_AFC_CNTRL,           reg_data, 1);
-    reg_data[0] = 0xaa, ml7396_regwrite(REG_ADR_PREAMBLE_SET,        reg_data, 1);
-    reg_data[0] = 0x09, ml7396_regwrite(REG_ADR_SFD1_SET1,           reg_data, 1);
-    reg_data[0] = 0x72, ml7396_regwrite(REG_ADR_SFD1_SET2,           reg_data, 1);
-    reg_data[0] = 0xf6, ml7396_regwrite(REG_ADR_SFD1_SET3,           reg_data, 1);
-    reg_data[0] = 0x72, ml7396_regwrite(REG_ADR_SFD1_SET4,           reg_data, 1);
-    reg_data[0] = 0x5e, ml7396_regwrite(REG_ADR_SFD2_SET1,           reg_data, 1);
-    reg_data[0] = 0x70, ml7396_regwrite(REG_ADR_SFD2_SET2,           reg_data, 1);
-    reg_data[0] = 0xc6, ml7396_regwrite(REG_ADR_SFD2_SET3,           reg_data, 1);
-    reg_data[0] = 0xb4, ml7396_regwrite(REG_ADR_SFD2_SET4,           reg_data, 1);
-    reg_data[0] = 0xb6, ml7396_regwrite(REG_ADR_2DIV_GAIN_CNTRL,     reg_data, 1);
-    reg_data[0] = 0x84, ml7396_regwrite(1,0x39,                      reg_data, 1);  /* Hidden register */
-    reg_data[0] = 0x8f, ml7396_regwrite(REG_ADR_PLL_CTRL,            reg_data, 1);
-    reg_data[0] = 0x32, ml7396_regwrite(REG_ADR_RX_ON_ADJ2,          reg_data, 1);
-    reg_data[0] = 0x0f, ml7396_regwrite(REG_ADR_LNA_GAIN_ADJ_M,      reg_data, 1);
-    reg_data[0] = 0x01, ml7396_regwrite(REG_ADR_LNA_GAIN_ADJ_L,      reg_data, 1);
-    reg_data[0] = 0xff, ml7396_regwrite(REG_ADR_MIX_GAIN_ADJ_M,      reg_data, 1);
-    reg_data[0] = 0xff, ml7396_regwrite(REG_ADR_MIX_GAIN_ADJ_L,      reg_data, 1);
-    reg_data[0] = 0xb4, ml7396_regwrite(REG_ADR_TX_OFF_ADJ1,         reg_data, 1);
-    reg_data[0] = 0x01, ml7396_regwrite(REG_ADR_RSSI_SLOPE_ADJ,      reg_data, 1);
-    reg_data[0] = 0x04, ml7396_regwrite(REG_ADR_PA_ON_ADJ,           reg_data, 1);
-    reg_data[0] = 0x0a, ml7396_regwrite(REG_ADR_RX_ON_ADJ,           reg_data, 1);
-    reg_data[0] = 0x00, ml7396_regwrite(REG_ADR_RXD_ADJ,             reg_data, 1);
-    reg_data[0] = 0x2c, ml7396_regwrite(2,0x2d,                      reg_data, 1);  /* Hidden register */
-    reg_data[0] = 0xc0, ml7396_regwrite(2,0x2e,                      reg_data, 1);  /* Hidden register */
-    reg_data[0] = 0x17, ml7396_regwrite(2,0x2f,                      reg_data, 1);  /* Hidden register */
-    reg_data[0] = 0x17, ml7396_regwrite(2,0x30,                      reg_data, 1);  /* Hidden register */
-    HAL_I2C_read(0x2b, reg_data, 1), ml7396_regwrite(REG_ADR_PA_ADJ1, reg_data, 1);  /*  1mW rough adjustment */
-    HAL_I2C_read(0x29, reg_data, 1), ml7396_regwrite(REG_ADR_PA_ADJ3, reg_data, 1);  /* 20mW rough adjustment */
+    reg_data[0] = 0x04, reg_wr(REG_ADR_SYNC_MODE,           reg_data, 1);
+    reg_data[0] = 0x10, reg_wr(REG_ADR_RAMP_CNTRL,          reg_data, 1);
+    reg_data[0] = 0x1e, reg_wr(REG_ADR_GAIN_MtoL,           reg_data, 1);
+    reg_data[0] = 0x02, reg_wr(REG_ADR_GAIN_LtoM,           reg_data, 1);
+    reg_data[0] = 0x9e, reg_wr(REG_ADR_GAIN_HtoM,           reg_data, 1);
+    reg_data[0] = 0x02, reg_wr(REG_ADR_GAIN_MtoH,           reg_data, 1);
+    reg_data[0] = 0x15, reg_wr(REG_ADR_RSSI_ADJ_M,          reg_data, 1);
+    reg_data[0] = 0x2b, reg_wr(REG_ADR_RSSI_ADJ_L,          reg_data, 1);
+    reg_data[0] = 0x22, reg_wr(REG_ADR_RSSI_STABLE_TIME,    reg_data, 1);
+    reg_data[0] = 0xd4, reg_wr(REG_ADR_RSSI_VAL_ADJ,        reg_data, 1);
+    reg_data[0] = 0x01, reg_wr(REG_ADR_AFC_CNTRL,           reg_data, 1);
+    reg_data[0] = 0xaa, reg_wr(REG_ADR_PREAMBLE_SET,        reg_data, 1);
+    reg_data[0] = 0x09, reg_wr(REG_ADR_SFD1_SET1,           reg_data, 1);
+    reg_data[0] = 0x72, reg_wr(REG_ADR_SFD1_SET2,           reg_data, 1);
+    reg_data[0] = 0xf6, reg_wr(REG_ADR_SFD1_SET3,           reg_data, 1);
+    reg_data[0] = 0x72, reg_wr(REG_ADR_SFD1_SET4,           reg_data, 1);
+    reg_data[0] = 0x5e, reg_wr(REG_ADR_SFD2_SET1,           reg_data, 1);
+    reg_data[0] = 0x70, reg_wr(REG_ADR_SFD2_SET2,           reg_data, 1);
+    reg_data[0] = 0xc6, reg_wr(REG_ADR_SFD2_SET3,           reg_data, 1);
+    reg_data[0] = 0xb4, reg_wr(REG_ADR_SFD2_SET4,           reg_data, 1);
+    reg_data[0] = 0xb6, reg_wr(REG_ADR_2DIV_GAIN_CNTRL,     reg_data, 1);
+    reg_data[0] = 0x84, reg_wr(1,0x39,                      reg_data, 1);  /* Hidden register */
+    reg_data[0] = 0x8f, reg_wr(REG_ADR_PLL_CTRL,            reg_data, 1);
+    reg_data[0] = 0x32, reg_wr(REG_ADR_RX_ON_ADJ2,          reg_data, 1);
+    reg_data[0] = 0x0f, reg_wr(REG_ADR_LNA_GAIN_ADJ_M,      reg_data, 1);
+    reg_data[0] = 0x01, reg_wr(REG_ADR_LNA_GAIN_ADJ_L,      reg_data, 1);
+    reg_data[0] = 0xff, reg_wr(REG_ADR_MIX_GAIN_ADJ_M,      reg_data, 1);
+    reg_data[0] = 0xff, reg_wr(REG_ADR_MIX_GAIN_ADJ_L,      reg_data, 1);
+    reg_data[0] = 0xb4, reg_wr(REG_ADR_TX_OFF_ADJ1,         reg_data, 1);
+    reg_data[0] = 0x01, reg_wr(REG_ADR_RSSI_SLOPE_ADJ,      reg_data, 1);
+    reg_data[0] = 0x04, reg_wr(REG_ADR_PA_ON_ADJ,           reg_data, 1);
+    reg_data[0] = 0x0a, reg_wr(REG_ADR_RX_ON_ADJ,           reg_data, 1);
+    reg_data[0] = 0x00, reg_wr(REG_ADR_RXD_ADJ,             reg_data, 1);
+    reg_data[0] = 0x2c, reg_wr(2,0x2d,                      reg_data, 1);  /* Hidden register */
+    reg_data[0] = 0xc0, reg_wr(2,0x2e,                      reg_data, 1);  /* Hidden register */
+    reg_data[0] = 0x17, reg_wr(2,0x2f,                      reg_data, 1);  /* Hidden register */
+    reg_data[0] = 0x17, reg_wr(2,0x30,                      reg_data, 1);  /* Hidden register */
+    HAL_I2C_read(0x2b, reg_data, 1), reg_wr(REG_ADR_PA_ADJ1, reg_data, 1);  /*  1mW rough adjustment */
+    HAL_I2C_read(0x29, reg_data, 1), reg_wr(REG_ADR_PA_ADJ3, reg_data, 1);  /* 20mW rough adjustment */
     switch (setup->txPower) {
     case  1:  /*  1mW */
-        HAL_I2C_read(0x2c, reg_data, 1), ml7396_regwrite(REG_ADR_PA_REG_FINE_ADJ, reg_data, 1);
-        reg_data[0] = 0x01, ml7396_regwrite(REG_ADR_PA_CNTRL,                    reg_data, 1);
+        HAL_I2C_read(0x2c, reg_data, 1), reg_wr(REG_ADR_PA_REG_FINE_ADJ, reg_data, 1);
+        reg_data[0] = 0x01, reg_wr(REG_ADR_PA_CNTRL,                    reg_data, 1);
         break;
     case 20:  /* 20mW */
-        HAL_I2C_read(0x2a, reg_data, 1), ml7396_regwrite(REG_ADR_PA_REG_FINE_ADJ, reg_data, 1);
-        reg_data[0] = 0x13, ml7396_regwrite(REG_ADR_PA_CNTRL,                    reg_data, 1);
+        HAL_I2C_read(0x2a, reg_data, 1), reg_wr(REG_ADR_PA_REG_FINE_ADJ, reg_data, 1);
+        reg_data[0] = 0x13, reg_wr(REG_ADR_PA_CNTRL,                    reg_data, 1);
         break;
     default:
         goto error;
     }
-    reg_data[0] = 0x0f, ml7396_regwrite(REG_ADR_SW_OUT_RAMP_ADJ,     reg_data, 1);
-    reg_data[0] = 0x08, ml7396_regwrite(REG_ADR_IQ_MAG_ADJ,          reg_data, 1);
-    reg_data[0] = 0x20, ml7396_regwrite(REG_ADR_IQ_PHASE_ADJ,        reg_data, 1);
+    reg_data[0] = 0x0f, reg_wr(REG_ADR_SW_OUT_RAMP_ADJ,     reg_data, 1);
+    reg_data[0] = 0x08, reg_wr(REG_ADR_IQ_MAG_ADJ,          reg_data, 1);
+    reg_data[0] = 0x20, reg_wr(REG_ADR_IQ_PHASE_ADJ,        reg_data, 1);
 #ifdef LAZURITE_MINI
-    reg_data[0] = 0x07, ml7396_regwrite(REG_ADR_PA_REG_ADJ1,         reg_data, 1);
-    reg_data[0] = 0x07, ml7396_regwrite(REG_ADR_PA_REG_ADJ2,         reg_data, 1);
-    reg_data[0] = 0x07, ml7396_regwrite(REG_ADR_PA_REG_ADJ3,         reg_data, 1);
-    reg_data[0] = 0x30, ml7396_regwrite(REG_ADR_CCA_LEVEL,           reg_data, 1);
+    reg_data[0] = 0x07, reg_wr(REG_ADR_PA_REG_ADJ1,         reg_data, 1);
+    reg_data[0] = 0x07, reg_wr(REG_ADR_PA_REG_ADJ2,         reg_data, 1);
+    reg_data[0] = 0x07, reg_wr(REG_ADR_PA_REG_ADJ3,         reg_data, 1);
+    reg_data[0] = 0x30, reg_wr(REG_ADR_CCA_LEVEL,           reg_data, 1);
 #else
-    reg_data[0] = 0x06, ml7396_regwrite(REG_ADR_PA_REG_ADJ1,         reg_data, 1);
-    reg_data[0] = 0x01, ml7396_regwrite(REG_ADR_PA_REG_ADJ2,         reg_data, 1);
-    reg_data[0] = 0x01, ml7396_regwrite(REG_ADR_PA_REG_ADJ3,         reg_data, 1);
-    reg_data[0] = 0x55, ml7396_regwrite(REG_ADR_CCA_LEVEL,           reg_data, 1);
+    reg_data[0] = 0x06, reg_wr(REG_ADR_PA_REG_ADJ1,         reg_data, 1);
+    reg_data[0] = 0x01, reg_wr(REG_ADR_PA_REG_ADJ2,         reg_data, 1);
+    reg_data[0] = 0x01, reg_wr(REG_ADR_PA_REG_ADJ3,         reg_data, 1);
+    reg_data[0] = 0x55, reg_wr(REG_ADR_CCA_LEVEL,           reg_data, 1);
 #endif
-    reg_data[0] = 0x04, ml7396_regwrite(REG_ADR_TX_PR_LEN,           reg_data, 1);  /* more than 0x04 */
-    reg_data[0] = 0x1f, ml7396_regwrite(REG_ADR_RSSI_LPF_ADJ,        reg_data, 1);
-    reg_data[0] = 0x44, ml7396_regwrite(REG_ADR_PLL_CP_ADJ,          reg_data, 1);
-    HAL_I2C_read(0x2d, reg_data, 1), ml7396_regwrite(REG_ADR_OSC_ADJ, reg_data, 1);  /* XA */
+    reg_data[0] = 0x04, reg_wr(REG_ADR_TX_PR_LEN,           reg_data, 1);  /* more than 0x04 */
+    reg_data[0] = 0x1f, reg_wr(REG_ADR_RSSI_LPF_ADJ,        reg_data, 1);
+    reg_data[0] = 0x44, reg_wr(REG_ADR_PLL_CP_ADJ,          reg_data, 1);
+    HAL_I2C_read(0x2d, reg_data, 1), reg_wr(REG_ADR_OSC_ADJ, reg_data, 1);  /* XA */
     if (setup->device_id == DEIVE_ID_LAPIS) {
-        HAL_I2C_read(0x80, reg_data, 1), ml7396_regwrite(REG_ADR_OSC_ADJ2, reg_data, 1);  /* XA */
-    //  reg_data[0] = 0x06, ml7396_regwrite(REG_ADR_OSC_ADJ2, reg_data, 1);  /* XA */
-    //  reg_data[0] = 0x58, ml7396_regwrite(REG_ADR_OSC_ADJ, reg_data, 1);  /* XA */
+        HAL_I2C_read(0x80, reg_data, 1), reg_wr(REG_ADR_OSC_ADJ2, reg_data, 1);  /* XA */
+    //  reg_data[0] = 0x06, reg_wr(REG_ADR_OSC_ADJ2, reg_data, 1);  /* XA */
+    //  reg_data[0] = 0x58, reg_wr(REG_ADR_OSC_ADJ, reg_data, 1);  /* XA */
     }
 //#ifdef LAZURITE_MINI
-//    HAL_I2C_read(0x81, reg_data, 1), ml7396_regwrite(REG_ADR_PA_REG_ADJ3, reg_data, 1);
-//    HAL_I2C_read(0x82, reg_data, 1), ml7396_regwrite(REG_ADR_RF_CNTRL_SET, reg_data, 1);
+//    HAL_I2C_read(0x81, reg_data, 1), reg_wr(REG_ADR_PA_REG_ADJ3, reg_data, 1);
+//    HAL_I2C_read(0x82, reg_data, 1), reg_wr(REG_ADR_RF_CNTRL_SET, reg_data, 1);
 //#endif
     /* variableness level setting */
     switch (setup->rate) {
@@ -692,7 +703,7 @@ int ml7396_hwif_regset(void *data) {
         goto error;
     }
     /* rate setting */
-    reg_data[0] = regset->rate, ml7396_regwrite(REG_ADR_DATA_SET, reg_data, 1);
+    reg_data[0] = regset->rate, reg_wr(REG_ADR_DATA_SET, reg_data, 1);
     {/* frequency setting */
         uint32_t freq_ch0, freq_min;
         uint8_t n4, a;
@@ -704,13 +715,13 @@ int ml7396_hwif_regset(void *data) {
             goto error;
         /* CCA IDLE WAIT time setting */
         if (setup->channel <= 32) {
-            reg_data[0] = 0x01, ml7396_regwrite(REG_ADR_IDLE_WAIT_H, reg_data, 1);
-            reg_data[0] = 0x18, ml7396_regwrite(REG_ADR_IDLE_WAIT_L, reg_data, 1);
+            reg_data[0] = 0x01, reg_wr(REG_ADR_IDLE_WAIT_H, reg_data, 1);
+            reg_data[0] = 0x18, reg_wr(REG_ADR_IDLE_WAIT_L, reg_data, 1);
         } else
         if (setup->channel <= 61 ) {
-            reg_data[0] = 0x00, ml7396_regwrite(REG_ADR_IDLE_WAIT_H, reg_data, 1);
+            reg_data[0] = 0x00, reg_wr(REG_ADR_IDLE_WAIT_H, reg_data, 1);
         // ARIB 5ms:idle_wait=on, 1.7us:idle_wait=off
-            reg_data[0] = 0x64, ml7396_regwrite(REG_ADR_IDLE_WAIT_L, reg_data, 1);
+            reg_data[0] = 0x64, reg_wr(REG_ADR_IDLE_WAIT_L, reg_data, 1);
         }
         freq_ch0 = regset->freq[setup->channel - 24];
         /* which assumes a value having lower 2MHz than CH0 frequency a calibration lower limit level
@@ -726,16 +737,16 @@ int ml7396_hwif_regset(void *data) {
         f = (freq_ch0 - ((n4 + a) << 20)) & 0x0fffff;
         reg_data[0] = f >>  0 & 0xff, reg_data[1] = f >>  8 & 0xff, reg_data[2] = f >> 16 & 0x0f;
         reg_data[3] = n4 << 2 | a;
-        ml7396_regwrite(REG_ADR_CH0_FL, reg_data, 4);  /* A special command: I set a value of bp.param[BP_PARAM_CH0_FL] */
+        reg_wr(REG_ADR_CH0_FL, reg_data, 4);  /* A special command: I set a value of bp.param[BP_PARAM_CH0_FL] */
         n4 = (INTQ(freq_min >> 2, 20) & 0x0f) << 2;  /* 4 times level of n */
         a = (INTQ(freq_min, 20) - n4) & 0x03;
         f = (freq_min - ((n4 + a) << 20)) & 0x0fffff;
         reg_data[0] = f >>  0 & 0xff, reg_data[1] = f >>  8 & 0xff, reg_data[2] = f >> 16 & 0x0f;
         reg_data[3] = n4 << 2 | a;  /* These data are not used */
         /* A special command: I set a value of bp.param[BP_PARAM_MIN_FL] */
-        ml7396_regwrite(REG_ADR_VCO_CAL_MIN_FL, reg_data, 3);
+        reg_wr(REG_ADR_VCO_CAL_MIN_FL, reg_data, 3);
         /* bandwidth 400kHz */
-        reg_data[0] = 0x07, ml7396_regwrite(REG_ADR_VCO_CAL_MAX_N, reg_data, 1);
+        reg_data[0] = 0x07, reg_wr(REG_ADR_VCO_CAL_MAX_N, reg_data, 1);
     }
     {
         uint16_t n;
@@ -743,48 +754,48 @@ int ml7396_hwif_regset(void *data) {
         /* bandwidth setting */
         n = regset->chspc / 36;
         reg_data[0] = n >>  0 & 0xff, reg_data[1] = n >>  8 & 0xff;
-        ml7396_regwrite(REG_ADR_CH_SPACE_L, reg_data, 2);
+        reg_wr(REG_ADR_CH_SPACE_L, reg_data, 2);
         /* IF frequency setting */
         n = regset->iffreq / 36;
         reg_data[0] = n >>  8 & 0xff, reg_data[1] = n >>  0 & 0xff;
-        ml7396_regwrite(REG_ADR_IF_FREQ_H, reg_data, 2);
-        ml7396_regwrite(REG_ADR_IF_FREQ_AFC_H, reg_data, 2);
+        reg_wr(REG_ADR_IF_FREQ_H, reg_data, 2);
+        reg_wr(REG_ADR_IF_FREQ_AFC_H, reg_data, 2);
         n = regset->iffreq_cca / 36;
         reg_data[0] = n >>  8 & 0xff, reg_data[1] = n >>  0 & 0xff;
-        ml7396_regwrite(REG_ADR_IF_FREQ_CCA_H, reg_data, 2);
+        reg_wr(REG_ADR_IF_FREQ_CCA_H, reg_data, 2);
     }
     {  /* BPF setting */
         uint8_t bpf;
         uint16_t n;
 
-        ml7396_regread(REG_ADR_BPF_ADJ_OFFSET, reg_data, 1), bpf = reg_data[0];
+        reg_rd(REG_ADR_BPF_ADJ_OFFSET, reg_data, 1), bpf = reg_data[0];
         if (bpf & 0x80)
             n = regset->ref + (uint16_t)INTQ((uint32_t)(bpf & 0x7f) * regset->coef, 14);
         else
             n = regset->ref - (uint16_t)INTQ((uint32_t)(bpf & 0x7f) * regset->coef, 14);
         reg_data[0] = n >> 8 & 0xff, reg_data[1] = n >> 0 & 0xff;
-        ml7396_regwrite(REG_ADR_BPF_ADJ_H,     reg_data, 2);
-        ml7396_regwrite(REG_ADR_BPF_AFC_ADJ_H, reg_data, 2);
+        reg_wr(REG_ADR_BPF_ADJ_H,     reg_data, 2);
+        reg_wr(REG_ADR_BPF_AFC_ADJ_H, reg_data, 2);
         if (bpf & 0x80)
             n = regset->ref_cca + (uint16_t)INTQ((uint32_t)(bpf & 0x7f) * regset->coef_cca, 14);
         else
             n = regset->ref_cca - (uint16_t)INTQ((uint32_t)(bpf & 0x7f) * regset->coef_cca, 14);
         reg_data[0] = n >> 8 & 0xff, reg_data[1] = n >> 0 & 0xff;
-        ml7396_regwrite(REG_ADR_BPF_CCA_ADJ_H, reg_data, 2);
+        reg_wr(REG_ADR_BPF_CCA_ADJ_H, reg_data, 2);
     }
 
-    reg_data[0] = 0x2c, ml7396_regwrite(REG_ADR_PRIVATE_BPF_CAP1,  reg_data, 1);
-    reg_data[0] = 0xc0, ml7396_regwrite(REG_ADR_PRIVATE_BPF_CAP2,  reg_data, 1);
-    reg_data[0] = 0x17, ml7396_regwrite(REG_ADR_PRIVATE_BPF_ADJ1,  reg_data, 1);
-    reg_data[0] = 0x17, ml7396_regwrite(REG_ADR_PRIVATE_BPF_ADJ2,  reg_data, 1);
+    reg_data[0] = 0x2c, reg_wr(REG_ADR_PRIVATE_BPF_CAP1,  reg_data, 1);
+    reg_data[0] = 0xc0, reg_wr(REG_ADR_PRIVATE_BPF_CAP2,  reg_data, 1);
+    reg_data[0] = 0x17, reg_wr(REG_ADR_PRIVATE_BPF_ADJ1,  reg_data, 1);
+    reg_data[0] = 0x17, reg_wr(REG_ADR_PRIVATE_BPF_ADJ2,  reg_data, 1);
 
     /* GFSK Frequency shift setting */
     reg_data[0] = regset->fdev >> 0 & 0xff, reg_data[1] = regset->fdev >> 8 & 0xff;
-    reg_data[0] = 0xb0, ml7396_regwrite(REG_ADR_F_DEV_L, reg_data, 2);
+    reg_data[0] = 0xb0, reg_wr(REG_ADR_F_DEV_L, reg_data, 2);
     /* Hidden register setting */
-    reg_data[0] = regset->reg1, ml7396_regwrite(2,0x0e, reg_data, 1);
+    reg_data[0] = regset->reg1, reg_wr(2,0x0e, reg_data, 1);
     /* diversity search setting */
-    reg_data[0] = regset->div, ml7396_regwrite(REG_ADR_2DIV_SEARCH, reg_data, 1);
+    reg_data[0] = regset->div, reg_wr(REG_ADR_2DIV_SEARCH, reg_data, 1);
 
     /* own apparatus address acquisition */
     HAL_I2C_read(0x26, reg_data, 2), setup->address = H2LS(*reg_data);
@@ -797,6 +808,29 @@ error:
 
 PHY_PARAM *phy_init(void)
 {
+    uint8_t reg_data;
+    uint32_t wait_t;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+    hwif.timer.handler = NULL;
+#ifdef ML7396_HWIF_NOTHAVE_TIMER_DI
+    hwif.timer.active = Disable;
+    hwif.timer.call_count = 0;
+#endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
+    HAL_init(0x50,8);
+//  HAL_SPI_setup();
+//  HAL_GPIO_setup();
+    HAL_TIMER_setup();
+//  HAL_I2C_setup();
+    phy_timer_tick(&wait_t);
+
+    /* wait clock */
+	regbank(0xff);
+    do {
+        reg_rd(REG_ADR_CLK_SET, &reg_data, 1);
+    } while (!(reg_data & 0x80));
+
 	memset(reg.rdata,0,sizeof(reg.rdata));
 	memset(reg.wdata,0,sizeof(reg.wdata));
 	phy.in.size = BUFFER_SIZE;
@@ -809,20 +843,353 @@ PHY_PARAM *phy_init(void)
 	return &phy;
 }
 
-int phy_set_trx(uint8_t state)
+void phy_set_trx(uint8_t state)
 {
-    return 0;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+    reg_wr(REG_ADR_RF_STATUS, &state, 1);
 }
+
 int phy_get_trx(void)
 {
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
     return 0;
 }
 int phy_set_cca(void)
 {
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
     return 0;
 }
 int phy_get_ed(void)
 {
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
     return 0;
 }
 
+
+
+
+
+#if 0
+/* コールバック関数呼び出し
+ */
+#define BUFFER_DONE(_buffer) \
+    do { \
+        if ((_buffer)->opt.common.done != NULL) \
+            (_buffer)->opt.common.done(_buffer); \
+    } while (0)
+
+
+/** よく使うレジスタ操作
+ *
+ * 受信手順: (FIFOデータの最後にED値が付く設定である事)
+ *   REG_RXON();
+ *   連続受信時の繰り返し範囲 {
+ *     FIFO_FULL 割り込み待ち
+ *     REG_RXSTART(&buffer);
+ *     REG_RXCONTINUE(&buffer);
+ *     何度か繰り返し {
+ *       FIFO_FULL 割り込み待ち
+ *       REG_RXCONTINUE(&buffer);
+ *     }
+ *     受信完了割り込み待ち
+ *     REG_RXCONTINUE(&buffer);
+ *     REG_RXDONE(&buffer);
+ *   (この時点で受信したデータは揃っている)
+ *     CRCエラー割り込みあり {
+ *       CRCエラー処理
+ *     } else {
+ *       ACKを返す場合 {
+ *         ACKデータに対して「送信手順」を実行
+ *       }
+ *       正常終了処理
+ *     }
+ *   }
+ *   REG_TRXOFF();
+ *
+ * 送信手順: (自動送信OFF(送信完了で自動的にTRX_OFFになる)が有効である事)
+ *   REG_TRXOFF();
+ *   連続送信時の繰り返し範囲 {
+ *     REG_CCAEN(_type);
+ *     REG_RXON();
+ *     CCA検出完了割り込み待ち
+ *     REG_TRXOFF();
+ *     キャリアなし {
+ *       REG_TXSTART(&buffer);
+ *       REG_TXCONTINUE(&buffer);
+ *       何度か繰り返し {
+ *         FIFO_EMPTY 割り込み待ち
+ *         REG_TXCONTINUE(&buffer);
+ *       }
+ *       送信完了割り込み待ち
+ *   (この時点で送信は完了している)
+ *       ACKを待つ場合 {
+ *         ACKデータに対して「受信手順」を実行
+ *       }
+ *       正常終了処理
+ *     } else {
+ *       キャリアありエラー処理
+ *     }
+ *   }
+ */
+
+/* レジスタ1バイト書き込み
+ */
+#define REG_WRB(_addr, _data) \
+    do { \
+        uint8_t _reg_data[1]; \
+        _reg_data[0] = (_data); \
+        ON_ERROR(reg_wr(_addr, _reg_data, 1)); \
+    } while (0)
+
+/* レジスタ1バイト読み出し
+ */
+#define REG_RDB(_addr, _data) \
+    do { \
+        uint8_t _reg_data[1]; \
+        ON_ERROR(reg_rd(_addr, _reg_data, 1));  \
+        (_data) = _reg_data[0]; \
+    } while (0)
+
+/* PHY強制リセット
+ */
+// 2016.06.30 Eiichi Saito: Position measurement tuning
+#define REG_PHYRST() \
+    do { \
+        uint8_t _reg_data[1]; \
+        _reg_data[0] = 0x03; \
+        ON_ERROR(reg_wr(REG_ADR_RF_STATUS, _reg_data, 1)); \
+        HAL_delayMicroseconds(100); \
+        _reg_data[0] = 0x88; \
+        ON_ERROR(reg_wr(REG_ADR_RST_SET, _reg_data, 1)); \
+    } while (0)
+
+
+/* 受信バッファ読み出し(先頭データ)
+ */
+#define REG_RXSTART(_buffer) \
+    do { \
+        uint16_t _data_size; \
+        uint8_t _reg_data[2]; \
+        ASSERT((_buffer)->status == ML7396_BUFFER_INIT); \
+        ON_ERROR(reg_rd(REG_ADR_RD_RX_FIFO, _reg_data, 2)); \
+        _data_size = n2u16(_reg_data) & 0x07ff; \
+        if (_data_size < RXCRC_SIZE) { \
+            (_buffer)->size = 0; \
+            (_buffer)->status = ML7396_BUFFER_ESIZE; \
+        } \
+        else { \
+            _data_size -= RXCRC_SIZE; \
+            (_buffer)->size = _data_size; \
+            if (_data_size > (_buffer)->capacity)  \
+                (_buffer)->status = ML7396_BUFFER_ESIZE; \
+            else \
+                (_buffer)->status = 0; \
+        } \
+    } while (0)
+void REG_RXSTART(ML7396_Buffer *_buffer)
+{
+        uint16_t _data_size;
+        uint8_t _reg_data[2];
+        ASSERT((_buffer)->status == ML7396_BUFFER_INIT);
+        reg_rd(REG_ADR_RD_RX_FIFO, _reg_data, 2);
+        _data_size = n2u16(_reg_data) & 0x07ff; 
+        if (_data_size < RXCRC_SIZE) {
+            (_buffer)->size = 0;
+            (_buffer)->status = ML7396_BUFFER_ESIZE;
+        }
+        else {
+            _data_size -= RXCRC_SIZE;
+            (_buffer)->size = _data_size;
+            if (_data_size > (_buffer)->capacity) 
+                (_buffer)->status = ML7396_BUFFER_ESIZE;
+            else
+                (_buffer)->status = 0;
+        }
+}
+
+/* 受信バッファ読み出し(継続データ)
+ *  CRCとED値は読み出さずに残す
+ */
+#define REG_RXCONTINUE(_buffer) \
+    do { \
+        uint8_t _size; \
+        uint16_t _data_size; \
+        ASSERT((_buffer)->status >= 0); \
+        _size = 256-FIFO_MARGIN; \
+        _data_size = (_buffer)->size - (_buffer)->status; \
+        if (_data_size <= _size) \
+            _size = _data_size; \
+        else \
+            --_size; \
+        if (_size > 0) { \
+            ON_ERROR(reg_rd(REG_ADR_RD_RX_FIFO, (_buffer)->data + (_buffer)->status, _size)); \
+            (_buffer)->status += _size; \
+        } \
+    } while (0)
+
+/* ED値読み出し
+ *  REG_RXCONTINUE() でFIFOに残ったCRCの破棄とED値を読みだすので読み出し処理の最後に実行する事
+ */
+#define REG_RXDONE(_buffer) \
+    do { \
+        uint8_t _reg_data[4]; \
+        ON_ERROR(reg_rd(REG_ADR_RD_RX_FIFO, _reg_data, RXCRC_SIZE)); \
+        ON_ERROR(reg_rd(REG_ADR_RD_RX_FIFO, &(_buffer)->opt.common.ed, 1)); \
+    } while (0)
+
+/* 送信バッファ書き込み(先頭データ)
+ */
+// 2015.05.07 Eiichi Saito : Change PHR CRC length field 0x0800 -> 0x1800
+#define REG_TXSTART(_buffer) \
+    do { \
+        uint16_t _data_size; \
+        uint8_t _reg_data[2]; \
+        ASSERT((_buffer)->status == ML7396_BUFFER_INIT); \
+        _data_size = (_buffer)->size; \
+        if (_data_size > (_buffer)->capacity) \
+            (_buffer)->status = ML7396_BUFFER_ESIZE; \
+        else { \
+            _data_size += TXCRC_SIZE; \
+            _data_size |= 0x1800; \
+            u2n16_set(_data_size, _reg_data); \
+            ON_ERROR(reg_wr(REG_ADR_WR_TX_FIFO, _reg_data, 2)); \
+            (_buffer)->status = 0; \
+        } \
+    } while (0)
+void REG_TXSTART(ML7396_Buffer* _buffer)
+{
+    uint16_t _data_size;
+    uint8_t reg_data[2]; 
+    ASSERT((_buffer)->status == ML7396_BUFFER_INIT); 
+    _data_size = (_buffer)->size; 
+    if (_data_size > (_buffer)->capacity) 
+        (_buffer)->status = ML7396_BUFFER_ESIZE; 
+    else { 
+        _data_size += TXCRC_SIZE; 
+        _data_size |= 0x1800; 
+        u2n16_set(_data_size, reg_data); 
+        reg_wr(REG_ADR_WR_TX_FIFO, reg_data, 2); 
+        (_buffer)->status = 0; 
+    }
+}
+
+/* 送信バッファ書き込み開始(継続データ)
+ * delay 300usecやTX_ONへの遷移中のFIFOアクセス（PLLアンロック）を防止するため。
+ *  必要に応じて自動でML7396の状態を RX_ON に変更
+ *  FIFO_MARGINが32なので_size変数は224、_data_sizeはパケットレングスになる。
+ *  パケットレングスが224以下であれば224以下の値に、244以上であれば224の値を
+ *  FIFOライトする値にする。
+ */
+// 2015.06.08 Eiichi Saito : addition delay
+/*
+#define REG_TXCONTINUE(_buffer) \
+    do { \
+        uint8_t _size; \
+        uint16_t _data_size; \
+        ASSERT((_buffer)->status >= 0); \
+        _size = 256-FIFO_MARGIN; \
+        _data_size = (_buffer)->size - (_buffer)->status; \
+        if (_data_size <= _size) \
+            _size = _data_size; \
+        if (_size > 0) { \
+            ON_ERROR(reg_wr(REG_ADR_WR_TX_FIFO, (_buffer)->data + (_buffer)->status, _size)); \
+            (_buffer)->status += _size; \
+            HAL_delayMicroseconds(300); \
+        } \
+    } while (0)
+*/
+// 2016.4.21 Eiichi Saito: FAST_TX disable
+#define REG_TXCONTINUE(_buffer) \
+    do { \
+        uint8_t _size; \
+        ASSERT((_buffer)->status >= 0); \
+        _size = (_buffer)->size - (_buffer)->status; \
+        if (_size > 0) { \
+            ON_ERROR(reg_wr(REG_ADR_WR_TX_FIFO, (_buffer)->data + (_buffer)->status, _size)); \
+            (_buffer)->status += _size; \
+            HAL_delayMicroseconds(300); \
+        } \
+    } while (0)
+
+/* CCA実行
+ */
+// 2016.06.30 Eiichi Saito: cca idle
+#define REG_CCAEN(_type) \
+    do { \
+        uint8_t _reg_cca_cntl[1]; \
+        uint8_t _reg_idl_wait[1]; \
+        uint8_t _reg_no_rcv[1]; \
+        _reg_no_rcv[0] = 0x00; \
+        ON_ERROR(reg_wr(REG_ADR_DEMSET3, _reg_no_rcv, 1)); \
+        ON_ERROR(reg_wr(REG_ADR_DEMSET14, _reg_no_rcv, 1)); \
+        if (_type == CCA_STOP) { \
+            _reg_cca_cntl[0] = 0x00; \
+            _reg_idl_wait[0] = 0x00; \
+        } else \
+        if (_type == CCA_FAST) { \
+            _reg_cca_cntl[0] = 0x10; \
+            _reg_idl_wait[0] = 0x00; \
+        } else \
+        if (_type == IDLE_DETECT) { \
+            _reg_cca_cntl[0] = 0x18; \
+            _reg_idl_wait[0] = 0x64; \
+        } else \
+        if (_type == CCA_RETRY) { \
+            _reg_cca_cntl[0] = 0x10; \
+            _reg_idl_wait[0] = 0x64; \
+        } \
+        ON_ERROR(reg_wr(REG_ADR_IDLE_WAIT_L, _reg_idl_wait, 1)); \
+        ON_ERROR(reg_wr(REG_ADR_CCA_CNTRL, _reg_cca_cntl, 1)); \
+    } while (0)
+#endif
+
+
+
+/******************************************************************************/
+/*! @brief Cause of interrupt
+ * @detail Original function was REG_INTSRC
+ * @issue
+ ******************************************************************************/
+void phy_intsrc(uint32_t intsrc)
+{
+    uint8_t reg_data[3];
+    reg_rd(REG_ADR_INT_SOURCE_GRP1, reg_data, 3);
+    intsrc = ((uint32_t)reg_data[0] <<  0) | ((uint32_t)reg_data[1] <<  8) | ((uint32_t)reg_data[2] << 16);
+}
+
+/******************************************************************************/
+/*! @brief Enable interrupt / Diseable interrupt
+ * @detail Original function was REG_INTEN
+ * @issue
+ ******************************************************************************/
+void phy_inten(uint32_t inten)
+{
+    uint8_t reg_data[3];
+    reg_data[0] = (uint8_t)((inten) >>  0) | 0xc0;
+    reg_data[1] = (uint8_t)((inten) >>  8);
+    reg_data[2] = (uint8_t)((inten) >> 16);
+    reg_wr(REG_ADR_INT_SOURCE_GRP1, reg_data, 3);
+    reg_wr(REG_ADR_INT_EN_GRP1, reg_data, 3);
+}
+
+/******************************************************************************/
+/*! @brief Clear interrupt 
+ * @detail Original function was REG_INTCLR
+ * @issue
+ ******************************************************************************/
+void phy_intclr(uint32_t intclr)
+{
+    uint8_t reg_data[3];
+    reg_data[0] = ~(uint8_t)((intclr) >>  0);
+    reg_data[1] = ~(uint8_t)((intclr) >>  8);
+    reg_data[2] = ~(uint8_t)((intclr) >> 16);
+    reg_wr(REG_ADR_INT_SOURCE_GRP1, reg_data, 3);
+}

@@ -46,27 +46,32 @@ typedef struct {
 	BUFFER out;
 } PHY_PARAM;
 
+
 #define PHY_ST_FORCE_TRXOFF      0x03
 #define PHY_ST_RXON              0x06
 #define PHY_ST_TXON              0x09
 #define PHY_ST_TRXOFF            0x08
 
 
-extern int ml7396_hwif_init(void);
-extern int ml7396_hwif_sint_handler(void (*func)(void));
-extern int ml7396_hwif_sint_ei(void);
-extern int ml7396_hwif_sint_di(void);
-extern int ml7396_hwif_timer_handler(void (*func)(void));
-extern int ml7396_hwif_timer_ei(void);
-extern int ml7396_hwif_timer_di(void);
-extern int ml7396_hwif_timer_start(uint16_t msec);
-extern int ml7396_hwif_timer_stop(void);
-extern int ml7396_hwif_timer_tick(uint32_t *msec);
-extern int ml7396_hwif_regset(void *data);
+extern int phy_sint_handler(void (*func)(void));
+extern int phy_sint_ei(void);
+extern int phy_sint_di(void);
+extern int phy_timer_handler(void (*func)(void));
+extern int phy_timer_ei(void);
+extern int phy_timer_di(void);
+extern int phy_timer_start(uint16_t msec);
+extern int phy_timer_stop(void);
+extern int phy_timer_tick(uint32_t *msec);
+extern int phy_regset(void *data);
 extern PHY_PARAM *phy_init(void);
-extern int phy_set_trx(uint8_t state);
+extern void phy_set_trx(uint8_t state);
 extern int phy_get_trx(void);
 extern int phy_set_cca(void);
 extern int phy_get_ed(void);
+extern void phy_intsrc(uint32_t intsrc);
+extern void phy_inten(uint32_t inten);
+extern void phy_intclr(uint32_t intclr);
+
+
 
 #endif

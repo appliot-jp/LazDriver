@@ -32,9 +32,7 @@ MACL_PARAM* macl_init(void)
 {
 	memset(&macl,0,sizeof(MACL_PARAM));
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) {
-		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-	}
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 	macl.phy = phy_init();
 	return &macl;
@@ -115,9 +113,7 @@ int	macl_stop(void)
 {
 	int status=STATUS_OK;
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) {
-		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-	}
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 	return status;
 }
@@ -193,9 +189,7 @@ int	macl_set_txpower(uint32_t mbm)
 {
 	int status=STATUS_OK;
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,mbm);
-	}
+	if(module_test & MODE_MACL_DEBUG)  printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,mbm);
 #endif
 	return status;
 }
@@ -204,9 +198,7 @@ int	macl_ch_scan(uint32_t duration)
 {
 	int status=STATUS_OK;
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,duration);
-	}
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,duration);
 #endif
 	return status;
 }
@@ -227,9 +219,7 @@ int	macl_set_cca_ed_level(uint32_t mbm)
 {
 	int status=STATUS_OK;
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,mbm);
-	}
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,mbm);
 #endif
 	return status;
 }
@@ -237,9 +227,7 @@ int	macl_set_csma_params(uint8_t min_be, uint8_t max_be, uint8_t retries)
 {
 	int status=STATUS_OK;
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,min_be,max_be);
-	}
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,min_be,max_be);
 #endif
 	return status;
 }
@@ -247,9 +235,7 @@ int	macl_set_frame_retries(int8_t retries)
 {
 	int status=STATUS_OK;
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,retries);
-	}
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,retries);
 #endif
 	return status;
 }
@@ -257,9 +243,7 @@ int	macl_set_promiscuous_mode(const bool on)
 {
 	int status=STATUS_OK;
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,on);
-	}
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,on);
 #endif
 	return status;
 }
@@ -268,9 +252,7 @@ int	macl_sleep(bool on)
 {
 	int status=STATUS_OK;
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,on);
-	}
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,on);
 #endif
 	return status;
 }
