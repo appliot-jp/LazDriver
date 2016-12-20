@@ -37,7 +37,39 @@
 #include "phy_lazurite.h"
 #include "phy_ml7396.h"
 
+
+/*
+ ******************************************************
+                    Define section
+ ******************************************************
+ */
 #define BUFFER_SIZE 256
+#define DEIVE_ID_ROHM  0x90
+#define DEIVE_ID_LAPIS 0xD0
+
+/*
+I convert floating point numerical value into Q format fixed-point numerical value
+
+ n: Floating point numerical value (when it is not so to be a fixation level, a floating point arithmetic library is linked)
+ q: Decimal point position
+ type: Model of the return value
+ A return value: Fixed-point numerical value
+*/
+#define FIXQ(n, q, type) ((type)((n) * ((type)1 << (q)) + .5))
+
+/*
+I acquire integer region of the fixed-point numerical value
+ * n: Fixed-point numerical value
+ * q: Decimal point position
+ * A return value: Integer part
+ */
+#define INTQ(n, q) ((n) >> (q))
+
+/*
+ ******************************************************
+                    Struct section
+ ******************************************************
+ */
 static struct {
     volatile uint8_t lock;  // exclusion lock counter  
     uint8_t bank;           // back number
@@ -47,75 +79,6 @@ static struct {
     0,    /* lock */
     0xff  /* bank */
 };
-
-
-static PHY_PARAM phy;
-
-/******************************************************************************/
-/*! @brief change register back
- * valid 0 BANK0
- * valid 1 BANK1
- * valid 2 BANK2
- * valid 8 BANK0 + access enable
- * valid 9 BANK1 + access enable
- * valid 10 BANK2 + access enable
- * @exception ignore
- ******************************************************************************/
-static void regbank(uint8_t bank) {
-    if (bank&0x0b){
-        if (bank != reg.bank) {
-            reg.wdata[0] = (0x00<<1)|0x01, reg.wdata[1] = bank&0x03;
-            if(bank > 2) reg.wdata[1] = reg.wdata[1] | 0x80;
-            ml7396_hwif_spi_transfer(reg.wdata, reg.rdata, 2);
-            reg.bank = bank;
-        }
-    }else{
-        reg.lock = 0;
-        reg.bank = bank;
-    }
-}
-
-/******************************************************************************/
-/*! @brief write register
- * bank: bank number
- * addr: write address
- * data: write data
- * size: data size
- ******************************************************************************/
-static void ml7396_regwrite(uint8_t bank, uint8_t addr, const uint8_t *data, uint8_t size)
-{
-//	__DI();
-    if (reg.lock++) {
-        --reg.lock;
-    }else{
-        regbank(bank);
-        reg.wdata[0] = (addr << 1) | 0x01;
-        memcpy(reg.wdata + 1, data, size);
-        ml7396_hwif_spi_transfer(reg.wdata, reg.rdata, size + 1);
-    }
-//	__EI();
-}
-
-/******************************************************************************/
-/*! @brief read register
- * bank: bank number
- * addr: read address
- * data: store readind data
- * size: data size
- ******************************************************************************/
-static void ml7396_regread(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
-//	__DI();
-    if (reg.lock++) {
-        --reg.lock;
-    }else{
-    regbank(bank);
-    reg.rdata[0] = (addr << 1) | 0x00;
-    memset(reg.rdata + 1, 0xff, size);
-    ml7396_hwif_spi_transfer(reg.rdata, reg.rdata, size + 1);
-    memcpy(data, reg.rdata, size);
-    }
-//	__EI();
-}
 
 static volatile struct {
     struct {                      /* Timer-related parameter */
@@ -152,208 +115,6 @@ static void timer_handler(void) {
 }
 #endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
 
-/******************************************************************************/
-/*! @brief Hardware interface function
-    Neighboring device initialization of the L7396 module
-    Preparations for SPI bus data communication
-    Preparations for SINTN interrupt control
-    Clear and start of the elapsed time timer
-    Preparations for time-out interrupt control
-    Hardware reset with the RESET termin
-   @return  more than 0=STATUS_OK, less than 0= error num
- ******************************************************************************/
-int ml7396_hwif_init(void) {
-    int status = -1;
-    uint32_t wait_t;
-
-    hwif.timer.handler = NULL;
-#ifdef ML7396_HWIF_NOTHAVE_TIMER_DI
-    hwif.timer.active = Disable;
-    hwif.timer.call_count = 0;
-#endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
-    status = HAL_init(0x50,8);
-	if(status != 0) return status;
-//  HAL_SPI_setup();
-//  HAL_GPIO_setup();
-    HAL_TIMER_setup();
-//  HAL_I2C_setup();
-    ml7396_hwif_timer_tick(&wait_t);
-    status = 0;
-    return status;
-}
-
-/******************************************************************************/
-/*! @brief Register access of the ML7396 module
-   The reading and writing of the SPI bus
-   wdata[]: Data sequence to write in
-   size: The number of the data to read and write
-   rdata[]: Sequence to store the data which I began to read in
- ******************************************************************************/
-int ml7396_hwif_spi_transfer(const uint8_t *wdata, uint8_t *rdata, uint8_t size) {
-
-    int status = -1;
-    uint8_t wsize, rsize;
-
-    if(wdata[0]&REG_ADR_WRITE_BIT) {
-            wsize = size;
-            rsize = 0;
-    }else{
-            wsize = 1;
-            rsize = size - wsize;
-    }
-
-    HAL_SPI_transfer(wdata, wsize, rdata, rsize);
-//  HAL_SPI_transfer(wdata, rdata, size);
-    status = 0;
-    return status;
-}
-
-
-/******************************************************************************/
-/*! @brief Interrupt handler registration of the ML7396 module
- * @detail Handler of the interrupt that SINTN terminal generates at 'L' level
- ******************************************************************************/
-int ml7396_hwif_sint_handler(void (*func)(void)) {
-    int status = -1;
-
-    HAL_GPIO_setInterrupt(func);
-    status = 0;
-    return status;
-}
-
-/******************************************************************************/
-/*! @brief Enable interrupt
- * @detail Interrupt permission delay cancellation of the ML7396 module
- ******************************************************************************/
-int ml7396_hwif_sint_ei(void) {
-    int status = -1;
-
-    HAL_GPIO_enableInterrupt();
-    status = 0;
-    return status;
-}
-
-/******************************************************************************/
-/*! @brief Disable interrupt
- * @detail The delay that interrupt of the ML7396 module is prohibited in it.
- *         I delay whether it is admitted again until I am cleared.
- ******************************************************************************/
-int ml7396_hwif_sint_di(void) {
-    int status = -1;
-
-    HAL_GPIO_disableInterrupt();
-    status = 0;
-    return status;
-}
-
-/******************************************************************************/
-/*! @brief time-out interrupt count start
- * @detail I produce an interrupt after progress at designation time
- * msec: Time before producing a time-out interrupt (appoint it by a msec unit)
- ******************************************************************************/
-int ml7396_hwif_timer_start(uint16_t msec) {
-    int status = -1;
-
-#ifdef ML7396_HWIF_NOTHAVE_TIMER_DI
-    HAL_TIMER_start(msec, timer_handler);
-#else  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
-    HAL_TIMER_start(msec, hwif.timer.handler);
-#endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
-    status = 0;
-    return status;
-}
-
-/******************************************************************************/
-/*! @brief time-out interrupt count start
- * @detail I produce an interrupt after progress at designation time
- * msec: Time before producing a time-out interrupt (appoint it by a msec unit)
- ******************************************************************************/
-int ml7396_hwif_timer_stop(void) {
-    int status = -1;
-
-    HAL_TIMER_stop();
-    status = 0;
-    return status;
-}
-
-/******************************************************************************/
-/*! @brief Time-out interrupt handler registration
- * @detail func: Interrupt handler function
- ******************************************************************************/
-int ml7396_hwif_timer_handler(void (*func)(void)) {
-    int status = -1;
-
-    hwif.timer.handler = func;
-    status = 0;
-    return status;
-}
-
-/******************************************************************************/
-/*! @brief Enable time-out interrupt
- * @detail func: The delay that time-out interrupt is prohibited in it.
-           I delay whether it is admitted again until I am cleared.
- ******************************************************************************/
-int ml7396_hwif_timer_ei(void) {
-    int status = -1;
-
-#ifdef ML7396_HWIF_NOTHAVE_TIMER_DI
-    switch (hwif.timer.active) {
-    case Disable:
-        hwif.timer.active = Enable;
-        if (hwif.timer.call_count) {
-            hwif.timer.call_count = 0;
-            if (hwif.timer.handler != NULL)
-                hwif.timer.handler();
-        }
-        break;
-    case Enable:
-        break;
-    }
-#else  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
-    HAL_TIMER_enableInterrupt();
-#endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
-    status = 0;
-    return status;
-}
-
-/******************************************************************************/
-/*! @brief Disable time-out interrupt
- * @detail The delay that time-out interrupt is prohibited in it.
- I delay whether it is admitted again until I am cleared.
- ******************************************************************************/
-int ml7396_hwif_timer_di(void) {
-    int status = -1;
-
-#ifdef ML7396_HWIF_NOTHAVE_TIMER_DI
-    switch (hwif.timer.active) {
-    case Disable:
-        break;
-    case Enable:
-        hwif.timer.active = Disable;
-        break;
-    }
-#else  /** #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
-    HAL_TIMER_disableInterrupt();
-#endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
-    status = 0;
-    return status;
-}
-
-/******************************************************************************/
-/*! @brief Timer tick
- * @detail The acquisition of the elapsed time timer.
-           I acquire an elapsed time from neighboring device initialization.
-           msec: The elapsed time when acquired it (msec unit).
- ******************************************************************************/
-int ml7396_hwif_timer_tick(uint32_t *msec) {
-    int status = -1;
-
-    HAL_TIMER_getTick(msec);
-    status = 0;
-    return status;
-}
-
-
 
 /*
 Register setting argument
@@ -366,27 +127,6 @@ typedef struct {
     uint16_t address;
 } Setup;
 
-
-#define DEIVE_ID_ROHM  0x90
-#define DEIVE_ID_LAPIS 0xD0
-
-/*
-I convert floating point numerical value into Q format fixed-point numerical value
-
- n: Floating point numerical value (when it is not so to be a fixation level, a floating point arithmetic library is linked)
- q: Decimal point position
- type: Model of the return value
- A return value: Fixed-point numerical value
-*/
-#define FIXQ(n, q, type) ((type)((n) * ((type)1 << (q)) + .5))
-
-/*
-I acquire integer region of the fixed-point numerical value
- * n: Fixed-point numerical value
- * q: Decimal point position
- * A return value: Integer part
- */
-#define INTQ(n, q) ((n) >> (q))
 
 /* register setting fixed number */
 
@@ -402,6 +142,8 @@ typedef struct {
     uint8_t reg1;                /* Concealment of register setting */
     uint8_t div;                 /* diversity search setting */
 } REGSET;
+
+
 /* setting fixed number (I do not handle the floating point arithmetic with the CPU and entrust all a compiler) */
 static const REGSET regset_50kbps = {
     0x10,                               /* rate */
@@ -506,16 +248,342 @@ static const REGSET regset_100kbps = {
     0x16                                /* div = more than 0x16 */
 };
 
-/*
- Register setting of ML7396
-   Channel setting
-   Bandwidth setting
-   Communication rate setting
-   Transmission output setting
-   Setting peculiar to other devices
-   awaiting first clock stability and the last calibration practice are unnecessary
-*/
 
+
+static PHY_PARAM phy;
+
+
+/*
+ ******************************************************
+               Private function section
+ ******************************************************
+ */
+/******************************************************************************/
+/*! @brief Register access of the ML7396 module
+   The reading and writing of the SPI bus
+   wdata[]: Data sequence to write in
+   size: The number of the data to read and write
+   rdata[]: Sequence to store the data which I began to read in
+ ******************************************************************************/
+static void ml7396_hwif_spi_transfer(const uint8_t *wdata, uint8_t *rdata, uint8_t size) {
+
+    uint8_t wsize, rsize;
+    if(wdata[0]&REG_ADR_WRITE_BIT) {
+            wsize = size;
+            rsize = 0;
+    }else{
+            wsize = 1;
+            rsize = size - wsize;
+    }
+    HAL_SPI_transfer(wdata, wsize, rdata, rsize);
+}
+
+
+/******************************************************************************/
+/*! @brief change register back
+ * valid 0 BANK0
+ * valid 1 BANK1
+ * valid 2 BANK2
+ * valid 8 BANK0 + access enable
+ * valid 9 BANK1 + access enable
+ * valid 10 BANK2 + access enable
+ * @exception ignore
+ ******************************************************************************/
+static void regbank(uint8_t bank) {
+    if (bank&0x0b){
+        if (bank != reg.bank) {
+            reg.wdata[0] = (0x00<<1)|0x01, reg.wdata[1] = bank&0x03;
+            if(bank > 2) reg.wdata[1] = reg.wdata[1] | 0x80;
+            ml7396_hwif_spi_transfer(reg.wdata, reg.rdata, 2);
+            reg.bank = bank;
+        }
+    }else{
+        reg.lock = 0;
+        reg.bank = bank;
+    }
+}
+
+/******************************************************************************/
+/*! @brief write register
+ * bank: bank number
+ * addr: write address
+ * data: write data
+ * size: data size
+ ******************************************************************************/
+static void ml7396_regwrite(uint8_t bank, uint8_t addr, const uint8_t *data, uint8_t size)
+{
+//	__DI();
+    if (reg.lock++) {
+        --reg.lock;
+    }else{
+        regbank(bank);
+        reg.wdata[0] = (addr << 1) | 0x01;
+        memcpy(reg.wdata + 1, data, size);
+        ml7396_hwif_spi_transfer(reg.wdata, reg.rdata, size + 1);
+    }
+//	__EI();
+}
+
+/******************************************************************************/
+/*! @brief read register
+ * bank: bank number
+ * addr: read address
+ * data: store readind data
+ * size: data size
+ ******************************************************************************/
+static void ml7396_regread(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
+//	__DI();
+    if (reg.lock++) {
+        --reg.lock;
+    }else{
+    regbank(bank);
+    reg.rdata[0] = (addr << 1) | 0x00;
+    memset(reg.rdata + 1, 0xff, size);
+    ml7396_hwif_spi_transfer(reg.rdata, reg.rdata, size + 1);
+    memcpy(data, reg.rdata, size);
+    }
+//	__EI();
+}
+
+#if 0
+/******************************************************************************/
+/*! @brief Sint event handler
+ * @detail 
+ ******************************************************************************/
+static void sint_handler(void) {
+	uint32_t hw_event, hw_done;
+	ml7396_hwif_timer_di();
+	// REG_INTSRC(hw_event);
+	printk(KERN_INFO"%s %s %d %08x\n",__FILE__,__func__,__LINE__,hw_event);
+	hw_done = 0;
+//	em_data.store_hw_event = 0;
+#ifdef LAZURITE_IDE 
+	if((em_data.state == ML7396_StateSending) &&
+			hw_event&(HW_EVENT_CCA_DONE|
+				HW_EVENT_FIFO_EMPTY|HW_EVENT_TX_DONE)) {
+
+		em_data.store_hw_event = hw_event;
+		if(hw_event & HW_EVENT_CCA_DONE){
+			ml7396_regread(REG_ADR_CCA_CNTRL, &em_data.cca_rslt, 1);
+			em_data.cca_rslt &= 0x03;
+		}
+		hw_event &= ~HW_EVENT_TX_FIFO_DONE;
+		REG_INTCLR(hw_event);
+	}else
+#endif
+	{
+		//em_main(&em_data, NULL, 0, hw_event, &hw_done);
+		//REG_INTCLR(hw_done);
+	}
+	ml7396_hwif_timer_ei();
+}
+
+/******************************************************************************/
+/*! @brief Sint event handler
+ * @detail 
+ ******************************************************************************/
+static void timer_handler(void) {
+	uint32_t hw_event, hw_done;
+	ml7396_hwif_sint_di();
+	hw_event = ETIMEDOUT, hw_done = 0;
+	// em_main(&em_data, NULL, 0, hw_event, &hw_done);
+	ml7396_hwif_sint_ei();
+}
+#endif
+
+
+
+/*
+ ******************************************************
+               Public function section
+ ******************************************************
+ */
+/******************************************************************************/
+/*! @brief Hardware interface function
+    Neighboring device initialization of the L7396 module
+    Preparations for SPI bus data communication
+    Preparations for SINTN interrupt control
+    Clear and start of the elapsed time timer
+    Preparations for time-out interrupt control
+    Hardware reset with the RESET termin
+   @return  more than 0=STATUS_OK, less than 0= error num
+ ******************************************************************************/
+int ml7396_hwif_init(void) {
+    int status = -1;
+    uint32_t wait_t;
+
+    hwif.timer.handler = NULL;
+#ifdef ML7396_HWIF_NOTHAVE_TIMER_DI
+    hwif.timer.active = Disable;
+    hwif.timer.call_count = 0;
+#endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
+    status = HAL_init(0x50,8);
+	if(status != 0) return status;
+//  HAL_SPI_setup();
+//  HAL_GPIO_setup();
+    HAL_TIMER_setup();
+//  HAL_I2C_setup();
+    ml7396_hwif_timer_tick(&wait_t);
+    status = 0;
+    return status;
+}
+
+/******************************************************************************/
+/*! @brief Interrupt handler registration of the ML7396 module
+ * @detail Handler of the interrupt that SINTN terminal generates at 'L' level
+ ******************************************************************************/
+int ml7396_hwif_sint_handler(void (*func)(void)) {
+    int status = -1;
+
+    HAL_GPIO_setInterrupt(func);
+    status = 0;
+    return status;
+}
+
+/******************************************************************************/
+/*! @brief Enable interrupt
+ * @detail Interrupt permission delay cancellation of the ML7396 module
+ ******************************************************************************/
+int ml7396_hwif_sint_ei(void) {
+    int status = -1;
+
+    HAL_GPIO_enableInterrupt();
+    status = 0;
+    return status;
+}
+
+/******************************************************************************/
+/*! @brief Disable interrupt
+ * @detail The delay that interrupt of the ML7396 module is prohibited in it.
+ *         I delay whether it is admitted again until I am cleared.
+ ******************************************************************************/
+int ml7396_hwif_sint_di(void) {
+    int status = -1;
+
+    HAL_GPIO_disableInterrupt();
+    status = 0;
+    return status;
+}
+
+/******************************************************************************/
+/*! @brief Time-out interrupt handler registration
+ * @detail func: Interrupt handler function
+ ******************************************************************************/
+int ml7396_hwif_timer_handler(void (*func)(void)) {
+    int status = -1;
+
+    hwif.timer.handler = func;
+    status = 0;
+    return status;
+}
+
+/******************************************************************************/
+/*! @brief Enable time-out interrupt
+ * @detail func: The delay that time-out interrupt is prohibited in it.
+           I delay whether it is admitted again until I am cleared.
+ ******************************************************************************/
+int ml7396_hwif_timer_ei(void) {
+    int status = -1;
+
+#ifdef ML7396_HWIF_NOTHAVE_TIMER_DI
+    switch (hwif.timer.active) {
+    case Disable:
+        hwif.timer.active = Enable;
+        if (hwif.timer.call_count) {
+            hwif.timer.call_count = 0;
+            if (hwif.timer.handler != NULL)
+                hwif.timer.handler();
+        }
+        break;
+    case Enable:
+        break;
+    }
+#else  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
+    HAL_TIMER_enableInterrupt();
+#endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
+    status = 0;
+    return status;
+}
+
+/******************************************************************************/
+/*! @brief Disable time-out interrupt
+ * @detail The delay that time-out interrupt is prohibited in it.
+ I delay whether it is admitted again until I am cleared.
+ ******************************************************************************/
+int ml7396_hwif_timer_di(void) {
+    int status = -1;
+
+#ifdef ML7396_HWIF_NOTHAVE_TIMER_DI
+    switch (hwif.timer.active) {
+    case Disable:
+        break;
+    case Enable:
+        hwif.timer.active = Disable;
+        break;
+    }
+#else  /** #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
+    HAL_TIMER_disableInterrupt();
+#endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
+    status = 0;
+    return status;
+}
+
+/******************************************************************************/
+/*! @brief time-out interrupt count start
+ * @detail I produce an interrupt after progress at designation time
+ * msec: Time before producing a time-out interrupt (appoint it by a msec unit)
+ ******************************************************************************/
+int ml7396_hwif_timer_start(uint16_t msec) {
+    int status = -1;
+
+#ifdef ML7396_HWIF_NOTHAVE_TIMER_DI
+    HAL_TIMER_start(msec, timer_handler);
+#else  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
+    HAL_TIMER_start(msec, hwif.timer.handler);
+#endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
+    status = 0;
+    return status;
+}
+
+/******************************************************************************/
+/*! @brief time-out interrupt count start
+ * @detail I produce an interrupt after progress at designation time
+ * msec: Time before producing a time-out interrupt (appoint it by a msec unit)
+ ******************************************************************************/
+int ml7396_hwif_timer_stop(void) {
+    int status = -1;
+
+    HAL_TIMER_stop();
+    status = 0;
+    return status;
+}
+
+/******************************************************************************/
+/*! @brief Timer tick
+ * @detail The acquisition of the elapsed time timer.
+           I acquire an elapsed time from neighboring device initialization.
+           msec: The elapsed time when acquired it (msec unit).
+ ******************************************************************************/
+int ml7396_hwif_timer_tick(uint32_t *msec) {
+    int status = -1;
+
+    HAL_TIMER_getTick(msec);
+    status = 0;
+    return status;
+}
+
+
+
+/******************************************************************************/
+/*! @brief Register setting of ML7396
+ * @detail 
+       Channel setting
+       Bandwidth setting
+       Communication rate setting
+       Transmission output setting
+       Setting peculiar to other devices
+       awaiting first clock stability and the last calibration practice are unnecessary
+ ******************************************************************************/
 int ml7396_hwif_regset(void *data) {
     int status = -1;
     Setup *setup = (Setup *)data;

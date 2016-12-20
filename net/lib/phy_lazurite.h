@@ -51,6 +51,18 @@ typedef struct {
 #define PHY_ST_TXON              0x09
 #define PHY_ST_TRXOFF            0x08
 
+
+extern int ml7396_hwif_init(void);
+extern int ml7396_hwif_sint_handler(void (*func)(void));
+extern int ml7396_hwif_sint_ei(void);
+extern int ml7396_hwif_sint_di(void);
+extern int ml7396_hwif_timer_handler(void (*func)(void));
+extern int ml7396_hwif_timer_ei(void);
+extern int ml7396_hwif_timer_di(void);
+extern int ml7396_hwif_timer_start(uint16_t msec);
+extern int ml7396_hwif_timer_stop(void);
+extern int ml7396_hwif_timer_tick(uint32_t *msec);
+extern int ml7396_hwif_regset(void *data);
 extern PHY_PARAM *phy_init(void);
 extern int phy_set_trx(uint8_t state);
 extern int phy_get_trx(void);

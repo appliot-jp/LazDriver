@@ -229,18 +229,6 @@
 /** Public function
  */
 
-extern int ml7396_hwif_init(void);
-extern int ml7396_hwif_spi_transfer(const uint8_t *wdata, uint8_t *rdata, uint8_t size);
-extern int ml7396_hwif_sint_handler(void (*func)(void));
-extern int ml7396_hwif_sint_ei(void);
-extern int ml7396_hwif_sint_di(void);
-extern int ml7396_hwif_timer_start(uint16_t msec);
-extern int ml7396_hwif_timer_stop(void);
-extern int ml7396_hwif_timer_handler(void (*func)(void));
-extern int ml7396_hwif_timer_ei(void);
-extern int ml7396_hwif_timer_di(void);
-extern int ml7396_hwif_timer_tick(uint32_t *msec);
-extern int ml7396_hwif_regset(void *data);
 
 
 #endif  /* #ifndef _INCLUDE_ML7396_REG_H */
