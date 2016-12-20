@@ -374,7 +374,6 @@ int mach_parse_data(struct mac_header *header) {
 	header->raw.len = header->input.len; // last byte is rss
 	header->payload.data = (uint8_t *)(header->raw.data+offset);
 	header->payload.len = header->raw.len - offset - 1; // -1 means rssi attathed on raw
-	header->rssi = header->input.data[header->input.len];
 
 	status = STATUS_OK;
 
@@ -726,10 +725,12 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 	   }
 	   */
 	status = macl_xmit_sync(mach.tx.raw);
+	printk(KERN_INFO"%s,%s,%d,RSSI=%02x\n",__FILE__,__func__,__LINE__,mach.tx.rssi);
 	if(status == STATUS_OK)
 	{
-		status = mach.rx.rssi;
+		status = mach.tx.rssi;
 	}
+
 	// @issue arib should be implemented later.
 	/*
 	   if(status == STATUS_OK)
@@ -762,7 +763,6 @@ int mach_sleep(bool on)
 int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 {
 	int status=STATUS_OK;
-	uint8_t rssi;
 
 	// end of sending ack during rx
 	if(!rx) {
@@ -802,7 +802,10 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 			}
 		}
 	} else if (mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_ACK) {
-		if(mach.rx.seq == mach.tx.seq) status = 1;				// check ack
+		if(mach.rx.seq == mach.tx.seq) {
+			status = 1;				// check ack
+			mach.tx.rssi = mach.rx.input.data[mach.rx.input.len-1];
+		}
 		goto end;
 	} else {									// other data type
 	}
@@ -819,7 +822,7 @@ update:
 		memcpy(&mach.rx_prev,&mach.rx,sizeof(mach.rx));
 
 		// get rssi
-		mach.rx.rssi = rssi;
+		mach.rx.rssi = mach.rx.raw.data[mach.rx.raw.len-1];
 		mach_rx_irq(&mach.rx);
 	} else {								// match sequence number
 #ifdef LAZURITE_IDE

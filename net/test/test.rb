@@ -32,6 +32,7 @@ class TestClass < Minitest::Test
 		end
 	end
 
+	'''
 	def test_drviver
 		@@laz.init(module_test = 0xff00)
 		cmd = `dmesg | tail -n 3`
@@ -127,7 +128,10 @@ class TestClass < Minitest::Test
 
 		@@laz.remove()
 	end
+	'''
 	def test_subghz_setup
+		sleep 0.5
+		p "************** 2nd test ***************************"
 		@@laz.init(module_test = 0xff00)
 		@@laz.begin(48,0xabcd,100,20)
 		@@laz.send(0xabcd,0x1234,"hello")

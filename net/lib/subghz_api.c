@@ -282,6 +282,7 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 	}
 	else if(result == -EBUSY) msg = SUBGHZ_TX_CCA_FAIL;
 	else if(result == -ETIMEDOUT) msg = SUBGHZ_TX_ACK_FAIL;
+	else msg = SUBGHZ_TX_FAIL;
 
 	/*
 	 * @issue delete halt until complete. this function is set in phy.
