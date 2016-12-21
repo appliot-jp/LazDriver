@@ -119,7 +119,7 @@ static SUBGHZ_MSG subghz_remove(void)
 {
 	SUBGHZ_MSG msg=0;
 
-	//msg = HAL_remove();
+	msg = HAL_remove();
 
 	return msg;
 }

@@ -373,7 +373,7 @@ int mach_parse_data(struct mac_header *header) {
 	
 	header->raw.len = header->input.len; // last byte is rss
 	header->payload.data = (uint8_t *)(header->raw.data+offset);
-	header->payload.len = header->raw.len - offset - 1; // -1 means rssi attathed on raw
+	header->payload.len = header->input.len - offset -1; // -1 means rssi attathed on raw
 
 	status = STATUS_OK;
 
@@ -822,7 +822,7 @@ update:
 		memcpy(&mach.rx_prev,&mach.rx,sizeof(mach.rx));
 
 		// get rssi
-		mach.rx.rssi = mach.rx.raw.data[mach.rx.raw.len-1];
+		mach.rx.rssi = mach.rx.input.data[mach.rx.input.len-1];
 		mach_rx_irq(&mach.rx);
 	} else {								// match sequence number
 #ifdef LAZURITE_IDE
