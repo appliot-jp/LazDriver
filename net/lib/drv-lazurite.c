@@ -156,6 +156,11 @@ void rx_callback(const uint8_t *data, uint8_t rssi, int status)
 	if(status > 0) {
 		//@issue temporary delete LED flash
 		//EXT_rx_led_flash(2);
+#ifdef LAZURITE_IDE
+		if(module_test & MODE_MACH_DEBUG) {
+			printk(KERN_INFO"%s,%s,%d, RSSI=%d\n",__FILE__,__func__,__LINE__,rssi);
+		}
+#endif
 		write_list_data(data,status,rssi);
 	}
 	return;
@@ -571,6 +576,12 @@ end:
 	return bytes_read;
 }
 static void tx_callback(uint8_t rssi,int status) {
+#ifndef LAZURITE_IDE
+		if(module_test & MODE_MACH_DEBUG) {
+			printk(KERN_INFO"%s,%s,%d,rssi=%02x\n",
+					__FILE__,__func__,__LINE__,rssi);
+		}
+#endif
 	p.tx_rssi = rssi;
 	p.tx_status = status;
 

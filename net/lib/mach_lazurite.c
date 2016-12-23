@@ -45,6 +45,14 @@ const uint8_t enb_dst_panid = 0x52;
 const uint8_t enb_src_panid = 0x04;
 const uint8_t addr_len[] = {0x00,0x01,0x02,0x08};
 
+
+/******************************************************************************/
+/*! @brief get 64bit address
+  @param[in] *macaddr	pointer of 64bit mac address
+  @return    STATUS_OK	ok
+  @exception	EIO hardware error
+  @issue implement later
+ ******************************************************************************/
 int	get_mac_addr(uint8_t *macaddr)
 {
 	int status=STATUS_OK;
@@ -58,6 +66,10 @@ int	get_mac_addr(uint8_t *macaddr)
 	{
 		macaddr[i] = from_eeprom[7-i];
 	}
+	if(status != STATUS_OK)
+	{
+		status = -EIO;
+	}
 
 	return status;
 }
@@ -65,12 +77,11 @@ int	get_mac_addr(uint8_t *macaddr)
 // local functions
 /******************************************************************************/
 /*! @brief make raw data
-  @param[in] *data start pointer of output buffer
-  @param[in] *size length of header
-  @param[in] *header  pointer of mac header
-  ack_reg (1: auto, 0: no ack)
-  panid_comp,dst_addr_type,src_addr_type are generated from addr_type
-
+  @param[in] *header  pointer of mac header<br>
+  ack_reg (1: auto, 0: no ack)<br>
+  panid_comp,dst_addr_type,src_addr_type are generated from addr_type<br>
+  payload	buffer of payload<br>
+  raw		output buffer<br>
   @return    false= invalid data, true valid data
   @exception	EINVAL data is not set according to addr_type
 
@@ -92,25 +103,12 @@ static int mach_make_header(struct mac_header *header) {
 	bool dst_ffff = true;
 	int i;
 
-	// check data 
-	if((header->payload.data==NULL) || (header->raw.data==NULL)) {
-		printk(KERN_ERR"buffer error in %s,%s,%d,%lx,%lx\n",
-				__FILE__,
-				__func__,
-				__LINE__,
-				(long)header->payload.data,
-				(long)header->raw.data);
-		status = -ENOMEM;
-		goto error;
-	}
-
 	// sequence number
 	if(!header->fc.fc_bit.seq_comp) {
 		if(header->raw.size >= (offset + 1)){
 			header->seq++;
 			header->raw.data[offset]=header->seq,offset++;
 		} else {
-			printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 			status = -ENOMEM;
 			goto error;
 		}
@@ -121,14 +119,18 @@ static int mach_make_header(struct mac_header *header) {
 	{
 		if(!header->dst.panid.enb)
 		{
+#ifndef LAZURITE_IDE
 			printk(KERN_ERR"dst panid is invalid in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+#endif
 			status = -EINVAL;
 			goto error;
 		} else {
 			if(header->raw.size >= (offset + 2)){
 				H2LBS(header->raw.data[offset],header->dst.panid.data), offset+=2;
 			} else {
+#ifndef LAZURITE_IDE
 				printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+#endif
 				status = -ENOMEM;
 				goto error;
 			}
@@ -144,9 +146,7 @@ static int mach_make_header(struct mac_header *header) {
 		{
 			case 0:
 #ifndef LAZURITE_IDE
-				if(module_test & MODE_MACH_DEBUG) {
-					printk(KERN_ERR"dst address is not set in %s,%s,%d\n", __FILE__, __func__, __LINE__);
-				}
+				printk(KERN_ERR"dst address is not set in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 				status = -EINVAL;
 				goto error;
@@ -157,9 +157,7 @@ static int mach_make_header(struct mac_header *header) {
 						(header->dst.panid.enb == false))
 				{
 #ifndef LAZURITE_IDE
-					if(module_test & MODE_MACH_DEBUG) {
-						printk(KERN_ERR"invalid panid for short address.%s,%s,%d\n", __FILE__, __func__, __LINE__);
-					}
+					printk(KERN_ERR"invalid panid for short address.%s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -EINVAL;
 					goto error;
@@ -169,7 +167,9 @@ static int mach_make_header(struct mac_header *header) {
 					header->raw.data[offset] = header->dst.addr.lddn_addr,offset++;
 					if(header->dst.addr.lddn_addr != 0xff) dst_ffff = false;
 				} else {
+#ifndef LAZURITE_IDE
 					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+#endif
 					status = -ENOMEM;
 					goto error;
 				}
@@ -180,9 +180,7 @@ static int mach_make_header(struct mac_header *header) {
 						(header->dst.panid.enb == false))
 				{
 #ifndef LAZURITE_IDE
-					if(module_test & MODE_MACH_DEBUG) {
 						printk(KERN_ERR"invalid panid for short address.%s,%s,%d\n", __FILE__, __func__, __LINE__);
-					}
 #endif
 					status = -EINVAL;
 					goto error;
@@ -191,7 +189,9 @@ static int mach_make_header(struct mac_header *header) {
 					header->fc.fc_bit.dst_addr_type = IEEE802154_FC_ADDR_SHORT;
 					H2LBS(header->raw.data[offset],header->dst.addr.short_addr), offset+=2;
 				} else {
+#ifndef LAZURITE_IDE
 					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+#endif
 					status = -ENOMEM;
 					goto error;
 				}
@@ -206,7 +206,9 @@ static int mach_make_header(struct mac_header *header) {
 					}
 					header->fc.fc_bit.dst_addr_type = IEEE802154_FC_ADDR_IEEE;
 				} else {
+#ifndef LAZURITE_IDE
 					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+#endif
 					status = -ENOMEM;
 					goto error;
 				}
@@ -221,14 +223,18 @@ static int mach_make_header(struct mac_header *header) {
 	{
 		if(header->src.panid.enb == 0)
 		{
+#ifndef LAZURITE_IDE
 			printk(KERN_ERR"src panid is invalid in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+#endif
 			status = -EINVAL;
 			goto error;
 		} else {
 			if(header->raw.size >= (offset + sizeof(uint16_t))){
 				H2LBS(header->raw.data[offset],header->src.panid.data), offset+=2;
 			} else {
+#ifndef	LAZURITE_IDE
 				printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+#endif
 				status = -ENOMEM;
 				goto error;
 			}
@@ -245,12 +251,16 @@ static int mach_make_header(struct mac_header *header) {
 				break;
 			case 1:
 				if(header->raw.size < (offset + addr_len[1])){
+#ifndef LAZURITE_IDE
 					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+#endif
 					status = -ENOMEM;
 					goto error;
 				}
 				if(header->src.addr.lddn_addr==0xff){
+#ifndef LAZURITE_IDE
 					printk(KERN_ERR"invalid src LDD address. %s,%s,%d\n", __FILE__, __func__, __LINE__);
+#endif
 					status = -EINVAL;
 					goto error;
 				}
@@ -259,7 +269,9 @@ static int mach_make_header(struct mac_header *header) {
 				break;
 			case 2:
 				if(header->raw.size < (offset + addr_len[2])){
+#ifndef LAZURITE_IDE
 					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+#endif
 					status = -ENOMEM;
 					goto error;
 				}
@@ -274,7 +286,9 @@ static int mach_make_header(struct mac_header *header) {
 				break;
 			case 3:
 				if(header->raw.size < (offset + addr_len[3])){
+#ifndef LAZURITE_IDE
 					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+#endif
 					status = -ENOMEM;
 					goto error;
 				}
@@ -314,10 +328,10 @@ error:
 
 /******************************************************************************/
 /*! @brief prawarse mac header
-  @param[in] header pointer of mac header
-  input = input buffer
-  raw   = output buffer
-  payload = pointer/length of payload
+  @param[in] header pointer of mac header<br>
+  input = input buffer<br>
+  raw   = output buffer<br>
+  payload = pointer/length of payload<br>
   @return    STATUS_OK, error num
   @exception ENOMEM = data size error
   in case of rx disable, this error is occured, when any data is received,
@@ -370,7 +384,7 @@ int mach_parse_data(struct mac_header *header) {
 		header->src.addr.ieee_addr[i] = header->input.data[offset],offset++;
 	}
 
-	
+
 	header->raw.len = header->input.len; // last byte is rss
 	header->payload.data = (uint8_t *)(header->raw.data+offset);
 	header->payload.len = header->input.len - offset -1; // -1 means rssi attathed on raw
@@ -380,6 +394,12 @@ int mach_parse_data(struct mac_header *header) {
 	return status;
 }
 
+/******************************************************************************/
+/*! @brief compare sequence number and address<br>
+  when seqnence number and address of current rx is as same as the previous, rx data is sent as retry.
+
+  @return    true=match false=unmatch
+ ******************************************************************************/
 bool mach_match_seq_num(void)
 {
 	bool result=false;
@@ -533,6 +553,11 @@ int mach_stop(void) {
 	return macl_stop();
 }
 
+/********************************************************************/
+/*! @brief setup rx parameters
+  @return    STATUS_OK
+  @exception  depends on macl_stop
+ ********************************************************************/
 int mach_setup(struct rf_param *rf) {
 	int status;
 	struct wpan_phy_cca cca;
@@ -546,22 +571,22 @@ int mach_setup(struct rf_param *rf) {
 	}
 
 	// @issue txPower
-	macl_set_txpower(rf->tx_power);
+	if((status = macl_set_txpower(rf->tx_power)) != STATUS_OK) goto error;
 
 	// set setting CCA
-	macl_set_csma_params(rf->cca_min_be,rf->cca_max_be,rf->cca_retry);
-	macl_set_frame_retries(rf->tx_retry);
-	macl_ch_scan(rf->cca_interval);				// add 
-	cca.mode = rf->cca_mode;
-	cca.opt = rf->cca_opt;
-	macl_set_cca_mode(&cca);
-	macl_set_cca_ed_level(rf->cca_level);
+	if((status = macl_set_csma_params(rf->cca_min_be,rf->cca_max_be,rf->cca_retry)) != STATUS_OK) goto error;
+	if((status = macl_set_frame_retries(rf->tx_retry)) != STATUS_OK) goto error;
+	if((status = macl_ch_scan(rf->cca_interval)) != STATUS_OK) goto error;				// add 
+	if((status = cca.mode = rf->cca_mode) != STATUS_OK) goto error;
+	if((status = cca.opt = rf->cca_opt) != STATUS_OK) goto error;
+	if((status = macl_set_cca_mode(&cca)) != STATUS_OK) goto error;
+	if((status = macl_set_cca_ed_level(rf->cca_level)) != STATUS_OK) goto error;
 error:
 	return status;
 }
 
 /********************************************************************/
-/*! @brief tx in mac high layer
+/*! @brief set 64bit address for distination
   @param[in]	*addr	64bit distination address
   @return    STATUS_OK
   @exception none
@@ -572,10 +597,15 @@ int mach_set_dst_ieee_addr(uint8_t *addr)
 	return STATUS_OK;
 }
 
-int mach_set_src_addr(uint8_t addr_mode)
+/********************************************************************/
+/*! @brief set src address according to addr_type
+  @param[in]	addr_type	address type(0: omit, 1:8bit ldd, 2: 16bit, 3: 64bit
+  @return    STATUS_OK
+ ********************************************************************/
+int mach_set_src_addr(uint8_t addr_type)
 {
 	int status=STATUS_OK;
-	switch(addr_mode)
+	switch(addr_type)
 	{
 		case 0:
 			mach.tx.src.panid.enb = true;
@@ -607,6 +637,12 @@ int mach_set_src_addr(uint8_t addr_mode)
 	return status;
 }
 
+/********************************************************************/
+/*! @brief set dst short address
+  @issue ここから作業する
+  @param[in]	addr_type	address type(0: omit, 1:8bit ldd, 2: 16bit, 3: 64bit
+  @return    STATUS_OK
+ ********************************************************************/
 int mach_set_dst_short_addr(uint16_t panid,uint16_t addr)
 {
 	mach.tx.dst.panid.enb = true;
@@ -725,9 +761,7 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 	   }
 	   */
 	status = macl_xmit_sync(mach.tx.raw);
-	printk(KERN_INFO"%s,%s,%d,RSSI=%02x\n",__FILE__,__func__,__LINE__,mach.tx.rssi);
-	if(status == STATUS_OK)
-	{
+	if(status == STATUS_OK) {
 		status = mach.tx.rssi;
 	}
 
@@ -740,6 +774,7 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 error:
 	return status;
 }
+
 int mach_ed(uint8_t *ed)
 {
 	return macl_ed(ed);
@@ -787,7 +822,7 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 		goto end;
 	}
 
-	// check frame type
+	// data frame and cmd frame
 	if ((mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_DATA) ||
 			(mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_CMD)) {
 		// check sequence number
@@ -801,7 +836,9 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 				goto end;
 			}
 		}
-	} else if (mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_ACK) {
+	}
+	// ack process
+	else if (mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_ACK) {
 		if(mach.rx.seq == mach.tx.seq) {
 			status = 1;				// check ack
 			mach.tx.rssi = mach.rx.input.data[mach.rx.input.len-1];
@@ -811,8 +848,9 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 	}
 
 update:
-	// copy data, if output buffer is available.
+	// rx after sending ack
 	if(mach.rx.raw.size >= mach.rx.input.len)
+		// copy phy buffer to application buffer
 		memcpy(mach.rx.raw.data,mach.rx.input.data,mach.rx.input.len);
 	else
 		goto end;
@@ -822,10 +860,12 @@ update:
 		memcpy(&mach.rx_prev,&mach.rx,sizeof(mach.rx));
 
 		// get rssi
-		mach.rx.rssi = mach.rx.input.data[mach.rx.input.len-1];
+		mach.rx.rssi = mach.rx.raw.data[mach.rx.raw.len-1];
+		// decriment raw length for ed
+		mach.rx.raw.len -= 1;
 		mach_rx_irq(&mach.rx);
 	} else {								// match sequence number
-#ifdef LAZURITE_IDE
+#ifndef LAZURITE_IDE
 		if(module_test & MODE_MACH_DEBUG) {
 			printk(KERN_INFO"Same sequence number!! %s,%s,%d\n",__FILE__,__func__,__LINE__);
 		}
