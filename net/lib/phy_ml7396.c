@@ -410,7 +410,6 @@ static void reg_rd(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size)
 
 static void vco_cal(void) {
 
-//    uint32_t intsrc=0;
     uint8_t reg_data[4];
 
     reg_rd(REG_ADR_PACKET_MODE_SET, reg_data,1);
@@ -427,10 +426,11 @@ static void vco_cal(void) {
     phy_intclr(0x00000000);
     reg_data[0]=0x01;
     reg_wr(REG_ADR_VCO_CAL_START, reg_data,1);
-//	do {
-//			phy_intsrc(intsrc);
-//	} while (!(intsrc & 0x00000004));
-//	phy_intclr(0x00000004);
+	do {
+        HAL_delayMicroseconds(100);
+        reg_rd(REG_ADR_INT_SOURCE_GRP1, reg_data, 1);
+	} while (!(reg_data[0] & 0x04));
+	phy_intclr(0x00000004);
 }
 
 
@@ -924,8 +924,7 @@ PHY_PARAM *phy_init(void)
     /* wait clock */
         regbank(0xff);
         do {
-            // ssdebug
-            HAL_delayMicroseconds(1000);
+            HAL_delayMicroseconds(100);
             reg_rd(REG_ADR_CLK_SET, &reg_data, 1);
         } while (!(reg_data & 0x80));
     }
@@ -952,16 +951,12 @@ void phy_rst(void)
 {
     uint8_t reg_data[1];
     // ssdebug
-    phy_inten(event_enable[0]);
-
+    //phy_inten(event_enable[0]);
     reg_data[0] = 0x03;
     reg_wr(REG_ADR_RF_STATUS, reg_data, 1);
-    // ssdebug
-    HAL_delayMicroseconds(300);
+    HAL_delayMicroseconds(200);
     reg_data[0] = 0x88;
     reg_wr(REG_ADR_RST_SET, reg_data, 1);
-    // ssdebug
-    HAL_delayMicroseconds(300);
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"DEBUG PHY: %s,%s\n",__FILE__,__func__);
 #endif
@@ -972,8 +967,7 @@ void phy_set_trx(uint8_t state)
 {
     uint8_t reg_data;
     reg_wr(REG_ADR_RF_STATUS, &state, 1);
-    HAL_delayMicroseconds(300);
-    // ssdebug
+    HAL_delayMicroseconds(200);
     reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data);
@@ -1268,20 +1262,6 @@ void REG_TXSTART(ML7396_Buffer* _buffer)
         ON_ERROR(reg_wr(REG_ADR_CCA_CNTRL, _reg_cca_cntl, 1)); \
     } while (0)
 #endif
-
-
-
-/******************************************************************************/
-/*! @brief Cause of interrupt
- * @detail Original function was REG_INTSRC
- * @issue
- ******************************************************************************/
-void phy_intsrc(uint32_t intsrc)
-{
-    uint8_t reg_data[3];
-    reg_rd(REG_ADR_INT_SOURCE_GRP1, reg_data, 3);
-    intsrc = ((uint32_t)reg_data[0] <<  0) | ((uint32_t)reg_data[1] <<  8) | ((uint32_t)reg_data[2] << 16);
-}
 
 /******************************************************************************/
 /*! @brief Enable interrupt / Diseable interrupt

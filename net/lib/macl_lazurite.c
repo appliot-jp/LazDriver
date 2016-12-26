@@ -163,7 +163,8 @@ int	macl_xmit_sync(BUFFER buff)
 	} else {
 		printk(KERN_INFO"not ACK Received!!%s,%s\n",__FILE__,__func__);
 	}
-
+    // ssdebug
+    phy_set_trx(0x09);
 
 	return status;
 }
@@ -182,7 +183,6 @@ int	macl_set_channel(uint8_t page,uint8_t ch)
 #endif
     phy_rst();
     phy_setup(page,ch);
-    phy_set_trx(0x09);
 	return status;
 }
 int	macl_set_hw_addr_filt(struct ieee802154_hw_addr_filt *filt,unsigned long changed)

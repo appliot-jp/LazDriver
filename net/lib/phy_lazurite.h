@@ -69,7 +69,6 @@ extern void phy_set_trx(uint8_t state);
 extern int phy_get_trx(void);
 extern int phy_set_cca(void);
 extern int phy_get_ed(void);
-extern void phy_intsrc(uint32_t intsrc);
 extern void phy_inten(uint32_t inten);
 extern void phy_intclr(uint32_t intclr);
 
