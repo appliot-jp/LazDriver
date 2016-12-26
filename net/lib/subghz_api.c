@@ -83,12 +83,12 @@ static SUBGHZ_MSG subghz_init(void)
 	subghz_param.rf.cca_max_be = 7;
 	subghz_param.rf.cca_duration = 7;
 	subghz_param.rf.cca_retry = 20;
-	subghz_param.rf.cca_level = 1;
+	subghz_param.rf.cca_level = DBM_TO_MBM(-80);
 	subghz_param.rf.tx_min_be = 0;
 	subghz_param.rf.tx_max_be = 7;
 	subghz_param.rf.tx_retry = 3;
 	subghz_param.rf.cca_interval = 20;
-	subghz_param.rf.tx_power = 20;
+	subghz_param.rf.tx_power = DBM_TO_MBM(13);
 	subghz_param.rf.tx_interval = 500;
 	subghz_param.rf.cca_mode = NL802154_CCA_CARRIER;
 	subghz_param.rf.cca_opt = NL802154_CCA_OPT_ENERGY_CARRIER_AND;
@@ -152,6 +152,12 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 		msg = SUBGHZ_SETUP_FAIL;
 		goto error;
 	}
+
+	if(txPower == 1) 
+		subghz_param.rf.tx_power = DBM_TO_MBM(1);
+	else if(txPower == 20) 
+		subghz_param.rf.tx_power = DBM_TO_MBM(13);
+	else goto error;
 	
 	if((result = mach_setup(&subghz_param.rf)) != STATUS_OK) {
 		msg = SUBGHZ_SETUP_FAIL;

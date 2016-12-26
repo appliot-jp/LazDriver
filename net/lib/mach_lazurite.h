@@ -109,14 +109,14 @@ struct rf_param {
 	uint8_t pages;
 	uint8_t cca_min_be;
 	uint8_t cca_max_be;
-	uint8_t cca_level;
+	int32_t cca_level;		//mbm
 	uint8_t cca_duration;
 	uint8_t cca_retry;
 	uint8_t tx_min_be;
 	uint8_t tx_max_be;
 	uint8_t tx_retry;
 	uint32_t cca_interval;
-	uint32_t tx_power;
+	int32_t tx_power;
 	uint32_t tx_interval;
 	enum nl802154_cca_modes cca_mode;
 	enum nl802154_cca_opts cca_opt;
