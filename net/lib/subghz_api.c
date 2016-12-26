@@ -83,12 +83,12 @@ static SUBGHZ_MSG subghz_init(void)
 	subghz_param.rf.cca_max_be = 7;
 	subghz_param.rf.cca_duration = 7;
 	subghz_param.rf.cca_retry = 20;
-	subghz_param.rf.cca_level = 1;
+	subghz_param.rf.cca_level = DBM_TO_MBM(-80);
 	subghz_param.rf.tx_min_be = 0;
 	subghz_param.rf.tx_max_be = 7;
 	subghz_param.rf.tx_retry = 3;
 	subghz_param.rf.cca_interval = 20;
-	subghz_param.rf.tx_power = 20;
+	subghz_param.rf.tx_power = DBM_TO_MBM(13);
 	subghz_param.rf.tx_interval = 500;
 	subghz_param.rf.cca_mode = NL802154_CCA_CARRIER;
 	subghz_param.rf.cca_opt = NL802154_CCA_OPT_ENERGY_CARRIER_AND;
@@ -119,7 +119,7 @@ static SUBGHZ_MSG subghz_remove(void)
 {
 	SUBGHZ_MSG msg=0;
 
-	msg = HAL_remove();
+	//msg = HAL_remove();
 
 	return msg;
 }
@@ -152,6 +152,12 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 		msg = SUBGHZ_SETUP_FAIL;
 		goto error;
 	}
+
+	if(txPower == 1) 
+		subghz_param.rf.tx_power = DBM_TO_MBM(1);
+	else if(txPower == 20) 
+		subghz_param.rf.tx_power = DBM_TO_MBM(13);
+	else goto error;
 	
 	if((result = mach_setup(&subghz_param.rf)) != STATUS_OK) {
 		msg = SUBGHZ_SETUP_FAIL;
@@ -271,6 +277,10 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 	mach_set_src_addr(IEEE802154_FC_ADDR_SHORT);
 	subghz_param.sending = true;
 	result = mach_tx(fc,subghz_param.addr_type,&subghz_param.tx);
+
+	if(callback) {
+		callback(result,result);
+	}
 	//mach_ed(&rssi);
 	//subghz_txdone(rssi,result);
 	subghz_param.sending = false;
@@ -286,17 +296,17 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 
 	/*
 	 * @issue delete halt until complete. this function is set in phy.
-	msg = subghz_halt_until_complete();
-//	#ifdef DEBUG
-//		Serial.print("msg=");
-//		Serial.println_long(msg,DEC);
-//	#endif
+	 msg = subghz_halt_until_complete();
+	//	#ifdef DEBUG
+	//		Serial.print("msg=");
+	//		Serial.println_long(msg,DEC);
+	//	#endif
 	if(msg == SUBGHZ_TX_CCA_FAIL)
 	{
-		goto error_not_send;
+	goto error_not_send;
 	}
 	*/
-//error:
+	//error:
 	return msg;
 }
 
@@ -316,8 +326,8 @@ static short subghz_readData(uint8_t *data, uint16_t max_size)
 {
 	short result = 0;
 #ifdef	LAZURITE_IDE
-//  SUBGHZ_MAC_PARAM mac;
-//	__DI();
+	//  SUBGHZ_MAC_PARAM mac;
+	//	__DI();
 	dis_interrupts(DI_SUBGHZ);
 	if(subghz_param.rx_buf == NULL)
 	{
@@ -325,55 +335,55 @@ static short subghz_readData(uint8_t *data, uint16_t max_size)
 		goto end;
 	}
 	result = subghz_param.rx_stat.status;
-	
+
 	if(result > 0) 
 	{
 		if((short)max_size > result)
 		{
 			max_size = result;
 		}
-/*
-        // 2016.11.15 Eiichi Saito AES
-        subghz_decMac(&mac,subghz_param.rx_buf,subghz_param.rx_stat.status);
+		/*
+		// 2016.11.15 Eiichi Saito AES
+		subghz_decMac(&mac,subghz_param.rx_buf,subghz_param.rx_stat.status);
 
-        if (mac.mac_header.alignment.sec_enb){
-            uint8_t mhr_len;
-            uint8_t pad;
+		if (mac.mac_header.alignment.sec_enb){
+		uint8_t mhr_len;
+		uint8_t pad;
 
-            if (mac.mac_header.alignment.seq_comp){
-                mac.seq_num=0;
-            }
-            mhr_len = mac.raw_len - mac.payload_len;
-            memcpy(data, subghz_param.rx_buf,mhr_len);
-            pad = AES128_CBC_decrypt(data+mhr_len, mac.payload, mac.payload_len, mac.seq_num);
-	        subghz_param.rx_stat.status -= pad;
-	        result = subghz_param.rx_stat.status;
+		if (mac.mac_header.alignment.seq_comp){
+		mac.seq_num=0;
+		}
+		mhr_len = mac.raw_len - mac.payload_len;
+		memcpy(data, subghz_param.rx_buf,mhr_len);
+		pad = AES128_CBC_decrypt(data+mhr_len, mac.payload, mac.payload_len, mac.seq_num);
+		subghz_param.rx_stat.status -= pad;
+		result = subghz_param.rx_stat.status;
 #ifdef DEBUG_AES
-            Serial.print("\r\n");
-            Serial.print(data+mhr_len);
-            Serial.print("\r\n");
-            Serial.print("total,payload,pad: ");
-            Serial.print_long((long)mac.raw_len,DEC);
-            Serial.print(" ");
-            Serial.print_long((long)mac.payload_len,DEC);
-            Serial.print(" ");
-            Serial.println_long((long)pad,DEC);
+Serial.print("\r\n");
+Serial.print(data+mhr_len);
+Serial.print("\r\n");
+Serial.print("total,payload,pad: ");
+Serial.print_long((long)mac.raw_len,DEC);
+Serial.print(" ");
+Serial.print_long((long)mac.payload_len,DEC);
+Serial.print(" ");
+Serial.println_long((long)pad,DEC);
 #endif
-        }else
-        {
-		    memcpy(data, subghz_param.rx_buf, max_size+1);
-        }
+}else
+{
+memcpy(data, subghz_param.rx_buf, max_size+1);
+}
 */
-		// @issue why read 
-		memcpy(data, subghz_param.rx_buf,max_size+1);
-		subghz_param.rx_buf = NULL;
-	}
-	
+// @issue why read 
+memcpy(data, subghz_param.rx_buf,max_size+1);
+subghz_param.rx_buf = NULL;
+}
+
 end:
 //	__EI();
-	enb_interrupts(DI_SUBGHZ);
+enb_interrupts(DI_SUBGHZ);
 #endif	//LAZURITE_IDE
-	return result;
+return result;
 }
 // 
 static SUBGHZ_MSG subghz_rxEnable(void (*callback)(const uint8_t *data, uint8_t rssi, int status))
@@ -385,34 +395,34 @@ static SUBGHZ_MSG subghz_rxEnable(void (*callback)(const uint8_t *data, uint8_t 
 	subghz_param.rx.data = data;
 	subghz_param.rx.size = sizeof(data);
 	subghz_param.rx.len = 0;
-	
+
 	subghz_param.rx_callback = callback;
 	if(subghz_param.read == false)
 	{
 		/*
-		result = BP3596_setFuncRecvComplete(subghz_rxdone);
-		if(result != BP3596_STATUS_OK)
-		{
-			msg = SUBGHZ_RX_COMP_FAIL;
-			subghz_param.rx_stat.status = result;
-			goto error;
-		}
-		result = BP3596_recvEnable();
-		if(result != BP3596_STATUS_OK)
-		{
-			msg = SUBGHZ_RX_ENB_FAIL;
-			subghz_param.rx_stat.status = result;
-			goto error;
-		}
-		*/
-		
+		   result = BP3596_setFuncRecvComplete(subghz_rxdone);
+		   if(result != BP3596_STATUS_OK)
+		   {
+		   msg = SUBGHZ_RX_COMP_FAIL;
+		   subghz_param.rx_stat.status = result;
+		   goto error;
+		   }
+		   result = BP3596_recvEnable();
+		   if(result != BP3596_STATUS_OK)
+		   {
+		   msg = SUBGHZ_RX_ENB_FAIL;
+		   subghz_param.rx_stat.status = result;
+		   goto error;
+		   }
+		   */
+
 		if((result=mach_start(&subghz_param.rx))!=STATUS_OK) {
 			msg = SUBGHZ_RX_ENB_FAIL;
 			goto error;
 		}
 	}
 	subghz_param.read = true;
-	
+
 error:
 	return msg;
 }
@@ -421,7 +431,7 @@ static SUBGHZ_MSG subghz_rxDisable(void)
 {
 	SUBGHZ_MSG msg;
 	int result;
-	
+
 	result = mach_stop();
 	if(result != STATUS_OK)
 	{
@@ -436,20 +446,20 @@ error:
 }
 
 /*static SUBGHZ_MSG subghz_setPANID(uint16_t panid)
-{
-	SUBGHZ_MSG msg;
-	int result;
-	
-	result = BP3596_setMyPANID(panid);
-	if(result != BP3596_STATUS_OK)
-	{
-		msg = SUBGHZ_PANID;
-		goto error;
-	}
-	msg = SUBGHZ_OK;
+  {
+  SUBGHZ_MSG msg;
+  int result;
+
+  result = BP3596_setMyPANID(panid);
+  if(result != BP3596_STATUS_OK)
+  {
+  msg = SUBGHZ_PANID;
+  goto error;
+  }
+  msg = SUBGHZ_OK;
 error:
-	subghz_param.tx_stat.status = result;
-	return msg;
+subghz_param.tx_stat.status = result;
+return msg;
 }
 */
 static void subghz_getStatus(SUBGHZ_STATUS *tx, SUBGHZ_STATUS *rx)
@@ -560,7 +570,7 @@ static SUBGHZ_MSG subghz_setSendMode(SUBGHZ_PARAM *param)
 	subghz_param.rf.tx_interval = param->txInterval;
 	subghz_param.rf.cca_interval = param->ccaWait;
 	subghz_param.mach->my_addr.short_addr = param->myAddress;
-	
+
 	return SUBGHZ_OK;
 }
 
@@ -594,7 +604,7 @@ static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len)
 // 2016.11.15 Eiichi Saito AES
 static SUBGHZ_MSG subghz_setAes(uint8_t *key, uint8_t *workspace)
 {
-    AES128_setAes(key,workspace);
+	AES128_setAes(key,workspace);
 	return SUBGHZ_OK;
 }
 
