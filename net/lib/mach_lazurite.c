@@ -577,8 +577,8 @@ int mach_setup(struct rf_param *rf) {
 	if((status = macl_set_csma_params(rf->cca_min_be,rf->cca_max_be,rf->cca_retry)) != STATUS_OK) goto error;
 	if((status = macl_set_frame_retries(rf->tx_retry)) != STATUS_OK) goto error;
 	if((status = macl_ch_scan(rf->cca_interval)) != STATUS_OK) goto error;				// add 
-	if((status = cca.mode = rf->cca_mode) != STATUS_OK) goto error;
-	if((status = cca.opt = rf->cca_opt) != STATUS_OK) goto error;
+	cca.mode = rf->cca_mode;
+	cca.opt = rf->cca_opt;
 	if((status = macl_set_cca_mode(&cca)) != STATUS_OK) goto error;
 	if((status = macl_set_cca_ed_level(rf->cca_level)) != STATUS_OK) goto error;
 error:
