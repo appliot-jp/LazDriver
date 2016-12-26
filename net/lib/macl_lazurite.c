@@ -178,10 +178,11 @@ int	macl_set_channel(uint8_t page,uint8_t ch)
 {
 	int status=STATUS_OK;
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,page,ch);
-	}
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,page,ch);
 #endif
+    phy_rst();
+    phy_setup(page,ch);
+    phy_set_trx(0x09);
 	return status;
 }
 int	macl_set_hw_addr_filt(struct ieee802154_hw_addr_filt *filt,unsigned long changed)
