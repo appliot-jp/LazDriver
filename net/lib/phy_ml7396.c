@@ -480,6 +480,29 @@ static void timer_handler(void) {
 }
 #endif
 
+static void phy_pi_mesg(void)
+{
+#ifndef LAZURITE_IDE
+    uint8_t reg_data[6];
+    if(module_test & MODE_PHY_DEBUG) {
+
+        reg_rd(REG_ADR_INT_EN_GRP1, reg_data, 4);
+        printk(KERN_INFO"DEBUG PHY INTEN1: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
+        printk(KERN_INFO"DEBUG PHY INTEN2: %s,%s,%x\n",__FILE__,__func__,reg_data[1]);
+        printk(KERN_INFO"DEBUG PHY INTEN3: %s,%s,%x\n",__FILE__,__func__,reg_data[2]);
+        printk(KERN_INFO"DEBUG PHY INTEN4: %s,%s,%x\n",__FILE__,__func__,reg_data[3]);
+
+        reg_rd(REG_ADR_INT_SOURCE_GRP1, reg_data, 4);
+        printk(KERN_INFO"DEBUG PHY INTEN1: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
+        printk(KERN_INFO"DEBUG PHY INTEN2: %s,%s,%x\n",__FILE__,__func__,reg_data[1]);
+        printk(KERN_INFO"DEBUG PHY INTEN3: %s,%s,%x\n",__FILE__,__func__,reg_data[2]);
+        printk(KERN_INFO"DEBUG PHY INTEN4: %s,%s,%x\n",__FILE__,__func__,reg_data[3]);
+
+        reg_rd(REG_ADR_RF_STATUS, reg_data, 1);
+        printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
+    }
+#endif
+}
 
 
 /*
@@ -694,19 +717,6 @@ int phy_setup(uint8_t page,uint8_t ch)
     if (device_id == DEIVE_ID_LAPIS)
         reg_data[0] = 0x0A, reg_wr(REG_ADR_2DIV_CNTRL,          reg_data, 1);
 #endif
-
-#ifndef LAZURITE_IDE
-    // ssdebug
-    reg_rd(REG_ADR_RF_STATUS, reg_data, 1);
-    if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
-    reg_rd(REG_ADR_INT_EN_GRP1, reg_data, 4);
-	if(module_test & MODE_PHY_DEBUG) {
-        printk(KERN_INFO"DEBUG PHY INTEN1: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
-        printk(KERN_INFO"DEBUG PHY INTEN2: %s,%s,%x\n",__FILE__,__func__,reg_data[1]);
-        printk(KERN_INFO"DEBUG PHY INTEN3: %s,%s,%x\n",__FILE__,__func__,reg_data[2]);
-        printk(KERN_INFO"DEBUG PHY INTEN3: %s,%s,%x\n",__FILE__,__func__,reg_data[3]);
-    }
-#endif
     reg_data[0] = 0x04, reg_wr(REG_ADR_SYNC_MODE,           reg_data, 1);
     reg_data[0] = 0x10, reg_wr(REG_ADR_RAMP_CNTRL,          reg_data, 1);
     reg_data[0] = 0x1e, reg_wr(REG_ADR_GAIN_MtoL,           reg_data, 1);
@@ -920,13 +930,13 @@ PHY_PARAM *phy_init(void)
         HAL_TIMER_setup();
     //  HAL_I2C_setup();
         phy_timer_tick(&wait_t);
-
-    /* wait clock */
         regbank(0xff);
         do {
             HAL_delayMicroseconds(100);
             reg_rd(REG_ADR_CLK_SET, &reg_data, 1);
         } while (!(reg_data & 0x80));
+        reg_data = 0x00; reg_wr(REG_ADR_INT_SOURCE_GRP1, &reg_data, 1);
+        phy_pi_mesg();
     }
 
 	memset(reg.rdata,0,sizeof(reg.rdata));
@@ -939,9 +949,19 @@ PHY_PARAM *phy_init(void)
 	phy.out.data = reg.wdata;
 
     reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data);
-#endif
+
+    // ssdebug 1
+    reg_data=0x00;
+    
+    reg_wr(REG_ADR_INT_SOURCE_GRP1, &reg_data, 1);
+    reg_wr(REG_ADR_INT_SOURCE_GRP2, &reg_data, 1);
+    reg_wr(REG_ADR_INT_SOURCE_GRP3, &reg_data, 1);
+    reg_wr(REG_ADR_INT_SOURCE_GRP4, &reg_data, 1);
+
+    reg_wr(REG_ADR_INT_EN_GRP1, &reg_data, 1);
+    reg_wr(REG_ADR_INT_EN_GRP2, &reg_data, 1);
+    reg_wr(REG_ADR_INT_EN_GRP3, &reg_data, 1);
+    reg_wr(REG_ADR_INT_EN_GRP4, &reg_data, 1);
 	return &phy;
 }
 
@@ -950,7 +970,7 @@ PHY_PARAM *phy_init(void)
 void phy_rst(void)
 {
     uint8_t reg_data[1];
-    // ssdebug
+
     //phy_inten(event_enable[0]);
     reg_data[0] = 0x03;
     reg_wr(REG_ADR_RF_STATUS, reg_data, 1);
@@ -966,12 +986,16 @@ void phy_rst(void)
 void phy_set_trx(uint8_t state)
 {
     uint8_t reg_data;
+    phy_pi_mesg();
     reg_wr(REG_ADR_RF_STATUS, &state, 1);
     HAL_delayMicroseconds(200);
     reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
+    phy_pi_mesg();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data);
 #endif
+    // ssdebug 1
+//    HAL_wait_event();
 }
 
 int phy_get_trx(void)

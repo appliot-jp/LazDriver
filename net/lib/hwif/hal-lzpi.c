@@ -31,6 +31,7 @@
 #include	<linux/gpio.h>
 #include	<linux/kthread.h>
 #include	<linux/delay.h>
+#include    <linux/wait.h>
 #include	"spi-lzpi.h"
 #include	"i2c-lzpi.h"
 #include	"hal-lzpi.h"
@@ -48,6 +49,7 @@ static void (*ext_timer_func)(void);
 static void (*ext_irq_func)(void);
 static bool ext_irq_enb;
 volatile int que_th2ex = 0;
+extern wait_queue_head_t tx_done;
 volatile int que_irq= 0;
 volatile int que_tx_led= 1;
 volatile int que_rx_led= 1;
@@ -132,6 +134,8 @@ int rf_main_thread(void *p)
 			m.trigger&=~0x01;
 			if(ext_irq_func) {
 				printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,m.trigger);
+                // ssdebug 1
+			    // que_th2ex=1;
 				ext_irq_func();
 			}
 		}
@@ -197,12 +201,13 @@ int tx_led_thread(void *p)
 }
 // rf hardware interrupt handler
 static irqreturn_t rf_irq_handler(int irq,void *dev_id) {
+    printk(KERN_INFO"%s %s %d %08lx,%d\n",__FILE__,__func__,__LINE__,(unsigned long)ext_irq_func,que_irq);
 	if(ext_irq_func)
 	{
 		m.trigger |= 0x01;
 		if (que_irq==0)
 		{
-			//printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,que_irq);
+			printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,que_irq);
 			que_irq=1;
 			wake_up_interruptible_sync(&rf_irq_q);
 			//return IRQ_WAKE_THREAD;
@@ -286,6 +291,7 @@ int spi_probe(void){
 		goto error_thread;
 	}
 	printk(KERN_INFO"[HAL] %s thread start pid=%d\n",tx_led_task->comm,tx_led_task->pid);
+    printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 
 	return 0;
 
@@ -309,8 +315,47 @@ error:
 	return status;
 }
 
+
+// ssdebug 1
+int HAL_wait_event(void)
+{
+	int status=0;
+	que_th2ex = 0;
+	wait_event_interruptible_timeout(tx_done, que_th2ex,HZ);
+
+#if 0
+	SUBGHZ_MSG msg = SUBGHZ_OK;
+	
+	// @issue 
+#ifdef LAZURITE_IDE
+	while(subghz_param.sending == true)
+	{
+  		lp_setHaltMode();
+        // 2016.03.14 tx send event
+		BP3596_sendIdle();
+	}
+#else
+	que_th2ex = 0;
+	wait_event_interruptible_timeout(tx_done, que_th2ex,HZ);
+#endif
+	if(subghz_param.tx_stat.status > 0) {
+		msg = SUBGHZ_OK;
+	} else if(subghz_param.tx_stat.status == -EBUSY) {
+		msg = SUBGHZ_TX_CCA_FAIL;
+	} else if(subghz_param.tx_stat.status == -ETIMEDOUT) {
+		msg = SUBGHZ_TX_ACK_FAIL;
+	} else {
+		msg = -EIO;
+	}
+#endif
+
+	return status;
+}
+
+
 int HAL_init(uint8_t i2c_addr, uint8_t addr_bits){
-	int status;
+    int status;
+    printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 	// spi initialization
 	m.i2c.i2c_addr = i2c_addr;
 	m.i2c.addr_bits = addr_bits;
@@ -353,11 +398,13 @@ int HAL_SPI_transfer(const uint8_t *wdata, uint16_t wsize,unsigned char *rdata, 
 int HAL_GPIO_setInterrupt(void (*func)(void))
 {
 	ext_irq_func = func;
+    printk(KERN_INFO"%s %s %d %08lx\n",__FILE__,__func__,__LINE__,(unsigned long)ext_irq_func);
 	return HAL_STATUS_OK;
 }
 
 int HAL_GPIO_enableInterrupt(void)
 {
+    printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 	if(!flag_irq_enable) enable_irq(gpio_to_irq(GPIO_SINTN));
 	flag_irq_enable = true;
 	return HAL_STATUS_OK;
@@ -366,6 +413,7 @@ int HAL_GPIO_enableInterrupt(void)
 int HAL_GPIO_disableInterrupt(void)
 {
 	if(flag_irq_enable) disable_irq(gpio_to_irq(GPIO_SINTN));
+    printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 	flag_irq_enable = false;
 	m.trigger&=~0x01;
 	return HAL_STATUS_OK;

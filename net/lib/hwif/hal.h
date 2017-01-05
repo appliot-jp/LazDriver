@@ -47,6 +47,7 @@
 #define HAL_ERROR_IRQ		-5 		 // IRQ error
 #define HAL_ERROR_THREAD	-6 		 // thread error
 
+extern int HAL_wait_event(void);
 extern int HAL_init(uint8_t i2c_addr, uint8_t addr_bits);
 extern int HAL_remove(void);
 extern int HAL_GPIO_setValue(uint8_t pin, uint8_t value);

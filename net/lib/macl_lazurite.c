@@ -27,14 +27,46 @@
 #include "endian.h"
 #include "common-lzpi.h"
 
-MACL_PARAM macl;
-MACL_PARAM* macl_init(void)
-{
-	memset(&macl,0,sizeof(MACL_PARAM));
+
+/*
+ ******************************************************
+               Private function section
+ ******************************************************
+ */
+static void macl_init_handler(void) {
+	phy_timer_di();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
+	phy_timer_ei();
+}
+
+
+static void macl_timer_handler(void) {
+	phy_sint_di();
+	phy_sint_ei();
+}
+
+
+/*
+ ******************************************************
+               Public function section
+ ******************************************************
+ */
+MACL_PARAM macl;
+MACL_PARAM* macl_init(void)
+{
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+	phy_sint_di(); phy_sint_di();
+
+	memset(&macl,0,sizeof(MACL_PARAM));
 	macl.phy = phy_init();
+	phy_sint_handler(macl_init_handler);
+    phy_timer_handler(macl_timer_handler);
+
+	phy_sint_ei(); phy_timer_ei();
 	return &macl;
 }
 
@@ -163,8 +195,7 @@ int	macl_xmit_sync(BUFFER buff)
 	} else {
 		printk(KERN_INFO"not ACK Received!!%s,%s\n",__FILE__,__func__);
 	}
-    // ssdebug
-    phy_set_trx(0x09);
+    phy_set_trx(PHY_ST_TXON);
 
 	return status;
 }
