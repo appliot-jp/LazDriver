@@ -123,7 +123,7 @@ int rf_main_thread(void *p)
 {
 	m.trigger=0;
 	while(!kthread_should_stop()) {
-		printk(KERN_INFO"%s %s %d %d %d %d\n",__FILE__,__func__,__LINE__,flag_irq_enable,gpio_get_value(GPIO_SINTN),m.trigger);
+		// printk(KERN_INFO"%s %s %d %d %d %d\n",__FILE__,__func__,__LINE__,flag_irq_enable,gpio_get_value(GPIO_SINTN),m.trigger);
 		if(((flag_irq_enable!=true)||gpio_get_value(GPIO_SINTN)!=0)&&((m.trigger&0x0f)==0))
 		{
 			que_irq=0;
@@ -133,9 +133,9 @@ int rf_main_thread(void *p)
 		if(m.trigger&0x01){
 			m.trigger&=~0x01;
 			if(ext_irq_func) {
-				printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,m.trigger);
+				// printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,m.trigger);
                 // ssdebug 1
-			    // que_th2ex=1;
+			    que_th2ex=1;
 				ext_irq_func();
 			}
 		}
@@ -316,7 +316,7 @@ error:
 }
 
 
-// ssdebug 1
+// ssdebug 2
 int HAL_wait_event(void)
 {
 	int status=0;

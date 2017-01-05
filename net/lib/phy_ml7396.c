@@ -423,14 +423,12 @@ static void vco_cal(void) {
     reg_wr(REG_ADR_TX_ALARM_HL,reg_data,1); 
     reg_wr(REG_ADR_RX_ALARM_LH,reg_data,1);
     reg_wr(REG_ADR_RX_ALARM_HL,reg_data,1);
-    phy_intclr(0x00000000);
     reg_data[0]=0x01;
     reg_wr(REG_ADR_VCO_CAL_START, reg_data,1);
 	do {
         HAL_delayMicroseconds(100);
         reg_rd(REG_ADR_INT_SOURCE_GRP1, reg_data, 1);
 	} while (!(reg_data[0] & 0x04));
-	phy_intclr(0x00000004);
 }
 
 
@@ -936,7 +934,6 @@ PHY_PARAM *phy_init(void)
             reg_rd(REG_ADR_CLK_SET, &reg_data, 1);
         } while (!(reg_data & 0x80));
         reg_data = 0x00; reg_wr(REG_ADR_INT_SOURCE_GRP1, &reg_data, 1);
-        phy_pi_mesg();
     }
 
 	memset(reg.rdata,0,sizeof(reg.rdata));
@@ -950,18 +947,6 @@ PHY_PARAM *phy_init(void)
 
     reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
 
-    // ssdebug 1
-    reg_data=0x00;
-    
-    reg_wr(REG_ADR_INT_SOURCE_GRP1, &reg_data, 1);
-    reg_wr(REG_ADR_INT_SOURCE_GRP2, &reg_data, 1);
-    reg_wr(REG_ADR_INT_SOURCE_GRP3, &reg_data, 1);
-    reg_wr(REG_ADR_INT_SOURCE_GRP4, &reg_data, 1);
-
-    reg_wr(REG_ADR_INT_EN_GRP1, &reg_data, 1);
-    reg_wr(REG_ADR_INT_EN_GRP2, &reg_data, 1);
-    reg_wr(REG_ADR_INT_EN_GRP3, &reg_data, 1);
-    reg_wr(REG_ADR_INT_EN_GRP4, &reg_data, 1);
 	return &phy;
 }
 
@@ -986,16 +971,14 @@ void phy_rst(void)
 void phy_set_trx(uint8_t state)
 {
     uint8_t reg_data;
-    phy_pi_mesg();
     reg_wr(REG_ADR_RF_STATUS, &state, 1);
     HAL_delayMicroseconds(200);
     reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
-    phy_pi_mesg();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data);
 #endif
     // ssdebug 1
-//    HAL_wait_event();
+      HAL_wait_event();
 }
 
 int phy_get_trx(void)
@@ -1310,9 +1293,11 @@ void phy_inten(uint32_t inten)
  ******************************************************************************/
 void phy_intclr(uint32_t intclr)
 {
-    uint8_t reg_data[3];
+    uint8_t reg_data[4];
     reg_data[0] = ~(uint8_t)((intclr) >>  0);
     reg_data[1] = ~(uint8_t)((intclr) >>  8);
     reg_data[2] = ~(uint8_t)((intclr) >> 16);
-    reg_wr(REG_ADR_INT_SOURCE_GRP1, reg_data, 3);
+    reg_data[3] = ~(uint8_t)((intclr) >> 24);
+    reg_wr(REG_ADR_INT_SOURCE_GRP1, reg_data, 4);
+    phy_pi_mesg();
 }

@@ -34,10 +34,12 @@
  ******************************************************
  */
 static void macl_init_handler(void) {
+    uint32_t data = 0x00000000;
 	phy_timer_di();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
+    phy_intclr(data);
 	phy_timer_ei();
 }
 
