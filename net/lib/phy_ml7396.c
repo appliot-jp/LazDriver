@@ -1293,11 +1293,12 @@ void phy_inten(uint32_t inten)
  ******************************************************************************/
 void phy_intclr(uint32_t intclr)
 {
+    // ssdebug 1
     uint8_t reg_data[4];
-    reg_data[0] = ~(uint8_t)((intclr) >>  0);
-    reg_data[1] = ~(uint8_t)((intclr) >>  8);
-    reg_data[2] = ~(uint8_t)((intclr) >> 16);
-    reg_data[3] = ~(uint8_t)((intclr) >> 24);
+    reg_data[0] = 0x00; //~(uint8_t)((intclr) >>  0);
+    reg_data[1] = 0x00; //~(uint8_t)((intclr) >>  8);
+    reg_data[2] = 0x00; //~(uint8_t)((intclr) >> 16);
+    reg_data[3] = 0x00; //~(uint8_t)((intclr) >> 24);
     reg_wr(REG_ADR_INT_SOURCE_GRP1, reg_data, 4);
     phy_pi_mesg();
 }
