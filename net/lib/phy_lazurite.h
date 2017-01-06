@@ -61,12 +61,16 @@ extern PHY_PARAM *phy_init(void);
 extern void phy_rst(void);
 extern void phy_rxon(void);
 extern void phy_trxoff(void);
-extern void phy_tx(void);
 extern void phy_addr_filt(void);
 extern void phy_promiscuous(void);
 extern int phy_ed(void);
 extern void phy_sleep(void);
-extern void phy_intclr(uint32_t intclr);
+extern void phy_fifo(void);
+extern void phy_cca(void);
+extern void phy_ccadone(void);
+extern void phy_rxcmp(void);
+extern void phy_txcmp(void);
+extern void phy_retry(void);
 
 
 

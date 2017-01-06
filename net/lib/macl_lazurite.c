@@ -44,7 +44,6 @@ static void macl_rcv_handler(void) {
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 	phy_timer_di();
-    phy_intclr(0xFFFFFFFF);
 	phy_timer_di();
 }
 
@@ -54,7 +53,6 @@ static void macl_ackrcv_handler(void) {
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 	phy_timer_di();
-    phy_intclr(0xFFFFFFFF);
 	phy_timer_ei();
 }
 
@@ -64,7 +62,6 @@ static void macl_txcmp_handler(void) {
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 	phy_timer_di();
-    phy_intclr(0xFFFFFFFF);
 	phy_sint_handler(macl_ackrcv_handler);
     phy_timer_handler(macl_timer_handler);
 	phy_timer_ei();
@@ -76,7 +73,6 @@ static void macl_cca_handler(void) {
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 	phy_timer_di();
-    phy_intclr(0xFFFFFFFF);
 	phy_sint_handler(macl_txcmp_handler);
 	phy_timer_ei();
 }
@@ -87,8 +83,8 @@ static void macl_fifo_handler(void) {
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 	phy_timer_di();
-    phy_intclr(0xFFFFFFFF);
 	phy_sint_handler(macl_cca_handler);
+    phy_cca();
 	phy_timer_ei();
 }
 
@@ -242,7 +238,7 @@ int	macl_xmit_sync(BUFFER buff)
 	}
 
 	phy_sint_handler(macl_fifo_handler);
-    phy_tx();
+    phy_ccadone();
 
 	return status;
 }

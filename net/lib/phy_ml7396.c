@@ -413,6 +413,31 @@ static void reg_rd(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size)
 }
 
 
+static void phy_pi_mesg(void)
+{
+#ifndef LAZURITE_IDE
+    uint8_t reg_data[6];
+    if(module_test & MODE_PHY_DEBUG) {
+
+        reg_rd(REG_ADR_INT_EN_GRP1, reg_data, 4);
+        printk(KERN_INFO"DEBUG PHY INTEN1: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
+        printk(KERN_INFO"DEBUG PHY INTEN2: %s,%s,%x\n",__FILE__,__func__,reg_data[1]);
+        printk(KERN_INFO"DEBUG PHY INTEN3: %s,%s,%x\n",__FILE__,__func__,reg_data[2]);
+        printk(KERN_INFO"DEBUG PHY INTEN4: %s,%s,%x\n",__FILE__,__func__,reg_data[3]);
+
+        reg_rd(REG_ADR_INT_SOURCE_GRP1, reg_data, 4);
+        printk(KERN_INFO"DEBUG PHY INTEN1: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
+        printk(KERN_INFO"DEBUG PHY INTEN2: %s,%s,%x\n",__FILE__,__func__,reg_data[1]);
+        printk(KERN_INFO"DEBUG PHY INTEN3: %s,%s,%x\n",__FILE__,__func__,reg_data[2]);
+        printk(KERN_INFO"DEBUG PHY INTEN4: %s,%s,%x\n",__FILE__,__func__,reg_data[3]);
+
+        reg_rd(REG_ADR_RF_STATUS, reg_data, 1);
+        printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
+    }
+#endif
+}
+
+
 /******************************************************************************/
 /*! @brief Enable interrupt / Diseable interrupt
  * @detail Original function was REG_INTEN
@@ -429,6 +454,22 @@ void phy_inten(uint32_t inten)
     reg_wr(REG_ADR_INT_EN_GRP1, reg_data, 4);
 }
 
+
+/******************************************************************************/
+/*! @brief Clear interrupt 
+ * @detail Original function was REG_INTCLR
+ * @issue
+ ******************************************************************************/
+void phy_intclr(uint32_t intclr)
+{
+    uint8_t reg_data[4];
+    reg_data[0] = ~(uint8_t)((intclr) >>  0);
+    reg_data[1] = ~(uint8_t)((intclr) >>  8);
+    reg_data[2] = ~(uint8_t)((intclr) >> 16);
+    reg_data[3] = ~(uint8_t)((intclr) >> 24);
+    reg_wr(REG_ADR_INT_SOURCE_GRP1, reg_data, 4);
+    phy_pi_mesg();
+}
 
 
 static void vco_cal(void) {
@@ -504,30 +545,6 @@ static void timer_handler(void) {
 	ml7396_hwif_sint_ei();
 }
 #endif
-
-static void phy_pi_mesg(void)
-{
-#ifndef LAZURITE_IDE
-    uint8_t reg_data[6];
-    if(module_test & MODE_PHY_DEBUG) {
-
-        reg_rd(REG_ADR_INT_EN_GRP1, reg_data, 4);
-        printk(KERN_INFO"DEBUG PHY INTEN1: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
-        printk(KERN_INFO"DEBUG PHY INTEN2: %s,%s,%x\n",__FILE__,__func__,reg_data[1]);
-        printk(KERN_INFO"DEBUG PHY INTEN3: %s,%s,%x\n",__FILE__,__func__,reg_data[2]);
-        printk(KERN_INFO"DEBUG PHY INTEN4: %s,%s,%x\n",__FILE__,__func__,reg_data[3]);
-
-        reg_rd(REG_ADR_INT_SOURCE_GRP1, reg_data, 4);
-        printk(KERN_INFO"DEBUG PHY INTEN1: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
-        printk(KERN_INFO"DEBUG PHY INTEN2: %s,%s,%x\n",__FILE__,__func__,reg_data[1]);
-        printk(KERN_INFO"DEBUG PHY INTEN3: %s,%s,%x\n",__FILE__,__func__,reg_data[2]);
-        printk(KERN_INFO"DEBUG PHY INTEN4: %s,%s,%x\n",__FILE__,__func__,reg_data[3]);
-
-        reg_rd(REG_ADR_RF_STATUS, reg_data, 1);
-        printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
-    }
-#endif
-}
 
 
 
@@ -1003,7 +1020,28 @@ void phy_rst(void)
 void phy_rxon(void)
 {
     uint8_t reg_data = PHY_ST_RXON;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+    phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
     reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
+    HAL_wait_event();
+}
+
+
+void phy_promiscuous(void)
+{
+    uint8_t reg_data = PHY_ST_RXON;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+    phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
+    reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
+}
+
+
+void phy_rxcmp(void)
+{
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
@@ -1020,30 +1058,7 @@ void phy_trxoff(void)
 }
 
 
-void phy_tx(void)
-{
-    uint8_t reg_data = PHY_ST_TXON;
-    reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
-    HAL_delayMicroseconds(200);
-    reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data);
-#endif
-    // ssdebug 1
-    phy_inten(HW_EVENT_RF_STATUS);
-    HAL_wait_event();
-}
-
-
 void phy_addr_filt(void)
-{
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-}
-
-
-void phy_promiscuous(void)
 {
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
@@ -1068,9 +1083,51 @@ void phy_sleep(void)
 }
 
 
+void phy_fifo(void)
+{
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+}
 
 
+void phy_cca(void)
+{
+    phy_intclr(0xFFFFFFFF);
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+}
 
+
+void phy_ccadone(void)
+{
+    uint8_t reg_data = PHY_ST_TXON;
+    reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
+    HAL_delayMicroseconds(200);
+    reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data);
+#endif
+    phy_inten(HW_EVENT_RF_STATUS);
+    HAL_wait_event();
+}
+
+
+void phy_txcmp(void)
+{
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+}
+
+
+void phy_retry(void)
+{
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+}
 
 #if 0
 /* コールバック関数呼び出し
@@ -1334,18 +1391,4 @@ void REG_TXSTART(ML7396_Buffer* _buffer)
         ON_ERROR(reg_wr(REG_ADR_CCA_CNTRL, _reg_cca_cntl, 1)); \
     } while (0)
 #endif
-/******************************************************************************/
-/*! @brief Clear interrupt 
- * @detail Original function was REG_INTCLR
- * @issue
- ******************************************************************************/
-void phy_intclr(uint32_t intclr)
-{
-    uint8_t reg_data[4];
-    reg_data[0] = ~(uint8_t)((intclr) >>  0);
-    reg_data[1] = ~(uint8_t)((intclr) >>  8);
-    reg_data[2] = ~(uint8_t)((intclr) >> 16);
-    reg_data[3] = ~(uint8_t)((intclr) >> 24);
-    reg_wr(REG_ADR_INT_SOURCE_GRP1, reg_data, 4);
-    phy_pi_mesg();
-}
+
