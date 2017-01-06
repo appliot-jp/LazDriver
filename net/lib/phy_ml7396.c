@@ -66,10 +66,12 @@ I acquire integer region of the fixed-point numerical value
 #define INTQ(n, q) ((n) >> (q))
 
 /* headware interrupt */
+#define HW_EVENT_ALL_MASK     0x00000000  /* Interrupt all mask */
 #define HW_EVENT_FIFO_CLEAR   0x000000C0  /* FIFO_EMPTY */
 #define HW_EVENT_FIFO_EMPTY   0x00000010  /* FIFO_EMPTY */
 #define HW_EVENT_FIFO_FULL    0x00000020  /* FIFO_FULL */
 #define HW_EVENT_CCA_DONE     0x00000100  /* CCA検出完了 */
+#define HW_EVENT_RF_STATUS    0x00000400  /* RF状態遷移 */
 #define HW_EVENT_TX_DONE      0x00030000  /* 送信完了 */
 #define HW_EVENT_TX_FIFO_DONE 0x00C00000  /* 送信FIFO書込み完了 */
 #define HW_EVENT_RX_DONE      0x000C0000  /* 受信完了 */
@@ -289,9 +291,7 @@ static PHY_PARAM phy;
 static void ml7396_hwif_spi_transfer(const uint8_t *wdata, uint8_t *rdata, uint8_t size)
 {
     uint8_t wsize, rsize;
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
+
     if(wdata[0]&REG_ADR_WRITE_BIT) {
             wsize = size;
             rsize = 0;
@@ -370,7 +370,7 @@ static void reg_wr(uint8_t bank, uint8_t addr, const uint8_t *data, uint8_t size
 //	__DI();
     if (reg.lock++) {
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"REG LOCK ERR%s,%s\n",__FILE__,__func__);
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"REG LOCK ERR%s,%s,%d\n",__FILE__,__func__,reg.lock);
 #endif
     }else{
         regbank(bank);
@@ -394,7 +394,7 @@ static void reg_rd(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size)
 //	__DI();
     if (reg.lock++) {
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"REG LOCK ERR%s,%s\n",__FILE__,__func__);
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"REG LOCK ERR%s,%s,%d\n",__FILE__,__func__,reg.lock);
 #endif
     }else{
         regbank(bank);
@@ -412,6 +412,9 @@ static void vco_cal(void) {
 
     uint8_t reg_data[4];
 
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"DEBUG PHY: %s,%s\n",__FILE__,__func__);
+#endif
     reg_rd(REG_ADR_PACKET_MODE_SET, reg_data,1);
     reg_data[0] |=  0x1a;
     reg_wr(REG_ADR_PACKET_MODE_SET, reg_data,1);
@@ -425,6 +428,7 @@ static void vco_cal(void) {
     reg_wr(REG_ADR_RX_ALARM_HL,reg_data,1);
     reg_data[0]=0x01;
     reg_wr(REG_ADR_VCO_CAL_START, reg_data,1);
+    phy_inten(HW_EVENT_ALL_MASK);
 	do {
         HAL_delayMicroseconds(100);
         reg_rd(REG_ADR_INT_SOURCE_GRP1, reg_data, 1);
@@ -703,7 +707,10 @@ int phy_setup(uint8_t page,uint8_t ch)
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"DEBUG PHY: %s,%s,%x,%x\n",__FILE__,__func__,page,ch);
 #endif
-
+    // ssdebug 1
+    reg_data[0]=0xC0; reg_data[1]=0x00; reg_data[2]=0x00; reg_data[3]=0x00;
+    reg_wr(REG_ADR_INT_SOURCE_GRP1, reg_data, 4);
+    
     HAL_I2C_read(0x23, reg_data, 1), device_id = reg_data[0];
     reg_data[0] = 0x0f, reg_wr(REG_ADR_CLK_SET,             reg_data, 1);
     reg_data[0] = 0x22, reg_wr(REG_ADR_RX_PR_LEN_SFD_LEN,   reg_data, 1);
@@ -978,7 +985,8 @@ void phy_set_trx(uint8_t state)
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data);
 #endif
     // ssdebug 1
-      HAL_wait_event();
+    phy_inten(HW_EVENT_RF_STATUS);
+    HAL_wait_event();
 }
 
 int phy_get_trx(void)
@@ -1293,12 +1301,11 @@ void phy_inten(uint32_t inten)
  ******************************************************************************/
 void phy_intclr(uint32_t intclr)
 {
-    // ssdebug 1
     uint8_t reg_data[4];
-    reg_data[0] = 0x00; //~(uint8_t)((intclr) >>  0);
-    reg_data[1] = 0x00; //~(uint8_t)((intclr) >>  8);
-    reg_data[2] = 0x00; //~(uint8_t)((intclr) >> 16);
-    reg_data[3] = 0x00; //~(uint8_t)((intclr) >> 24);
+    reg_data[0] = ~(uint8_t)((intclr) >>  0);
+    reg_data[1] = ~(uint8_t)((intclr) >>  8);
+    reg_data[2] = ~(uint8_t)((intclr) >> 16);
+    reg_data[3] = ~(uint8_t)((intclr) >> 24);
     reg_wr(REG_ADR_INT_SOURCE_GRP1, reg_data, 4);
     phy_pi_mesg();
 }
