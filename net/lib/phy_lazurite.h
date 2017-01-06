@@ -47,12 +47,6 @@ typedef struct {
 } PHY_PARAM;
 
 
-#define PHY_ST_FORCE_TRXOFF      0x03
-#define PHY_ST_RXON              0x06
-#define PHY_ST_TXON              0x09
-#define PHY_ST_TRXOFF            0x08
-
-
 extern int phy_sint_handler(void (*func)(void));
 extern int phy_sint_ei(void);
 extern int phy_sint_di(void);
@@ -65,11 +59,13 @@ extern int phy_timer_tick(uint32_t *msec);
 extern int phy_setup(uint8_t page,uint8_t ch);
 extern PHY_PARAM *phy_init(void);
 extern void phy_rst(void);
-extern void phy_set_trx(uint8_t state);
-extern int phy_get_trx(void);
-extern int phy_set_cca(void);
-extern int phy_get_ed(void);
-extern void phy_inten(uint32_t inten);
+extern void phy_rxon(void);
+extern void phy_trxoff(void);
+extern void phy_tx(void);
+extern void phy_addr_filt(void);
+extern void phy_promiscuous(void);
+extern int phy_ed(void);
+extern void phy_sleep(void);
 extern void phy_intclr(uint32_t intclr);
 
 

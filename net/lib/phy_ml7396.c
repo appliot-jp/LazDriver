@@ -39,9 +39,9 @@
 
 
 /*
- ******************************************************
-                    Define section
- ******************************************************
+ --------------------------------------------------------------
+                          Define section
+ --------------------------------------------------------------
  */
 #define BUFFER_SIZE 256
 #define DEIVE_ID_ROHM  0x90
@@ -70,13 +70,13 @@ I acquire integer region of the fixed-point numerical value
 #define HW_EVENT_FIFO_CLEAR   0x000000C0  /* FIFO_EMPTY */
 #define HW_EVENT_FIFO_EMPTY   0x00000010  /* FIFO_EMPTY */
 #define HW_EVENT_FIFO_FULL    0x00000020  /* FIFO_FULL */
-#define HW_EVENT_CCA_DONE     0x00000100  /* CCA検出完了 */
-#define HW_EVENT_RF_STATUS    0x00000400  /* RF状態遷移 */
-#define HW_EVENT_TX_DONE      0x00030000  /* 送信完了 */
-#define HW_EVENT_TX_FIFO_DONE 0x00C00000  /* 送信FIFO書込み完了 */
-#define HW_EVENT_RX_DONE      0x000C0000  /* 受信完了 */
-#define HW_EVENT_CRC_ERROR    0x00300000  /* CRCエラー */
-#define HW_EVENT_TIMEOUT      0x80000000  /* タイマータイムアウト */
+#define HW_EVENT_CCA_DONE     0x00000100  /* CCA DONE */
+#define HW_EVENT_RF_STATUS    0x00000400  /* RF status */
+#define HW_EVENT_TX_DONE      0x00030000  /* TX complete */
+#define HW_EVENT_RX_DONE      0x000C0000  /* RX complete */
+#define HW_EVENT_CRC_ERROR    0x00300000  /* CRC error */
+#define HW_EVENT_TX_FIFO_DONE 0x00C00000  /* FIFO complete */
+#define HW_EVENT_TIMEOUT      0x80000000  /* Timer timeout */
 
 /* software interrupt */
 #define SW_EVENT_SETUP   1  /* 初期化 */
@@ -86,10 +86,15 @@ I acquire integer region of the fixed-point numerical value
 #define SW_EVENT_SLEEP   5  /* 省電力状態へ移行 */
 #define SW_EVENT_WAKEUP  6  /* 省電力状態から復帰 */
 
+#define PHY_ST_FORCE_TRXOFF      0x03
+#define PHY_ST_RXON              0x06
+#define PHY_ST_TXON              0x09
+#define PHY_ST_TRXOFF            0x08
+
 /*
- ******************************************************
-                    Struct section
- ******************************************************
+ ---------------------------------------------------------------
+                         Struct section
+ ---------------------------------------------------------------
  */
 
 
@@ -277,9 +282,9 @@ static PHY_PARAM phy;
 
 
 /*
- ******************************************************
-               Private function section
- ******************************************************
+ ------------------------------------------------------------------
+                      Private function section
+ ------------------------------------------------------------------
  */
 /******************************************************************************/
 /*! @brief Register access of the ML7396 module
@@ -408,6 +413,24 @@ static void reg_rd(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size)
 }
 
 
+/******************************************************************************/
+/*! @brief Enable interrupt / Diseable interrupt
+ * @detail Original function was REG_INTEN
+ * @issue
+ ******************************************************************************/
+void phy_inten(uint32_t inten)
+{
+    uint8_t reg_data[4];
+    reg_data[0] = (uint8_t)((inten) >>  0) | 0xc0;
+    reg_data[1] = (uint8_t)((inten) >>  8);
+    reg_data[2] = (uint8_t)((inten) >> 16);
+    reg_data[3] = (uint8_t)((inten) >> 24);
+    reg_wr(REG_ADR_INT_SOURCE_GRP1, reg_data, 4);
+    reg_wr(REG_ADR_INT_EN_GRP1, reg_data, 4);
+}
+
+
+
 static void vco_cal(void) {
 
     uint8_t reg_data[4];
@@ -507,10 +530,13 @@ static void phy_pi_mesg(void)
 }
 
 
+
+
+
 /*
- ******************************************************
-               Public function section
- ******************************************************
+ -------------------------------------------------------------
+                    Public function section
+ -------------------------------------------------------------
  */
 /******************************************************************************/
 /*! @brief Interrupt handler registration of the ML7396 module
@@ -963,7 +989,6 @@ void phy_rst(void)
 {
     uint8_t reg_data[1];
 
-    //phy_inten(event_enable[0]);
     reg_data[0] = 0x03;
     reg_wr(REG_ADR_RF_STATUS, reg_data, 1);
     HAL_delayMicroseconds(200);
@@ -975,10 +1000,30 @@ void phy_rst(void)
 }
 
 
-void phy_set_trx(uint8_t state)
+void phy_rxon(void)
 {
-    uint8_t reg_data;
-    reg_wr(REG_ADR_RF_STATUS, &state, 1);
+    uint8_t reg_data = PHY_ST_RXON;
+    reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+}
+
+
+void phy_trxoff(void)
+{
+    uint8_t reg_data = PHY_ST_TRXOFF;
+    reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+}
+
+
+void phy_tx(void)
+{
+    uint8_t reg_data = PHY_ST_TXON;
+    reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
     HAL_delayMicroseconds(200);
     reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
 #ifndef LAZURITE_IDE
@@ -989,27 +1034,39 @@ void phy_set_trx(uint8_t state)
     HAL_wait_event();
 }
 
-int phy_get_trx(void)
+
+void phy_addr_filt(void)
+{
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+}
+
+
+void phy_promiscuous(void)
+{
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+}
+
+
+int phy_ed(void)
 {
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
     return 0;
 }
-int phy_set_cca(void)
+
+
+void phy_sleep(void)
 {
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
-    return 0;
 }
-int phy_get_ed(void)
-{
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-    return 0;
-}
+
 
 
 
@@ -1277,23 +1334,6 @@ void REG_TXSTART(ML7396_Buffer* _buffer)
         ON_ERROR(reg_wr(REG_ADR_CCA_CNTRL, _reg_cca_cntl, 1)); \
     } while (0)
 #endif
-
-/******************************************************************************/
-/*! @brief Enable interrupt / Diseable interrupt
- * @detail Original function was REG_INTEN
- * @issue
- ******************************************************************************/
-void phy_inten(uint32_t inten)
-{
-    uint8_t reg_data[4];
-    reg_data[0] = (uint8_t)((inten) >>  0) | 0xc0;
-    reg_data[1] = (uint8_t)((inten) >>  8);
-    reg_data[2] = (uint8_t)((inten) >> 16);
-    reg_data[3] = (uint8_t)((inten) >> 24);
-    reg_wr(REG_ADR_INT_SOURCE_GRP1, reg_data, 4);
-    reg_wr(REG_ADR_INT_EN_GRP1, reg_data, 4);
-}
-
 /******************************************************************************/
 /*! @brief Clear interrupt 
  * @detail Original function was REG_INTCLR
