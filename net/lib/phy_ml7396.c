@@ -93,9 +93,17 @@ I acquire integer region of the fixed-point numerical value
 
 /*
  ---------------------------------------------------------------
-                         Struct section
+                         Struct and Enum section
  ---------------------------------------------------------------
  */
+
+
+typedef enum {
+	CCA_STOP=0,                  /* CCA Stop */
+	CCA_FAST,                    /* CCA First */
+	IDLE_DETECT,                 /* CCA Idle detection */
+	CCA_RETRY                    /* CCA with BACKOFF */
+} CCA_State;
 
 
 /** state
@@ -1017,14 +1025,35 @@ void phy_rst(void)
 }
 
 
+void phy_txon(void)
+{
+
+    uint8_t reg_data = PHY_ST_TXON;
+
+    phy_intclr(0xFFFFFFFF);
+    reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
+    HAL_delayMicroseconds(200);
+    reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data);
+#endif
+    phy_inten(HW_EVENT_TX_DONE);
+    HAL_wait_event();
+}
+
+
 void phy_rxon(void)
 {
     uint8_t reg_data = PHY_ST_RXON;
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-    phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
+
+    phy_intclr(0xFFFFFFFF);
     reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
+    HAL_delayMicroseconds(200);
+    reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data);
+#endif
+//  phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
     HAL_wait_event();
 }
 
@@ -1032,11 +1061,14 @@ void phy_rxon(void)
 void phy_promiscuous(void)
 {
     uint8_t reg_data = PHY_ST_RXON;
+    reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
+    HAL_delayMicroseconds(200);
+    reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data);
 #endif
     phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
-    reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
+    HAL_wait_event();
 }
 
 
@@ -1083,26 +1115,49 @@ void phy_sleep(void)
 }
 
 
-void phy_fifo(void)
+void phy_ccaen(void)
 {
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-}
 
+    uint8_t _type = CCA_FAST;
+    uint8_t _reg_cca_cntl[1];
+    uint8_t _reg_idl_wait[1];
+    uint8_t _reg_no_rcv[1];
 
-void phy_cca(void)
-{
     phy_intclr(0xFFFFFFFF);
+
+    _reg_no_rcv[0] = 0x00;
+    reg_wr(REG_ADR_DEMSET3, _reg_no_rcv, 1);
+    reg_wr(REG_ADR_DEMSET14, _reg_no_rcv, 1);
+    if (_type == CCA_STOP) {
+        _reg_cca_cntl[0] = 0x00;
+        _reg_idl_wait[0] = 0x00;
+    } else
+    if (_type == CCA_FAST) {
+        _reg_cca_cntl[0] = 0x10;
+        _reg_idl_wait[0] = 0x00;
+    } else
+    if (_type == IDLE_DETECT) {
+        _reg_cca_cntl[0] = 0x18;
+        _reg_idl_wait[0] = 0x64;
+    } else
+    if (_type == CCA_RETRY) {
+        _reg_cca_cntl[0] = 0x10;
+        _reg_idl_wait[0] = 0x64;
+    }
+    reg_wr(REG_ADR_IDLE_WAIT_L, _reg_idl_wait, 1);
+    reg_wr(REG_ADR_CCA_CNTRL, _reg_cca_cntl, 1);
+    
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
+    phy_inten(HW_EVENT_CCA_DONE);
+    HAL_wait_event();
 }
 
 
-void phy_ccadone(void)
+void phy_send(void)
 {
-    uint8_t reg_data = PHY_ST_TXON;
+    uint8_t reg_data = PHY_ST_RXON;
     reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
     HAL_delayMicroseconds(200);
     reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
@@ -1119,6 +1174,8 @@ void phy_txcmp(void)
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
+    phy_inten(HW_EVENT_TX_DONE);
+    HAL_wait_event();
 }
 
 
@@ -1360,35 +1417,4 @@ void REG_TXSTART(ML7396_Buffer* _buffer)
         } \
     } while (0)
 
-/* CCA実行
- */
-// 2016.06.30 Eiichi Saito: cca idle
-#define REG_CCAEN(_type) \
-    do { \
-        uint8_t _reg_cca_cntl[1]; \
-        uint8_t _reg_idl_wait[1]; \
-        uint8_t _reg_no_rcv[1]; \
-        _reg_no_rcv[0] = 0x00; \
-        ON_ERROR(reg_wr(REG_ADR_DEMSET3, _reg_no_rcv, 1)); \
-        ON_ERROR(reg_wr(REG_ADR_DEMSET14, _reg_no_rcv, 1)); \
-        if (_type == CCA_STOP) { \
-            _reg_cca_cntl[0] = 0x00; \
-            _reg_idl_wait[0] = 0x00; \
-        } else \
-        if (_type == CCA_FAST) { \
-            _reg_cca_cntl[0] = 0x10; \
-            _reg_idl_wait[0] = 0x00; \
-        } else \
-        if (_type == IDLE_DETECT) { \
-            _reg_cca_cntl[0] = 0x18; \
-            _reg_idl_wait[0] = 0x64; \
-        } else \
-        if (_type == CCA_RETRY) { \
-            _reg_cca_cntl[0] = 0x10; \
-            _reg_idl_wait[0] = 0x64; \
-        } \
-        ON_ERROR(reg_wr(REG_ADR_IDLE_WAIT_L, _reg_idl_wait, 1)); \
-        ON_ERROR(reg_wr(REG_ADR_CCA_CNTRL, _reg_cca_cntl, 1)); \
-    } while (0)
 #endif
-

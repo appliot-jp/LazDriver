@@ -64,27 +64,29 @@ static void macl_txcmp_handler(void) {
 	phy_timer_di();
 	phy_sint_handler(macl_ackrcv_handler);
     phy_timer_handler(macl_timer_handler);
+    phy_rxon();
 	phy_timer_ei();
 }
 
 
-static void macl_cca_handler(void) {
+static void macl_ccadone_handler(void) {
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 	phy_timer_di();
 	phy_sint_handler(macl_txcmp_handler);
+    phy_txon();
 	phy_timer_ei();
 }
 
 
-static void macl_fifo_handler(void) {
+static void macl_fifodone_handler(void) {
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 	phy_timer_di();
-	phy_sint_handler(macl_cca_handler);
-    phy_cca();
+	phy_sint_handler(macl_ccadone_handler);
+    phy_ccaen();
 	phy_timer_ei();
 }
 
@@ -237,8 +239,8 @@ int	macl_xmit_sync(BUFFER buff)
 		printk(KERN_INFO"not ACK Received!!%s,%s\n",__FILE__,__func__);
 	}
 
-	phy_sint_handler(macl_fifo_handler);
-    phy_ccadone();
+	phy_sint_handler(macl_fifodone_handler);
+    phy_send();
 
 	return status;
 }

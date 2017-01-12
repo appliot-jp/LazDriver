@@ -47,6 +47,7 @@ static struct timespec start_time;			// memory of tick timer
 static struct timer_list g_timer;			// timer handler
 static void (*ext_timer_func)(void);
 static void (*ext_irq_func)(void);
+static void (*act_irq_func)(void);
 static bool ext_irq_enb;
 volatile int que_th2ex = 0;
 extern wait_queue_head_t tx_done;
@@ -136,7 +137,8 @@ int rf_main_thread(void *p)
 				// printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,m.trigger);
                 // ssdebug 1
 			    que_th2ex=1;
-				ext_irq_func();
+				act_irq_func = ext_irq_func;
+                act_irq_func();
 			}
 		}
 		if(m.trigger&0x02) {
