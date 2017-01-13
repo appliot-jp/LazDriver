@@ -86,7 +86,7 @@ static void macl_fifodone_handler(void) {
 #endif
 	phy_timer_di();
 	phy_sint_handler(macl_ccadone_handler);
-    phy_ccaen();
+    phy_ccaen(CCA_FAST);
 	phy_timer_ei();
 }
 

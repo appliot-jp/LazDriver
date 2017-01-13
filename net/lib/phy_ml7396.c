@@ -97,18 +97,6 @@ I acquire integer region of the fixed-point numerical value
  ---------------------------------------------------------------
  */
 
-
-typedef enum {
-	CCA_STOP=0,                  /* CCA Stop */
-	CCA_FAST,                    /* CCA First */
-	IDLE_DETECT,                 /* CCA Idle detection */
-	CCA_RETRY                    /* CCA with BACKOFF */
-} CCA_State;
-
-
-/** state
- */
-
 /* 各状態における割り込み許可状況 */
 static const uint32_t event_enable[] = {
 	0,                                                                             /* ML7396_StateReset */
@@ -758,7 +746,6 @@ int phy_setup(uint8_t page,uint8_t ch)
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"DEBUG PHY: %s,%s,%x,%x\n",__FILE__,__func__,page,ch);
 #endif
-    // ssdebug 1
     reg_data[0]=0xC0; reg_data[1]=0x00; reg_data[2]=0x00; reg_data[3]=0x00;
     reg_wr(REG_ADR_INT_SOURCE_GRP1, reg_data, 4);
     
@@ -969,11 +956,17 @@ error:
 }
 
 
+/*
+ ------------------------------------------------------------------
+                      Action cell section
+ ------------------------------------------------------------------
+ */
 PHY_PARAM *phy_init(void)
 {
     uint8_t reg_data;
     uint32_t wait_t;
     int status = -1;
+
     hwif.timer.handler = NULL;
 #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI
     hwif.timer.active = Disable;
@@ -1008,8 +1001,7 @@ PHY_PARAM *phy_init(void)
 	return &phy;
 }
 
-/* PHY強制リセット
- */
+
 void phy_rst(void)
 {
     uint8_t reg_data[1];
@@ -1030,15 +1022,15 @@ void phy_txon(void)
 
     uint8_t reg_data = PHY_ST_TXON;
 
-    phy_intclr(0xFFFFFFFF);
+    phy_intclr(HW_EVENT_CCA_DONE | HW_EVENT_RF_STATUS);
     reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
     HAL_delayMicroseconds(200);
     reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
+    phy_inten(HW_EVENT_TX_DONE);
+    HAL_wait_event();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data);
 #endif
-    phy_inten(HW_EVENT_TX_DONE);
-    HAL_wait_event();
 }
 
 
@@ -1046,29 +1038,30 @@ void phy_rxon(void)
 {
     uint8_t reg_data = PHY_ST_RXON;
 
-    phy_intclr(0xFFFFFFFF);
+    phy_intclr(HW_EVENT_TX_DONE | HW_EVENT_TX_FIFO_DONE);
     reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
     HAL_delayMicroseconds(200);
     reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
+    phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
+    HAL_wait_event();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data);
 #endif
-//  phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
-    HAL_wait_event();
 }
 
 
 void phy_promiscuous(void)
 {
     uint8_t reg_data = PHY_ST_RXON;
+
     reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
     HAL_delayMicroseconds(200);
     reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
+    phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
+    HAL_wait_event();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data);
 #endif
-    phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
-    HAL_wait_event();
 }
 
 
@@ -1083,6 +1076,7 @@ void phy_rxcmp(void)
 void phy_trxoff(void)
 {
     uint8_t reg_data = PHY_ST_TRXOFF;
+
     reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
@@ -1115,67 +1109,159 @@ void phy_sleep(void)
 }
 
 
-void phy_ccaen(void)
+void phy_ccaen(CCA_ST state)
 {
+    uint8_t reg_cca_cntl;
+    uint8_t reg_idl_wait;
+    uint8_t reg_data;
 
-    uint8_t _type = CCA_FAST;
-    uint8_t _reg_cca_cntl[1];
-    uint8_t _reg_idl_wait[1];
-    uint8_t _reg_no_rcv[1];
-
-    phy_intclr(0xFFFFFFFF);
-
-    _reg_no_rcv[0] = 0x00;
-    reg_wr(REG_ADR_DEMSET3, _reg_no_rcv, 1);
-    reg_wr(REG_ADR_DEMSET14, _reg_no_rcv, 1);
-    if (_type == CCA_STOP) {
-        _reg_cca_cntl[0] = 0x00;
-        _reg_idl_wait[0] = 0x00;
-    } else
-    if (_type == CCA_FAST) {
-        _reg_cca_cntl[0] = 0x10;
-        _reg_idl_wait[0] = 0x00;
-    } else
-    if (_type == IDLE_DETECT) {
-        _reg_cca_cntl[0] = 0x18;
-        _reg_idl_wait[0] = 0x64;
-    } else
-    if (_type == CCA_RETRY) {
-        _reg_cca_cntl[0] = 0x10;
-        _reg_idl_wait[0] = 0x64;
+    if (state != CCA_FAST){
+        phy_intclr(HW_EVENT_CCA_DONE);
     }
-    reg_wr(REG_ADR_IDLE_WAIT_L, _reg_idl_wait, 1);
-    reg_wr(REG_ADR_CCA_CNTRL, _reg_cca_cntl, 1);
+
+    reg_data = 0x00;
+    reg_wr(REG_ADR_DEMSET3, &reg_data, 1);
+    reg_wr(REG_ADR_DEMSET14,&reg_data, 1);
+
+    if (state == CCA_STOP) {
+        reg_cca_cntl = 0x00;
+        reg_idl_wait = 0x00;
+    } else
+    if (state == CCA_FAST) {
+        reg_cca_cntl = 0x10;
+        reg_idl_wait = 0x00;
+    } else
+    if (state == IDLE_DETECT) {
+        reg_cca_cntl = 0x18;
+        reg_idl_wait = 0x64;
+    } else
+    if (state == CCA_RETRY) {
+        reg_cca_cntl = 0x10;
+        reg_idl_wait = 0x64;
+    }
+
+    reg_wr(REG_ADR_IDLE_WAIT_L, &reg_idl_wait, 1);
+    reg_wr(REG_ADR_CCA_CNTRL, &reg_cca_cntl, 1);
+
+    reg_data = PHY_ST_RXON;
+    reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
     
+    phy_inten(HW_EVENT_CCA_DONE);
+    HAL_wait_event();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
-    phy_inten(HW_EVENT_CCA_DONE);
-    HAL_wait_event();
 }
 
 
 void phy_send(void)
 {
-    uint8_t reg_data = PHY_ST_RXON;
-    reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
-    HAL_delayMicroseconds(200);
-    reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data);
-#endif
-    phy_inten(HW_EVENT_RF_STATUS);
+    uint8_t reg_data[2];
+    uint8_t length;
+    uint8_t payload[] = "LAPIS Lazurite RF system";
+
+    // make fcf
+    length = sizeof(payload);
+    reg_data[0] = 0x18;             // frame control
+    reg_data[1] = 2 + length;       // crc size + payload length
+    reg_wr(REG_ADR_WR_TX_FIFO, reg_data, 2); 
+
+    // make payload
+    reg_wr(REG_ADR_WR_TX_FIFO, payload, sizeof(payload));
+//  HAL_delayMicroseconds(300);
+
+    phy_inten(HW_EVENT_TX_FIFO_DONE);
     HAL_wait_event();
+
+#if 0
+/* 送信バッファ書き込み(先頭データ)
+ */
+// 2015.05.07 Eiichi Saito : Change PHR CRC length field 0x0800 -> 0x1800
+#define REG_TXSTART(_buffer) \
+    do { \
+        uint16_t _data_size; \
+        uint8_t _reg_data[2]; \
+        ASSERT((_buffer)->status == ML7396_BUFFER_INIT); \
+        _data_size = (_buffer)->size; \
+        if (_data_size > (_buffer)->capacity) \
+            (_buffer)->status = ML7396_BUFFER_ESIZE; \
+        else { \
+            _data_size += TXCRC_SIZE; \
+            _data_size |= 0x1800; \
+            u2n16_set(_data_size, _reg_data); \
+            ON_ERROR(reg_wr(REG_ADR_WR_TX_FIFO, _reg_data, 2)); \
+            (_buffer)->status = 0; \
+        } \
+    } while (0)
+void REG_TXSTART(ML7396_Buffer* _buffer)
+{
+    uint16_t _data_size;
+    uint8_t reg_data[2]; 
+    ASSERT((_buffer)->status == ML7396_BUFFER_INIT); 
+    _data_size = (_buffer)->size; 
+    if (_data_size > (_buffer)->capacity) 
+        (_buffer)->status = ML7396_BUFFER_ESIZE; 
+    else { 
+        _data_size += TXCRC_SIZE; 
+        _data_size |= 0x1800; 
+        u2n16_set(_data_size, reg_data); 
+        reg_wr(REG_ADR_WR_TX_FIFO, reg_data, 2); 
+        (_buffer)->status = 0; 
+    }
+}
+
+/* 送信バッファ書き込み開始(継続データ)
+ * delay 300usecやTX_ONへの遷移中のFIFOアクセス（PLLアンロック）を防止するため。
+ *  必要に応じて自動でML7396の状態を RX_ON に変更
+ *  FIFO_MARGINが32なので_size変数は224、_data_sizeはパケットレングスになる。
+ *  パケットレングスが224以下であれば224以下の値に、244以上であれば224の値を
+ *  FIFOライトする値にする。
+ */
+// 2015.06.08 Eiichi Saito : addition delay
+/*
+#define REG_TXCONTINUE(_buffer) \
+    do { \
+        uint8_t _size; \
+        uint16_t _data_size; \
+        ASSERT((_buffer)->status >= 0); \
+        _size = 256-FIFO_MARGIN; \
+        _data_size = (_buffer)->size - (_buffer)->status; \
+        if (_data_size <= _size) \
+            _size = _data_size; \
+        if (_size > 0) { \
+            ON_ERROR(reg_wr(REG_ADR_WR_TX_FIFO, (_buffer)->data + (_buffer)->status, _size)); \
+            (_buffer)->status += _size; \
+            HAL_delayMicroseconds(300); \
+        } \
+    } while (0)
+*/
+// 2016.4.21 Eiichi Saito: FAST_TX disable
+#define REG_TXCONTINUE(_buffer) \
+    do { \
+        uint8_t _size; \
+        ASSERT((_buffer)->status >= 0); \
+        _size = (_buffer)->size - (_buffer)->status; \
+        if (_size > 0) { \
+            ON_ERROR(reg_wr(REG_ADR_WR_TX_FIFO, (_buffer)->data + (_buffer)->status, _size)); \
+            (_buffer)->status += _size; \
+            HAL_delayMicroseconds(300); \
+        } \
+    } while (0)
+#endif
+
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
 }
 
 
 void phy_txcmp(void)
 {
+    phy_inten(HW_EVENT_TX_DONE);
+    HAL_wait_event();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
-    phy_inten(HW_EVENT_TX_DONE);
-    HAL_wait_event();
 }
 
 
@@ -1341,80 +1427,6 @@ void REG_RXSTART(ML7396_Buffer *_buffer)
         uint8_t _reg_data[4]; \
         ON_ERROR(reg_rd(REG_ADR_RD_RX_FIFO, _reg_data, RXCRC_SIZE)); \
         ON_ERROR(reg_rd(REG_ADR_RD_RX_FIFO, &(_buffer)->opt.common.ed, 1)); \
-    } while (0)
-
-/* 送信バッファ書き込み(先頭データ)
- */
-// 2015.05.07 Eiichi Saito : Change PHR CRC length field 0x0800 -> 0x1800
-#define REG_TXSTART(_buffer) \
-    do { \
-        uint16_t _data_size; \
-        uint8_t _reg_data[2]; \
-        ASSERT((_buffer)->status == ML7396_BUFFER_INIT); \
-        _data_size = (_buffer)->size; \
-        if (_data_size > (_buffer)->capacity) \
-            (_buffer)->status = ML7396_BUFFER_ESIZE; \
-        else { \
-            _data_size += TXCRC_SIZE; \
-            _data_size |= 0x1800; \
-            u2n16_set(_data_size, _reg_data); \
-            ON_ERROR(reg_wr(REG_ADR_WR_TX_FIFO, _reg_data, 2)); \
-            (_buffer)->status = 0; \
-        } \
-    } while (0)
-void REG_TXSTART(ML7396_Buffer* _buffer)
-{
-    uint16_t _data_size;
-    uint8_t reg_data[2]; 
-    ASSERT((_buffer)->status == ML7396_BUFFER_INIT); 
-    _data_size = (_buffer)->size; 
-    if (_data_size > (_buffer)->capacity) 
-        (_buffer)->status = ML7396_BUFFER_ESIZE; 
-    else { 
-        _data_size += TXCRC_SIZE; 
-        _data_size |= 0x1800; 
-        u2n16_set(_data_size, reg_data); 
-        reg_wr(REG_ADR_WR_TX_FIFO, reg_data, 2); 
-        (_buffer)->status = 0; 
-    }
-}
-
-/* 送信バッファ書き込み開始(継続データ)
- * delay 300usecやTX_ONへの遷移中のFIFOアクセス（PLLアンロック）を防止するため。
- *  必要に応じて自動でML7396の状態を RX_ON に変更
- *  FIFO_MARGINが32なので_size変数は224、_data_sizeはパケットレングスになる。
- *  パケットレングスが224以下であれば224以下の値に、244以上であれば224の値を
- *  FIFOライトする値にする。
- */
-// 2015.06.08 Eiichi Saito : addition delay
-/*
-#define REG_TXCONTINUE(_buffer) \
-    do { \
-        uint8_t _size; \
-        uint16_t _data_size; \
-        ASSERT((_buffer)->status >= 0); \
-        _size = 256-FIFO_MARGIN; \
-        _data_size = (_buffer)->size - (_buffer)->status; \
-        if (_data_size <= _size) \
-            _size = _data_size; \
-        if (_size > 0) { \
-            ON_ERROR(reg_wr(REG_ADR_WR_TX_FIFO, (_buffer)->data + (_buffer)->status, _size)); \
-            (_buffer)->status += _size; \
-            HAL_delayMicroseconds(300); \
-        } \
-    } while (0)
-*/
-// 2016.4.21 Eiichi Saito: FAST_TX disable
-#define REG_TXCONTINUE(_buffer) \
-    do { \
-        uint8_t _size; \
-        ASSERT((_buffer)->status >= 0); \
-        _size = (_buffer)->size - (_buffer)->status; \
-        if (_size > 0) { \
-            ON_ERROR(reg_wr(REG_ADR_WR_TX_FIFO, (_buffer)->data + (_buffer)->status, _size)); \
-            (_buffer)->status += _size; \
-            HAL_delayMicroseconds(300); \
-        } \
     } while (0)
 
 #endif

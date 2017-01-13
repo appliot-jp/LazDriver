@@ -135,7 +135,6 @@ int rf_main_thread(void *p)
 			m.trigger&=~0x01;
 			if(ext_irq_func) {
 				// printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,m.trigger);
-                // ssdebug 1
 			    que_th2ex=1;
 				act_irq_func = ext_irq_func;
                 act_irq_func();
@@ -318,7 +317,6 @@ error:
 }
 
 
-// ssdebug 2
 int HAL_wait_event(void)
 {
 	int status=0;

@@ -47,6 +47,14 @@ typedef struct {
 } PHY_PARAM;
 
 
+typedef enum {
+	CCA_STOP=0,                  /* CCA Stop */
+	CCA_FAST,                    /* CCA First */
+	IDLE_DETECT,                 /* CCA Idle detection */
+	CCA_RETRY                    /* CCA with BACKOFF */
+} CCA_ST;
+
+
 extern int phy_sint_handler(void (*func)(void));
 extern int phy_sint_ei(void);
 extern int phy_sint_di(void);
@@ -67,7 +75,7 @@ extern void phy_promiscuous(void);
 extern int phy_ed(void);
 extern void phy_sleep(void);
 extern void phy_send(void);
-extern void phy_ccaen(void);
+extern void phy_ccaen(CCA_ST state);
 extern void phy_rxcmp(void);
 extern void phy_txcmp(void);
 extern void phy_retry(void);
