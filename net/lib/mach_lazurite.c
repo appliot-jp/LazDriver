@@ -27,6 +27,7 @@
 #include "mach_lazurite.h"
 #include "macl_lazurite.h"
 #include "arib_lazurite.h"
+#include "hwif/hal.h"
 
 static struct mach_param mach;
 /*! @uint8_t ackbuf[32]
@@ -57,14 +58,13 @@ int	get_mac_addr(uint8_t *macaddr)
 {
 	int status=STATUS_OK;
 	int i;
-	const uint8_t from_eeprom[] = {
-		0x00,0x1d,0x12,0x90,
-		0x00,0x63,0x60,0x0c,
-	};
+	uint8_t rdata[8];
+
+	HAL_I2C_read(0x20,rdata,8);
 
 	for (i=0;i<8;i++)
 	{
-		macaddr[i] = from_eeprom[7-i];
+		macaddr[i] = rdata[7-i];
 	}
 	if(status != STATUS_OK)
 	{
