@@ -30,14 +30,15 @@
 
 /*
  ******************************************************
-               Private function section
+               Private handler section
  ******************************************************
  */
-static void macl_timer_handler(void) {
-	phy_sint_di();
-	phy_sint_ei();
-}
-
+static void macl_rcv_handler(void);
+static void macl_fifodone_handler(void);
+static void macl_ccadone_handler(void);
+static void macl_txdone_handler(void);
+static void macl_ackrcv_handler(void);
+static void macl_timer_handler(void);
 
 static void macl_rcv_handler(void) {
 #ifndef LAZURITE_IDE
@@ -48,23 +49,13 @@ static void macl_rcv_handler(void) {
 }
 
 
-static void macl_ackrcv_handler(void) {
+static void macl_fifodone_handler(void) {
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 	phy_timer_di();
-	phy_timer_ei();
-}
-
-
-static void macl_txcmp_handler(void) {
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-	phy_timer_di();
-	phy_sint_handler(macl_ackrcv_handler);
-    phy_timer_handler(macl_timer_handler);
-    phy_rxon();
+	phy_sint_handler(macl_ccadone_handler);
+    phy_stm_ccaen(CCA_FAST);
 	phy_timer_ei();
 }
 
@@ -74,20 +65,41 @@ static void macl_ccadone_handler(void) {
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 	phy_timer_di();
-	phy_sint_handler(macl_txcmp_handler);
-    phy_txon();
+	phy_sint_handler(macl_txdone_handler);
+    phy_stm_txon();
 	phy_timer_ei();
 }
 
 
-static void macl_fifodone_handler(void) {
+static void macl_txdone_handler(void) {
+#ifndef LAZURITE_IDE
+//	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+	phy_timer_di();
+	phy_sint_handler(macl_ackrcv_handler);
+//  phy_timer_handler(macl_timer_handler);
+    phy_stm_txdone();
+	phy_timer_ei();
+}
+
+
+static void macl_ackrcv_handler(void) {
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 	phy_timer_di();
-	phy_sint_handler(macl_ccadone_handler);
-    phy_ccaen(CCA_FAST);
+    phy_stm_rxdone();
 	phy_timer_ei();
+}
+
+
+static void macl_timer_handler(void) {
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+	phy_sint_di();
+    phy_stm_retry();
+	phy_sint_ei();
 }
 
 
@@ -200,7 +212,7 @@ int	macl_start(void)
 		}
 
 	    phy_sint_handler(macl_rcv_handler);
-        phy_rxon();
+        phy_stm_rxon();
 	}
 #endif
 	return status;
@@ -240,7 +252,7 @@ int	macl_xmit_sync(BUFFER buff)
 	}
 
 	phy_sint_handler(macl_fifodone_handler);
-    phy_send();
+    phy_stm_send(buff);
 
 	return status;
 }
@@ -348,7 +360,7 @@ int	macl_set_promiscuous_mode(const bool on)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,on);
 #endif
     phy_sint_handler(macl_rcv_handler);
-    phy_promiscuous();
+    phy_stm_promiscuous();
 	return status;
 }
 

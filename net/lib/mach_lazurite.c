@@ -760,6 +760,10 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 	   goto error;
 	   }
 	   */
+  //printk(KERN_INFO"RAW\n");
+  //PAYLOADDUMP(mach.tx.raw.data,mach.tx.raw.len);
+  //printk(KERN_INFO"PAYLOAD\n");
+  //PAYLOADDUMP(mach.tx.payload.data,mach.tx.payload.len);
 	status = macl_xmit_sync(mach.tx.raw);
 	if(status == STATUS_OK) {
 		status = mach.tx.rssi;

@@ -55,6 +55,12 @@ typedef enum {
 } CCA_ST;
 
 
+
+/*
+ -------------------------------------------------------------
+                    Public interrupt section
+ -------------------------------------------------------------
+ */
 extern int phy_sint_handler(void (*func)(void));
 extern int phy_sint_ei(void);
 extern int phy_sint_di(void);
@@ -64,21 +70,31 @@ extern int phy_timer_di(void);
 extern int phy_timer_start(uint16_t msec);
 extern int phy_timer_stop(void);
 extern int phy_timer_tick(uint32_t *msec);
+/*
+ -------------------------------------------------------------
+                    Public action section
+ -------------------------------------------------------------
+ */
 extern int phy_setup(uint8_t page,uint8_t ch);
 extern PHY_PARAM *phy_init(void);
 extern void phy_rst(void);
-extern void phy_rxon(void);
-extern void phy_txon(void);
 extern void phy_trxoff(void);
 extern void phy_addr_filt(void);
-extern void phy_promiscuous(void);
 extern int phy_ed(void);
 extern void phy_sleep(void);
-extern void phy_send(void);
-extern void phy_ccaen(CCA_ST state);
-extern void phy_rxcmp(void);
-extern void phy_txcmp(void);
-extern void phy_retry(void);
+/*
+ ------------------------------------------------------------------
+                      Public state machine section
+ ------------------------------------------------------------------
+ */
+extern void phy_stm_promiscuous(void);
+extern void phy_stm_rxon(void);
+extern void phy_stm_send(BUFFER buff);
+extern void phy_stm_ccaen(CCA_ST state);
+extern void phy_stm_txon(void);
+extern void phy_stm_txdone(void);
+extern void phy_stm_rxdone(void);
+extern void phy_stm_retry(void);
 
 
 

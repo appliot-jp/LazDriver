@@ -67,6 +67,7 @@ I acquire integer region of the fixed-point numerical value
 
 /* headware interrupt */
 #define HW_EVENT_ALL_MASK     0x00000000  /* Interrupt all mask */
+#define HW_EVENT_VCO_CAL_DONE 0x00000004  /* VCO CAL DONE */
 #define HW_EVENT_FIFO_CLEAR   0x000000C0  /* FIFO_EMPTY */
 #define HW_EVENT_FIFO_EMPTY   0x00000010  /* FIFO_EMPTY */
 #define HW_EVENT_FIFO_FULL    0x00000020  /* FIFO_FULL */
@@ -90,6 +91,9 @@ I acquire integer region of the fixed-point numerical value
 #define PHY_ST_RXON              0x06
 #define PHY_ST_TXON              0x09
 #define PHY_ST_TRXOFF            0x08
+
+#define PHY_REG_SET_TX_DONE_RX   0x20
+#define PHY_REG_SET_TX_DONE_OFF  0x10
 
 /*
  ---------------------------------------------------------------
@@ -422,10 +426,10 @@ static void phy_pi_mesg(void)
         printk(KERN_INFO"DEBUG PHY INTEN4: %s,%s,%x\n",__FILE__,__func__,reg_data[3]);
 
         reg_rd(REG_ADR_INT_SOURCE_GRP1, reg_data, 4);
-        printk(KERN_INFO"DEBUG PHY INTEN1: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
-        printk(KERN_INFO"DEBUG PHY INTEN2: %s,%s,%x\n",__FILE__,__func__,reg_data[1]);
-        printk(KERN_INFO"DEBUG PHY INTEN3: %s,%s,%x\n",__FILE__,__func__,reg_data[2]);
-        printk(KERN_INFO"DEBUG PHY INTEN4: %s,%s,%x\n",__FILE__,__func__,reg_data[3]);
+        printk(KERN_INFO"DEBUG PHY INTS1: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
+        printk(KERN_INFO"DEBUG PHY INTS2: %s,%s,%x\n",__FILE__,__func__,reg_data[1]);
+        printk(KERN_INFO"DEBUG PHY INTS3: %s,%s,%x\n",__FILE__,__func__,reg_data[2]);
+        printk(KERN_INFO"DEBUG PHY INTS4: %s,%s,%x\n",__FILE__,__func__,reg_data[3]);
 
         reg_rd(REG_ADR_RF_STATUS, reg_data, 1);
         printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
@@ -446,7 +450,6 @@ void phy_inten(uint32_t inten)
     reg_data[1] = (uint8_t)((inten) >>  8);
     reg_data[2] = (uint8_t)((inten) >> 16);
     reg_data[3] = (uint8_t)((inten) >> 24);
-    reg_wr(REG_ADR_INT_SOURCE_GRP1, reg_data, 4);
     reg_wr(REG_ADR_INT_EN_GRP1, reg_data, 4);
 }
 
@@ -459,12 +462,12 @@ void phy_inten(uint32_t inten)
 void phy_intclr(uint32_t intclr)
 {
     uint8_t reg_data[4];
+//  phy_pi_mesg();
     reg_data[0] = ~(uint8_t)((intclr) >>  0);
     reg_data[1] = ~(uint8_t)((intclr) >>  8);
     reg_data[2] = ~(uint8_t)((intclr) >> 16);
     reg_data[3] = ~(uint8_t)((intclr) >> 24);
     reg_wr(REG_ADR_INT_SOURCE_GRP1, reg_data, 4);
-    phy_pi_mesg();
 }
 
 
@@ -493,6 +496,7 @@ static void vco_cal(void) {
         HAL_delayMicroseconds(100);
         reg_rd(REG_ADR_INT_SOURCE_GRP1, reg_data, 1);
 	} while (!(reg_data[0] & 0x04));
+    phy_intclr(HW_EVENT_VCO_CAL_DONE);
 }
 
 
@@ -548,7 +552,7 @@ static void timer_handler(void) {
 
 /*
  -------------------------------------------------------------
-                    Public function section
+                    Public interrupt section
  -------------------------------------------------------------
  */
 /******************************************************************************/
@@ -722,6 +726,11 @@ int phy_timer_tick(uint32_t *msec)
     return status;
 }
 
+/*
+ -------------------------------------------------------------
+                    Public action section
+ -------------------------------------------------------------
+ */
 /******************************************************************************/
 /*! @brief Register setting of phy
  * @detail 
@@ -956,11 +965,6 @@ error:
 }
 
 
-/*
- ------------------------------------------------------------------
-                      Action cell section
- ------------------------------------------------------------------
- */
 PHY_PARAM *phy_init(void)
 {
     uint8_t reg_data;
@@ -1017,62 +1021,6 @@ void phy_rst(void)
 }
 
 
-void phy_txon(void)
-{
-
-    uint8_t reg_data = PHY_ST_TXON;
-
-    phy_intclr(HW_EVENT_CCA_DONE | HW_EVENT_RF_STATUS);
-    reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
-    HAL_delayMicroseconds(200);
-    reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
-    phy_inten(HW_EVENT_TX_DONE);
-    HAL_wait_event();
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data);
-#endif
-}
-
-
-void phy_rxon(void)
-{
-    uint8_t reg_data = PHY_ST_RXON;
-
-    phy_intclr(HW_EVENT_TX_DONE | HW_EVENT_TX_FIFO_DONE);
-    reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
-    HAL_delayMicroseconds(200);
-    reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
-    phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
-    HAL_wait_event();
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data);
-#endif
-}
-
-
-void phy_promiscuous(void)
-{
-    uint8_t reg_data = PHY_ST_RXON;
-
-    reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
-    HAL_delayMicroseconds(200);
-    reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
-    phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
-    HAL_wait_event();
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data);
-#endif
-}
-
-
-void phy_rxcmp(void)
-{
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-}
-
-
 void phy_trxoff(void)
 {
     uint8_t reg_data = PHY_ST_TRXOFF;
@@ -1109,44 +1057,29 @@ void phy_sleep(void)
 }
 
 
-void phy_ccaen(CCA_ST state)
+/*
+ ------------------------------------------------------------------
+                      Public state machine section
+ ------------------------------------------------------------------
+ */
+void phy_stm_promiscuous(void)
 {
-    uint8_t reg_cca_cntl;
-    uint8_t reg_idl_wait;
-    uint8_t reg_data;
+    uint8_t reg_data = PHY_ST_RXON;
 
-    if (state != CCA_FAST){
-        phy_intclr(HW_EVENT_CCA_DONE);
-    }
-
-    reg_data = 0x00;
-    reg_wr(REG_ADR_DEMSET3, &reg_data, 1);
-    reg_wr(REG_ADR_DEMSET14,&reg_data, 1);
-
-    if (state == CCA_STOP) {
-        reg_cca_cntl = 0x00;
-        reg_idl_wait = 0x00;
-    } else
-    if (state == CCA_FAST) {
-        reg_cca_cntl = 0x10;
-        reg_idl_wait = 0x00;
-    } else
-    if (state == IDLE_DETECT) {
-        reg_cca_cntl = 0x18;
-        reg_idl_wait = 0x64;
-    } else
-    if (state == CCA_RETRY) {
-        reg_cca_cntl = 0x10;
-        reg_idl_wait = 0x64;
-    }
-
-    reg_wr(REG_ADR_IDLE_WAIT_L, &reg_idl_wait, 1);
-    reg_wr(REG_ADR_CCA_CNTRL, &reg_cca_cntl, 1);
-
-    reg_data = PHY_ST_RXON;
     reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
-    
-    phy_inten(HW_EVENT_CCA_DONE);
+    HAL_delayMicroseconds(200);
+    reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
+    phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
+    HAL_wait_event();
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data);
+#endif
+}
+
+
+void phy_stm_rxon(void)
+{
+    phy_inten(HW_EVENT_TX_DONE);
     HAL_wait_event();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
@@ -1154,24 +1087,49 @@ void phy_ccaen(CCA_ST state)
 }
 
 
-void phy_send(void)
+void phy_stm_send(BUFFER buff)
 {
     uint8_t reg_data[2];
-    uint8_t length;
-    uint8_t payload[] = "LAPIS Lazurite RF system";
+    uint8_t length = buff.len;
+//  uint8_t *payload = buff.data;
+    uint8_t payload[16]; // = "Hello"; // "LAPIS Lazurite RF system";
+
+    payload[0] = 0x21;
+    payload[1] = 0xA8;
+    payload[2] = 0x0a;
+    payload[3] = 0xcd;
+    payload[4] = 0xab;
+    payload[5] = 0x70;
+    payload[6] = 0x66;
+    payload[7] = 0xcd;
+    payload[8] = 0xab;
+    payload[9] = 0x54;
+    payload[10] = 0xac;
+    payload[11] = 0x55;//"H";
+    payload[12] = 0x55;//"e";
+    payload[13] = 0x55;//"l";
+    payload[14] =0x55;// "l";
+    payload[15] =0x55;// "o";
 
     // make fcf
     length = sizeof(payload);
-    reg_data[0] = 0x18;             // frame control
-    reg_data[1] = 2 + length;       // crc size + payload length
+    reg_data[0] = 0x18;             // PHR
+    reg_data[1] = 2 + length;       // length : crc size + payload length
     reg_wr(REG_ADR_WR_TX_FIFO, reg_data, 2); 
 
     // make payload
-    reg_wr(REG_ADR_WR_TX_FIFO, payload, sizeof(payload));
-//  HAL_delayMicroseconds(300);
+    reg_wr(REG_ADR_WR_TX_FIFO, payload, length);
+    HAL_delayMicroseconds(300);
+
+    reg_data[0] = PHY_REG_SET_TX_DONE_RX;
+	reg_wr(REG_ADR_ACK_TIMER_EN, reg_data, 1);
 
     phy_inten(HW_EVENT_TX_FIFO_DONE);
     HAL_wait_event();
+
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s,%s,%d\n",__FILE__,__func__,payload,length);
+#endif
 
 #if 0
 /* 送信バッファ書き込み(先頭データ)
@@ -1248,16 +1206,47 @@ void REG_TXSTART(ML7396_Buffer* _buffer)
         } \
     } while (0)
 #endif
-
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
 }
 
 
-void phy_txcmp(void)
+void phy_stm_ccaen(CCA_ST state)
 {
-    phy_inten(HW_EVENT_TX_DONE);
+    uint8_t reg_cca_cntl;
+    uint8_t reg_idl_wait;
+    uint8_t reg_data;
+
+    //if (state != CCA_FAST){
+        phy_intclr(HW_EVENT_CCA_DONE);
+    //}
+
+    reg_data = 0x00;
+    reg_wr(REG_ADR_DEMSET3, &reg_data, 1);
+    reg_wr(REG_ADR_DEMSET14,&reg_data, 1);
+
+    if (state == CCA_STOP) {
+        reg_cca_cntl = 0x00;
+        reg_idl_wait = 0x00;
+    } else
+    if (state == CCA_FAST) {
+        reg_cca_cntl = 0x10;
+        reg_idl_wait = 0x00;
+    } else
+    if (state == IDLE_DETECT) {
+        reg_cca_cntl = 0x18;
+        reg_idl_wait = 0x64;
+    } else
+    if (state == CCA_RETRY) {
+        reg_cca_cntl = 0x10;
+        reg_idl_wait = 0x64;
+    }
+
+    reg_wr(REG_ADR_IDLE_WAIT_L, &reg_idl_wait, 1);
+    reg_wr(REG_ADR_CCA_CNTRL, &reg_cca_cntl, 1);
+
+    reg_data = PHY_ST_RXON;
+    reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
+    
+    phy_inten(HW_EVENT_CCA_DONE);
     HAL_wait_event();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
@@ -1265,7 +1254,56 @@ void phy_txcmp(void)
 }
 
 
-void phy_retry(void)
+void phy_stm_txon(void)
+{
+    uint8_t reg_data;
+
+    phy_intclr(HW_EVENT_CCA_DONE | HW_EVENT_RF_STATUS);
+
+    reg_data = 0x64;
+	reg_wr(REG_ADR_DEMSET3, &reg_data, 1);
+    reg_data = 0x27;
+	reg_wr(REG_ADR_DEMSET14, &reg_data, 1);
+
+    reg_data = PHY_ST_TXON;
+    reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
+    HAL_delayMicroseconds(200);
+    phy_inten(HW_EVENT_TX_DONE);
+    HAL_wait_event();
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"DEBUG PHY: %s,%s\n",__FILE__,__func__);
+#endif
+}
+
+
+void phy_stm_txdone(void)
+{
+//  uint8_t reg_data = PHY_ST_RXON;
+
+    phy_intclr(HW_EVENT_TX_DONE | HW_EVENT_TX_FIFO_DONE | HW_EVENT_RF_STATUS);
+//  reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
+//  HAL_delayMicroseconds(200);
+//  reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
+    phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
+    HAL_wait_event();
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+}
+
+void phy_stm_rxdone(void)
+{
+    phy_pi_mesg();
+    phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+}
+
+
+void phy_stm_retry(void)
 {
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
