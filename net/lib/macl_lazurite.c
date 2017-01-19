@@ -55,7 +55,7 @@ static void macl_fifodone_handler(void) {
 #endif
 	phy_timer_di();
 	phy_sint_handler(macl_ccadone_handler);
-    phy_stm_ccaen(CCA_FAST);
+    phy_stm_fifodone();
 	phy_timer_ei();
 }
 
@@ -66,7 +66,7 @@ static void macl_ccadone_handler(void) {
 #endif
 	phy_timer_di();
 	phy_sint_handler(macl_txdone_handler);
-    phy_stm_txon();
+    phy_stm_ccadone();
 	phy_timer_ei();
 }
 
@@ -212,7 +212,7 @@ int	macl_start(void)
 		}
 
 	    phy_sint_handler(macl_rcv_handler);
-        phy_stm_rxon();
+        phy_stm_receive();
 	}
 #endif
 	return status;

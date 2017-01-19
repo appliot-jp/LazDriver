@@ -47,15 +47,6 @@ typedef struct {
 } PHY_PARAM;
 
 
-typedef enum {
-	CCA_STOP=0,                  /* CCA Stop */
-	CCA_FAST,                    /* CCA First */
-	IDLE_DETECT,                 /* CCA Idle detection */
-	CCA_RETRY                    /* CCA with BACKOFF */
-} CCA_ST;
-
-
-
 /*
  -------------------------------------------------------------
                     Public interrupt section
@@ -72,7 +63,7 @@ extern int phy_timer_stop(void);
 extern int phy_timer_tick(uint32_t *msec);
 /*
  -------------------------------------------------------------
-                    Public action section
+                    Public function section
  -------------------------------------------------------------
  */
 extern int phy_setup(uint8_t page,uint8_t ch);
@@ -88,10 +79,10 @@ extern void phy_sleep(void);
  ------------------------------------------------------------------
  */
 extern void phy_stm_promiscuous(void);
-extern void phy_stm_rxon(void);
+extern void phy_stm_receive(void);
 extern void phy_stm_send(BUFFER buff);
-extern void phy_stm_ccaen(CCA_ST state);
-extern void phy_stm_txon(void);
+extern void phy_stm_fifodone(void);
+extern void phy_stm_ccadone(void);
 extern void phy_stm_txdone(void);
 extern void phy_stm_rxdone(void);
 extern void phy_stm_retry(void);
