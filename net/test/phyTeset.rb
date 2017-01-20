@@ -42,7 +42,7 @@ class TestClass < Minitest::Test
 #		@@laz.remove()
 
 #		@@laz.init(module_test = 0x3000) #PHY/MACL
-		@@laz.init(module_test = 0x1000) #PHY 
+		@@laz.init(module_test = 0x0000) #PHY 
 #		@@laz.init(module_test = 0x0000)
 #		@@laz.init(module_test = 0xFF00)
 		@@laz.begin(36,0xabcd,100,20)

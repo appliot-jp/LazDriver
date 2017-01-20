@@ -202,13 +202,13 @@ int tx_led_thread(void *p)
 }
 // rf hardware interrupt handler
 static irqreturn_t rf_irq_handler(int irq,void *dev_id) {
-    printk(KERN_INFO"%s %s %d %08lx,%d\n",__FILE__,__func__,__LINE__,(unsigned long)ext_irq_func,que_irq);
+    // printk(KERN_INFO"%s %s %d %08lx,%d\n",__FILE__,__func__,__LINE__,(unsigned long)ext_irq_func,que_irq);
 	if(ext_irq_func)
 	{
 		m.trigger |= 0x01;
 		if (que_irq==0)
 		{
-			printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,que_irq);
+//			printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,que_irq);
 			que_irq=1;
 			wake_up_interruptible_sync(&rf_irq_q);
 			//return IRQ_WAKE_THREAD;
@@ -355,7 +355,7 @@ int HAL_wait_event(void)
 
 int HAL_init(uint8_t i2c_addr, uint8_t addr_bits){
     int status;
-    printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
+    // printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 	// spi initialization
 	m.i2c.i2c_addr = i2c_addr;
 	m.i2c.addr_bits = addr_bits;
@@ -398,13 +398,13 @@ int HAL_SPI_transfer(const uint8_t *wdata, uint16_t wsize,unsigned char *rdata, 
 int HAL_GPIO_setInterrupt(void (*func)(void))
 {
 	ext_irq_func = func;
-    printk(KERN_INFO"%s %s %d %08lx\n",__FILE__,__func__,__LINE__,(unsigned long)ext_irq_func);
+    //printk(KERN_INFO"%s %s %d %08lx\n",__FILE__,__func__,__LINE__,(unsigned long)ext_irq_func);
 	return HAL_STATUS_OK;
 }
 
 int HAL_GPIO_enableInterrupt(void)
 {
-    printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
+    //printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 	if(!flag_irq_enable) enable_irq(gpio_to_irq(GPIO_SINTN));
 	flag_irq_enable = true;
 	return HAL_STATUS_OK;
@@ -413,7 +413,7 @@ int HAL_GPIO_enableInterrupt(void)
 int HAL_GPIO_disableInterrupt(void)
 {
 	if(flag_irq_enable) disable_irq(gpio_to_irq(GPIO_SINTN));
-    printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
+    //printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 	flag_irq_enable = false;
 	m.trigger&=~0x01;
 	return HAL_STATUS_OK;

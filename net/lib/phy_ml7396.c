@@ -479,7 +479,8 @@ static void phy_inten(uint32_t inten)
 static void phy_intclr(uint32_t intclr)
 {
     uint8_t reg_data[4];
-    phy_pi_mesg();
+    // ssdebug
+    // phy_pi_mesg();
     reg_data[0] = ~(uint8_t)((intclr) >>  0);
     reg_data[1] = ~(uint8_t)((intclr) >>  8);
     reg_data[2] = ~(uint8_t)((intclr) >> 16);
@@ -1091,7 +1092,8 @@ void phy_rst(void)
     reg_data = 0x88;
     reg_wr(REG_ADR_RST_SET, &reg_data, 1);
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+    // ssdebug
+//	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 }
 
