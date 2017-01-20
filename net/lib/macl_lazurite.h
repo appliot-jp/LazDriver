@@ -27,12 +27,13 @@
 typedef struct {
 	uint8_t pages;
 	uint8_t ch;
-	uint8_t txPower;
 	uint8_t ccaRetry;
+	uint8_t ccaBe;
+	uint8_t txPower;
 	uint8_t txRetry;
 	bool promiscuous;
-	uint16_t txInterval;
-	uint16_t ccaInterval;
+	uint16_t ack_timeout;
+//	uint16_t ccaInterval;
 	PHY_PARAM *phy;
 } MACL_PARAM;
 
@@ -110,11 +111,11 @@ extern int	macl_set_channel(uint8_t page,uint8_t ch);
 extern int	macl_set_hw_addr_filt(struct ieee802154_hw_addr_filt *filt,unsigned long changed);
 extern int	macl_set_txpower(uint32_t mbm);
 //extern int	macl_set_lbt(struct ieee802154_hw *hw, bool on);				// does not support
-extern int	macl_ch_scan(uint32_t duration);				// add 
+//extern int	macl_ch_scan(uint32_t duration);				// add 
 extern int	macl_set_cca_mode(const struct wpan_phy_cca *cca);
 extern int	macl_set_cca_ed_level(uint32_t mbm);
 extern int	macl_set_csma_params(uint8_t min_be, uint8_t max_be, uint8_t retries);
-extern int	macl_set_frame_retries(int8_t retries);
+extern int	macl_set_frame_retries(uint8_t retries,uint16_t timeout);
 extern int	macl_set_promiscuous_mode(const bool on);
 
 /*! @brief  macl_rx_irq(BUFFER *rx,BUFFER *ack)

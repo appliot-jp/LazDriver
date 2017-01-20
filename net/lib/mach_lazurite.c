@@ -418,6 +418,7 @@ bool mach_match_seq_num(void)
   @param[in] *rx mac header of receiving data
   @return    STATUS_OK
   @exception EINVAL		can not return ack
+  @issue need to check ack condition
   rx.dst.addr | rx.src.addr | my.pancoord | coord.pancoord | rx    | ack
   -----------------------------------------------------------------------
   ieee      |     none    |  don't care |  don't care    | yes   |  no
@@ -575,8 +576,8 @@ int mach_setup(struct rf_param *rf) {
 
 	// set setting CCA
 	if((status = macl_set_csma_params(rf->cca_min_be,rf->cca_max_be,rf->cca_retry)) != STATUS_OK) goto error;
-	if((status = macl_set_frame_retries(rf->tx_retry)) != STATUS_OK) goto error;
-	if((status = macl_ch_scan(rf->cca_interval)) != STATUS_OK) goto error;				// add 
+	if((status = macl_set_frame_retries(rf->tx_retry,rf->ack_timeout)) != STATUS_OK) goto error;
+//	if((status = macl_ch_scan(rf->cca_interval)) != STATUS_OK) goto error;				// add 
 	cca.mode = rf->cca_mode;
 	cca.opt = rf->cca_opt;
 	if((status = macl_set_cca_mode(&cca)) != STATUS_OK) goto error;

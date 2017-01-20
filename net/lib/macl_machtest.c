@@ -223,6 +223,7 @@ int	macl_set_txpower(uint32_t mbm)
 	return status;
 }
 //extern int	macl_set_lbt(struct ieee802154_hw *hw, bool on);				// does not support
+/*
 int	macl_ch_scan(uint32_t duration)
 {
 	int status=STATUS_OK;
@@ -233,6 +234,7 @@ int	macl_ch_scan(uint32_t duration)
 #endif
 	return status;
 }
+*/
 int	macl_set_cca_mode(const struct wpan_phy_cca *cca)
 {
 	int status=STATUS_OK;

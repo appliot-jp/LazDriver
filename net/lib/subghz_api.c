@@ -81,15 +81,15 @@ static SUBGHZ_MSG subghz_init(void)
 	subghz_param.addr_type = 6;
 	subghz_param.rf.cca_min_be = 0;
 	subghz_param.rf.cca_max_be = 7;
-	subghz_param.rf.cca_duration = 7;
+//	subghz_param.rf.cca_duration = 7;
 	subghz_param.rf.cca_retry = 20;
 	subghz_param.rf.cca_level = DBM_TO_MBM(-80);
 	subghz_param.rf.tx_min_be = 0;
 	subghz_param.rf.tx_max_be = 7;
 	subghz_param.rf.tx_retry = 3;
-	subghz_param.rf.cca_interval = 20;
+//	subghz_param.rf.cca_interval = 20;
 	subghz_param.rf.tx_power = DBM_TO_MBM(13);
-	subghz_param.rf.tx_interval = 500;
+	subghz_param.rf.ack_timeout = 500;
 	subghz_param.rf.cca_mode = NL802154_CCA_CARRIER;
 	subghz_param.rf.cca_opt = NL802154_CCA_OPT_ENERGY_CARRIER_AND;
 	subghz_param.rf.tx_retry = 3;
@@ -549,7 +549,7 @@ static SUBGHZ_MSG subghz_getSendMode(SUBGHZ_PARAM *param)
 	param->senseTime = subghz_param.rf.cca_max_be;
 	param->txRetry = subghz_param.rf.tx_retry;
 	param->txInterval = subghz_param.rf.tx_max_be;
-	param->ccaWait = subghz_param.rf.cca_duration;
+//	param->ccaWait = subghz_param.rf.cca_duration;
 	param->myAddress = subghz_param.mach->my_addr.short_addr; 
 
 	return SUBGHZ_OK;
@@ -565,10 +565,10 @@ static SUBGHZ_MSG subghz_setSendMode(SUBGHZ_PARAM *param)
 	// @issue check parameter. interval may not be needed.
 	// interval is calcurated from max_be.
 	subghz_param.addr_type = param->addrType;
-	subghz_param.rf.cca_duration= param->senseTime;
+	subghz_param.rf.cca_max_be= param->senseTime;
 	subghz_param.rf.tx_retry = param->txRetry;
-	subghz_param.rf.tx_interval = param->txInterval;
-	subghz_param.rf.cca_interval = param->ccaWait;
+	subghz_param.rf.ack_timeout = param->txInterval;
+//	subghz_param.rf.cca_interval = param->ccaWait;
 	subghz_param.mach->my_addr.short_addr = param->myAddress;
 
 	return SUBGHZ_OK;

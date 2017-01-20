@@ -187,6 +187,8 @@ typedef enum{
 } PHY_TRX_STATE;
 
 
+static uint8_t phy_cca_be;
+
 /* setting fixed number (I do not handle the floating point arithmetic with the CPU and entrust all a compiler) */
 static const REGSET regset_50kbps = {
     0x10,                               /* rate */
@@ -527,7 +529,7 @@ static void phy_backoffTimer(void){
 
 	uint16_t cca_wait;
 
-	cca_wait = (rand()&0x07) * UNIT_BAKOFF_PERIOD;
+	cca_wait = (rand()&phy_cca_be) * UNIT_BAKOFF_PERIOD;
 	if (!cca_wait) cca_wait = DEFAUL_BAKOF;
 	HAL_delayMicroseconds(cca_wait);
 }
@@ -776,11 +778,11 @@ int phy_timer_start(uint16_t msec)
 int phy_timer_stop(void)
 {
     int status = -1;
+    HAL_TIMER_stop();
+    status = 0;
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
-    HAL_TIMER_stop();
-    status = 0;
     return status;
 }
 
@@ -1083,13 +1085,11 @@ PHY_PARAM *phy_init(void)
 
 void phy_rst(void)
 {
-    uint8_t reg_data[1];
+    uint8_t reg_data;
 
-    reg_data[0] = 0x03;
-    reg_wr(REG_ADR_RF_STATUS, reg_data, 1);
-    HAL_delayMicroseconds(200);
-    reg_data[0] = 0x88;
-    reg_wr(REG_ADR_RST_SET, reg_data, 1);
+    phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+    reg_data = 0x88;
+    reg_wr(REG_ADR_RST_SET, &reg_data, 1);
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
@@ -1162,8 +1162,9 @@ void phy_stm_send(BUFFER buff)
 {
     uint8_t reg_data[2];
     uint16_t length = buff.len;
-//  uint8_t *payload = buff.data;
-//  uint8_t payload[18-2]; // = "Hello"; // "LAPIS Lazurite RF system";
+#if 0
+    uint8_t *payload = buff.data;
+#else
     uint8_t payload[] = "         LAPIS Lazurite RF system\r\n";
     uint8_t i=0;
 
@@ -1172,22 +1173,14 @@ void phy_stm_send(BUFFER buff)
     payload[++i] = ++send_seq;
     payload[++i] = 0xcd;
     payload[++i] = 0xab;
-    payload[++i] = 0x70;
-    payload[++i] = 0x66;
-//    payload[++i] = 0xcd;
-//    payload[++i] = 0xab;
+    payload[++i] = 0x6e;
+    payload[++i] = 0x5f;
     payload[++i] = 0x54;
     payload[++i] = 0xac;
-//    payload[++i] = 0x55;//"H";
-//    payload[++i] = 0x55;//"e";
-//    payload[++i] = 0x55;//"l";
-//    payload[++i] =0x55;// "l";
-//    payload[++i] =0x55;// "o";
-//    payload[++i] =0x0d;//  CR
-//    payload[++i] =0x00;//  LF
+    length = sizeof(payload);
+#endif
 
     // make fcf
-    length = sizeof(payload);
     reg_data[0] = 0x18;             // PHR
     reg_data[1] = 2 + length;       // length : crc size + payload length
     reg_wr(REG_ADR_WR_TX_FIFO, reg_data, 2); 
@@ -1295,10 +1288,12 @@ void phy_stm_fifodone(void)
 }
 
 
-int phy_stm_ccadone(void)
+int phy_stm_ccadone(uint8_t be)
 {
     int status;
     uint8_t reg_data;
+
+    phy_cca_be = be;
 
     phy_intclr(HW_EVENT_CCA_DONE | HW_EVENT_RF_STATUS);
 	reg_rd(REG_ADR_CCA_CNTRL, &reg_data, 1);
@@ -1344,7 +1339,7 @@ void phy_stm_retry(void)
 {
     phy_intclr(HW_EVENT_TX_DONE | HW_EVENT_TX_FIFO_DONE | HW_EVENT_RF_STATUS);
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+//	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 }
 

@@ -27,6 +27,7 @@
 #include "endian.h"
 #include "common-lzpi.h"
 
+MACL_PARAM macl;
 
 /*
  ******************************************************
@@ -66,18 +67,18 @@ static void macl_ccadone_handler(void) {
 #endif
 	phy_timer_di();
 	phy_sint_handler(macl_txdone_handler);
-    phy_stm_ccadone();
+    phy_stm_ccadone(macl.ccaBe);
 	phy_timer_ei();
 }
 
 
 static void macl_txdone_handler(void) {
 #ifndef LAZURITE_IDE
-//	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,macl.ack_timeout);
 #endif
 	phy_timer_di();
 	phy_sint_handler(macl_ackrcv_handler);
-    phy_timer_start(500);
+    phy_timer_start(macl.ack_timeout);
     phy_timer_handler(macl_timer_handler);
     phy_stm_txdone();
 	phy_timer_ei();
@@ -100,6 +101,7 @@ static void macl_timer_handler(void) {
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 	phy_sint_di();
+    phy_timer_stop();
     phy_stm_retry();
     phy_rst();
 	phy_sint_ei();
@@ -111,7 +113,6 @@ static void macl_timer_handler(void) {
                Public function section
  ******************************************************
  */
-MACL_PARAM macl;
 MACL_PARAM* macl_init(void)
 {
 #ifndef LAZURITE_IDE
@@ -312,6 +313,7 @@ int	macl_set_txpower(uint32_t mbm)
 	return status;
 }
 //extern int	macl_set_lbt(struct ieee802154_hw *hw, bool on);				// does not support
+/*
 int	macl_ch_scan(uint32_t duration)
 {
 	int status=STATUS_OK;
@@ -321,6 +323,7 @@ int	macl_ch_scan(uint32_t duration)
 #endif
 	return status;
 }
+*/
 int	macl_set_cca_mode(const struct wpan_phy_cca *cca)
 {
 	int status=STATUS_OK;
@@ -346,15 +349,17 @@ int	macl_set_csma_params(uint8_t min_be, uint8_t max_be, uint8_t retries)
 {
 	int status=STATUS_OK;
     macl.ccaRetry = retries;
+    macl.ccaBe = max_be;
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,min_be,max_be);
 #endif
 	return status;
 }
-int	macl_set_frame_retries(int8_t retries)
+int	macl_set_frame_retries(uint8_t retries,uint16_t timeout)
 {
 	int status=STATUS_OK;
     macl.txRetry = retries;
+    macl.ack_timeout = timeout;
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,retries);
 #endif

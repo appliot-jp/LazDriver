@@ -1,0 +1,1549 @@
+[    0.000000] Booting Linux on physical CPU 0x0
+[    0.000000] Initializing cgroup subsys cpuset
+[    0.000000] Initializing cgroup subsys cpu
+[    0.000000] Initializing cgroup subsys cpuacct
+[    0.000000] Linux version 4.4.34-v7+ (dc4@dc4-XPS13-9333) (gcc version 4.9.3 (crosstool-NG crosstool-ng-1.22.0-88-g8460611) ) #930 SMP Wed Nov 23 15:20:41 GMT 2016
+[    0.000000] CPU: ARMv7 Processor [410fd034] revision 4 (ARMv7), cr=10c5383d
+[    0.000000] CPU: PIPT / VIPT nonaliasing data cache, VIPT aliasing instruction cache
+[    0.000000] Machine model: Raspberry Pi 3 Model B Rev 1.2
+[    0.000000] cma: Reserved 8 MiB at 0x36800000
+[    0.000000] Memory policy: Data cache writealloc
+[    0.000000] On node 0 totalpages: 225280
+[    0.000000] free_area_init_node: node 0, pgdat 808c4f40, node_mem_map b6036000
+[    0.000000]   Normal zone: 1980 pages used for memmap
+[    0.000000]   Normal zone: 0 pages reserved
+[    0.000000]   Normal zone: 225280 pages, LIFO batch:31
+[    0.000000] [bcm2709_smp_init_cpus] enter (9520->f3003010)
+[    0.000000] [bcm2709_smp_init_cpus] ncores=4
+[    0.000000] PERCPU: Embedded 13 pages/cpu @b5ff2000 s22592 r8192 d22464 u53248
+[    0.000000] pcpu-alloc: s22592 r8192 d22464 u53248 alloc=13*4096
+[    0.000000] pcpu-alloc: [0] 0 [0] 1 [0] 2 [0] 3 
+[    0.000000] Built 1 zonelists in Zone order, mobility grouping on.  Total pages: 223300
+[    0.000000] Kernel command line: 8250.nr_uarts=1 dma.dmachans=0x7f35 bcm2708_fb.fbwidth=1280 bcm2708_fb.fbheight=1024 bcm2709.boardrev=0xa02082 bcm2709.serial=0x35d07800 smsc95xx.macaddr=B8:27:EB:D0:78:00 bcm2708_fb.fbswap=1 bcm2709.uart_clock=48000000 vc_mem.mem_base=0x3dc00000 vc_mem.mem_size=0x3f000000  dwc_otg.lpm_enable=0 console=ttyS0,115200 console=tty1 root=/dev/mmcblk0p7 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait quiet splash plymouth.ignore-serial-consoles
+[    0.000000] PID hash table entries: 4096 (order: 2, 16384 bytes)
+[    0.000000] Dentry cache hash table entries: 131072 (order: 7, 524288 bytes)
+[    0.000000] Inode-cache hash table entries: 65536 (order: 6, 262144 bytes)
+[    0.000000] Memory: 874104K/901120K available (6357K kernel code, 432K rwdata, 1716K rodata, 476K init, 764K bss, 18824K reserved, 8192K cma-reserved)
+[    0.000000] Virtual kernel memory layout:
+    vector  : 0xffff0000 - 0xffff1000   (   4 kB)
+    fixmap  : 0xffc00000 - 0xfff00000   (3072 kB)
+    vmalloc : 0xb7800000 - 0xff800000   (1152 MB)
+    lowmem  : 0x80000000 - 0xb7000000   ( 880 MB)
+    modules : 0x7f000000 - 0x80000000   (  16 MB)
+      .text : 0x80008000 - 0x807ea674   (8074 kB)
+      .init : 0x807eb000 - 0x80862000   ( 476 kB)
+      .data : 0x80862000 - 0x808ce250   ( 433 kB)
+       .bss : 0x808d1000 - 0x809901ec   ( 765 kB)
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=4, Nodes=1
+[    0.000000] Hierarchical RCU implementation.
+[    0.000000] 	Build-time adjustment of leaf fanout to 32.
+[    0.000000] NR_IRQS:16 nr_irqs:16 16
+[    0.000000] Architected cp15 timer(s) running at 19.20MHz (phys).
+[    0.000000] clocksource: arch_sys_counter: mask: 0xffffffffffffff max_cycles: 0x46d987e47, max_idle_ns: 440795202767 ns
+[    0.000008] sched_clock: 56 bits at 19MHz, resolution 52ns, wraps every 4398046511078ns
+[    0.000026] Switching to timer-based delay loop, resolution 52ns
+[    0.000294] Console: colour dummy device 80x30
+[    0.000495] console [tty1] enabled
+[    0.000530] Calibrating delay loop (skipped), value calculated using timer frequency.. 38.40 BogoMIPS (lpj=192000)
+[    0.000550] pid_max: default: 32768 minimum: 301
+[    0.000860] Mount-cache hash table entries: 2048 (order: 1, 8192 bytes)
+[    0.000875] Mountpoint-cache hash table entries: 2048 (order: 1, 8192 bytes)
+[    0.001801] Disabling cpuset control group subsystem
+[    0.001833] Initializing cgroup subsys io
+[    0.001862] Initializing cgroup subsys memory
+[    0.001905] Initializing cgroup subsys devices
+[    0.001925] Initializing cgroup subsys freezer
+[    0.001945] Initializing cgroup subsys net_cls
+[    0.001995] CPU: Testing write buffer coherency: ok
+[    0.002061] ftrace: allocating 21236 entries in 63 pages
+[    0.051808] CPU0: update cpu_capacity 1024
+[    0.051840] CPU0: thread -1, cpu 0, socket 0, mpidr 80000000
+[    0.051853] [bcm2709_smp_prepare_cpus] enter
+[    0.051995] Setting up static identity map for 0x8240 - 0x8274
+[    0.053667] [bcm2709_boot_secondary] cpu:1 started (0) 17
+[    0.053882] [bcm2709_secondary_init] enter cpu:1
+[    0.053926] CPU1: update cpu_capacity 1024
+[    0.053932] CPU1: thread -1, cpu 1, socket 0, mpidr 80000001
+[    0.054316] [bcm2709_boot_secondary] cpu:2 started (0) 18
+[    0.054479] [bcm2709_secondary_init] enter cpu:2
+[    0.054500] CPU2: update cpu_capacity 1024
+[    0.054507] CPU2: thread -1, cpu 2, socket 0, mpidr 80000002
+[    0.054873] [bcm2709_boot_secondary] cpu:3 started (0) 18
+[    0.055003] [bcm2709_secondary_init] enter cpu:3
+[    0.055023] CPU3: update cpu_capacity 1024
+[    0.055029] CPU3: thread -1, cpu 3, socket 0, mpidr 80000003
+[    0.055090] Brought up 4 CPUs
+[    0.055113] SMP: Total of 4 processors activated (153.60 BogoMIPS).
+[    0.055122] CPU: All CPU(s) started in HYP mode.
+[    0.055130] CPU: Virtualization extensions available.
+[    0.055736] devtmpfs: initialized
+[    0.066871] VFP support v0.3: implementor 41 architecture 3 part 40 variant 3 rev 4
+[    0.067206] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604462750000 ns
+[    0.067910] pinctrl core: initialized pinctrl subsystem
+[    0.068421] NET: Registered protocol family 16
+[    0.073694] DMA: preallocated 4096 KiB pool for atomic coherent allocations
+[    0.081272] bcm2709: Mini UART enabled
+[    0.081317] hw-breakpoint: found 5 (+1 reserved) breakpoint and 4 watchpoint registers.
+[    0.081328] hw-breakpoint: maximum watchpoint size is 8 bytes.
+[    0.081481] Serial: AMBA PL011 UART driver
+[    0.081619] uart-pl011 3f201000.uart: could not find pctldev for node /soc/gpio@7e200000/uart0_pins, deferring probe
+[    0.081780] bcm2835-mbox 3f00b880.mailbox: mailbox enabled
+[    0.143973] bcm2835-dma 3f007000.dma: DMA legacy API manager at f3007000, dmachans=0x1
+[    0.144547] SCSI subsystem initialized
+[    0.144731] usbcore: registered new interface driver usbfs
+[    0.144821] usbcore: registered new interface driver hub
+[    0.144923] usbcore: registered new device driver usb
+[    0.151361] raspberrypi-firmware soc:firmware: Attached to firmware from 2016-11-25 16:09
+[    0.178584] clocksource: Switched to clocksource arch_sys_counter
+[    0.223652] FS-Cache: Loaded
+[    0.223932] CacheFiles: Loaded
+[    0.236288] NET: Registered protocol family 2
+[    0.237148] TCP established hash table entries: 8192 (order: 3, 32768 bytes)
+[    0.237277] TCP bind hash table entries: 8192 (order: 4, 65536 bytes)
+[    0.237466] TCP: Hash tables configured (established 8192 bind 8192)
+[    0.237561] UDP hash table entries: 512 (order: 2, 16384 bytes)
+[    0.237607] UDP-Lite hash table entries: 512 (order: 2, 16384 bytes)
+[    0.237839] NET: Registered protocol family 1
+[    0.238164] RPC: Registered named UNIX socket transport module.
+[    0.238175] RPC: Registered udp transport module.
+[    0.238183] RPC: Registered tcp transport module.
+[    0.238192] RPC: Registered tcp NFSv4.1 backchannel transport module.
+[    0.239410] hw perfevents: enabled with armv7_cortex_a7 PMU driver, 7 counters available
+[    0.240754] futex hash table entries: 1024 (order: 4, 65536 bytes)
+[    0.254010] VFS: Disk quotas dquot_6.6.0
+[    0.254317] VFS: Dquot-cache hash table entries: 1024 (order 0, 4096 bytes)
+[    0.256516] FS-Cache: Netfs 'nfs' registered for caching
+[    0.257429] NFS: Registering the id_resolver key type
+[    0.257485] Key type id_resolver registered
+[    0.257495] Key type id_legacy registered
+[    0.259854] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 252)
+[    0.259978] io scheduler noop registered
+[    0.259994] io scheduler deadline registered (default)
+[    0.260044] io scheduler cfq registered
+[    0.262592] BCM2708FB: allocated DMA memory f6c10000
+[    0.262619] BCM2708FB: allocated DMA channel 0 @ f3007000
+[    0.299740] Console: switching to colour frame buffer device 160x64
+[    0.321242] Serial: 8250/16550 driver, 1 ports, IRQ sharing disabled
+[    0.322250] console [ttyS0] disabled
+[    0.322312] 3f215040.uart: ttyS0 at MMIO 0x3f215040 (irq = 59, base_baud = 31250000) is a 16550
+[    0.322843] console [ttyS0] enabled
+[    1.338154] bcm2835-rng 3f104000.rng: hwrng registered
+[    1.338364] vc-cma: Videocore CMA driver
+[    1.338375] vc-cma: vc_cma_base      = 0x00000000
+[    1.338386] vc-cma: vc_cma_size      = 0x00000000 (0 MiB)
+[    1.338395] vc-cma: vc_cma_initial   = 0x00000000 (0 MiB)
+[    1.338756] vc-mem: phys_addr:0x00000000 mem_base=0x3dc00000 mem_size:0x3f000000(1008 MiB)
+[    1.353631] brd: module loaded
+[    1.362349] loop: module loaded
+[    1.363316] vchiq: vchiq_init_state: slot_zero = 0xb6c80000, is_master = 0
+[    1.364824] Loading iSCSI transport class v2.0-870.
+[    1.365504] usbcore: registered new interface driver smsc95xx
+[    1.365557] dwc_otg: version 3.00a 10-AUG-2012 (platform bus)
+[    1.565824] Core Release: 2.80a
+[    1.565845] Setting default values for core params
+[    1.565882] Finished setting default values for core params
+[    1.766255] Using Buffer DMA mode
+[    1.766266] Periodic Transfer Interrupt Enhancement - disabled
+[    1.766275] Multiprocessor Interrupt Enhancement - disabled
+[    1.766284] OTG VER PARAM: 0, OTG VER FLAG: 0
+[    1.766299] Dedicated Tx FIFOs mode
+[    1.766610] WARN::dwc_otg_hcd_init:1047: FIQ DMA bounce buffers: virt = 0xb6c04000 dma = 0xf6c04000 len=9024
+[    1.766642] FIQ FSM acceleration enabled for :
+Non-periodic Split Transactions
+Periodic Split Transactions
+High-Speed Isochronous Endpoints
+Interrupt/Control Split Transaction hack enabled
+[    1.766664] dwc_otg: Microframe scheduler enabled
+[    1.766713] WARN::hcd_init_fiq:413: FIQ on core 1 at 0x8044846c
+[    1.766729] WARN::hcd_init_fiq:414: FIQ ASM at 0x804487dc length 36
+[    1.766744] WARN::hcd_init_fiq:439: MPHI regs_base at 0xb787e000
+[    1.766809] dwc_otg 3f980000.usb: DWC OTG Controller
+[    1.766846] dwc_otg 3f980000.usb: new USB bus registered, assigned bus number 1
+[    1.766880] dwc_otg 3f980000.usb: irq 62, io mem 0x00000000
+[    1.766932] Init: Port Power? op_state=1
+[    1.766940] Init: Power Port (0)
+[    1.767150] usb usb1: New USB device found, idVendor=1d6b, idProduct=0002
+[    1.767166] usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[    1.767178] usb usb1: Product: DWC OTG Controller
+[    1.767192] usb usb1: Manufacturer: Linux 4.4.34-v7+ dwc_otg_hcd
+[    1.767204] usb usb1: SerialNumber: 3f980000.usb
+[    1.768022] hub 1-0:1.0: USB hub found
+[    1.768063] hub 1-0:1.0: 1 port detected
+[    1.768703] dwc_otg: FIQ enabled
+[    1.768713] dwc_otg: NAK holdoff enabled
+[    1.768721] dwc_otg: FIQ split-transaction FSM enabled
+[    1.768753] Module dwc_common_port init
+[    1.769019] usbcore: registered new interface driver usb-storage
+[    1.769292] mousedev: PS/2 mouse device common for all mice
+[    1.769994] bcm2835-cpufreq: min=600000 max=1200000
+[    1.770265] sdhci: Secure Digital Host Controller Interface driver
+[    1.770274] sdhci: Copyright(c) Pierre Ossman
+[    1.770595] sdhost: log_buf @ b6c07000 (f6c07000)
+[    1.828617] mmc0: sdhost-bcm2835 loaded - DMA enabled (>1)
+[    1.830888] mmc-bcm2835 3f300000.mmc: mmc_debug:0 mmc_debug2:0
+[    1.830902] mmc-bcm2835 3f300000.mmc: DMA channel allocated
+[    1.885780] mmc0: host does not support reading read-only switch, assuming write-enable
+[    1.887728] mmc0: new high speed SDHC card at address 1234
+[    1.888304] mmcblk0: mmc0:1234 SA16G 14.6 GiB
+[    1.888712] sdhci-pltfm: SDHCI platform and OF driver helper
+[    1.889197] ledtrig-cpu: registered to indicate activity on CPUs
+[    1.889321] hidraw: raw HID events driver (C) Jiri Kosina
+[    1.889506] usbcore: registered new interface driver usbhid
+[    1.889515] usbhid: USB HID core driver
+[    1.890064] Initializing XFRM netlink socket
+[    1.890103] NET: Registered protocol family 17
+[    1.890247] Key type dns_resolver registered
+[    1.890868] Registering SWP/SWPB emulation handler
+[    1.891716] registered taskstats version 1
+[    1.891912] vc-sm: Videocore shared memory driver
+[    1.891929] [vc_sm_connected_init]: start
+[    1.892485] [vc_sm_connected_init]: end - returning 0
+[    1.893879] 3f201000.uart: ttyAMA0 at MMIO 0x3f201000 (irq = 87, base_baud = 0) is a PL011 rev2
+[    1.894138]  mmcblk0: p1 p2 < p5 p6 p7 >
+[    1.894287] of_cfs_init
+[    1.894361] of_cfs_init: OK
+[    1.900519] EXT4-fs (mmcblk0p7): INFO: recovery required on readonly filesystem
+[    1.900534] EXT4-fs (mmcblk0p7): write access will be enabled during recovery
+[    1.914042] mmc1: queuing unknown CIS tuple 0x80 (2 bytes)
+[    1.915597] mmc1: queuing unknown CIS tuple 0x80 (3 bytes)
+[    1.917203] mmc1: queuing unknown CIS tuple 0x80 (3 bytes)
+[    1.920012] mmc1: queuing unknown CIS tuple 0x80 (7 bytes)
+[    1.958702] Indeed it is in host mode hprt0 = 00021501
+[    2.011164] mmc1: new high speed SDIO card at address 0001
+[    2.138625] usb 1-1: new high-speed USB device number 2 using dwc_otg
+[    2.138765] Indeed it is in host mode hprt0 = 00001101
+[    2.338961] usb 1-1: New USB device found, idVendor=0424, idProduct=9514
+[    2.338984] usb 1-1: New USB device strings: Mfr=0, Product=0, SerialNumber=0
+[    2.339806] hub 1-1:1.0: USB hub found
+[    2.339904] hub 1-1:1.0: 5 ports detected
+[    2.618620] usb 1-1.1: new high-speed USB device number 3 using dwc_otg
+[    2.718870] usb 1-1.1: New USB device found, idVendor=0424, idProduct=ec00
+[    2.718886] usb 1-1.1: New USB device strings: Mfr=0, Product=0, SerialNumber=0
+[    2.721740] smsc95xx v1.0.4
+[    2.781959] smsc95xx 1-1.1:1.0 eth0: register 'smsc95xx' at usb-3f980000.usb-1.1, smsc95xx USB 2.0 Ethernet, b8:27:eb:d0:78:00
+[    2.858613] usb 1-1.5: new low-speed USB device number 4 using dwc_otg
+[    2.977906] usb 1-1.5: New USB device found, idVendor=1a81, idProduct=1004
+[    2.977922] usb 1-1.5: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[    2.977935] usb 1-1.5: Product: Wireless Dongle
+[    2.977947] usb 1-1.5: Manufacturer: G-Tech
+[    2.991929] input: G-Tech Wireless Dongle as /devices/platform/soc/3f980000.usb/usb1/1-1/1-1.5/1-1.5:1.0/0003:1A81:1004.0001/input/input0
+[    3.049535] hid-generic 0003:1A81:1004.0001: input,hidraw0: USB HID v1.11 Keyboard [G-Tech Wireless Dongle] on usb-3f980000.usb-1.5/input0
+[    3.083093] input: G-Tech Wireless Dongle as /devices/platform/soc/3f980000.usb/usb1/1-1/1-1.5/1-1.5:1.1/0003:1A81:1004.0002/input/input1
+[    3.139290] hid-generic 0003:1A81:1004.0002: input,hiddev0,hidraw1: USB HID v1.11 Mouse [G-Tech Wireless Dongle] on usb-3f980000.usb-1.5/input1
+[    8.450364] EXT4-fs (mmcblk0p7): orphan cleanup on readonly fs
+[    8.453174] EXT4-fs (mmcblk0p7): 8 orphan inodes deleted
+[    8.453188] EXT4-fs (mmcblk0p7): recovery complete
+[   10.649409] EXT4-fs (mmcblk0p7): mounted filesystem with ordered data mode. Opts: (null)
+[   10.649470] VFS: Mounted root (ext4 filesystem) readonly on device 179:7.
+[   10.658179] devtmpfs: mounted
+[   10.658992] Freeing unused kernel memory: 476K (807eb000 - 80862000)
+[   10.826965] random: nonblocking pool is initialized
+[   10.950465] systemd[1]: systemd 215 running in system mode. (+PAM +AUDIT +SELINUX +IMA +SYSVINIT +LIBCRYPTSETUP +GCRYPT +ACL +XZ -SECCOMP -APPARMOR)
+[   10.950816] systemd[1]: Detected architecture 'arm'.
+[   11.059179] NET: Registered protocol family 10
+[   11.060669] systemd[1]: Inserted module 'ipv6'
+[   11.062728] systemd[1]: Set hostname to <raspberrypi>.
+[   11.433819] systemd[1]: Starting Forward Password Requests to Wall Directory Watch.
+[   11.434177] systemd[1]: Started Forward Password Requests to Wall Directory Watch.
+[   11.434255] systemd[1]: Expecting device dev-ttyS0.device...
+[   11.434415] systemd[1]: Starting Remote File Systems (Pre).
+[   11.434487] systemd[1]: Reached target Remote File Systems (Pre).
+[   11.434644] systemd[1]: Starting Arbitrary Executable File Formats File System Automount Point.
+[   11.435103] systemd[1]: Set up automount Arbitrary Executable File Formats File System Automount Point.
+[   11.435184] systemd[1]: Starting Encrypted Volumes.
+[   11.435254] systemd[1]: Reached target Encrypted Volumes.
+[   11.435334] systemd[1]: Starting Swap.
+[   11.435402] systemd[1]: Reached target Swap.
+[   11.435473] systemd[1]: Expecting device dev-mmcblk0p6.device...
+[   11.435543] systemd[1]: Starting Root Slice.
+[   11.435687] systemd[1]: Created slice Root Slice.
+[   11.435756] systemd[1]: Starting User and Session Slice.
+[   11.435983] systemd[1]: Created slice User and Session Slice.
+[   11.436055] systemd[1]: Starting Delayed Shutdown Socket.
+[   11.436220] systemd[1]: Listening on Delayed Shutdown Socket.
+[   11.436292] systemd[1]: Starting /dev/initctl Compatibility Named Pipe.
+[   11.436473] systemd[1]: Listening on /dev/initctl Compatibility Named Pipe.
+[   11.436545] systemd[1]: Starting Journal Socket (/dev/log).
+[   11.436728] systemd[1]: Listening on Journal Socket (/dev/log).
+[   11.436821] systemd[1]: Starting udev Control Socket.
+[   11.436995] systemd[1]: Listening on udev Control Socket.
+[   11.437082] systemd[1]: Starting udev Kernel Socket.
+[   11.437203] systemd[1]: Listening on udev Kernel Socket.
+[   11.437294] systemd[1]: Starting Journal Socket.
+[   11.437482] systemd[1]: Listening on Journal Socket.
+[   11.437613] systemd[1]: Starting System Slice.
+[   11.437825] systemd[1]: Created slice System Slice.
+[   11.437942] systemd[1]: Starting File System Check on Root Device...
+[   11.479231] systemd[1]: Starting system-systemd\x2dfsck.slice.
+[   11.479667] systemd[1]: Created slice system-systemd\x2dfsck.slice.
+[   11.479792] systemd[1]: Starting system-autologin.slice.
+[   11.480093] systemd[1]: Created slice system-autologin.slice.
+[   11.480179] systemd[1]: Starting system-serial\x2dgetty.slice.
+[   11.480455] systemd[1]: Created slice system-serial\x2dgetty.slice.
+[   11.480669] systemd[1]: Starting Increase datagram queue length...
+[   11.483269] systemd[1]: Starting Restore / save the current clock...
+[   11.518446] systemd[1]: Started Set Up Additional Binary Formats.
+[   11.518688] systemd[1]: Mounting POSIX Message Queue File System...
+[   11.521604] systemd[1]: Mounted Huge Pages File System.
+[   11.552383] systemd[1]: Starting Load Kernel Modules...
+[   11.556104] systemd[1]: Mounting Debug File System...
+[   11.559776] systemd[1]: Starting udev Coldplug all Devices...
+[   11.563848] systemd[1]: Starting Create list of required static device nodes for the current kernel...
+[   11.567502] systemd[1]: Starting Slices.
+[   11.567637] systemd[1]: Reached target Slices.
+[   11.621993] systemd[1]: Started Create list of required static device nodes for the current kernel.
+[   11.648742] fuse init (API version 7.23)
+[   11.650747] systemd[1]: Started Increase datagram queue length.
+[   11.651412] systemd[1]: Mounted POSIX Message Queue File System.
+[   11.652873] systemd[1]: Mounted Debug File System.
+[   11.654497] systemd[1]: Starting Syslog Socket.
+[   11.654705] systemd[1]: Listening on Syslog Socket.
+[   11.654794] systemd[1]: Starting Journal Service...
+[   11.690409] systemd[1]: Started Journal Service.
+[   11.704795] i2c /dev entries driver
+[   11.972778] systemd-udevd[132]: starting version 215
+[   12.415218] bcm2835-wdt 3f100000.watchdog: Broadcom BCM2835 watchdog timer
+[   12.429833] gpiomem-bcm2835 3f200000.gpiomem: Initialised: Registers at 0x3f200000
+[   12.471359] bcm2708_i2c 3f804000.i2c: BSC1 Controller at 0x3f804000 (irq 83) (baudrate 100000)
+[   12.736648] EXT4-fs (mmcblk0p7): re-mounted. Opts: (null)
+[   12.872308] usbcore: registered new interface driver brcmfmac
+[   13.071446] brcmfmac: brcmf_c_preinit_dcmds: Firmware version = wl0: May 27 2016 00:13:38 version 7.45.41.26 (r640327) FWID 01-df77e4a7
+[   13.092833] brcmfmac: brcmf_cfg80211_reg_notifier: not a ISO3166 code
+[   13.279938] brcmfmac: brcmf_cfg80211_reg_notifier: not a ISO3166 code
+[   13.279977] cfg80211: World regulatory domain updated:
+[   13.279988] cfg80211:  DFS Master region: unset
+[   13.279997] cfg80211:   (start_freq - end_freq @ bandwidth), (max_antenna_gain, max_eirp), (dfs_cac_time)
+[   13.280012] cfg80211:   (2402000 KHz - 2472000 KHz @ 40000 KHz), (N/A, 2000 mBm), (N/A)
+[   13.280025] cfg80211:   (2457000 KHz - 2482000 KHz @ 40000 KHz), (N/A, 2000 mBm), (N/A)
+[   13.280038] cfg80211:   (2474000 KHz - 2494000 KHz @ 20000 KHz), (N/A, 2000 mBm), (N/A)
+[   13.280054] cfg80211:   (5170000 KHz - 5250000 KHz @ 80000 KHz, 160000 KHz AUTO), (N/A, 2000 mBm), (N/A)
+[   13.280070] cfg80211:   (5250000 KHz - 5330000 KHz @ 80000 KHz, 160000 KHz AUTO), (N/A, 2000 mBm), (0 s)
+[   13.280089] cfg80211:   (5490000 KHz - 5730000 KHz @ 160000 KHz), (N/A, 2000 mBm), (0 s)
+[   13.280102] cfg80211:   (5735000 KHz - 5835000 KHz @ 80000 KHz), (N/A, 2000 mBm), (N/A)
+[   13.280114] cfg80211:   (57240000 KHz - 63720000 KHz @ 2160000 KHz), (N/A, 0 mBm), (N/A)
+[   13.727326] systemd-journald[121]: Received request to flush runtime journal from PID 1
+[   15.605188] brcmfmac: brcmf_add_if: ERROR: netdev:wlan0 already exists
+[   15.605230] brcmfmac: brcmf_add_if: ignore IF event
+[   15.612062] IPv6: ADDRCONF(NETDEV_UP): wlan0: link is not ready
+[   15.612095] brcmfmac: power management disabled
+[   15.899531] uart-pl011 3f201000.uart: no DMA platform data
+[   16.230832] Adding 102396k swap on /var/swap.  Priority:-1 extents:1 across:102396k SSFS
+[   16.831924] cfg80211: Regulatory domain changed to country: JP
+[   16.831954] cfg80211:  DFS Master region: JP
+[   16.831966] cfg80211:   (start_freq - end_freq @ bandwidth), (max_antenna_gain, max_eirp), (dfs_cac_time)
+[   16.831981] cfg80211:   (2402000 KHz - 2482000 KHz @ 40000 KHz), (N/A, 2000 mBm), (N/A)
+[   16.831994] cfg80211:   (2474000 KHz - 2494000 KHz @ 20000 KHz), (N/A, 2000 mBm), (N/A)
+[   16.832008] cfg80211:   (4910000 KHz - 4990000 KHz @ 40000 KHz), (N/A, 2300 mBm), (N/A)
+[   16.832020] cfg80211:   (5030000 KHz - 5090000 KHz @ 40000 KHz), (N/A, 2300 mBm), (N/A)
+[   16.832035] cfg80211:   (5170000 KHz - 5250000 KHz @ 80000 KHz, 160000 KHz AUTO), (N/A, 2000 mBm), (N/A)
+[   16.832050] cfg80211:   (5250000 KHz - 5330000 KHz @ 80000 KHz, 160000 KHz AUTO), (N/A, 2000 mBm), (0 s)
+[   16.832063] cfg80211:   (5490000 KHz - 5710000 KHz @ 160000 KHz), (N/A, 2300 mBm), (0 s)
+[   17.021014] smsc95xx 1-1.1:1.0 eth0: hardware isn't capable of remote wakeup
+[   17.021271] IPv6: ADDRCONF(NETDEV_UP): eth0: link is not ready
+[   17.579895] IPv6: ADDRCONF(NETDEV_CHANGE): wlan0: link becomes ready
+[   20.367528] Bluetooth: Core ver 2.21
+[   20.367688] NET: Registered protocol family 31
+[   20.367706] Bluetooth: HCI device and connection manager initialized
+[   20.367736] Bluetooth: HCI socket layer initialized
+[   20.367762] Bluetooth: L2CAP socket layer initialized
+[   20.367845] Bluetooth: SCO socket layer initialized
+[   20.377728] Bluetooth: HCI UART driver ver 2.3
+[   20.377753] Bluetooth: HCI UART protocol H4 registered
+[   20.377764] Bluetooth: HCI UART protocol Three-wire (H5) registered
+[   20.377940] Bluetooth: HCI UART protocol BCM registered
+[   20.577431] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[   20.577455] Bluetooth: BNEP filters: protocol multicast
+[   20.577478] Bluetooth: BNEP socket layer initialized
+[   31.648988] EXT4-fs (mmcblk0p5): mounted filesystem with ordered data mode. Opts: (null)
+[  789.307826] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[  789.307865] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[  789.307878] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[  789.307893] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[  789.307905] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_init 358
+[  789.308100] spi_probe name[bp3596_spi]]
+[  789.343419] [HAL] lzpi_rf_main_th thread start pid=1674
+[  789.343507] [HAL] lzpi_rx_led_thr thread start pid=1675
+[  789.343579] [HAL] lzpi_tx_led_thr thread start pid=1676
+[  789.343592] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c spi_probe 295
+[  789.343766] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_tick
+[  789.343986] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_ei
+[  789.343999] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_enableInterrupt 407
+[  789.344017] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[  789.344030] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[  789.345146] [drv-lazurite] End of init
+[  789.644573] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[  789.644860] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_setup
+[  789.649202] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,vco_cal
+[  789.653312] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[  789.653324] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  789.653335] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  789.653345] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  789.653389] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,4
+[  789.653413] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  789.653428] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  789.653438] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  789.653473] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,83
+[  789.653511] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_addr_filt
+[  789.653644] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[  789.653658] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  789.653675] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  789.653694] ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  789.653704] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  789.653717] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f357500
+[  789.654230] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f357500,0
+[  789.654243] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[  789.654279] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[  789.654292] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  789.654305] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f357564
+[  789.654949] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f357564,1
+[  790.653179] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[  790.653186] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[  790.653204] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[  790.653217] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[  790.653224] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  790.653235] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3575d4
+[  790.653294] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[  790.653307] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,1
+[  790.653318] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  790.653328] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  790.653365] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  790.653376] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,5
+[  790.653386] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,40
+[  790.653396] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  790.653426] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,66
+[  790.657645] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3575d4,1
+[  791.653231] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_ccadone
+[  791.653252] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[  791.653266] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[  791.653278] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  791.653291] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f35765c
+[  791.653300] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_start
+[  791.653312] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_handler
+[  791.653371] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[  791.653382] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  791.653392] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,3
+[  791.653402] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  791.653439] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  791.653449] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,4
+[  791.653459] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,41
+[  791.653469] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  791.653499] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,66
+[  791.653551] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_txdone
+[  791.653561] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[  791.654652] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[  791.654667] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  791.654678] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  791.654688] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  791.654698] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  791.654709] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f357500
+[  791.655197] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f357500,0
+[  791.655210] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[  791.655236] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[  791.655247] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  791.655258] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f357564
+[  791.655911] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f357564,1
+[  792.653182] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[  792.653190] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[  792.653219] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[  792.653232] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[  792.653253] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[  792.653263] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_ei
+[  792.653274] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_enableInterrupt 407
+[  793.654531] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[  793.654548] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  793.654555] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  793.654560] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  793.654566] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  793.654573] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f357500
+[  793.655049] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f357500,0
+[  793.655056] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[  793.655073] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[  793.655079] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  793.655085] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f357564
+[  794.653140] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[  794.653144] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[  794.653159] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[  795.684473] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[  795.684530] [HAL] rf_main_thread thread end
+[  795.684584] [HAL] tx_led_thread thread end
+[  795.684629] [HAL] rx_led_thread thread end
+[  795.684654] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[  795.684686] spi_remove
+[  795.684818] [drv-lazurite] exit remove
+[  822.237098] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[  822.237136] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[  822.237153] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[  822.237168] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[  822.237182] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_init 358
+[  822.237347] spi_probe name[bp3596_spi]]
+[  822.273665] [HAL] lzpi_rf_main_th thread start pid=1728
+[  822.273755] [HAL] lzpi_rx_led_thr thread start pid=1729
+[  822.273832] [HAL] lzpi_tx_led_thr thread start pid=1730
+[  822.273844] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c spi_probe 295
+[  822.274001] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_tick
+[  822.274224] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_ei
+[  822.274237] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_enableInterrupt 407
+[  822.274254] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[  822.274265] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[  822.275382] [drv-lazurite] End of init
+[  822.574381] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[  822.574671] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_setup
+[  822.579020] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,vco_cal
+[  822.582459] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[  822.582470] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  822.582481] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  822.582491] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  822.582526] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,4
+[  822.582537] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  822.582548] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  822.582558] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  822.582587] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,83
+[  822.582622] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_addr_filt
+[  822.582718] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[  822.582731] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  822.582741] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  822.582751] ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  822.582761] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  822.582772] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f36b500
+[  822.583255] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f36b500,0
+[  822.583269] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[  822.583357] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[  822.583382] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  822.583407] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f36b564
+[  822.584048] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f36b564,1
+[  823.573355] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[  823.573404] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[  823.573418] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[  823.573431] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[  823.573442] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  823.573454] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f36b5d4
+[  823.573521] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[  823.573532] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,1
+[  823.573542] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  823.573552] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  823.573587] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  823.573597] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,5
+[  823.573608] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,40
+[  823.573618] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  823.573644] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,66
+[  823.577837] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f36b5d4,1
+[  824.573342] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_ccadone
+[  824.573360] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[  824.573373] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[  824.573383] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  824.573395] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f36b65c
+[  824.573405] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_start
+[  824.573417] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_handler
+[  824.573473] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[  824.573484] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  824.573494] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,3
+[  824.573504] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  824.573538] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  824.573548] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,4
+[  824.573558] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,41
+[  824.573568] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  824.573595] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,66
+[  824.573643] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_txdone
+[  824.573653] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[  824.574806] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[  824.574821] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  824.574832] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  824.574842] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  824.574852] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  824.574864] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f36b500
+[  824.575351] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f36b500,0
+[  824.575363] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[  824.575397] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[  824.575407] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  824.575419] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f36b564
+[  824.576046] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f36b564,1
+[  825.573356] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[  825.573364] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[  825.573390] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[  825.573402] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[  825.573422] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[  825.573432] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_ei
+[  825.573442] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_enableInterrupt 407
+[  826.574968] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[  826.574986] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  826.574992] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  826.574997] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  826.575003] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  826.575010] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f36b500
+[  826.575491] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f36b500,0
+[  826.575499] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[  826.575543] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[  826.575548] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  826.575554] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f36b564
+[  827.573337] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[  827.573340] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[  827.573349] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[  828.624441] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[  828.624501] [HAL] rf_main_thread thread end
+[  828.624586] [HAL] tx_led_thread thread end
+[  828.624643] [HAL] rx_led_thread thread end
+[  828.624674] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[  828.624724] spi_remove
+[  828.624950] [drv-lazurite] exit remove
+[  852.961788] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[  852.961823] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[  852.961834] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[  852.961844] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[  852.961855] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_init 358
+[  852.962015] spi_probe name[bp3596_spi]]
+[  853.003726] [HAL] lzpi_rf_main_th thread start pid=1783
+[  853.003811] [HAL] lzpi_rx_led_thr thread start pid=1784
+[  853.003882] [HAL] lzpi_tx_led_thr thread start pid=1785
+[  853.003894] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c spi_probe 295
+[  853.004599] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_tick
+[  853.004841] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_ei
+[  853.004853] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_enableInterrupt 407
+[  853.004870] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[  853.004881] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[  853.005990] [drv-lazurite] End of init
+[  853.296485] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[  853.296775] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_setup
+[  853.302311] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,vco_cal
+[  853.305840] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[  853.305854] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  853.305865] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  853.305876] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  853.305925] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,4
+[  853.305936] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  853.305947] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  853.305957] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  853.306000] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,83
+[  853.306049] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_addr_filt
+[  853.306191] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[  853.306204] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  853.306214] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  853.306224] ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  853.306234] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  853.306247] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f37f500
+[  853.306778] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f37f500,0
+[  853.306793] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[  853.306824] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[  853.306835] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  853.306846] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f37f564
+[  853.307489] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f37f564,1
+[  854.303527] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[  854.303537] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[  854.303566] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[  854.303579] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[  854.303591] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  854.303605] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f37f5d4
+[  854.303667] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[  854.303677] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,1
+[  854.303688] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  854.303698] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  854.303735] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  854.303745] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,5
+[  854.303755] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,40
+[  854.303765] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  854.303795] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,66
+[  854.308012] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f37f5d4,1
+[  855.303531] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_ccadone
+[  855.303556] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[  855.303571] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[  855.303581] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  855.303594] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f37f65c
+[  855.303603] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_start
+[  855.303615] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_handler
+[  855.303677] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[  855.303687] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  855.303698] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,3
+[  855.303708] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  855.303745] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  855.303755] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,4
+[  855.303765] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,41
+[  855.303775] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[  855.303805] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,66
+[  855.303858] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_txdone
+[  855.303868] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[  855.304998] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[  855.305014] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  855.305025] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  855.305035] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  855.305045] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  855.305056] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f37f500
+[  855.305545] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f37f500,0
+[  855.305557] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[  855.305581] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[  855.305591] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  855.305602] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f37f564
+[  855.306255] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f37f564,1
+[  856.303543] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[  856.303553] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[  856.303580] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[  856.303593] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[  856.303614] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[  856.303623] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_ei
+[  856.303634] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_enableInterrupt 407
+[  857.304962] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[  857.304986] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  857.304997] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  857.305008] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[  857.305018] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  857.305030] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f37f500
+[  857.305544] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f37f500,0
+[  857.305559] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[  857.305601] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[  857.305613] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[  857.305625] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f37f564
+[  858.303560] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[  858.303659] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[  858.303672] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[  859.365448] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[  859.365521] [HAL] rf_main_thread thread end
+[  859.365581] [HAL] tx_led_thread thread end
+[  859.365635] [HAL] rx_led_thread thread end
+[  859.365666] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[  859.365717] spi_remove
+[  859.365943] [drv-lazurite] exit remove
+[ 1046.507941] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1046.507966] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1046.507976] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1046.507987] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1046.507999] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_init 358
+[ 1046.508134] spi_probe name[bp3596_spi]]
+[ 1046.545020] [HAL] lzpi_rf_main_th thread start pid=1835
+[ 1046.545113] [HAL] lzpi_rx_led_thr thread start pid=1836
+[ 1046.545192] [HAL] lzpi_tx_led_thr thread start pid=1837
+[ 1046.545205] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c spi_probe 295
+[ 1046.545379] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_tick
+[ 1046.545675] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_ei
+[ 1046.545690] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_enableInterrupt 407
+[ 1046.545709] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1046.545721] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[ 1046.546837] [drv-lazurite] End of init
+[ 1046.847137] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[ 1046.847427] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_setup
+[ 1046.852955] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,vco_cal
+[ 1046.856546] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[ 1046.856561] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1046.856572] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1046.856582] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1046.856632] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,4
+[ 1046.856643] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1046.856653] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1046.856663] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1046.856708] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,83
+[ 1046.856757] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_addr_filt
+[ 1046.856909] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1046.856923] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1046.856933] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1046.856943] ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1046.856953] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1046.856965] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f393500
+[ 1046.857497] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f393500,0
+[ 1046.857511] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[ 1046.864738] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1046.864772] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1046.864798] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f393564
+[ 1046.865467] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f393564,1
+[ 1047.854707] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1047.854764] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[ 1047.854780] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1047.854793] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1047.854803] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1047.854816] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3935d4
+[ 1047.854879] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[ 1047.854890] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,1
+[ 1047.854901] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1047.854911] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1047.854949] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1047.854959] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,5
+[ 1047.854969] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,40
+[ 1047.854979] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1047.855010] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,66
+[ 1047.859226] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3935d4,1
+[ 1048.854691] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_ccadone
+[ 1048.854717] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1048.854732] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1048.854743] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1048.854756] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f39365c
+[ 1048.854766] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_start
+[ 1048.854779] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_handler
+[ 1048.854859] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[ 1048.854870] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1048.854880] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,3
+[ 1048.854890] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1048.854927] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1048.854937] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,4
+[ 1048.854948] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,41
+[ 1048.854958] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1048.854988] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,66
+[ 1048.855041] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_txdone
+[ 1048.855051] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1048.856146] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1048.856160] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1048.856171] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1048.856182] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1048.856192] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1048.856203] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f393500
+[ 1048.856737] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f393500,0
+[ 1048.856750] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[ 1048.856774] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1048.856784] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1048.856795] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f393564
+[ 1048.857430] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f393564,1
+[ 1049.854666] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1049.854686] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[ 1049.854694] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1049.854701] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1049.854717] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1049.854729] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_ei
+[ 1049.854740] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_enableInterrupt 407
+[ 1050.856091] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1050.856115] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1050.856125] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1050.856135] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1050.856146] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1050.856158] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f393500
+[ 1050.856669] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f393500,0
+[ 1050.856683] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[ 1050.856724] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1050.856744] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1050.856757] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f393564
+[ 1051.854646] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[ 1051.854657] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1051.854685] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1052.907724] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1052.907799] [HAL] rf_main_thread thread end
+[ 1052.907856] [HAL] tx_led_thread thread end
+[ 1052.907940] [HAL] rx_led_thread thread end
+[ 1052.907985] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1052.908034] spi_remove
+[ 1052.908264] [drv-lazurite] exit remove
+[ 1057.491586] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1057.491610] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1057.491620] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1057.491631] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1057.491642] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_init 358
+[ 1057.491762] spi_probe name[bp3596_spi]]
+[ 1057.525139] [HAL] lzpi_rf_main_th thread start pid=1883
+[ 1057.525224] [HAL] lzpi_rx_led_thr thread start pid=1884
+[ 1057.525293] [HAL] lzpi_tx_led_thr thread start pid=1885
+[ 1057.525305] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c spi_probe 295
+[ 1057.525468] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_tick
+[ 1057.525755] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_ei
+[ 1057.525769] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_enableInterrupt 407
+[ 1057.525787] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1057.525799] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[ 1057.526905] [drv-lazurite] End of init
+[ 1057.827600] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[ 1057.827892] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_setup
+[ 1057.832271] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,vco_cal
+[ 1057.835666] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[ 1057.835679] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1057.835695] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1057.835706] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1057.835742] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,4
+[ 1057.835753] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1057.835764] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1057.835774] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1057.835804] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,83
+[ 1057.835838] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_addr_filt
+[ 1057.835963] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1057.835976] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1057.835986] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1057.835997] ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1057.836006] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1057.836020] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3a7500
+[ 1057.836507] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3a7500,0
+[ 1057.836520] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[ 1057.840350] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1057.840362] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1057.840375] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3a7564
+[ 1057.841017] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3a7564,1
+[ 1058.834680] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[ 1058.834690] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1058.834718] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1058.834732] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1058.834743] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1058.834756] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3a75d4
+[ 1058.834820] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[ 1058.834831] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,1
+[ 1058.834842] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1058.834852] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1058.834889] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1058.834900] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,5
+[ 1058.834910] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,40
+[ 1058.834920] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1058.834951] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,66
+[ 1058.839167] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3a75d4,1
+[ 1059.834684] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_ccadone
+[ 1059.834709] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1059.834724] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1059.834735] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1059.834749] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3a765c
+[ 1059.834758] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_start
+[ 1059.834770] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_handler
+[ 1059.834832] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[ 1059.834843] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1059.834853] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,3
+[ 1059.834864] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1059.834900] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1059.834910] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,4
+[ 1059.834921] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,41
+[ 1059.834931] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1059.834961] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,66
+[ 1059.835015] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_txdone
+[ 1059.835025] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1059.836138] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1059.836154] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1059.836165] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1059.836175] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1059.836186] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1059.836197] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3a7500
+[ 1059.836685] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3a7500,0
+[ 1059.836697] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[ 1059.836721] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1059.836732] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1059.836743] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3a7564
+[ 1059.837398] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3a7564,1
+[ 1060.834694] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[ 1060.834702] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1060.834732] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1060.834745] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1060.834765] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1060.834775] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_ei
+[ 1060.834785] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_enableInterrupt 407
+[ 1061.836055] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1061.836072] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1061.836078] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1061.836083] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1061.836088] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1061.836095] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3a7500
+[ 1061.836560] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3a7500,0
+[ 1061.836567] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[ 1061.836583] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1061.836590] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1061.836600] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3a7564
+[ 1062.834669] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1062.834672] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[ 1062.834683] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1063.865189] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1063.865242] [HAL] rf_main_thread thread end
+[ 1063.865283] [HAL] tx_led_thread thread end
+[ 1063.865337] [HAL] rx_led_thread thread end
+[ 1063.865357] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1063.865389] spi_remove
+[ 1063.865517] [drv-lazurite] exit remove
+[ 1069.216156] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1069.216188] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1069.216207] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1069.216221] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1069.216235] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_init 358
+[ 1069.216406] spi_probe name[bp3596_spi]]
+[ 1069.255162] [HAL] lzpi_rf_main_th thread start pid=1931
+[ 1069.255269] [HAL] lzpi_rx_led_thr thread start pid=1932
+[ 1069.255362] [HAL] lzpi_tx_led_thr thread start pid=1933
+[ 1069.255376] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c spi_probe 295
+[ 1069.255597] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_tick
+[ 1069.255825] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_ei
+[ 1069.255838] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_enableInterrupt 407
+[ 1069.255856] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1069.255868] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[ 1069.257787] [drv-lazurite] End of init
+[ 1069.550779] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[ 1069.551068] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_setup
+[ 1069.556055] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,vco_cal
+[ 1069.559504] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[ 1069.559516] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1069.559527] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1069.559537] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1069.559576] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,4
+[ 1069.559586] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1069.559597] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1069.559606] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1069.559636] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,83
+[ 1069.559671] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_addr_filt
+[ 1069.559816] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1069.559829] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1069.559839] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1069.559849] ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1069.559859] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1069.559871] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3bb500
+[ 1069.560353] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3bb500,0
+[ 1069.560368] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[ 1069.560395] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1069.560408] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1069.560420] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3bb564
+[ 1069.561051] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3bb564,1
+[ 1070.554715] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[ 1070.554726] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1070.554755] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1070.554768] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1070.554779] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1070.554792] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3bb5d4
+[ 1070.554858] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[ 1070.554869] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,1
+[ 1070.554880] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1070.554890] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1070.554925] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1070.554935] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,5
+[ 1070.554945] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,40
+[ 1070.554955] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1070.554982] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,66
+[ 1070.559176] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3bb5d4,1
+[ 1071.554728] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_ccadone
+[ 1071.554752] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1071.554766] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1071.554776] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1071.554788] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3bb65c
+[ 1071.554799] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_start
+[ 1071.554811] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_handler
+[ 1071.554876] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[ 1071.554887] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1071.554898] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,3
+[ 1071.554908] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1071.554942] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1071.554952] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,4
+[ 1071.554962] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,41
+[ 1071.554972] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1071.555001] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,66
+[ 1071.555049] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_txdone
+[ 1071.555058] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1071.556183] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1071.556200] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1071.556210] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1071.556221] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1071.556231] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1071.556242] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3bb500
+[ 1071.556735] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3bb500,0
+[ 1071.556751] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[ 1071.556774] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1071.556785] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1071.556797] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3bb564
+[ 1071.557453] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3bb564,1
+[ 1072.554737] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1072.554759] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[ 1072.554767] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1072.554774] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1072.554791] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1072.554803] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_ei
+[ 1072.554814] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_enableInterrupt 407
+[ 1073.556369] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1073.556385] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1073.556392] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1073.556397] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1073.556402] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1073.556410] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3bb500
+[ 1073.556898] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3bb500,0
+[ 1073.556906] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[ 1073.556925] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1073.556932] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1073.556938] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3bb564
+[ 1074.554700] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[ 1074.554706] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1074.554722] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1075.590703] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1075.590755] [HAL] rf_main_thread thread end
+[ 1075.590793] [HAL] tx_led_thread thread end
+[ 1075.590832] [HAL] rx_led_thread thread end
+[ 1075.590850] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1075.590879] spi_remove
+[ 1075.590999] [drv-lazurite] exit remove
+[ 1264.380199] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1264.380236] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1264.380249] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1264.380261] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1264.380274] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_init 358
+[ 1264.380446] spi_probe name[bp3596_spi]]
+[ 1264.415252] [HAL] lzpi_rf_main_th thread start pid=2488
+[ 1264.415412] [HAL] lzpi_rx_led_thr thread start pid=2489
+[ 1264.415526] [HAL] lzpi_tx_led_thr thread start pid=2490
+[ 1264.415540] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c spi_probe 295
+[ 1264.415798] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_tick
+[ 1264.416143] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_ei
+[ 1264.416167] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_enableInterrupt 407
+[ 1264.416194] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1264.416209] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[ 1264.417491] [drv-lazurite] End of init
+[ 1264.706926] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[ 1264.707213] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_setup
+[ 1264.711611] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,vco_cal
+[ 1264.715064] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[ 1264.715083] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1264.715094] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1264.715110] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1264.715156] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,4
+[ 1264.715166] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1264.715176] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1264.715200] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1264.715235] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,83
+[ 1264.715271] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_addr_filt
+[ 1264.715394] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1264.715409] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1264.715419] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1264.715430] ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1264.715440] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1264.715452] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3cf4ac
+[ 1264.721157] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3cf4ac,0
+[ 1264.721177] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[ 1264.721218] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1264.721232] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1264.721245] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3cf510
+[ 1264.721868] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3cf510,1
+[ 1265.714894] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[ 1265.714905] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1265.714934] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1265.714948] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1265.714960] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1265.714973] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3cf580
+[ 1265.715042] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[ 1265.715053] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,1
+[ 1265.715063] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1265.715073] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1265.715109] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1265.715120] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,5
+[ 1265.715130] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,40
+[ 1265.715140] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1265.715168] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,66
+[ 1265.719367] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3cf580,1
+[ 1266.714886] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_ccadone
+[ 1266.714910] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1266.714926] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1266.714936] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1266.714950] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3cf660
+[ 1266.714960] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_start
+[ 1266.714973] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_handler
+[ 1266.715041] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[ 1266.715052] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1266.715062] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,3
+[ 1266.715073] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1266.715108] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1266.715119] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,4
+[ 1266.715130] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,41
+[ 1266.715140] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1266.715167] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,66
+[ 1266.715216] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_txdone
+[ 1266.715225] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1266.716357] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1266.716372] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1266.716382] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1266.716393] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1266.716402] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1266.716414] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3cf4ac
+[ 1266.716903] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3cf4ac,0
+[ 1266.716915] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[ 1266.716943] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1266.716954] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1266.716967] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3cf510
+[ 1266.717589] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3cf510,1
+[ 1267.714867] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1267.714874] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[ 1267.714892] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1267.714901] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1267.714916] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1267.714929] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_ei
+[ 1267.714940] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_enableInterrupt 407
+[ 1268.716263] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1268.716280] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1268.716285] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1268.716291] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1268.716296] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1268.716303] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3cf4ac
+[ 1268.716782] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3cf4ac,0
+[ 1268.716789] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[ 1268.716812] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1268.716818] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1268.716824] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3cf510
+[ 1269.714812] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[ 1269.714818] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1269.714837] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1270.747879] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1270.747939] [HAL] rf_main_thread thread end
+[ 1270.747979] [HAL] tx_led_thread thread end
+[ 1270.748033] [HAL] rx_led_thread thread end
+[ 1270.748053] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1270.748086] spi_remove
+[ 1270.748222] [drv-lazurite] exit remove
+[ 1314.253859] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1314.253887] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1314.253898] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1314.253908] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1314.253934] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_init 358
+[ 1314.254071] spi_probe name[bp3596_spi]]
+[ 1314.294870] [HAL] lzpi_rf_main_th thread start pid=2547
+[ 1314.294959] [HAL] lzpi_rx_led_thr thread start pid=2548
+[ 1314.295032] [HAL] lzpi_tx_led_thr thread start pid=2549
+[ 1314.295045] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c spi_probe 295
+[ 1314.295648] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_tick
+[ 1314.295931] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_ei
+[ 1314.295990] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_enableInterrupt 407
+[ 1314.296008] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1314.296018] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[ 1314.297124] [drv-lazurite] End of init
+[ 1314.592170] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[ 1314.592520] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_setup
+[ 1314.598329] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,vco_cal
+[ 1314.601920] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[ 1314.601933] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1314.601944] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1314.601954] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1314.602021] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,4
+[ 1314.602032] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1314.602043] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1314.602053] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1314.602097] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,83
+[ 1314.602147] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_addr_filt
+[ 1314.602328] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1314.602343] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1314.602354] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1314.602364] ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1314.602375] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1314.602387] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3e34ac
+[ 1314.602914] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3e34ac,0
+[ 1314.602926] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[ 1314.604690] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1314.604711] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1314.604741] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3e3510
+[ 1314.605415] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3e3510,1
+[ 1315.594674] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1315.594730] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[ 1315.594744] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1315.594758] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1315.594769] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1315.594781] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3e3580
+[ 1315.594844] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[ 1315.594857] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,1
+[ 1315.594867] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1315.594877] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1315.594913] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1315.594924] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,5
+[ 1315.594934] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,40
+[ 1315.594944] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1315.594974] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,66
+[ 1315.599190] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3e3580,1
+[ 1316.594650] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_ccadone
+[ 1316.594687] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1316.594701] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1316.594711] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1316.594724] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3e3660
+[ 1316.594733] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_start
+[ 1316.594746] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_handler
+[ 1316.594805] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[ 1316.594815] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1316.594826] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,3
+[ 1316.594836] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1316.594872] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1316.594883] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,4
+[ 1316.594893] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,41
+[ 1316.594903] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1316.594933] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,66
+[ 1316.594991] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_txdone
+[ 1316.595001] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1316.596133] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1316.596148] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1316.596159] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1316.596169] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1316.596180] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1316.596191] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3e34ac
+[ 1316.596678] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3e34ac,0
+[ 1316.596690] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[ 1316.596716] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1316.596727] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1316.596739] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3e3510
+[ 1316.597376] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3e3510,1
+[ 1317.594647] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[ 1317.594668] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1317.594684] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1317.594696] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1317.594716] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1317.594726] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_ei
+[ 1317.594737] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_enableInterrupt 407
+[ 1318.596445] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1318.596468] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1318.596479] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1318.596489] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1318.596500] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1318.596529] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3e34ac
+[ 1318.597041] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3e34ac,0
+[ 1318.597054] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[ 1318.597101] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1318.597114] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1318.597126] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3e3510
+[ 1319.594634] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[ 1319.594645] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1319.594673] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1320.625501] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1320.625541] [HAL] rf_main_thread thread end
+[ 1320.625583] [HAL] tx_led_thread thread end
+[ 1320.625618] [HAL] rx_led_thread thread end
+[ 1320.625642] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1320.625674] spi_remove
+[ 1320.625806] [drv-lazurite] exit remove
+[ 1325.438454] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1325.438508] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1325.438519] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1325.438530] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1325.438544] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_init 358
+[ 1325.438789] spi_probe name[bp3596_spi]]
+[ 1325.474812] [HAL] lzpi_rf_main_th thread start pid=2594
+[ 1325.474901] [HAL] lzpi_rx_led_thr thread start pid=2595
+[ 1325.474974] [HAL] lzpi_tx_led_thr thread start pid=2596
+[ 1325.474986] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c spi_probe 295
+[ 1325.475150] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_tick
+[ 1325.475355] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_ei
+[ 1325.475367] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_enableInterrupt 407
+[ 1325.475384] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1325.475395] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[ 1325.476890] [drv-lazurite] End of init
+[ 1325.771572] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[ 1325.771861] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_setup
+[ 1325.777699] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,vco_cal
+[ 1325.781242] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[ 1325.781254] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1325.781265] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1325.781276] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1325.781325] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,4
+[ 1325.781336] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1325.781347] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1325.781357] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1325.781402] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,83
+[ 1325.781453] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_addr_filt
+[ 1325.781638] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1325.781652] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1325.781662] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1325.781672] ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1325.781682] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1325.781694] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3f74ac
+[ 1325.782217] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3f74ac,0
+[ 1325.782230] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[ 1325.785369] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1325.785392] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1325.785405] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3f7510
+[ 1325.786098] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3f7510,1
+[ 1326.774624] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1326.774735] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[ 1326.774747] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1326.774760] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1326.774770] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1326.774783] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3f7580
+[ 1326.774846] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[ 1326.774857] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,1
+[ 1326.774867] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1326.774877] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1326.774911] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1326.774922] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,5
+[ 1326.774932] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,40
+[ 1326.774942] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1326.774969] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,66
+[ 1326.779162] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3f7580,1
+[ 1327.774580] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_ccadone
+[ 1327.774595] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1327.774603] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1327.774609] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1327.774616] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3f7660
+[ 1327.774621] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_start
+[ 1327.774627] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_handler
+[ 1327.774670] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,c0
+[ 1327.774675] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1327.774681] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,3
+[ 1327.774686] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1327.774708] DEBUG PHY INTS1: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1327.774713] DEBUG PHY INTS2: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,4
+[ 1327.774718] DEBUG PHY INTS3: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,41
+[ 1327.774723] DEBUG PHY INTS4: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,0
+[ 1327.774739] DEBUG PHY: /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_pi_mesg,66
+[ 1327.774772] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_txdone
+[ 1327.774777] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1327.776001] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1327.776010] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1327.776015] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1327.776020] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1327.776025] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1327.776031] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3f74ac
+[ 1327.776470] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3f74ac,0
+[ 1327.776476] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[ 1327.776496] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1327.776502] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1327.776508] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3f7510
+[ 1327.777085] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3f7510,1
+[ 1328.774623] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1328.774733] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[ 1328.774745] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1328.774758] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1328.774778] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1328.774788] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_ei
+[ 1328.774798] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_enableInterrupt 407
+[ 1329.854907] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1329.854931] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1329.854942] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1329.854953] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1329.854963] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1329.854976] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3f74ac
+[ 1329.855520] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f3f74ac,0
+[ 1329.855534] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[ 1329.855579] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1329.855600] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1329.855613] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f3f7510
+[ 1330.854609] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1330.854615] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[ 1330.854633] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1331.885457] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1331.885494] [HAL] rf_main_thread thread end
+[ 1331.886953] [HAL] tx_led_thread thread end
+[ 1331.887084] [HAL] rx_led_thread thread end
+[ 1331.887113] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1331.887151] spi_remove
+[ 1331.887332] [drv-lazurite] exit remove
+[ 1496.454787] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1496.454819] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1496.454831] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1496.454842] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1496.454854] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_init 358
+[ 1496.454992] spi_probe name[bp3596_spi]]
+[ 1496.494602] [HAL] lzpi_rf_main_th thread start pid=3133
+[ 1496.494699] [HAL] lzpi_rx_led_thr thread start pid=3134
+[ 1496.494771] [HAL] lzpi_tx_led_thr thread start pid=3135
+[ 1496.494784] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c spi_probe 295
+[ 1496.495031] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_tick
+[ 1496.495302] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_ei
+[ 1496.495314] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_enableInterrupt 407
+[ 1496.495333] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1496.495344] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[ 1496.496687] [drv-lazurite] End of init
+[ 1496.785231] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[ 1496.785490] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_setup
+[ 1496.789208] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,vco_cal
+[ 1496.792469] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_addr_filt
+[ 1496.792536] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1496.792544] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1496.792549] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1496.792554] ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1496.792559] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1496.792566] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f40b4ac
+[ 1496.793001] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f40b4ac,0
+[ 1496.793008] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[ 1496.793032] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1496.793038] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1496.793043] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f40b510
+[ 1496.793049] REG LOCK ERR/home/pi/driver/LazDriver/net/lib/phy_ml7396.c,reg_wr,2
+[ 1496.793254] REG LOCK ERR/home/pi/driver/LazDriver/net/lib/phy_ml7396.c,reg_wr,2
+[ 1496.793259] REG LOCK ERR/home/pi/driver/LazDriver/net/lib/phy_ml7396.c,reg_wr,2
+[ 1496.793264] REG LOCK ERR/home/pi/driver/LazDriver/net/lib/phy_ml7396.c,reg_wr,2
+[ 1496.793269] REG LOCK ERR/home/pi/driver/LazDriver/net/lib/phy_ml7396.c,reg_wr,2
+[ 1496.793274] REG LOCK ERR/home/pi/driver/LazDriver/net/lib/phy_ml7396.c,reg_wr,2
+[ 1496.793479] REG LOCK ERR/home/pi/driver/LazDriver/net/lib/phy_ml7396.c,reg_wr,2
+[ 1497.784379] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[ 1497.784419] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1497.795107] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1498.796656] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1498.796680] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1498.796691] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1498.796701] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1498.796712] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1498.796726] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f40b4ac
+[ 1499.794357] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1500.795719] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1500.795738] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1500.795743] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1500.795749] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1500.795755] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1500.795762] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f40b4ac
+[ 1501.794329] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1502.844785] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1502.844964] [HAL] rf_main_thread thread end
+[ 1502.845034] [HAL] tx_led_thread thread end
+[ 1502.845127] [HAL] rx_led_thread thread end
+[ 1502.845160] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1502.845213] spi_remove
+[ 1502.845445] [drv-lazurite] exit remove
+[ 1710.311037] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1710.311064] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1710.311076] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_di
+[ 1710.311087] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1710.311099] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_init 358
+[ 1710.311227] spi_probe name[bp3596_spi]]
+[ 1710.344538] [HAL] lzpi_rf_main_th thread start pid=3690
+[ 1710.344638] [HAL] lzpi_rx_led_thr thread start pid=3691
+[ 1710.344722] [HAL] lzpi_tx_led_thr thread start pid=3692
+[ 1710.344736] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c spi_probe 295
+[ 1710.344906] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_tick
+[ 1710.345147] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_ei
+[ 1710.345159] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_enableInterrupt 407
+[ 1710.345177] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1710.345188] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[ 1710.347075] [drv-lazurite] End of init
+[ 1710.643656] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sleep
+[ 1710.643946] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_setup
+[ 1710.650139] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,vco_cal
+[ 1710.653650] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_addr_filt
+[ 1710.653790] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1710.653806] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1710.653816] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1710.653826] ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1710.653837] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1710.653849] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f41f4ac
+[ 1710.655407] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 205 7f41f4ac,0
+[ 1710.655428] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c rf_irq_handler 211 0
+[ 1710.655468] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_di
+[ 1710.655480] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1710.655492] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f41f510
+[ 1710.655503] REG LOCK ERR/home/pi/driver/LazDriver/net/lib/phy_ml7396.c,reg_wr,2
+[ 1710.655714] REG LOCK ERR/home/pi/driver/LazDriver/net/lib/phy_ml7396.c,reg_wr,2
+[ 1710.655724] REG LOCK ERR/home/pi/driver/LazDriver/net/lib/phy_ml7396.c,reg_wr,2
+[ 1710.655735] REG LOCK ERR/home/pi/driver/LazDriver/net/lib/phy_ml7396.c,reg_wr,2
+[ 1710.655750] REG LOCK ERR/home/pi/driver/LazDriver/net/lib/phy_ml7396.c,reg_wr,2
+[ 1710.655760] REG LOCK ERR/home/pi/driver/LazDriver/net/lib/phy_ml7396.c,reg_wr,2
+[ 1710.655970] REG LOCK ERR/home/pi/driver/LazDriver/net/lib/phy_ml7396.c,reg_wr,2
+[ 1711.654334] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1711.654446] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_fifodone
+[ 1711.654459] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_timer_ei
+[ 1712.665015] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1712.665037] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1712.665048] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1712.665059] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1712.665069] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1712.665082] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f41f4ac
+[ 1713.664257] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1714.665594] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1714.665611] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1714.665616] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1714.665622] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1714.665627] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_sint_handler
+[ 1714.665636] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_setInterrupt 401 7f41f4ac
+[ 1715.664282] /home/pi/driver/LazDriver/net/lib/phy_ml7396.c,phy_stm_send,!\xffffffa8ͫn_T\xffffffacLAPIS Lazurite RF system
+,36
+[ 1716.715790] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1716.715860] [HAL] rf_main_thread thread end
+[ 1716.715943] [HAL] tx_led_thread thread end
+[ 1716.716006] [HAL] rx_led_thread thread end
+[ 1716.716041] /home/pi/driver/LazDriver/net/lib/hwif/hal-lzpi.c HAL_GPIO_disableInterrupt 416
+[ 1716.716092] spi_remove
+[ 1716.716327] [drv-lazurite] exit remove
