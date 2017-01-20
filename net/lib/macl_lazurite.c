@@ -77,7 +77,8 @@ static void macl_txdone_handler(void) {
 #endif
 	phy_timer_di();
 	phy_sint_handler(macl_ackrcv_handler);
-//  phy_timer_handler(macl_timer_handler);
+    phy_timer_start(500);
+    phy_timer_handler(macl_timer_handler);
     phy_stm_txdone();
 	phy_timer_ei();
 }
@@ -88,6 +89,7 @@ static void macl_ackrcv_handler(void) {
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 	phy_timer_di();
+    phy_timer_stop();
     phy_stm_rxdone();
 	phy_timer_ei();
 }
@@ -99,6 +101,7 @@ static void macl_timer_handler(void) {
 #endif
 	phy_sint_di();
     phy_stm_retry();
+    phy_rst();
 	phy_sint_ei();
 }
 
@@ -121,6 +124,7 @@ MACL_PARAM* macl_init(void)
 	phy_sint_ei(); phy_timer_ei();
 	return &macl;
 }
+
 
 /********************************************************************/
 /*! @brief macl start 
@@ -312,6 +316,7 @@ int	macl_ch_scan(uint32_t duration)
 {
 	int status=STATUS_OK;
 #ifndef LAZURITE_IDE
+    macl.ccaInterval = duration;
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,duration);
 #endif
 	return status;
@@ -340,6 +345,7 @@ int	macl_set_cca_ed_level(uint32_t mbm)
 int	macl_set_csma_params(uint8_t min_be, uint8_t max_be, uint8_t retries)
 {
 	int status=STATUS_OK;
+    macl.ccaRetry = retries;
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,min_be,max_be);
 #endif
@@ -348,6 +354,7 @@ int	macl_set_csma_params(uint8_t min_be, uint8_t max_be, uint8_t retries)
 int	macl_set_frame_retries(int8_t retries)
 {
 	int status=STATUS_OK;
+    macl.txRetry = retries;
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,retries);
 #endif

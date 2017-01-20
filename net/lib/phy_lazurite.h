@@ -47,6 +47,13 @@ typedef struct {
 } PHY_PARAM;
 
 
+typedef enum {
+	CCA_IDLE=0,
+	CCA_BUSY,
+	CCA_TIMEOUT
+}CCA_RESULT;
+
+
 /*
  -------------------------------------------------------------
                     Public interrupt section
@@ -82,7 +89,7 @@ extern void phy_stm_promiscuous(void);
 extern void phy_stm_receive(void);
 extern void phy_stm_send(BUFFER buff);
 extern void phy_stm_fifodone(void);
-extern void phy_stm_ccadone(void);
+extern int phy_stm_ccadone(void);
 extern void phy_stm_txdone(void);
 extern void phy_stm_rxdone(void);
 extern void phy_stm_retry(void);

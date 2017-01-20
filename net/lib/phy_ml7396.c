@@ -28,6 +28,7 @@
 #include <linux/stddef.h>
 #endif
 
+#include "hwif/random.h"
 #include "hwif/hal.h"
 #include "hwif/hal-lzpi.h"
 #include "errno.h"
@@ -90,6 +91,8 @@ I acquire integer region of the fixed-point numerical value
 #define PHY_REG_SET_TX_DONE_RX   0x20
 #define PHY_REG_SET_TX_DONE_OFF  0x10
 
+#define UNIT_BAKOFF_PERIOD  300
+#define DEFAUL_BAKOF        1000
 /*
  ---------------------------------------------------------------
                          Struct and Enum section
@@ -169,11 +172,10 @@ typedef struct {
 
 
 typedef enum {
-	CCA_FAST=0,                   /* CCA Fast */
-	DETECT_IDLE,                  /* CCA Idle detection */
-	STOP_DETECTION,               /* Stop idle detection */
-	CCA_RETRY,                    /* CCA with BACKOFF */
-	CCA_STOP                      /* Stop CCA */
+	CCA_FAST,                    /* CCA minmum */
+	CCA_IDLE_EN,                 /* CCA Idle detection */
+	CCA_RETRY,                   /* CCA with BACKOFF */
+	CCA_STOP                     /* CCA stop */
 } CCA_REQ;
 
 
@@ -456,7 +458,7 @@ static void phy_pi_mesg(void)
  * @detail Original function was REG_INTEN
  * @issue
  ******************************************************************************/
-void phy_inten(uint32_t inten)
+static void phy_inten(uint32_t inten)
 {
     uint8_t reg_data[4];
     reg_data[0] = (uint8_t)((inten) >>  0) | 0xc0;
@@ -472,7 +474,7 @@ void phy_inten(uint32_t inten)
  * @detail Original function was REG_INTCLR
  * @issue
  ******************************************************************************/
-void phy_intclr(uint32_t intclr)
+static void phy_intclr(uint32_t intclr)
 {
     uint8_t reg_data[4];
     phy_pi_mesg();
@@ -520,37 +522,49 @@ static void vco_cal(void) {
 }
 
 
+// static void backoffTimer(EM_Data *em_data){
+static void phy_backoffTimer(void){
+
+	uint16_t cca_wait;
+
+	cca_wait = (rand()&0x07) * UNIT_BAKOFF_PERIOD;
+	if (!cca_wait) cca_wait = DEFAUL_BAKOF;
+	HAL_delayMicroseconds(cca_wait);
+}
+
+
 static void phy_cca_ctrl(CCA_REQ state) {
 
     uint8_t reg_cca_cntl;
     uint8_t reg_idl_wait;
     uint8_t reg_data;
 
+    phy_set_trx_state(PHY_ST_TRXOFF);
+
     if (state == CCA_STOP){
-        phy_set_trx_state(PHY_ST_TRXOFF);
         reg_data = 0x64;
         reg_wr(REG_ADR_DEMSET3, &reg_data, 1);
         reg_data = 0x27;
         reg_wr(REG_ADR_DEMSET14, &reg_data, 1);
+        reg_cca_cntl = 0x00;
+        reg_idl_wait = 0x00;
+        reg_wr(REG_ADR_IDLE_WAIT_L, &reg_idl_wait, 1);
+        reg_wr(REG_ADR_CCA_CNTRL, &reg_cca_cntl, 1);
     }else{
         reg_data = 0x00;
         reg_wr(REG_ADR_DEMSET3, &reg_data, 1);
         reg_wr(REG_ADR_DEMSET14,&reg_data, 1);
-        phy_set_trx_state(PHY_ST_TRXOFF);
 
         if (state == CCA_FAST) {
             reg_cca_cntl = 0x10;
             reg_idl_wait = 0x00;
         } else
-        if (state == DETECT_IDLE) {
+        if (state == CCA_IDLE_EN) {
             reg_cca_cntl = 0x18;
             reg_idl_wait = 0x64;
         } else
-        if (state == STOP_DETECTION) {
-            reg_cca_cntl = 0x00;
-            reg_idl_wait = 0x00;
-        } else
         if (state == CCA_RETRY) {
+            phy_backoffTimer();
             reg_cca_cntl = 0x10;
             reg_idl_wait = 0x64;
         }
@@ -1281,16 +1295,28 @@ void phy_stm_fifodone(void)
 }
 
 
-void phy_stm_ccadone(void)
+int phy_stm_ccadone(void)
 {
+    int status;
+    uint8_t reg_data;
+
     phy_intclr(HW_EVENT_CCA_DONE | HW_EVENT_RF_STATUS);
-    phy_cca_ctrl(CCA_STOP);
-    phy_set_trx_state(PHY_ST_TXON);
-    phy_inten(HW_EVENT_TX_DONE);
+	reg_rd(REG_ADR_CCA_CNTRL, &reg_data, 1);
+
+    if(reg_data&0x03){
+        phy_cca_ctrl(CCA_FAST);
+        status = CCA_BUSY;
+    }else{
+        phy_cca_ctrl(CCA_STOP);
+        phy_set_trx_state(PHY_ST_TXON);
+        phy_inten(HW_EVENT_TX_DONE);
+        status = CCA_IDLE;
+    }
     HAL_wait_event();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
+   return status;
 }
 
 
@@ -1304,6 +1330,7 @@ void phy_stm_txdone(void)
 #endif
 }
 
+
 void phy_stm_rxdone(void)
 {
     phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
@@ -1315,6 +1342,7 @@ void phy_stm_rxdone(void)
 
 void phy_stm_retry(void)
 {
+    phy_intclr(HW_EVENT_TX_DONE | HW_EVENT_TX_FIFO_DONE | HW_EVENT_RF_STATUS);
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
