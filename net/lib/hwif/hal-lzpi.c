@@ -321,7 +321,8 @@ int HAL_wait_event(void)
 {
 	int status=0;
 	que_th2ex = 0;
-	wait_event_interruptible_timeout(tx_done, que_th2ex,HZ);
+//	wait_event_interruptible_timeout(tx_done, que_th2ex,HZ);
+	wait_event_interruptible_timeout(tx_done, que_th2ex,2);
 
 #if 0
 	SUBGHZ_MSG msg = SUBGHZ_OK;

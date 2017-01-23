@@ -234,7 +234,7 @@ int	macl_stop(void)
 }
 void	macl_xmit_sync(BUFFER buff)
 {
-	int status=STATUS_OK;
+//	int status=STATUS_OK;
 	BUFFER ack;
 	const uint8_t ackdata0[]={0x42,0x20,0x00};
 	const uint8_t ackdata1[]={0x42,0x20,0x01};
@@ -258,6 +258,8 @@ void	macl_xmit_sync(BUFFER buff)
 
 	phy_sint_handler(macl_fifodone_handler);
     phy_stm_send(buff);
+
+//  return status;
 }
 //extern int	macl_xmit_async(BUFFER buff);								// for linux. does not support
 int	macl_ed(uint8_t *level)

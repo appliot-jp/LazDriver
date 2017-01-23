@@ -42,17 +42,15 @@ class TestClass < Minitest::Test
 #		@@laz.remove()
 
 #		@@laz.init(module_test = 0x3000) #PHY/MACL
-		@@laz.init(module_test = 0x0000) #PHY 
+		@@laz.init(module_test = 0x1000) #PHY 
 #		@@laz.init(module_test = 0x0000)
 #		@@laz.init(module_test = 0xFF00)
 		@@laz.begin(36,0xabcd,100,20)
-		@@laz.send(0xabcd,0x5f6e,"hello")
-        sleep(1)
-		@@laz.rxEnable()
-		@@laz.send(0xabcd,0x5f6e,"hello")
-        sleep(1)
-		@@laz.send(0xabcd,0x5f6e,"hello")
-        sleep(1)
+        for num in 1..10 do
+		    @@laz.send(0xabcd,0x5f6e,"hello")
+            sleep(1)
+        end
+#		@@laz.rxEnable()
 		@@laz.remove()
 	end
 end
