@@ -89,7 +89,7 @@ extern void phy_stm_promiscuous(void);
 extern void phy_stm_receive(void);
 extern void phy_stm_send(BUFFER buff);
 extern void phy_stm_fifodone(void);
-extern int phy_stm_ccadone(uint8_t be);
+extern void phy_stm_ccadone(uint8_t be, uint8_t *cca_result);
 extern void phy_stm_txdone(void);
 extern void phy_stm_rxdone(void);
 extern void phy_stm_retry(void);

@@ -479,8 +479,7 @@ static void phy_inten(uint32_t inten)
 static void phy_intclr(uint32_t intclr)
 {
     uint8_t reg_data[4];
-    // ssdebug
-    // phy_pi_mesg();
+    phy_pi_mesg();
     reg_data[0] = ~(uint8_t)((intclr) >>  0);
     reg_data[1] = ~(uint8_t)((intclr) >>  8);
     reg_data[2] = ~(uint8_t)((intclr) >> 16);
@@ -1092,8 +1091,7 @@ void phy_rst(void)
     reg_data = 0x88;
     reg_wr(REG_ADR_RST_SET, &reg_data, 1);
 #ifndef LAZURITE_IDE
-    // ssdebug
-//	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 }
 
@@ -1141,20 +1139,20 @@ void phy_stm_promiscuous(void)
 {
     phy_set_trx_state(PHY_ST_RXON);
     phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
-    HAL_wait_event();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
+    HAL_wait_event();
 }
 
 
 void phy_stm_receive(void)
 {
     phy_inten(HW_EVENT_RX_DONE);
-    HAL_wait_event();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
+    HAL_wait_event();
 }
 
 
@@ -1195,11 +1193,10 @@ void phy_stm_send(BUFFER buff)
 	reg_wr(REG_ADR_ACK_TIMER_EN, reg_data, 1);
 
     phy_inten(HW_EVENT_TX_FIFO_DONE);
-    HAL_wait_event();
-
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s,%s,%d\n",__FILE__,__func__,payload,length);
 #endif
+    HAL_wait_event();
 
 #if 0
 /* 送信バッファ書き込み(先頭データ)
@@ -1283,16 +1280,15 @@ void phy_stm_fifodone(void)
 {
     phy_cca_ctrl(CCA_FAST);
     phy_inten(HW_EVENT_CCA_DONE);
-    HAL_wait_event();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
+    HAL_wait_event();
 }
 
 
-int phy_stm_ccadone(uint8_t be)
+void phy_stm_ccadone(uint8_t be, uint8_t *cca_result)
 {
-    int status;
     uint8_t reg_data;
 
     phy_cca_be = be;
@@ -1300,20 +1296,19 @@ int phy_stm_ccadone(uint8_t be)
     phy_intclr(HW_EVENT_CCA_DONE | HW_EVENT_RF_STATUS);
 	reg_rd(REG_ADR_CCA_CNTRL, &reg_data, 1);
 
-    if(reg_data&0x03){
+    if(0) { //reg_data&0x03){
         phy_cca_ctrl(CCA_FAST);
-        status = CCA_BUSY;
+        *cca_result = CCA_BUSY;
     }else{
         phy_cca_ctrl(CCA_STOP);
         phy_set_trx_state(PHY_ST_TXON);
         phy_inten(HW_EVENT_TX_DONE);
-        status = CCA_IDLE;
+        *cca_result = CCA_IDLE;
     }
-    HAL_wait_event();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
-   return status;
+    HAL_wait_event();
 }
 
 
@@ -1321,10 +1316,10 @@ void phy_stm_txdone(void)
 {
     phy_intclr(HW_EVENT_TX_DONE | HW_EVENT_TX_FIFO_DONE | HW_EVENT_RF_STATUS);
     phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
-//  HAL_wait_event();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
+    HAL_wait_event();
 }
 
 
@@ -1341,7 +1336,7 @@ void phy_stm_retry(void)
 {
     phy_intclr(HW_EVENT_TX_DONE | HW_EVENT_TX_FIFO_DONE | HW_EVENT_RF_STATUS);
 #ifndef LAZURITE_IDE
-//	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 }
 

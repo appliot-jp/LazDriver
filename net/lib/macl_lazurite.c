@@ -67,7 +67,7 @@ static void macl_ccadone_handler(void) {
 #endif
 	phy_timer_di();
 	phy_sint_handler(macl_txdone_handler);
-    phy_stm_ccadone(macl.ccaBe);
+    phy_stm_ccadone(macl.ccaBe,&macl.cca_result);
 	phy_timer_ei();
 }
 
@@ -118,7 +118,7 @@ MACL_PARAM* macl_init(void)
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
-	phy_sint_di(); phy_sint_di();
+	phy_sint_di(); phy_timer_di();
 
 	memset(&macl,0,sizeof(MACL_PARAM));
 	macl.phy = phy_init();
@@ -232,7 +232,7 @@ int	macl_stop(void)
     phy_trxoff();
 	return status;
 }
-int	macl_xmit_sync(BUFFER buff)
+void	macl_xmit_sync(BUFFER buff)
 {
 	int status=STATUS_OK;
 	BUFFER ack;
@@ -258,8 +258,6 @@ int	macl_xmit_sync(BUFFER buff)
 
 	phy_sint_handler(macl_fifodone_handler);
     phy_stm_send(buff);
-
-	return status;
 }
 //extern int	macl_xmit_async(BUFFER buff);								// for linux. does not support
 int	macl_ed(uint8_t *level)

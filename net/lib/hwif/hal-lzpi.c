@@ -136,6 +136,7 @@ int rf_main_thread(void *p)
 			if(ext_irq_func) {
 				// printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,m.trigger);
 			    que_th2ex=1;
+			    wake_up_interruptible(&tx_done);
 				act_irq_func = ext_irq_func;
                 act_irq_func();
 			}
@@ -292,7 +293,6 @@ int spi_probe(void){
 		goto error_thread;
 	}
 	printk(KERN_INFO"[HAL] %s thread start pid=%d\n",tx_led_task->comm,tx_led_task->pid);
-    printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 
 	return 0;
 
@@ -354,7 +354,7 @@ int HAL_wait_event(void)
 
 
 int HAL_init(uint8_t i2c_addr, uint8_t addr_bits){
-    int status;
+	int status;
     // printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 	// spi initialization
 	m.i2c.i2c_addr = i2c_addr;

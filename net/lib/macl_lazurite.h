@@ -29,6 +29,7 @@ typedef struct {
 	uint8_t ch;
 	uint8_t ccaRetry;
 	uint8_t ccaBe;
+    uint8_t cca_result;
 	uint8_t txPower;
 	uint8_t txRetry;
 	bool promiscuous;
@@ -104,7 +105,7 @@ struct ieee802154_hw_addr_filt {
 extern MACL_PARAM* macl_init(void);									// 
 extern int	macl_start(void);											// rxon
 extern int	macl_stop(void);												// rxoff
-extern int	macl_xmit_sync(BUFFER buff);									// tx
+extern void	macl_xmit_sync(BUFFER buff);									// tx
 //extern int	macl_xmit_async(BUFFER buff);								// for linux. does not support
 extern int	macl_ed(uint8_t *level);
 extern int	macl_set_channel(uint8_t page,uint8_t ch);
