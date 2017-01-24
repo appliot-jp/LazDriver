@@ -32,10 +32,13 @@ typedef struct {
     uint8_t cca_result;
 	uint8_t txPower;
 	uint8_t txRetry;
+	uint8_t resending_num;
+	uint8_t sequnceNum;
 	bool promiscuous;
 	uint16_t ack_timeout;
 //	uint16_t ccaInterval;
 	PHY_PARAM *phy;
+    BUFFER buff;
 } MACL_PARAM;
 
 /**

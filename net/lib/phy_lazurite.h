@@ -77,9 +77,11 @@ extern int phy_setup(uint8_t page,uint8_t ch);
 extern PHY_PARAM *phy_init(void);
 extern void phy_rst(void);
 extern void phy_trxoff(void);
+extern void phy_force_trxoff(void);
 extern void phy_addr_filt(void);
 extern int phy_ed(void);
 extern void phy_sleep(void);
+extern void phy_wait_event(void);
 /*
  ------------------------------------------------------------------
                       Public state machine section
@@ -87,7 +89,7 @@ extern void phy_sleep(void);
  */
 extern void phy_stm_promiscuous(void);
 extern void phy_stm_receive(void);
-extern void phy_stm_send(BUFFER buff);
+extern void phy_stm_send(BUFFER buff,uint8_t seqNum);
 extern void phy_stm_fifodone(void);
 extern void phy_stm_ccadone(uint8_t be, uint8_t *cca_result);
 extern void phy_stm_txdone(void);

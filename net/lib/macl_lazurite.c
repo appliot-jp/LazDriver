@@ -57,6 +57,7 @@ static void macl_fifodone_handler(void) {
 	phy_timer_di();
 	phy_sint_handler(macl_ccadone_handler);
     phy_stm_fifodone();
+    phy_wait_event();
 	phy_timer_ei();
 }
 
@@ -68,6 +69,7 @@ static void macl_ccadone_handler(void) {
 	phy_timer_di();
 	phy_sint_handler(macl_txdone_handler);
     phy_stm_ccadone(macl.ccaBe,&macl.cca_result);
+    phy_wait_event();
 	phy_timer_ei();
 }
 
@@ -81,6 +83,7 @@ static void macl_txdone_handler(void) {
     phy_timer_start(macl.ack_timeout);
     phy_timer_handler(macl_timer_handler);
     phy_stm_txdone();
+    phy_wait_event();
 	phy_timer_ei();
 }
 
@@ -98,12 +101,20 @@ static void macl_ackrcv_handler(void) {
 
 static void macl_timer_handler(void) {
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,macl.txRetry,macl.resending_num);
 #endif
 	phy_sint_di();
     phy_timer_stop();
     phy_stm_retry();
-    phy_rst();
+    if(macl.resending_num < macl.txRetry){
+        phy_force_trxoff();
+        macl.resending_num++;
+	    phy_sint_handler(macl_fifodone_handler);
+        phy_stm_send(macl.buff,macl.sequnceNum);
+        phy_wait_event();
+    }else{
+        phy_rst();
+    }
 	phy_sint_ei();
 }
 
@@ -122,6 +133,7 @@ MACL_PARAM* macl_init(void)
 
 	memset(&macl,0,sizeof(MACL_PARAM));
 	macl.phy = phy_init();
+    macl.sequnceNum=0;
 	phy_sint_ei(); phy_timer_ei();
 	return &macl;
 }
@@ -256,9 +268,12 @@ void	macl_xmit_sync(BUFFER buff)
 		printk(KERN_INFO"not ACK Received!!%s,%s\n",__FILE__,__func__);
 	}
 
+    macl.buff = buff;
+    macl.resending_num = 0;
+    macl.sequnceNum++;
 	phy_sint_handler(macl_fifodone_handler);
-    phy_stm_send(buff);
-
+    phy_stm_send(macl.buff,macl.sequnceNum);
+    phy_wait_event();
 //  return status;
 }
 //extern int	macl_xmit_async(BUFFER buff);								// for linux. does not support
@@ -373,6 +388,7 @@ int	macl_set_promiscuous_mode(const bool on)
 #endif
     phy_sint_handler(macl_rcv_handler);
     phy_stm_promiscuous();
+    phy_wait_event();
 	return status;
 }
 

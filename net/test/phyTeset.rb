@@ -46,9 +46,9 @@ class TestClass < Minitest::Test
 #		@@laz.init(module_test = 0x0000)
 #		@@laz.init(module_test = 0xFF00)
 		@@laz.begin(36,0xabcd,100,20)
-        for num in 1..10 do
+        for num in 1..5 do
 		    @@laz.send(0xabcd,0x5f6e,"hello")
-            sleep(1)
+            sleep(3)
         end
 #		@@laz.rxEnable()
 		@@laz.remove()

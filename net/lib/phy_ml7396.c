@@ -1105,6 +1105,15 @@ void phy_trxoff(void)
 }
 
 
+void phy_force_trxoff(void)
+{
+    phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+}
+
+
 void phy_addr_filt(void)
 {
 #ifndef LAZURITE_IDE
@@ -1130,6 +1139,12 @@ void phy_sleep(void)
 }
 
 
+void phy_wait_event(void)
+{
+    HAL_wait_event();
+}
+
+
 /*
  ------------------------------------------------------------------
                       Public state machine section
@@ -1142,7 +1157,6 @@ void phy_stm_promiscuous(void)
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
-    HAL_wait_event();
 }
 
 
@@ -1152,13 +1166,12 @@ void phy_stm_receive(void)
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
-    HAL_wait_event();
 }
 
 
 uint8_t send_seq;
 
-void phy_stm_send(BUFFER buff)
+void phy_stm_send(BUFFER buff,uint8_t seqNum)
 {
     uint8_t reg_data[2];
     uint16_t length = buff.len;
@@ -1170,7 +1183,7 @@ void phy_stm_send(BUFFER buff)
 
     payload[i] = 0x21;
     payload[++i] = 0xA8;
-    payload[++i] = ++send_seq;
+    payload[++i] = seqNum;
     payload[++i] = 0xcd;
     payload[++i] = 0xab;
     payload[++i] = 0x6e;
@@ -1196,7 +1209,6 @@ void phy_stm_send(BUFFER buff)
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s,%s,%d\n",__FILE__,__func__,payload,length);
 #endif
-    HAL_wait_event();
 
 #if 0
 /* 送信バッファ書き込み(先頭データ)
@@ -1283,7 +1295,6 @@ void phy_stm_fifodone(void)
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
-    HAL_wait_event();
 }
 
 
@@ -1308,7 +1319,6 @@ void phy_stm_ccadone(uint8_t be, uint8_t *cca_result)
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
-    HAL_wait_event();
 }
 
 
@@ -1319,7 +1329,6 @@ void phy_stm_txdone(void)
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
-    HAL_wait_event();
 }
 
 

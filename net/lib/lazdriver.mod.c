@@ -43,6 +43,7 @@ __attribute__((section("__versions"))) = {
 	{ 0xf4fa543b, __VMLINUX_SYMBOL_STR(arm_copy_to_user) },
 	{ 0x275ef902, __VMLINUX_SYMBOL_STR(__init_waitqueue_head) },
 	{ 0xfa2a45e, __VMLINUX_SYMBOL_STR(__memzero) },
+	{ 0x5f754e5a, __VMLINUX_SYMBOL_STR(memset) },
 	{ 0x45f768a8, __VMLINUX_SYMBOL_STR(__mutex_init) },
 	{ 0x27e1a049, __VMLINUX_SYMBOL_STR(printk) },
 	{ 0xf9964443, __VMLINUX_SYMBOL_STR(kthread_stop) },
@@ -91,4 +92,4 @@ __attribute__((section(".modinfo"))) =
 
 MODULE_ALIAS("i2c:lzpi_i2c");
 
-MODULE_INFO(srcversion, "4DC6DBE13A24146627AB00C");
+MODULE_INFO(srcversion, "22574A85BA5A73A8EEA02C1");
