@@ -64,6 +64,9 @@ static struct task_struct *rx_led_task;
 int i2c_addr_bits;
 bool flag_irq_enable;
 
+// ssdebug
+wait_queue_head_t mac_done;
+
 // main_thread_parameter
 static struct {
 	volatile uint16_t trigger;
@@ -248,6 +251,8 @@ int spi_probe(void){
 	init_waitqueue_head( &rx_led_q );
 	init_waitqueue_head( &tx_led_q );
 	init_waitqueue_head( &ext_q );
+    // ssdebug
+	init_waitqueue_head( &mac_done );
 
 	// create GPIO irq
 	gpio_direction_input(GPIO_SINTN);
