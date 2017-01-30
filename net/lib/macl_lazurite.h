@@ -29,10 +29,10 @@ typedef struct {
 	uint8_t ch;
 	uint8_t ccaRetry;
 	uint8_t ccaBe;
-    uint8_t cca_result;
+    uint8_t ccaCount;
 	uint8_t txPower;
 	uint8_t txRetry;
-	uint8_t resending_num;
+	uint8_t resendingNum;
 	uint8_t sequnceNum;
 	bool promiscuous;
 	uint16_t ack_timeout;

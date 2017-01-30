@@ -47,12 +47,6 @@ typedef struct {
 } PHY_PARAM;
 
 
-typedef enum {
-	CCA_IDLE=0,
-	CCA_BUSY,
-	CCA_TIMEOUT
-}CCA_RESULT;
-
 
 /*
  -------------------------------------------------------------
@@ -93,10 +87,10 @@ extern void phy_stm_promiscuous(void);
 extern void phy_stm_receive(void);
 extern void phy_stm_send(BUFFER buff,uint8_t seqNum);
 extern void phy_stm_fifodone(void);
-extern void phy_stm_ccadone(uint8_t be, uint8_t *cca_result);
+extern int phy_stm_ccadone(uint8_t be,uint8_t count, uint8_t retry);
 extern void phy_stm_txdone(void);
 extern void phy_stm_rxdone(void);
-extern void phy_stm_retry(void);
+extern void phy_stm_stop(void);
 
 
 

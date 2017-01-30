@@ -1310,8 +1310,9 @@ void phy_stm_fifodone(void)
 }
 
 
-void phy_stm_ccadone(uint8_t be, uint8_t *cca_result)
+int phy_stm_ccadone(uint8_t be,uint8_t count, uint8_t retry)
 {
+    int status = 0;
     uint8_t reg_data;
 
     phy_cca_be = be;
@@ -1319,19 +1320,29 @@ void phy_stm_ccadone(uint8_t be, uint8_t *cca_result)
     phy_intclr(HW_EVENT_CCA_DONE | HW_EVENT_RF_STATUS);
 	reg_rd(REG_ADR_CCA_CNTRL, &reg_data, 1);
 
-    // ssdebug
-    if(0) { //reg_data&0x03){
-        phy_cca_ctrl(CCA_FAST);
-        *cca_result = CCA_BUSY;
+    if(reg_data&0x03){
+        if(!count){
+           phy_cca_ctrl(CCA_IDLE_EN);
+           phy_inten(HW_EVENT_CCA_DONE);
+           status = 1;
+        }else
+        if(count < retry){
+           phy_cca_ctrl(CCA_RETRY); 
+           phy_inten(HW_EVENT_CCA_DONE);
+           status = 2;
+        }else{
+           phy_cca_ctrl(CCA_STOP);
+           status = -1;
+        }
     }else{
         phy_cca_ctrl(CCA_STOP);
         phy_set_trx_state(PHY_ST_TXON);
         phy_inten(HW_EVENT_TX_DONE);
-        *cca_result = CCA_IDLE;
     }
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
+    return status;
 }
 
 
@@ -1354,9 +1365,10 @@ void phy_stm_rxdone(void)
 }
 
 
-void phy_stm_retry(void)
+void phy_stm_stop(void)
 {
-    phy_intclr(HW_EVENT_TX_DONE | HW_EVENT_TX_FIFO_DONE | HW_EVENT_RF_STATUS);
+//    phy_intclr(HW_EVENT_TX_DONE | HW_EVENT_TX_FIFO_DONE | HW_EVENT_RF_STATUS);
+      phy_intclr(~HW_EVENT_ALL_MASK);
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
