@@ -49,8 +49,12 @@ static void (*ext_timer_func)(void);
 static void (*ext_irq_func)(void);
 static void (*act_irq_func)(void);
 static bool ext_irq_enb;
+
 volatile int que_th2ex = 0;
 extern wait_queue_head_t tx_done;
+volatile int que_macl = 0;
+extern wait_queue_head_t mac_done;
+
 volatile int que_irq= 0;
 volatile int que_tx_led= 1;
 volatile int que_rx_led= 1;
@@ -322,39 +326,29 @@ error:
 }
 
 
-int HAL_wait_event(void)
+int HAL_wait_event(uint8_t event)
 {
 	int status=0;
-	que_th2ex = 0;
-//	wait_event_interruptible_timeout(tx_done, que_th2ex,HZ);
-	wait_event_interruptible_timeout(tx_done, que_th2ex,2);
+    if (event == HAL_PHY_EVENT) {
+	    que_th2ex = 0;
+//	    wait_event_interruptible_timeout(tx_done, que_th2ex,HZ);
+	    wait_event_interruptible_timeout(tx_done, que_th2ex,2);
+    }else
+    if (event == HAL_MAC_EVENT) {
+        que_macl = 0;
+	    wait_event_interruptible(mac_done, que_macl);
+    }
+	return status;
+}
 
-#if 0
-	SUBGHZ_MSG msg = SUBGHZ_OK;
-	
-	// @issue 
-#ifdef LAZURITE_IDE
-	while(subghz_param.sending == true)
-	{
-  		lp_setHaltMode();
-        // 2016.03.14 tx send event
-		BP3596_sendIdle();
-	}
-#else
-	que_th2ex = 0;
-	wait_event_interruptible_timeout(tx_done, que_th2ex,HZ);
-#endif
-	if(subghz_param.tx_stat.status > 0) {
-		msg = SUBGHZ_OK;
-	} else if(subghz_param.tx_stat.status == -EBUSY) {
-		msg = SUBGHZ_TX_CCA_FAIL;
-	} else if(subghz_param.tx_stat.status == -ETIMEDOUT) {
-		msg = SUBGHZ_TX_ACK_FAIL;
-	} else {
-		msg = -EIO;
-	}
-#endif
 
+int HAL_wakeup_event(uint8_t event)
+{
+	int status=0;
+    if (event == HAL_MAC_EVENT) {
+        que_macl = 1;
+	    wake_up_interruptible(&mac_done);
+    }
 	return status;
 }
 

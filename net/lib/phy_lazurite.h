@@ -81,7 +81,9 @@ extern void phy_force_trxoff(void);
 extern void phy_addr_filt(void);
 extern int phy_ed(void);
 extern void phy_sleep(void);
-extern void phy_wait_event(void);
+extern void phy_wait_phy_event(void);
+extern void phy_wait_mac_event(void);
+extern void phy_wakeup_mac_event(void);
 /*
  ------------------------------------------------------------------
                       Public state machine section

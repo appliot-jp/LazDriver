@@ -1139,9 +1139,21 @@ void phy_sleep(void)
 }
 
 
-void phy_wait_event(void)
+void phy_wait_phy_event(void)
 {
-    HAL_wait_event();
+    HAL_wait_event(HAL_PHY_EVENT);
+}
+
+
+void phy_wait_mac_event(void)
+{
+    HAL_wait_event(HAL_MAC_EVENT);
+}
+
+
+void phy_wakeup_mac_event(void)
+{
+    HAL_wakeup_event(HAL_MAC_EVENT);
 }
 
 
@@ -1307,6 +1319,7 @@ void phy_stm_ccadone(uint8_t be, uint8_t *cca_result)
     phy_intclr(HW_EVENT_CCA_DONE | HW_EVENT_RF_STATUS);
 	reg_rd(REG_ADR_CCA_CNTRL, &reg_data, 1);
 
+    // ssdebug
     if(0) { //reg_data&0x03){
         phy_cca_ctrl(CCA_FAST);
         *cca_result = CCA_BUSY;
