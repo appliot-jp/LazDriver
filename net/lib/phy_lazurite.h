@@ -48,6 +48,16 @@ typedef struct {
 
 
 
+typedef enum {
+	CCA_STOP,                    /* CCA stop */
+	CCA_FAST,                    /* CCA minmum */
+	CCA_IDLE_EN,                 /* CCA Idle detection */
+	CCA_RETRY,                   /* CCA with BACKOFF */
+	CCA_CANCEL,                  /* CCA cancel */
+} CCA_STATE;
+
+
+
 /*
  -------------------------------------------------------------
                     Public interrupt section
@@ -87,7 +97,7 @@ extern void phy_stm_promiscuous(void);
 extern void phy_stm_receive(void);
 extern void phy_stm_send(BUFFER buff,uint8_t seqNum);
 extern void phy_stm_fifodone(void);
-extern int phy_stm_ccadone(uint8_t be,uint8_t count, uint8_t retry);
+extern CCA_STATE phy_stm_ccadone(uint8_t be,uint8_t count, uint8_t retry);
 extern void phy_stm_txdone(void);
 extern void phy_stm_rxdone(void);
 extern void phy_stm_stop(void);

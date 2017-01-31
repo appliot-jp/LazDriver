@@ -65,28 +65,28 @@ static void macl_fifodone_handler(void) {
 
 
 static void macl_ccadone_handler(void) {
-    int cca_status;
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-	phy_timer_di();
+    int cca_state;
 
-    cca_status = phy_stm_ccadone(macl.ccaBe,macl.ccaCount,macl.ccaRetry);
-    if(cca_status == 1){
+	phy_timer_di();
+    cca_state = phy_stm_ccadone(macl.ccaBe,macl.ccaCount,macl.ccaRetry);
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s CCA STATE:%d\n",__FILE__,__func__,cca_state);
+#endif
+    if(cca_state == CCA_IDLE_EN){
         macl.ccaCount++;
 	    phy_sint_handler(macl_ccadone_handler);
         phy_timer_start(500);
         phy_timer_handler(macl_cca_abort_handler);
         phy_wait_phy_event();
-    }else if(cca_status ==  2){
+    }else if(cca_state == CCA_RETRY){
         macl.ccaCount++;
 	    phy_sint_handler(macl_ccadone_handler);
         phy_wait_phy_event();
-    }else if(cca_status == -1){
+    }else if(cca_state == CCA_CANCEL){
         phy_stm_stop();
         phy_rst();
         phy_wakeup_mac_event();
-    }else{
+    }else if(cca_state == CCA_STOP){
 	    phy_sint_handler(macl_txdone_handler);
         phy_wait_phy_event();
     }

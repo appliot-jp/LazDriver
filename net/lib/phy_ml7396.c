@@ -170,15 +170,6 @@ typedef struct {
 } REGSET;
 
 
-
-typedef enum {
-	CCA_FAST,                    /* CCA minmum */
-	CCA_IDLE_EN,                 /* CCA Idle detection */
-	CCA_RETRY,                   /* CCA with BACKOFF */
-	CCA_STOP                     /* CCA stop */
-} CCA_REQ;
-
-
 typedef enum{
     PHY_ST_FORCE_TRXOFF=0x03,
     PHY_ST_RXON=0x06,
@@ -535,7 +526,7 @@ static void phy_backoffTimer(void){
 }
 
 
-static void phy_cca_ctrl(CCA_REQ state) {
+static void phy_cca_ctrl(CCA_STATE state) {
 
     uint8_t reg_cca_cntl;
     uint8_t reg_idl_wait;
@@ -543,7 +534,7 @@ static void phy_cca_ctrl(CCA_REQ state) {
 
     phy_set_trx_state(PHY_ST_TRXOFF);
 
-    if (state == CCA_STOP){
+    if (state == CCA_CANCEL || state == CCA_STOP){
         reg_data = 0x64;
         reg_wr(REG_ADR_DEMSET3, &reg_data, 1);
         reg_data = 0x27;
@@ -1310,39 +1301,40 @@ void phy_stm_fifodone(void)
 }
 
 
-int phy_stm_ccadone(uint8_t be,uint8_t count, uint8_t retry)
+CCA_STATE phy_stm_ccadone(uint8_t be,uint8_t count, uint8_t retry)
 {
-    int status = 0;
+    int state;
     uint8_t reg_data;
 
     phy_cca_be = be;
 
-    phy_intclr(HW_EVENT_CCA_DONE | HW_EVENT_RF_STATUS);
 	reg_rd(REG_ADR_CCA_CNTRL, &reg_data, 1);
+    phy_intclr(HW_EVENT_CCA_DONE | HW_EVENT_RF_STATUS);
 
     if(reg_data&0x03){
         if(!count){
-           phy_cca_ctrl(CCA_IDLE_EN);
+           state = CCA_IDLE_EN;
+           phy_cca_ctrl(state);
            phy_inten(HW_EVENT_CCA_DONE);
-           status = 1;
         }else
         if(count < retry){
-           phy_cca_ctrl(CCA_RETRY); 
+           state = CCA_RETRY;
+           phy_cca_ctrl(state); 
            phy_inten(HW_EVENT_CCA_DONE);
-           status = 2;
         }else{
-           phy_cca_ctrl(CCA_STOP);
-           status = -1;
+           state = CCA_CANCEL;
+           phy_cca_ctrl(state);
         }
     }else{
-        phy_cca_ctrl(CCA_STOP);
+        state = CCA_STOP;
+        phy_cca_ctrl(state);
         phy_set_trx_state(PHY_ST_TXON);
         phy_inten(HW_EVENT_TX_DONE);
     }
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
-    return status;
+    return state;
 }
 
 
