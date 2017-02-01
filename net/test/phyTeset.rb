@@ -50,7 +50,8 @@ class TestClass < Minitest::Test
 		    @@laz.send(0xabcd,0x5f6e,"hello")
 #             sleep(1)
         end
-#		@@laz.rxEnable()
+		@@laz.rxEnable()
+        sleep(5)
 		@@laz.remove()
 	end
 end
