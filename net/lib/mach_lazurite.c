@@ -539,7 +539,7 @@ int mach_start(BUFFER *rxbuf) {
 	mach.rx.payload.size = rxbuf->size;
 	mach.rx.payload.len = 0;
 
-	status = macl_start();
+	status = macl_start(&mach.rx.raw);
 
 	return status;
 }

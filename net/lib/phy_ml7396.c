@@ -1115,6 +1115,14 @@ void phy_addr_filt(void)
 
 int phy_ed(void)
 {
+/* ED値読み出し
+ *  REG_RXCONTINUE() でFIFOに残ったCRCの破棄とED値を読みだすので読み出し処理の最後に実行する事
+ */
+//#define REG_RXDONE(_buffer)
+//        uint8_t _reg_data[4];
+//        ON_ERROR(reg_rd(REG_ADR_RD_RX_FIFO, _reg_data, RXCRC_SIZE));
+//        ON_ERROR(reg_rd(REG_ADR_RD_RX_FIFO, &(_buffer)->opt.common.ed, 1));
+//
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
@@ -1171,8 +1179,6 @@ void phy_stm_receive(void)
 #endif
 }
 
-
-uint8_t send_seq;
 
 void phy_stm_send(BUFFER buff,uint8_t seqNum)
 {
@@ -1348,7 +1354,7 @@ void phy_stm_txdone(void)
 }
 
 
-void phy_stm_rxdone(void)
+void phy_stm_ackrxdone(void)
 {
     phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
 #ifndef LAZURITE_IDE
@@ -1357,128 +1363,22 @@ void phy_stm_rxdone(void)
 }
 
 
-void phy_stm_stop(void)
+void phy_stm_rxdone(BUFFER *buff)
 {
-//    phy_intclr(HW_EVENT_TX_DONE | HW_EVENT_TX_FIFO_DONE | HW_EVENT_RF_STATUS);
-      phy_intclr(~HW_EVENT_ALL_MASK);
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-}
+   uint16_t data_size;
+   uint8_t reg_data[2];
 
-#if 0
-/* コールバック関数呼び出し
- */
-#define BUFFER_DONE(_buffer) \
-    do { \
-        if ((_buffer)->opt.common.done != NULL) \
-            (_buffer)->opt.common.done(_buffer); \
-    } while (0)
+    phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
 
-
-/** よく使うレジスタ操作
- *
- * 受信手順: (FIFOデータの最後にED値が付く設定である事)
- *   REG_RXON();
- *   連続受信時の繰り返し範囲 {
- *     FIFO_FULL 割り込み待ち
- *     REG_RXSTART(&buffer);
- *     REG_RXCONTINUE(&buffer);
- *     何度か繰り返し {
- *       FIFO_FULL 割り込み待ち
- *       REG_RXCONTINUE(&buffer);
- *     }
- *     受信完了割り込み待ち
- *     REG_RXCONTINUE(&buffer);
- *     REG_RXDONE(&buffer);
- *   (この時点で受信したデータは揃っている)
- *     CRCエラー割り込みあり {
- *       CRCエラー処理
- *     } else {
- *       ACKを返す場合 {
- *         ACKデータに対して「送信手順」を実行
- *       }
- *       正常終了処理
- *     }
- *   }
- *   REG_TRXOFF();
- *
- * 送信手順: (自動送信OFF(送信完了で自動的にTRX_OFFになる)が有効である事)
- *   REG_TRXOFF();
- *   連続送信時の繰り返し範囲 {
- *     REG_CCAEN(_type);
- *     REG_RXON();
- *     CCA検出完了割り込み待ち
- *     REG_TRXOFF();
- *     キャリアなし {
- *       REG_TXSTART(&buffer);
- *       REG_TXCONTINUE(&buffer);
- *       何度か繰り返し {
- *         FIFO_EMPTY 割り込み待ち
- *         REG_TXCONTINUE(&buffer);
- *       }
- *       送信完了割り込み待ち
- *   (この時点で送信は完了している)
- *       ACKを待つ場合 {
- *         ACKデータに対して「受信手順」を実行
- *       }
- *       正常終了処理
- *     } else {
- *       キャリアありエラー処理
- *     }
- *   }
- */
-
-/* レジスタ1バイト書き込み
- */
-#define REG_WRB(_addr, _data) \
-    do { \
-        uint8_t _reg_data[1]; \
-        _reg_data[0] = (_data); \
-        ON_ERROR(reg_wr(_addr, _reg_data, 1)); \
-    } while (0)
-
-/* レジスタ1バイト読み出し
- */
-#define REG_RDB(_addr, _data) \
-    do { \
-        uint8_t _reg_data[1]; \
-        ON_ERROR(reg_rd(_addr, _reg_data, 1));  \
-        (_data) = _reg_data[0]; \
-    } while (0)
-
-
-
-
-/* 受信バッファ読み出し(先頭データ)
- */
-#define REG_RXSTART(_buffer) \
-    do { \
-        uint16_t _data_size; \
-        uint8_t _reg_data[2]; \
-        ASSERT((_buffer)->status == ML7396_BUFFER_INIT); \
-        ON_ERROR(reg_rd(REG_ADR_RD_RX_FIFO, _reg_data, 2)); \
-        _data_size = n2u16(_reg_data) & 0x07ff; \
-        if (_data_size < RXCRC_SIZE) { \
-            (_buffer)->size = 0; \
-            (_buffer)->status = ML7396_BUFFER_ESIZE; \
-        } \
-        else { \
-            _data_size -= RXCRC_SIZE; \
-            (_buffer)->size = _data_size; \
-            if (_data_size > (_buffer)->capacity)  \
-                (_buffer)->status = ML7396_BUFFER_ESIZE; \
-            else \
-                (_buffer)->status = 0; \
-        } \
-    } while (0)
-void REG_RXSTART(ML7396_Buffer *_buffer)
-{
-        uint16_t _data_size;
-        uint8_t _reg_data[2];
-        ASSERT((_buffer)->status == ML7396_BUFFER_INIT);
-        reg_rd(REG_ADR_RD_RX_FIFO, _reg_data, 2);
-        _data_size = n2u16(_reg_data) & 0x07ff; 
+    reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
+    if (reg_data[0]&0x30){
+    }else{
+        reg_rd(REG_ADR_RD_RX_FIFO, reg_data, 2);
+        data_size = (((unsigned int)reg_data[0] << 8) | reg_data[1]) & 0x07ff; 
+        buff->len = data_size + 1; // add ED vale
+        reg_rd(REG_ADR_RD_RX_FIFO, buff->data, buff->len);
+    }
+/*
         if (_data_size < RXCRC_SIZE) {
             (_buffer)->size = 0;
             (_buffer)->status = ML7396_BUFFER_ESIZE;
@@ -1491,12 +1391,7 @@ void REG_RXSTART(ML7396_Buffer *_buffer)
             else
                 (_buffer)->status = 0;
         }
-}
 
-/* 受信バッファ読み出し(継続データ)
- *  CRCとED値は読み出さずに残す
- */
-#define REG_RXCONTINUE(_buffer) \
     do { \
         uint8_t _size; \
         uint16_t _data_size; \
@@ -1512,15 +1407,18 @@ void REG_RXSTART(ML7396_Buffer *_buffer)
             (_buffer)->status += _size; \
         } \
     } while (0)
-
-/* ED値読み出し
- *  REG_RXCONTINUE() でFIFOに残ったCRCの破棄とED値を読みだすので読み出し処理の最後に実行する事
- */
-#define REG_RXDONE(_buffer) \
-    do { \
-        uint8_t _reg_data[4]; \
-        ON_ERROR(reg_rd(REG_ADR_RD_RX_FIFO, _reg_data, RXCRC_SIZE)); \
-        ON_ERROR(reg_rd(REG_ADR_RD_RX_FIFO, &(_buffer)->opt.common.ed, 1)); \
-    } while (0)
-
+*/
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%d,%d\n",__FILE__,__func__,(unsigned long)buff->data,buff->len,data_size);
 #endif
+}
+
+
+void phy_stm_stop(void)
+{
+//    phy_intclr(HW_EVENT_TX_DONE | HW_EVENT_TX_FIFO_DONE | HW_EVENT_RF_STATUS);
+      phy_intclr(~HW_EVENT_ALL_MASK);
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+}
