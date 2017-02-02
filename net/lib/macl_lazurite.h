@@ -38,7 +38,7 @@ typedef struct {
 	uint16_t ack_timeout;
 //	uint16_t ccaInterval;
 	PHY_PARAM *phy;
-    BUFFER txBuff;
+    BUFFER *txBuff;
     BUFFER *rxBuff;
 } MACL_PARAM;
 
@@ -109,7 +109,7 @@ struct ieee802154_hw_addr_filt {
 extern MACL_PARAM* macl_init(void);									// 
 extern int	macl_start(BUFFER *buff);											// rxon
 extern int	macl_stop(void);												// rxoff
-extern int	macl_xmit_sync(BUFFER buff);									// tx
+extern int	macl_xmit_sync(BUFFER *buff);									// tx
 //extern int	macl_xmit_async(BUFFER buff);								// for linux. does not support
 extern int	macl_ed(uint8_t *level);
 extern int	macl_set_channel(uint8_t page,uint8_t ch);

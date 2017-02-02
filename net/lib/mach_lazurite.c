@@ -766,7 +766,7 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
   //printk(KERN_INFO"PAYLOAD\n");
   //PAYLOADDUMP(mach.tx.payload.data,mach.tx.payload.len);
 //	status = macl_xmit_sync(mach.tx.raw);
-	macl_xmit_sync(mach.tx.raw);
+	macl_xmit_sync(&mach.tx.raw);
 	if(status == STATUS_OK) {
 		status = mach.tx.rssi;
 	}

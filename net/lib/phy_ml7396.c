@@ -1180,12 +1180,12 @@ void phy_stm_receive(void)
 }
 
 
-void phy_stm_send(BUFFER buff,uint8_t seqNum)
+void phy_stm_send(BUFFER *buff,uint8_t seqNum)
 {
     uint8_t reg_data[2];
-    uint16_t length = buff.len;
+    uint16_t length = buff->len;
 #if 0
-    uint8_t *payload = buff.data;
+    uint8_t *payload = buff->data;
 #else
     uint8_t payload[] = "         LAPIS Lazurite RF system\r\n";
     uint8_t i=0;
@@ -1216,7 +1216,7 @@ void phy_stm_send(BUFFER buff,uint8_t seqNum)
 
     phy_inten(HW_EVENT_TX_FIFO_DONE);
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s,%s,%d\n",__FILE__,__func__,payload,length);
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s,%lx,%d\n",__FILE__,__func__,(unsigned long)payload,length);
 #endif
 
 #if 0

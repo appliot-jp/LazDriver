@@ -143,7 +143,8 @@ static void macl_ackrcv_handler(void) {
 
 static void macl_ack_timeout_handler(void) {
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,macl.txRetry);
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%lx,%d\n",
+               __FILE__,__func__,(unsigned long)macl.txBuff,macl.txRetry);
 #endif
 	phy_sint_di();
     phy_timer_stop();
@@ -282,6 +283,7 @@ int	macl_start(BUFFER *buff)
 	return status;
 }
 
+
 int	macl_stop(void)
 {
 	int status=STATUS_OK;
@@ -291,7 +293,9 @@ int	macl_stop(void)
     phy_trxoff();
 	return status;
 }
-int	macl_xmit_sync(BUFFER buff)
+
+
+int	macl_xmit_sync(BUFFER *buff)
 {
 	int status=STATUS_OK;
 	BUFFER ack;
@@ -324,7 +328,7 @@ int	macl_xmit_sync(BUFFER buff)
     phy_wait_phy_event();
     phy_wait_mac_event();
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%lx\n",__FILE__,__func__,(unsigned long)macl.txBuff);
 #endif
     return status;
 }
