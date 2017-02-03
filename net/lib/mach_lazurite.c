@@ -539,7 +539,10 @@ int mach_start(BUFFER *rxbuf) {
 	mach.rx.payload.size = rxbuf->size;
 	mach.rx.payload.len = 0;
 
-	status = macl_start(&mach.rx.raw);
+	printk(KERN_INFO"%s,%s,%d,%lx,%d\n",__FILE__,__func__,__LINE__,(unsigned long)mach.rx.raw.data,mach.rx.raw.len);
+    PAYLOADDUMP(mach.rx.raw.data, mach.rx.raw.len);
+
+	status = macl_start(mach.rx.raw);
 
 	return status;
 }
@@ -766,7 +769,7 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
   //printk(KERN_INFO"PAYLOAD\n");
   //PAYLOADDUMP(mach.tx.payload.data,mach.tx.payload.len);
 //	status = macl_xmit_sync(mach.tx.raw);
-	macl_xmit_sync(&mach.tx.raw);
+	macl_xmit_sync(mach.tx.raw);
 	if(status == STATUS_OK) {
 		status = mach.tx.rssi;
 	}

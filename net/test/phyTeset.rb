@@ -46,14 +46,23 @@ class TestClass < Minitest::Test
 #		@@laz.init(module_test = 0x0000)
 #		@@laz.init(module_test = 0xFF00)
 		@@laz.begin(36,0xabcd,100,20)
-        for num in 1..5 do
+        for num in 1..3 do
 #		    @@laz.send(0xabcd,0x5f6e,"hello")
 		    @@laz.send(0xabcd,0x5f6e,"LAPIS Lazurite RF system")
 #             sleep(1)
         end
         sleep(1)
 		@@laz.rxEnable()
-        sleep(5)
+#		p @@laz.available()
+#		rcv = @@laz.read()
+#		p rcv
+#		p @@laz.available()
+#		rcv = @@laz.read()
+#		p rcv
+#		p @@laz.available()
+#		rcv = @@laz.read()
+#		p rcv
+        sleep(3)
 		@@laz.remove()
 	end
 end

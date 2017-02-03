@@ -114,6 +114,8 @@ static struct {
     uint8_t bank;           // back number
     uint8_t rdata[256];     // input buffer 
     uint8_t wdata[256];     // outpu buffer
+    uint8_t rxdata[256];     // input buffer 
+    uint8_t txdata[256];     // outpu buffer
 }reg = {
     0,    /* lock */
     0xff  /* bank */
@@ -1061,12 +1063,14 @@ PHY_PARAM *phy_init(void)
 
 	memset(reg.rdata,0,sizeof(reg.rdata));
 	memset(reg.wdata,0,sizeof(reg.wdata));
+	memset(reg.rxdata,0,sizeof(reg.rxdata));
+	memset(reg.txdata,0,sizeof(reg.txdata));
 	phy.in.size = BUFFER_SIZE;
-	phy.in.data = reg.rdata;
+	phy.in.data = reg.rxdata;
 	phy.in.len = 0;
 	phy.out.size = BUFFER_SIZE;
 	phy.out.len = 0;
-	phy.out.data = reg.wdata;
+	phy.out.data = reg.txdata;
 
     reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
 
@@ -1180,16 +1184,16 @@ void phy_stm_receive(void)
 }
 
 
-void phy_stm_send(BUFFER *buff,uint8_t seqNum)
+//void phy_stm_send(BUFFER buff,uint8_t seqNum)
+void phy_stm_send(BUFFER buff)
 {
     uint8_t reg_data[2];
-    uint16_t length = buff->len;
-#if 0
-    uint8_t *payload = buff->data;
+    uint16_t length = buff.len;
+#if 1
+     uint8_t *payload = buff.data;
 #else
     uint8_t payload[] = "         LAPIS Lazurite RF system\r\n";
     uint8_t i=0;
-
     payload[i] = 0x21;
     payload[++i] = 0xA8;
     payload[++i] = seqNum;
@@ -1216,46 +1220,12 @@ void phy_stm_send(BUFFER *buff,uint8_t seqNum)
 
     phy_inten(HW_EVENT_TX_FIFO_DONE);
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s,%lx,%d\n",__FILE__,__func__,(unsigned long)payload,length);
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s,%lx,%d\n",__FILE__,__func__,
+                (unsigned long)payload,length);
+    PAYLOADDUMP(payload,length);
 #endif
 
 #if 0
-/* 送信バッファ書き込み(先頭データ)
- */
-// 2015.05.07 Eiichi Saito : Change PHR CRC length field 0x0800 -> 0x1800
-#define REG_TXSTART(_buffer) \
-    do { \
-        uint16_t _data_size; \
-        uint8_t _reg_data[2]; \
-        ASSERT((_buffer)->status == ML7396_BUFFER_INIT); \
-        _data_size = (_buffer)->size; \
-        if (_data_size > (_buffer)->capacity) \
-            (_buffer)->status = ML7396_BUFFER_ESIZE; \
-        else { \
-            _data_size += TXCRC_SIZE; \
-            _data_size |= 0x1800; \
-            u2n16_set(_data_size, _reg_data); \
-            ON_ERROR(reg_wr(REG_ADR_WR_TX_FIFO, _reg_data, 2)); \
-            (_buffer)->status = 0; \
-        } \
-    } while (0)
-void REG_TXSTART(ML7396_Buffer* _buffer)
-{
-    uint16_t _data_size;
-    uint8_t reg_data[2]; 
-    ASSERT((_buffer)->status == ML7396_BUFFER_INIT); 
-    _data_size = (_buffer)->size; 
-    if (_data_size > (_buffer)->capacity) 
-        (_buffer)->status = ML7396_BUFFER_ESIZE; 
-    else { 
-        _data_size += TXCRC_SIZE; 
-        _data_size |= 0x1800; 
-        u2n16_set(_data_size, reg_data); 
-        reg_wr(REG_ADR_WR_TX_FIFO, reg_data, 2); 
-        (_buffer)->status = 0; 
-    }
-}
-
 /* 送信バッファ書き込み開始(継続データ)
  * delay 300usecやTX_ONへの遷移中のFIFOアクセス（PLLアンロック）を防止するため。
  *  必要に応じて自動でML7396の状態を RX_ON に変更
@@ -1378,36 +1348,6 @@ void phy_stm_rxdone(BUFFER *buff)
         buff->len = data_size + 1; // add ED vale
         reg_rd(REG_ADR_RD_RX_FIFO, buff->data, buff->len);
     }
-/*
-        if (_data_size < RXCRC_SIZE) {
-            (_buffer)->size = 0;
-            (_buffer)->status = ML7396_BUFFER_ESIZE;
-        }
-        else {
-            _data_size -= RXCRC_SIZE;
-            (_buffer)->size = _data_size;
-            if (_data_size > (_buffer)->capacity) 
-                (_buffer)->status = ML7396_BUFFER_ESIZE;
-            else
-                (_buffer)->status = 0;
-        }
-
-    do { \
-        uint8_t _size; \
-        uint16_t _data_size; \
-        ASSERT((_buffer)->status >= 0); \
-        _size = 256-FIFO_MARGIN; \
-        _data_size = (_buffer)->size - (_buffer)->status; \
-        if (_data_size <= _size) \
-            _size = _data_size; \
-        else \
-            --_size; \
-        if (_size > 0) { \
-            ON_ERROR(reg_rd(REG_ADR_RD_RX_FIFO, (_buffer)->data + (_buffer)->status, _size)); \
-            (_buffer)->status += _size; \
-        } \
-    } while (0)
-*/
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%d,%d\n",__FILE__,__func__,(unsigned long)buff->data,buff->len,data_size);
 #endif
@@ -1416,7 +1356,6 @@ void phy_stm_rxdone(BUFFER *buff)
 
 void phy_stm_stop(void)
 {
-//    phy_intclr(HW_EVENT_TX_DONE | HW_EVENT_TX_FIFO_DONE | HW_EVENT_RF_STATUS);
       phy_intclr(~HW_EVENT_ALL_MASK);
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
