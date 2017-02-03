@@ -112,10 +112,10 @@ static const uint32_t event_enable[] = {
 static struct {
     volatile uint8_t lock;  // exclusion lock counter  
     uint8_t bank;           // back number
-    uint8_t rdata[256];     // input buffer 
-    uint8_t wdata[256];     // outpu buffer
-    uint8_t rxdata[256];     // input buffer 
-    uint8_t txdata[256];     // outpu buffer
+    uint8_t rdata[8];     // input buffer 
+    uint8_t wdata[8];     // outpu buffer
+    uint8_t rfifo[260];     // input buffer 
+    uint8_t wfifo[260];     // outpu buffer
 }reg = {
     0,    /* lock */
     0xff  /* bank */
@@ -397,6 +397,27 @@ static void reg_wr(uint8_t bank, uint8_t addr, const uint8_t *data, uint8_t size
 //	__EI();
 }
 
+
+static void fifo_wr(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size)
+{
+//	__DI();
+    uint8_t *p_header;
+
+    p_header = data - 1;
+    if (reg.lock++) {
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"REG LOCK ERR%s,%s,%d\n",__FILE__,__func__,reg.lock);
+#endif
+    }else{
+        regbank(bank);
+        *p_header = (addr << 1) | 0x01;
+        ml7396_hwif_spi_transfer(p_header, reg.rdata, size + 1);
+    }
+    --reg.lock;
+//	__EI();
+}
+
+
 /******************************************************************************/
 /*! @brief read register
  * bank: bank number
@@ -417,6 +438,26 @@ static void reg_rd(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size)
         memset(reg.rdata + 1, 0xff, size);
         ml7396_hwif_spi_transfer(reg.rdata, reg.rdata, size + 1);
         memcpy(data, reg.rdata, size);
+    }
+    --reg.lock;
+//	__EI();
+}
+
+
+static void fifo_rd(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size)
+{
+//	__DI();
+    uint8_t *p_header;
+
+    p_header = data - 1;
+    if (reg.lock++) {
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"REG LOCK ERR%s,%s,%d\n",__FILE__,__func__,reg.lock);
+#endif
+    }else{
+        regbank(bank);
+        *p_header = (addr << 1) | 0x00;
+        ml7396_hwif_spi_transfer(p_header, p_header, size + 1);
     }
     --reg.lock;
 //	__EI();
@@ -1063,17 +1104,20 @@ PHY_PARAM *phy_init(void)
 
 	memset(reg.rdata,0,sizeof(reg.rdata));
 	memset(reg.wdata,0,sizeof(reg.wdata));
-	memset(reg.rxdata,0,sizeof(reg.rxdata));
-	memset(reg.txdata,0,sizeof(reg.txdata));
+	memset(reg.rfifo,0,sizeof(reg.rfifo));
+	memset(reg.wfifo,0,sizeof(reg.wfifo));
 	phy.in.size = BUFFER_SIZE;
-	phy.in.data = reg.rxdata;
+	phy.in.data = reg.rfifo+1;
 	phy.in.len = 0;
 	phy.out.size = BUFFER_SIZE;
 	phy.out.len = 0;
-	phy.out.data = reg.txdata;
+	phy.out.data = reg.wfifo+1;
 
     reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
 
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%lx\n",__FILE__,__func__,(unsigned long)reg.rfifo,(unsigned long)reg.rfifo+1);
+#endif
 	return &phy;
 }
 
@@ -1212,7 +1256,7 @@ void phy_stm_send(BUFFER buff)
     reg_wr(REG_ADR_WR_TX_FIFO, reg_data, 2); 
 
     // make payload
-    reg_wr(REG_ADR_WR_TX_FIFO, payload, length);
+    fifo_wr(REG_ADR_WR_TX_FIFO, payload, length);
     HAL_delayMicroseconds(300);
 
     reg_data[0] = PHY_REG_SET_TX_DONE_RX;
@@ -1346,7 +1390,7 @@ void phy_stm_rxdone(BUFFER *buff)
         reg_rd(REG_ADR_RD_RX_FIFO, reg_data, 2);
         data_size = (((unsigned int)reg_data[0] << 8) | reg_data[1]) & 0x07ff; 
         buff->len = data_size + 1; // add ED vale
-        reg_rd(REG_ADR_RD_RX_FIFO, buff->data, buff->len);
+        fifo_rd(REG_ADR_RD_RX_FIFO, buff->data, buff->len);
     }
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%d,%d\n",__FILE__,__func__,(unsigned long)buff->data,buff->len,data_size);
