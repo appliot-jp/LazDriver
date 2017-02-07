@@ -1116,7 +1116,8 @@ PHY_PARAM *phy_init(void)
     reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
 
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%lx\n",__FILE__,__func__,(unsigned long)reg.rfifo,(unsigned long)reg.rfifo+1);
+	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,rfifo:%lx,wfifo:%lx\n",__FILE__,__func__,
+                            (unsigned long)reg.rfifo+1,(unsigned long)reg.wfifo+1);
 #endif
 	return &phy;
 }
@@ -1223,7 +1224,7 @@ void phy_stm_receive(void)
 {
     phy_inten(HW_EVENT_RX_DONE);
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%lx\n",__FILE__,__func__,(unsigned long)reg.rfifo,(unsigned long)reg.rfifo+1);
 #endif
 }
 

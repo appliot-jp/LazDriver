@@ -46,12 +46,12 @@ static void macl_ack_timeout_handler(void);
 static void macl_rcv_handler(void) {
 
 	phy_timer_di();
-    phy_stm_rxdone(&macl.rxBuff);
+    phy_stm_rxdone(&macl.phy->in);
 
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG)printk(KERN_INFO"%s,%s,%lx,%d\n"
-                                ,__FILE__,__func__,(unsigned long)macl.rxBuff.data,macl.rxBuff.len);
-    PAYLOADDUMP(macl.rxBuff.data,macl.rxBuff.len);
+	if(module_test & MODE_MACL_DEBUG)printk(KERN_INFO"%s,%s,%lx,%d\n",
+                                __FILE__,__func__,(unsigned long)macl.phy->in.data,macl.phy->in.len);
+    PAYLOADDUMP(macl.phy->in.data,macl.phy->in.len);
 #endif
     phy_stm_receive();
     phy_wait_phy_event();
@@ -143,7 +143,7 @@ static void macl_ackrcv_handler(void) {
 static void macl_ack_timeout_handler(void) {
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%lx,%d\n",
-               __FILE__,__func__,(unsigned long)macl.txBuff.data,macl.txRetry);
+               __FILE__,__func__,(unsigned long)macl.phy->out.data,macl.txRetry);
 #endif
 	phy_sint_di();
     phy_timer_stop();
@@ -152,8 +152,7 @@ static void macl_ack_timeout_handler(void) {
         phy_force_trxoff();
         macl.resendingNum++;
 	    phy_sint_handler(macl_fifodone_handler);
-//      phy_stm_send(macl.txBuff,macl.sequnceNum);
-        phy_stm_send(macl.txBuff);
+        phy_stm_send(macl.phy->out);
         phy_wait_phy_event();
     }else{
         phy_rst();
@@ -170,14 +169,14 @@ static void macl_ack_timeout_handler(void) {
  */
 MACL_PARAM* macl_init(void)
 {
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
 	phy_sint_di(); phy_timer_di();
 
 	memset(&macl,0,sizeof(MACL_PARAM));
 	macl.phy = phy_init();
-//  macl.sequnceNum=0;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,in.data:%lx,out.data:%lx\n",
+                __FILE__,__func__,(unsigned long)macl.phy->in.data,(unsigned long)macl.phy->out.data);
+#endif
 	phy_sint_ei(); phy_timer_ei();
 	return &macl;
 }
@@ -189,7 +188,7 @@ MACL_PARAM* macl_init(void)
   @return     0=STATUS_OK, other = error
   @exception  return NULL
  ********************************************************************/
-int	macl_start(BUFFER buff)
+int	macl_start(void)
 {
 	int status=STATUS_OK;
 	BUFFER ack;
@@ -276,7 +275,6 @@ int	macl_start(BUFFER buff)
 #endif
 
     phy_sint_handler(macl_rcv_handler);
-    macl.rxBuff = buff;
     phy_stm_receive();
     phy_wait_phy_event();
 
@@ -319,18 +317,16 @@ int	macl_xmit_sync(BUFFER buff)
 		printk(KERN_INFO"not ACK Received!!%s,%s\n",__FILE__,__func__);
 	}
 
-    macl.txBuff = buff;
+    macl.phy->out = buff;
     macl.resendingNum = 0;
     macl.ccaCount=0;
-//    macl.sequnceNum++;
 	phy_sint_handler(macl_fifodone_handler);
-//  phy_stm_send(macl.txBuff,macl.sequnceNum);
-    phy_stm_send(macl.txBuff);
+    phy_stm_send(macl.phy->out);
     phy_wait_phy_event();
     phy_wait_mac_event();
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%lx\n",__FILE__,__func__,(unsigned long)macl.txBuff.data);
-    PAYLOADDUMP(macl.txBuff.data,macl.txBuff.len);
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%lx\n",__FILE__,__func__,(unsigned long)macl.phy->out.data);
+    PAYLOADDUMP(macl.phy->out.data,macl.phy->out.len);
 #endif
     return status;
 }
