@@ -461,7 +461,8 @@ bool mach_make_ack_header(void) {
 	// genenrate ack data
 	mach.ack.fc.fc16 = 0;
 	mach.ack.fc.fc_bit.frame_type = IEEE802154_FC_TYPE_ACK;
-	mach.ack.fc.fc_bit.panid_comp = 1;
+//	mach.ack.fc.fc_bit.panid_comp = 1;
+	mach.ack.fc.fc_bit.panid_comp = 0;
 	mach.ack.fc.fc_bit.seq_comp = mach.rx.fc.fc_bit.seq_comp;
 	mach.ack.fc.fc_bit.frame_ver = mach.rx.fc.fc_bit.frame_ver;
 	ack_condition = true;

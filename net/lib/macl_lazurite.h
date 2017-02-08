@@ -36,6 +36,7 @@ typedef struct {
 	bool promiscuous;
 	uint16_t ack_timeout;
 	PHY_PARAM *phy;
+	BUFFER ack;
 } MACL_PARAM;
 
 /**

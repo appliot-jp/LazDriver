@@ -349,29 +349,8 @@ static void regbank(uint8_t bank) {
         reg.bank = bank;
         break;
     }
-    
-
-
-
-/*
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-
-
-    if (bank == 0xff){
-        reg.lock = 0;
-        reg.bank = bank;
-    }else if(bank&0x0b){
-        if (bank != reg.bank) {
-            reg.wdata[0] = (0x00<<1)|0x01, reg.wdata[1] = bank&0x03;
-            if(bank > 2) reg.wdata[1] = reg.wdata[1] | 0x80;
-            ml7396_hwif_spi_transfer(reg.wdata, reg.rdata, 2);
-            reg.bank = bank;
-        }
-    }
-*/
 }
+
 
 /******************************************************************************/
 /*! @brief write register
@@ -457,7 +436,7 @@ static void fifo_rd(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size)
     }else{
         regbank(bank);
         *p_header = (addr << 1) | 0x00;
-        ml7396_hwif_spi_transfer(p_header, p_header, size + 1);
+        ml7396_hwif_spi_transfer(p_header, data, size + 1);
     }
     --reg.lock;
 //	__EI();
@@ -1215,41 +1194,70 @@ void phy_stm_promiscuous(void)
     phy_set_trx_state(PHY_ST_RXON);
     phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 }
 
 
-void phy_stm_receive(void)
+void phy_stm_rxStart(void)
 {
-    phy_inten(HW_EVENT_RX_DONE);
+    phy_set_trx_state(PHY_ST_RXON);
+    phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%lx\n",__FILE__,__func__,(unsigned long)reg.rfifo,(unsigned long)reg.rfifo+1);
+	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 }
 
 
-//void phy_stm_send(BUFFER buff,uint8_t seqNum)
+void phy_stm_ackSend(BUFFER buff)
+{
+    uint8_t reg_data[2];
+    uint16_t length = buff.len;
+    uint8_t *payload = buff.data;
+
+    // ssdebug
+    HAL_delayMicroseconds(1000);
+    HAL_delayMicroseconds(1000);
+
+    reg_data[0] = PHY_REG_SET_TX_DONE_RX;
+    reg_wr(REG_ADR_ACK_TIMER_EN, reg_data, 1);
+    reg_rd(REG_ADR_PACKET_MODE_SET, reg_data, 1);
+    reg_data[0] = reg_data[0] | 0x04;    // auto tx on
+    reg_wr(REG_ADR_PACKET_MODE_SET, reg_data, 1);
+    phy_inten(HW_EVENT_TX_DONE);
+
+    // make fcf
+    reg_data[0] = 0x18;             // PHR
+    reg_data[1] = 2 + length;       // length : crc size + payload length
+    reg_wr(REG_ADR_WR_TX_FIFO, reg_data, 2); 
+    // make payload
+    fifo_wr(REG_ADR_WR_TX_FIFO, payload, length);
+
+#ifndef LAZURITE_IDE
+    if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s,%lx,%d\n",__FILE__,__func__,(unsigned long)payload,length);
+    PAYLOADDUMP(payload,length);
+#endif
+}
+
+/******************************************************************************/
+/*! @brief Writing in data to FIFO
+ ******************************************************************************/
+/* 送信バッファ書き込み開始(継続データ)
+ * delay 300usecやTX_ONへの遷移中のFIFOアクセス（PLLアンロック）を防止するため。
+ *  必要に応じて自動でML7396の状態を RX_ON に変更
+ *  FIFO_MARGINが32なので_size変数は224、_data_sizeはパケットレングスになる。
+ *  パケットレングスが224以下であれば224以下の値に、244以上であれば224の値を
+ *  FIFOライトする値にする。
+ */
 void phy_stm_send(BUFFER buff)
 {
     uint8_t reg_data[2];
     uint16_t length = buff.len;
-#if 1
-     uint8_t *payload = buff.data;
-#else
-    uint8_t payload[] = "         LAPIS Lazurite RF system\r\n";
-    uint8_t i=0;
-    payload[i] = 0x21;
-    payload[++i] = 0xA8;
-    payload[++i] = seqNum;
-    payload[++i] = 0xcd;
-    payload[++i] = 0xab;
-    payload[++i] = 0x6e;
-    payload[++i] = 0x5f;
-    payload[++i] = 0x54;
-    payload[++i] = 0xac;
-    length = sizeof(payload);
-#endif
+    uint8_t *payload = buff.data;
+
+    reg_rd(REG_ADR_PACKET_MODE_SET, reg_data, 1);
+    reg_data[0] &= ~0x04;    // auto tx off
+    reg_wr(REG_ADR_PACKET_MODE_SET, reg_data, 1);
 
     // make fcf
     reg_data[0] = 0x18;             // PHR
@@ -1258,56 +1266,14 @@ void phy_stm_send(BUFFER buff)
 
     // make payload
     fifo_wr(REG_ADR_WR_TX_FIFO, payload, length);
-    HAL_delayMicroseconds(300);
 
     reg_data[0] = PHY_REG_SET_TX_DONE_RX;
-	reg_wr(REG_ADR_ACK_TIMER_EN, reg_data, 1);
+    reg_wr(REG_ADR_ACK_TIMER_EN, reg_data, 1);
 
     phy_inten(HW_EVENT_TX_FIFO_DONE);
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s,%lx,%d\n",__FILE__,__func__,
-                (unsigned long)payload,length);
+    if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%d\n",__FILE__,__func__,(unsigned long)payload,length);
     PAYLOADDUMP(payload,length);
-#endif
-
-#if 0
-/* 送信バッファ書き込み開始(継続データ)
- * delay 300usecやTX_ONへの遷移中のFIFOアクセス（PLLアンロック）を防止するため。
- *  必要に応じて自動でML7396の状態を RX_ON に変更
- *  FIFO_MARGINが32なので_size変数は224、_data_sizeはパケットレングスになる。
- *  パケットレングスが224以下であれば224以下の値に、244以上であれば224の値を
- *  FIFOライトする値にする。
- */
-// 2015.06.08 Eiichi Saito : addition delay
-/*
-#define REG_TXCONTINUE(_buffer) \
-    do { \
-        uint8_t _size; \
-        uint16_t _data_size; \
-        ASSERT((_buffer)->status >= 0); \
-        _size = 256-FIFO_MARGIN; \
-        _data_size = (_buffer)->size - (_buffer)->status; \
-        if (_data_size <= _size) \
-            _size = _data_size; \
-        if (_size > 0) { \
-            ON_ERROR(reg_wr(REG_ADR_WR_TX_FIFO, (_buffer)->data + (_buffer)->status, _size)); \
-            (_buffer)->status += _size; \
-            HAL_delayMicroseconds(300); \
-        } \
-    } while (0)
-*/
-// 2016.4.21 Eiichi Saito: FAST_TX disable
-#define REG_TXCONTINUE(_buffer) \
-    do { \
-        uint8_t _size; \
-        ASSERT((_buffer)->status >= 0); \
-        _size = (_buffer)->size - (_buffer)->status; \
-        if (_size > 0) { \
-            ON_ERROR(reg_wr(REG_ADR_WR_TX_FIFO, (_buffer)->data + (_buffer)->status, _size)); \
-            (_buffer)->status += _size; \
-            HAL_delayMicroseconds(300); \
-        } \
-    } while (0)
 #endif
 }
 
@@ -1369,7 +1335,7 @@ void phy_stm_txdone(void)
 }
 
 
-void phy_stm_ackrxdone(void)
+void phy_stm_ackRxdone(void)
 {
     phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
 #ifndef LAZURITE_IDE
@@ -1378,7 +1344,7 @@ void phy_stm_ackrxdone(void)
 }
 
 
-void phy_stm_rxdone(BUFFER *buff)
+void phy_stm_rxdone(BUFFER buff)
 {
    uint16_t data_size;
    uint8_t reg_data[2];
@@ -1387,14 +1353,15 @@ void phy_stm_rxdone(BUFFER *buff)
 
     reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
     if (reg_data[0]&0x30){
+        // ssdebug crc error の後処理をここへ実装する。
     }else{
         reg_rd(REG_ADR_RD_RX_FIFO, reg_data, 2);
         data_size = (((unsigned int)reg_data[0] << 8) | reg_data[1]) & 0x07ff; 
-        buff->len = data_size + 1; // add ED vale
-        fifo_rd(REG_ADR_RD_RX_FIFO, buff->data, buff->len);
+        buff.len = data_size + 1; // add ED vale
+        fifo_rd(REG_ADR_RD_RX_FIFO, buff.data, buff.len);
     }
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%d,%d\n",__FILE__,__func__,(unsigned long)buff->data,buff->len,data_size);
+	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%d,%d\n",__FILE__,__func__,(unsigned long)buff.data,buff.len,data_size);
 #endif
 }
 
