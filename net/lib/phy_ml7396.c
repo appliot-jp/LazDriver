@@ -1320,11 +1320,26 @@ void phy_stm_txdone(void)
 }
 
 
-void phy_stm_ackRxdone(void)
+void phy_stm_ackRxdone(BUFFER buff)
 {
+   uint16_t data_size;
+   uint8_t reg_data[2];
+
     phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
+
+    reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
+    if (reg_data[0]&0x30){
+        // crc error
+        phy_rst();
+    }else{
+        reg_rd(REG_ADR_RD_RX_FIFO, reg_data, 2);
+        data_size = (((unsigned int)reg_data[0] << 8) | reg_data[1]) & 0x07ff; 
+        buff.len = data_size + 1; // add ED vale
+        fifo_rd(REG_ADR_RD_RX_FIFO, buff.data, buff.len);
+    }
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%d,%d\n",
+            __FILE__,__func__,(unsigned long)buff.data,buff.len,data_size);
 #endif
 }
 
@@ -1348,7 +1363,8 @@ void phy_stm_rxdone(BUFFER buff)
         fifo_rd(REG_ADR_RD_RX_FIFO, buff.data, buff.len);
     }
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%d,%d\n",__FILE__,__func__,(unsigned long)buff.data,buff.len,data_size);
+	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%d,%d\n",
+            __FILE__,__func__,(unsigned long)buff.data,buff.len,data_size);
 #endif
 }
 

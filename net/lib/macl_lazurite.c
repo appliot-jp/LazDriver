@@ -166,13 +166,16 @@ static void macl_txdone_handler(void)
 
 static void macl_ack_rxdone_handler(void)
 {
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
 	phy_timer_di();
-    phy_timer_stop();
-    phy_wakeup_mac_event();
-    phy_stm_ackRxdone();
+    phy_stm_ackRxdone(macl.phy->in);
+    if(macl.phy->in.data[2] == macl.sequnceNum){
+        phy_timer_stop();
+        phy_wakeup_mac_event();
+    }
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d,%d\n",
+            __FILE__,__func__,macl.phy->in.data[2],macl.sequnceNum);
+#endif
 	phy_timer_ei();
 }
 
@@ -357,6 +360,7 @@ int	macl_xmit_sync(BUFFER buff)
     macl.phy->out = buff;
     macl.resendingNum = 0;
     macl.ccaCount=0;
+    macl.sequnceNum= buff.data[2];
 	phy_sint_handler(macl_fifodone_handler);
     phy_stm_send(macl.phy->out);
     phy_wait_phy_event();

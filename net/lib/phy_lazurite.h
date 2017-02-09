@@ -98,7 +98,7 @@ extern void phy_stm_fifodone(void);
 extern CCA_STATE phy_stm_ccadone(uint8_t be,uint8_t count, uint8_t retry);
 extern void phy_stm_txdone(void);
 extern void phy_stm_rxdone(BUFFER buff);
-extern void phy_stm_ackRxdone(void);
+extern void phy_stm_ackRxdone(BUFFER buff);
 extern void phy_stm_stop(void);
 
 
