@@ -508,13 +508,19 @@ static void phy_set_trx_state(PHY_TRX_STATE state) {
 }
 
 
+static void phy_rst(void)
+{
+    uint8_t reg_data;
+
+    reg_data = 0x88;
+    reg_wr(REG_ADR_RST_SET, &reg_data, 1);
+}
+
+
 static void vco_cal(void) {
 
     uint8_t reg_data[4];
 
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
     reg_rd(REG_ADR_PACKET_MODE_SET, reg_data,1);
     reg_data[0] |=  0x1a;
     reg_wr(REG_ADR_PACKET_MODE_SET, reg_data,1);
@@ -537,7 +543,6 @@ static void vco_cal(void) {
 }
 
 
-// static void backoffTimer(EM_Data *em_data){
 static void phy_backoffTimer(void){
 
 	uint16_t cca_wait;
@@ -824,12 +829,12 @@ int phy_timer_tick(uint32_t *msec)
 /******************************************************************************/
 /*! @brief Register setting of phy
  * @detail 
-       Channel setting
-       Bandwidth setting
-       Communication rate setting
-       Transmission output setting
-       Setting peculiar to other devices
-       awaiting first clock stability and the last calibration practice are unnecessary
+   Channel setting
+   Bandwidth setting
+   Communication rate setting
+   Transmission output setting
+   Setting peculiar to other devices
+   awaiting first clock stability and the last calibration practice are unnecessary
  ******************************************************************************/
 int phy_setup(uint8_t page,uint8_t ch)
 {
@@ -841,6 +846,9 @@ int phy_setup(uint8_t page,uint8_t ch)
     int status = -1;
     const REGSET *regset;
     uint8_t reg_data[4];
+
+    phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+    phy_rst();
 
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
@@ -1102,37 +1110,6 @@ PHY_PARAM *phy_init(void)
 }
 
 
-void phy_rst(void)
-{
-    uint8_t reg_data;
-
-    phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
-    reg_data = 0x88;
-    reg_wr(REG_ADR_RST_SET, &reg_data, 1);
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-}
-
-
-void phy_trxoff(void)
-{
-    phy_set_trx_state(PHY_ST_TRXOFF);
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-}
-
-
-void phy_force_trxoff(void)
-{
-    phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-}
-
-
 void phy_addr_filt(void)
 {
 #ifndef LAZURITE_IDE
@@ -1215,9 +1192,8 @@ void phy_stm_ackSend(BUFFER buff)
     uint16_t length = buff.len;
     uint8_t *payload = buff.data;
 
-    // ssdebug
-    HAL_delayMicroseconds(1000);
-    HAL_delayMicroseconds(1000);
+    //HAL_delayMicroseconds(1000);
+    //HAL_delayMicroseconds(1000);
 
     reg_data[0] = PHY_REG_SET_TX_DONE_RX;
     reg_wr(REG_ADR_ACK_TIMER_EN, reg_data, 1);
@@ -1241,14 +1217,9 @@ void phy_stm_ackSend(BUFFER buff)
 
 /******************************************************************************/
 /*! @brief Writing in data to FIFO
+ * Delay 300usec is intended to prevent FIFO access during TX_ON transition.
+ * It may become the PLL unlocking when FIFO accesses it.
  ******************************************************************************/
-/* 送信バッファ書き込み開始(継続データ)
- * delay 300usecやTX_ONへの遷移中のFIFOアクセス（PLLアンロック）を防止するため。
- *  必要に応じて自動でML7396の状態を RX_ON に変更
- *  FIFO_MARGINが32なので_size変数は224、_data_sizeはパケットレングスになる。
- *  パケットレングスが224以下であれば224以下の値に、244以上であれば224の値を
- *  FIFOライトする値にする。
- */
 void phy_stm_send(BUFFER buff)
 {
     uint8_t reg_data[2];
@@ -1351,9 +1322,12 @@ void phy_stm_rxdone(BUFFER buff)
 
     phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
 
+    phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+
     reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
     if (reg_data[0]&0x30){
-        // ssdebug crc error の後処理をここへ実装する。
+        // crc error
+        phy_rst();
     }else{
         reg_rd(REG_ADR_RD_RX_FIFO, reg_data, 2);
         data_size = (((unsigned int)reg_data[0] << 8) | reg_data[1]) & 0x07ff; 
@@ -1369,6 +1343,9 @@ void phy_stm_rxdone(BUFFER buff)
 void phy_stm_stop(void)
 {
       phy_intclr(~HW_EVENT_ALL_MASK);
+      phy_inten(HW_EVENT_ALL_MASK);
+      phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+      phy_rst();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif

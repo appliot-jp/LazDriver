@@ -77,11 +77,8 @@ extern int phy_timer_tick(uint32_t *msec);
                     Public function section
  -------------------------------------------------------------
  */
-extern int phy_setup(uint8_t page,uint8_t ch);
 extern PHY_PARAM *phy_init(void);
-extern void phy_rst(void);
-extern void phy_trxoff(void);
-extern void phy_force_trxoff(void);
+extern int phy_setup(uint8_t page,uint8_t ch);
 extern void phy_addr_filt(void);
 extern int phy_ed(void);
 extern void phy_sleep(void);

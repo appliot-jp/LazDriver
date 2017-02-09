@@ -75,7 +75,6 @@ typedef struct
 	uint8_t txRetry;
 	uint16_t txInterval;
 	uint16_t myAddress;
-	// 2015.10.26 Eiichi Saito   addition random backoff
 	uint16_t ccaWait;
 } SUBGHZ_PARAM;
 
@@ -130,7 +129,6 @@ typedef struct
 	SUBGHZ_MSG (*setSendMode)(SUBGHZ_PARAM *param);
 	SUBGHZ_MSG (*getSendMode)(SUBGHZ_PARAM *param);
 	void (*decMac)(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len);
-    // 2016.11.15 Eiichi Saito AES
     SUBGHZ_MSG (*setAes)(uint8_t *key,uint8_t *workspace);
 } SubGHz_CTRL;
 

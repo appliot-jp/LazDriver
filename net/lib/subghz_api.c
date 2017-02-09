@@ -343,7 +343,6 @@ static short subghz_readData(uint8_t *data, uint16_t max_size)
 			max_size = result;
 		}
 		/*
-		// 2016.11.15 Eiichi Saito AES
 		subghz_decMac(&mac,subghz_param.rx_buf,subghz_param.rx_stat.status);
 
 		if (mac.mac_header.alignment.sec_enb){
@@ -601,7 +600,6 @@ static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len)
 	return;
 }
 
-// 2016.11.15 Eiichi Saito AES
 static SUBGHZ_MSG subghz_setAes(uint8_t *key, uint8_t *workspace)
 {
 	AES128_setAes(key,workspace);
