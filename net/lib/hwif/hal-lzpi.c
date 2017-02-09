@@ -53,7 +53,7 @@ static bool ext_irq_enb;
 volatile int que_th2ex = 0;
 extern wait_queue_head_t tx_done;
 volatile int que_macl = 0;
-extern wait_queue_head_t mac_done;
+wait_queue_head_t mac_done;
 
 volatile int que_irq= 0;
 volatile int que_tx_led= 1;
@@ -68,8 +68,6 @@ static struct task_struct *rx_led_task;
 int i2c_addr_bits;
 bool flag_irq_enable;
 
-// ssdebug
-wait_queue_head_t mac_done;
 
 // main_thread_parameter
 static struct {
@@ -331,7 +329,6 @@ int HAL_wait_event(uint8_t event)
 	int status=0;
     if (event == HAL_PHY_EVENT) {
 	    que_th2ex = 0;
-//	    wait_event_interruptible_timeout(tx_done, que_th2ex,HZ);
 	    wait_event_interruptible_timeout(tx_done, que_th2ex,2);
     }else
     if (event == HAL_MAC_EVENT) {

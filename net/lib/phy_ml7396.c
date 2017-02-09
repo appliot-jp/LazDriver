@@ -505,13 +505,15 @@ static void phy_set_trx_state(PHY_TRX_STATE state) {
     uint8_t reg_data = state;
     reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
     HAL_delayMicroseconds(200);
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,state);
+#endif
 }
 
 
 static void phy_rst(void)
 {
     uint8_t reg_data;
-
     reg_data = 0x88;
     reg_wr(REG_ADR_RST_SET, &reg_data, 1);
 }
@@ -847,7 +849,6 @@ int phy_setup(uint8_t page,uint8_t ch)
     const REGSET *regset;
     uint8_t reg_data[4];
 
-    phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
     phy_rst();
 
 #ifndef LAZURITE_IDE
@@ -1145,18 +1146,27 @@ void phy_sleep(void)
 
 void phy_wait_phy_event(void)
 {
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
     HAL_wait_event(HAL_PHY_EVENT);
 }
 
 
 void phy_wait_mac_event(void)
 {
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
     HAL_wait_event(HAL_MAC_EVENT);
 }
 
 
 void phy_wakeup_mac_event(void)
 {
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
     HAL_wakeup_event(HAL_MAC_EVENT);
 }
 
@@ -1198,7 +1208,7 @@ void phy_stm_ackSend(BUFFER buff)
     reg_data[0] = PHY_REG_SET_TX_DONE_RX;
     reg_wr(REG_ADR_ACK_TIMER_EN, reg_data, 1);
     reg_rd(REG_ADR_PACKET_MODE_SET, reg_data, 1);
-    reg_data[0] = reg_data[0] | 0x04;    // auto tx on
+    reg_data[0] |= 0x04;    // auto tx on
     reg_wr(REG_ADR_PACKET_MODE_SET, reg_data, 1);
     phy_inten(HW_EVENT_TX_DONE);
 
@@ -1226,6 +1236,9 @@ void phy_stm_send(BUFFER buff)
     uint16_t length = buff.len;
     uint8_t *payload = buff.data;
 
+    phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+    phy_rst();
+
     reg_rd(REG_ADR_PACKET_MODE_SET, reg_data, 1);
     reg_data[0] &= ~0x04;    // auto tx off
     reg_wr(REG_ADR_PACKET_MODE_SET, reg_data, 1);
@@ -1233,7 +1246,7 @@ void phy_stm_send(BUFFER buff)
     // make fcf
     reg_data[0] = 0x18;             // PHR
     reg_data[1] = 2 + length;       // length : crc size + payload length
-    reg_wr(REG_ADR_WR_TX_FIFO, reg_data, 2); 
+    reg_wr(REG_ADR_WR_TX_FIFO, reg_data, 2);
 
     // make payload
     fifo_wr(REG_ADR_WR_TX_FIFO, payload, length);
@@ -1243,7 +1256,8 @@ void phy_stm_send(BUFFER buff)
 
     phy_inten(HW_EVENT_TX_FIFO_DONE);
 #ifndef LAZURITE_IDE
-    if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%d\n",__FILE__,__func__,(unsigned long)payload,length);
+    if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%d,SequnceNumber:%d\n",
+                    __FILE__,__func__,(unsigned long)payload,length,payload[2]);
     PAYLOADDUMP(payload,length);
 #endif
 }
@@ -1322,11 +1336,10 @@ void phy_stm_rxdone(BUFFER buff)
 
     phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
 
-    phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
-
     reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
     if (reg_data[0]&0x30){
         // crc error
+        phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
         phy_rst();
     }else{
         reg_rd(REG_ADR_RD_RX_FIFO, reg_data, 2);
@@ -1342,7 +1355,7 @@ void phy_stm_rxdone(BUFFER buff)
 
 void phy_stm_stop(void)
 {
-      phy_intclr(~HW_EVENT_ALL_MASK);
+      phy_intclr(~(HW_EVENT_ALL_MASK | HW_EVENT_FIFO_CLEAR));
       phy_inten(HW_EVENT_ALL_MASK);
       phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
       phy_rst();
