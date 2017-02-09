@@ -52,7 +52,7 @@ class TestClass < Minitest::Test
 		p @@laz.available()
 		rcv = @@laz.read()
 		p rcv
-        sleep(3)
+        sleep(10)
 		@@laz.remove()
 	end
 end

@@ -93,7 +93,7 @@ extern void phy_wakeup_mac_event(void);
 extern void phy_stm_promiscuous(void);
 extern void phy_stm_rxStart(void);
 extern void phy_stm_ackSend(BUFFER buff);
-extern void phy_stm_send(BUFFER buff);
+extern void phy_stm_txStart(BUFFER buff);
 extern void phy_stm_fifodone(void);
 extern CCA_STATE phy_stm_ccadone(uint8_t be,uint8_t count, uint8_t retry);
 extern void phy_stm_txdone(void);

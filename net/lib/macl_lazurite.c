@@ -55,6 +55,7 @@ static void macl_rxdone_handler(void)
         phy_stm_ackSend(macl.ack);
 		macl_rx_irq(NULL,NULL);
     } else {
+        phy_sint_handler(macl_rxdone_handler);
         phy_stm_rxStart();
         phy_wait_phy_event();
     }
@@ -83,7 +84,8 @@ static void macl_ack_txdone_handler(void)
 	phy_timer_di();
     macl.ack.data = NULL;
     macl.ack.len = 0;
-    phy_stm_txdone();
+    phy_sint_handler(macl_rxdone_handler);
+    phy_stm_rxStart();
     phy_wait_phy_event();
 	phy_timer_ei();
 }
@@ -192,7 +194,7 @@ static void macl_ack_timeout_handler(void)
     if(macl.resendingNum < macl.txRetry){
         macl.resendingNum++;
 	    phy_sint_handler(macl_fifodone_handler);
-        phy_stm_send(macl.phy->out);
+        phy_stm_txStart(macl.phy->out);
         phy_wait_phy_event();
     }else{
         phy_wakeup_mac_event();
@@ -362,7 +364,7 @@ int	macl_xmit_sync(BUFFER buff)
     macl.ccaCount=0;
     macl.sequnceNum= buff.data[2];
 	phy_sint_handler(macl_fifodone_handler);
-    phy_stm_send(macl.phy->out);
+    phy_stm_txStart(macl.phy->out);
     phy_wait_phy_event();
     phy_wait_mac_event();
 #ifndef LAZURITE_IDE

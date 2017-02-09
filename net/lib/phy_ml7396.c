@@ -1188,6 +1188,7 @@ void phy_stm_promiscuous(void)
 
 void phy_stm_rxStart(void)
 {
+    phy_intclr(~(HW_EVENT_ALL_MASK | HW_EVENT_FIFO_CLEAR));
     phy_set_trx_state(PHY_ST_RXON);
     phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
 #ifndef LAZURITE_IDE
@@ -1230,7 +1231,7 @@ void phy_stm_ackSend(BUFFER buff)
  * Delay 300usec is intended to prevent FIFO access during TX_ON transition.
  * It may become the PLL unlocking when FIFO accesses it.
  ******************************************************************************/
-void phy_stm_send(BUFFER buff)
+void phy_stm_txStart(BUFFER buff)
 {
     uint8_t reg_data[2];
     uint16_t length = buff.len;
