@@ -77,29 +77,27 @@ extern int phy_timer_tick(uint32_t *msec);
                     Public function section
  -------------------------------------------------------------
  */
-extern PHY_PARAM *phy_init(void);
-extern int phy_setup(uint8_t page,uint8_t ch);
-extern void phy_addr_filt(void);
-extern int phy_ed(void);
-extern void phy_sleep(void);
 extern void phy_wait_phy_event(void);
 extern void phy_wait_mac_event(void);
 extern void phy_wakeup_mac_event(void);
-/*
- ------------------------------------------------------------------
-                      Public state machine section
- ------------------------------------------------------------------
- */
-extern void phy_stm_promiscuous(void);
-extern void phy_stm_rxStart(void);
-extern void phy_stm_ackSend(BUFFER buff);
-extern void phy_stm_txStart(BUFFER buff);
-extern void phy_stm_fifodone(void);
-extern CCA_STATE phy_stm_ccadone(uint8_t be,uint8_t count, uint8_t retry);
-extern void phy_stm_txdone(void);
-extern void phy_stm_rxdone(BUFFER buff);
-extern void phy_stm_ackRxdone(BUFFER buff);
-extern void phy_stm_stop(void);
+
+extern PHY_PARAM *phy_init(void);
+extern int phy_setup(uint8_t page,uint8_t ch);
+
+extern void phy_promiscuous(void);
+extern void phy_rxStart(void);
+extern void phy_ackSend(BUFFER buff);
+extern void phy_txStart(BUFFER buff);
+extern void phy_fifodone(void);
+extern CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry);
+extern void phy_txdone(void);
+extern void phy_rxdone(BUFFER buff);
+extern void phy_ackRxdone(BUFFER buff);
+extern void phy_stop(void);
+
+extern void phy_addr_filt(void);
+extern int phy_ed(void);
+extern void phy_sleep(void);
 
 
 

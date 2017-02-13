@@ -828,6 +828,33 @@ int phy_timer_tick(uint32_t *msec)
                     Public function section
  -------------------------------------------------------------
  */
+void phy_wait_phy_event(void)
+{
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+    HAL_wait_event(HAL_PHY_EVENT);
+}
+
+
+void phy_wait_mac_event(void)
+{
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+    HAL_wait_event(HAL_MAC_EVENT);
+}
+
+
+void phy_wakeup_mac_event(void)
+{
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+    HAL_wakeup_event(HAL_MAC_EVENT);
+}
+
+
 /******************************************************************************/
 /*! @brief Register setting of phy
  * @detail 
@@ -1111,72 +1138,7 @@ PHY_PARAM *phy_init(void)
 }
 
 
-void phy_addr_filt(void)
-{
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-}
-
-
-int phy_ed(void)
-{
-/* ED値読み出し
- *  REG_RXCONTINUE() でFIFOに残ったCRCの破棄とED値を読みだすので読み出し処理の最後に実行する事
- */
-//#define REG_RXDONE(_buffer)
-//        uint8_t _reg_data[4];
-//        ON_ERROR(reg_rd(REG_ADR_RD_RX_FIFO, _reg_data, RXCRC_SIZE));
-//        ON_ERROR(reg_rd(REG_ADR_RD_RX_FIFO, &(_buffer)->opt.common.ed, 1));
-//
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-    return 0;
-}
-
-
-void phy_sleep(void)
-{
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-}
-
-
-void phy_wait_phy_event(void)
-{
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-    HAL_wait_event(HAL_PHY_EVENT);
-}
-
-
-void phy_wait_mac_event(void)
-{
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-    HAL_wait_event(HAL_MAC_EVENT);
-}
-
-
-void phy_wakeup_mac_event(void)
-{
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-    HAL_wakeup_event(HAL_MAC_EVENT);
-}
-
-
-/*
- ------------------------------------------------------------------
-                      Public state machine section
- ------------------------------------------------------------------
- */
-void phy_stm_promiscuous(void)
+void phy_promiscuous(void)
 {
     phy_set_trx_state(PHY_ST_RXON);
     phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
@@ -1186,7 +1148,7 @@ void phy_stm_promiscuous(void)
 }
 
 
-void phy_stm_rxStart(void)
+void phy_rxStart(void)
 {
     phy_intclr(~(HW_EVENT_ALL_MASK | HW_EVENT_FIFO_CLEAR));
     phy_set_trx_state(PHY_ST_RXON);
@@ -1197,7 +1159,7 @@ void phy_stm_rxStart(void)
 }
 
 
-void phy_stm_ackSend(BUFFER buff)
+void phy_ackSend(BUFFER buff)
 {
     uint8_t reg_data[2];
     uint16_t length = buff.len;
@@ -1231,7 +1193,7 @@ void phy_stm_ackSend(BUFFER buff)
  * Delay 300usec is intended to prevent FIFO access during TX_ON transition.
  * It may become the PLL unlocking when FIFO accesses it.
  ******************************************************************************/
-void phy_stm_txStart(BUFFER buff)
+void phy_txStart(BUFFER buff)
 {
     uint8_t reg_data[2];
     uint16_t length = buff.len;
@@ -1264,7 +1226,7 @@ void phy_stm_txStart(BUFFER buff)
 }
 
 
-void phy_stm_fifodone(void)
+void phy_fifodone(void)
 {
     phy_cca_ctrl(CCA_FAST);
     phy_inten(HW_EVENT_CCA_DONE);
@@ -1274,7 +1236,7 @@ void phy_stm_fifodone(void)
 }
 
 
-CCA_STATE phy_stm_ccadone(uint8_t be,uint8_t count, uint8_t retry)
+CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry)
 {
     int state;
     uint8_t reg_data;
@@ -1311,7 +1273,7 @@ CCA_STATE phy_stm_ccadone(uint8_t be,uint8_t count, uint8_t retry)
 }
 
 
-void phy_stm_txdone(void)
+void phy_txdone(void)
 {
     phy_intclr(HW_EVENT_TX_DONE | HW_EVENT_TX_FIFO_DONE | HW_EVENT_RF_STATUS);
     phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
@@ -1321,7 +1283,7 @@ void phy_stm_txdone(void)
 }
 
 
-void phy_stm_ackRxdone(BUFFER buff)
+void phy_ackRxdone(BUFFER buff)
 {
    uint16_t data_size;
    uint8_t reg_data[2];
@@ -1345,7 +1307,7 @@ void phy_stm_ackRxdone(BUFFER buff)
 }
 
 
-void phy_stm_rxdone(BUFFER buff)
+void phy_rxdone(BUFFER buff)
 {
    uint16_t data_size;
    uint8_t reg_data[2];
@@ -1370,7 +1332,7 @@ void phy_stm_rxdone(BUFFER buff)
 }
 
 
-void phy_stm_stop(void)
+void phy_stop(void)
 {
       phy_intclr(~(HW_EVENT_ALL_MASK | HW_EVENT_FIFO_CLEAR));
       phy_inten(HW_EVENT_ALL_MASK);
@@ -1380,3 +1342,38 @@ void phy_stm_stop(void)
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 }
+
+
+void phy_addr_filt(void)
+{
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+}
+
+
+int phy_ed(void)
+{
+/* ED値読み出し
+ *  REG_RXCONTINUE() でFIFOに残ったCRCの破棄とED値を読みだすので読み出し処理の最後に実行する事
+ */
+//#define REG_RXDONE(_buffer)
+//        uint8_t _reg_data[4];
+//        ON_ERROR(reg_rd(REG_ADR_RD_RX_FIFO, _reg_data, RXCRC_SIZE));
+//        ON_ERROR(reg_rd(REG_ADR_RD_RX_FIFO, &(_buffer)->opt.common.ed, 1));
+//
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+    return 0;
+}
+
+
+void phy_sleep(void)
+{
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+}
+
+
