@@ -561,7 +561,7 @@ static void phy_cca_ctrl(CCA_STATE state) {
     uint8_t reg_idl_wait;
     uint8_t reg_data;
 
-    phy_set_trx_state(PHY_ST_TRXOFF);
+    phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
 
     if (state == CCA_CANCEL || state == CCA_STOP){
         reg_data = 0x64;
@@ -590,6 +590,7 @@ static void phy_cca_ctrl(CCA_STATE state) {
             reg_cca_cntl = 0x10;
             reg_idl_wait = 0x64;
         }
+        phy_inten(HW_EVENT_CCA_DONE);
         reg_wr(REG_ADR_IDLE_WAIT_L, &reg_idl_wait, 1);
         reg_wr(REG_ADR_CCA_CNTRL, &reg_cca_cntl, 1);
         phy_set_trx_state(PHY_ST_RXON);
@@ -1140,8 +1141,8 @@ PHY_PARAM *phy_init(void)
 
 void phy_promiscuous(void)
 {
-    phy_set_trx_state(PHY_ST_RXON);
     phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
+    phy_set_trx_state(PHY_ST_RXON);
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
@@ -1151,8 +1152,8 @@ void phy_promiscuous(void)
 void phy_rxStart(void)
 {
     phy_intclr(~(HW_EVENT_ALL_MASK | HW_EVENT_FIFO_CLEAR));
-    phy_set_trx_state(PHY_ST_RXON);
     phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
+    phy_set_trx_state(PHY_ST_RXON);
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
@@ -1214,10 +1215,10 @@ void phy_txStart(BUFFER buff)
     // make payload
     fifo_wr(REG_ADR_WR_TX_FIFO, payload, length);
 
-    reg_data[0] = PHY_REG_SET_TX_DONE_RX;
+    reg_data[0] = PHY_REG_SET_TX_DONE_OFF;
     reg_wr(REG_ADR_ACK_TIMER_EN, reg_data, 1);
 
-    phy_inten(HW_EVENT_TX_FIFO_DONE);
+//    phy_inten(HW_EVENT_TX_FIFO_DONE);
 #ifndef LAZURITE_IDE
     if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%d,SequnceNumber:%d\n",
                     __FILE__,__func__,(unsigned long)payload,length,payload[2]);
@@ -1226,10 +1227,9 @@ void phy_txStart(BUFFER buff)
 }
 
 
-void phy_fifodone(void)
+void phy_ccaStart(void)
 {
     phy_cca_ctrl(CCA_FAST);
-    phy_inten(HW_EVENT_CCA_DONE);
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
@@ -1243,6 +1243,7 @@ CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry)
 
     phy_cca_be = be;
 
+    // Notice: A following must not change.
 	reg_rd(REG_ADR_CCA_CNTRL, &reg_data, 1);
     phy_intclr(HW_EVENT_CCA_DONE | HW_EVENT_RF_STATUS);
 
@@ -1250,12 +1251,10 @@ CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry)
         if(!count){
            state = CCA_IDLE_EN;
            phy_cca_ctrl(state);
-           phy_inten(HW_EVENT_CCA_DONE);
         }else
         if(count < retry){
            state = CCA_RETRY;
            phy_cca_ctrl(state); 
-           phy_inten(HW_EVENT_CCA_DONE);
         }else{
            state = CCA_CANCEL;
            phy_cca_ctrl(state);
@@ -1289,10 +1288,10 @@ void phy_ackRxdone(BUFFER buff)
    uint8_t reg_data[2];
 
     phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
+    phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
 
     reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
-    if (reg_data[0]&0x30){
-        // crc error
+    if (reg_data[0]&0x30){       // crc error
         phy_rst();
     }else{
         reg_rd(REG_ADR_RD_RX_FIFO, reg_data, 2);
@@ -1313,11 +1312,10 @@ void phy_rxdone(BUFFER buff)
    uint8_t reg_data[2];
 
     phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
+    phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
 
     reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
-    if (reg_data[0]&0x30){
-        // crc error
-        phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+    if (reg_data[0]&0x30){       // crc error
         phy_rst();
     }else{
         reg_rd(REG_ADR_RD_RX_FIFO, reg_data, 2);

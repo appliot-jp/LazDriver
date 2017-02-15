@@ -54,7 +54,7 @@ static void macl_rxdone_handler(void)
 	    phy_sint_handler(macl_ack_txdone_handler);
         phy_ackSend(macl.ack);
 		macl_rx_irq(NULL,NULL);
-    } else {
+    } else {            // don't requeset ack, or crc errc
         phy_sint_handler(macl_rxdone_handler);
         phy_rxStart();
         phy_wait_phy_event();
@@ -98,7 +98,7 @@ static void macl_fifodone_handler(void)
 #endif
 	phy_timer_di();
 	phy_sint_handler(macl_ccadone_handler);
-    phy_fifodone();
+    phy_ccaStart();
     phy_wait_phy_event();
 	phy_timer_ei();
 }
@@ -154,14 +154,17 @@ static void macl_txdone_handler(void)
 #endif
 	phy_timer_di();
     phy_txdone();
+    // ack request
     if (macl.phy->out.data[0]&0x20) {
-        phy_sint_handler(macl_ack_rxdone_handler);
         phy_timer_start(macl.ack_timeout);
         phy_timer_handler(macl_ack_timeout_handler);
+        phy_sint_handler(macl_ack_rxdone_handler);
+        phy_rxStart();
+        phy_wait_phy_event();
     }else{
         phy_stop();
+        phy_wakeup_mac_event();
     }
-    phy_wait_phy_event();
 	phy_timer_ei();
 }
 
@@ -172,7 +175,12 @@ static void macl_ack_rxdone_handler(void)
     phy_ackRxdone(macl.phy->in);
     if(macl.phy->in.data[2] == macl.sequnceNum){
         phy_timer_stop();
+        phy_stop();
         phy_wakeup_mac_event();
+    }else{
+        phy_sint_handler(macl_ack_rxdone_handler);
+        phy_rxStart();
+        phy_wait_phy_event();
     }
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d,%d\n",
@@ -193,9 +201,10 @@ static void macl_ack_timeout_handler(void)
     phy_stop();
     if(macl.resendingNum < macl.txRetry){
         macl.resendingNum++;
-	    phy_sint_handler(macl_fifodone_handler);
+	  //phy_sint_handler(macl_fifodone_handler);
         phy_txStart(macl.phy->out);
-        phy_wait_phy_event();
+        macl_fifodone_handler();
+      //phy_wait_phy_event();
     }else{
         phy_wakeup_mac_event();
     }
@@ -363,9 +372,10 @@ int	macl_xmit_sync(BUFFER buff)
     macl.resendingNum = 0;
     macl.ccaCount=0;
     macl.sequnceNum= buff.data[2];
-	phy_sint_handler(macl_fifodone_handler);
+//	phy_sint_handler(macl_fifodone_handler);
     phy_txStart(macl.phy->out);
-    phy_wait_phy_event();
+    macl_fifodone_handler();
+//  phy_wait_phy_event();
     phy_wait_mac_event();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%lx\n",__FILE__,__func__,
