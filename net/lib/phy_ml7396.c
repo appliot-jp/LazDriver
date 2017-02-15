@@ -1248,10 +1248,12 @@ CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry)
     phy_intclr(HW_EVENT_CCA_DONE | HW_EVENT_RF_STATUS);
 
     if(reg_data&0x03){
+#if 1   // when it force retrying CCA, is zero.
         if(!count){
            state = CCA_IDLE_EN;
            phy_cca_ctrl(state);
         }else
+#endif
         if(count < retry){
            state = CCA_RETRY;
            phy_cca_ctrl(state); 
@@ -1282,17 +1284,19 @@ void phy_txdone(void)
 }
 
 
-void phy_ackRxdone(BUFFER buff)
+int phy_ackRxdone(BUFFER buff)
 {
-   uint16_t data_size;
-   uint8_t reg_data[2];
+    int status=STATUS_OK;
+    uint16_t data_size;
+    uint8_t reg_data[2];
 
-    phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
     phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+    phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
 
     reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
     if (reg_data[0]&0x30){       // crc error
         phy_rst();
+        status=STATUS_FAIL;
     }else{
         reg_rd(REG_ADR_RD_RX_FIFO, reg_data, 2);
         data_size = (((unsigned int)reg_data[0] << 8) | reg_data[1]) & 0x07ff; 
@@ -1303,20 +1307,23 @@ void phy_ackRxdone(BUFFER buff)
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%d,%d\n",
             __FILE__,__func__,(unsigned long)buff.data,buff.len,data_size);
 #endif
+    return status;
 }
 
 
-void phy_rxdone(BUFFER buff)
+int phy_rxdone(BUFFER buff)
 {
-   uint16_t data_size;
-   uint8_t reg_data[2];
+    int status=STATUS_OK;
+    uint16_t data_size;
+    uint8_t reg_data[2];
 
-    phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
     phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+    phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
 
     reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
-    if (reg_data[0]&0x30){       // crc error
+    if (reg_data[0]&0x30){        // crc error
         phy_rst();
+        status=STATUS_FAIL;
     }else{
         reg_rd(REG_ADR_RD_RX_FIFO, reg_data, 2);
         data_size = (((unsigned int)reg_data[0] << 8) | reg_data[1]) & 0x07ff; 
@@ -1327,14 +1334,15 @@ void phy_rxdone(BUFFER buff)
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%d,%d\n",
             __FILE__,__func__,(unsigned long)buff.data,buff.len,data_size);
 #endif
+    return status;
 }
 
 
 void phy_stop(void)
 {
+      phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
       phy_intclr(~(HW_EVENT_ALL_MASK | HW_EVENT_FIFO_CLEAR));
       phy_inten(HW_EVENT_ALL_MASK);
-      phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
       phy_rst();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);

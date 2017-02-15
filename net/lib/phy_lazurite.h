@@ -91,8 +91,8 @@ extern void phy_txStart(BUFFER buff);
 extern void phy_ccaStart(void);
 extern CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry);
 extern void phy_txdone(void);
-extern void phy_rxdone(BUFFER buff);
-extern void phy_ackRxdone(BUFFER buff);
+extern int phy_rxdone(BUFFER buff);
+extern int phy_ackRxdone(BUFFER buff);
 extern void phy_stop(void);
 
 extern void phy_addr_filt(void);

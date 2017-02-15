@@ -22,6 +22,7 @@
 #define _ERROR_H_
 
 #define STATUS_OK	0
+#define STATUS_FAIL	1
 
 #define EIO			5			// hardware error
 #define ENOMEM		12			// data size error
