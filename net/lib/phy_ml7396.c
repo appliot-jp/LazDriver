@@ -563,7 +563,7 @@ static void phy_cca_ctrl(CCA_STATE state) {
 
     phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
 
-    if (state == CCA_CANCEL || state == CCA_STOP){
+    if (state == CCA_ABORT || state == CCA_IDLE){
         reg_data = 0x64;
         reg_wr(REG_ADR_DEMSET3, &reg_data, 1);
         reg_data = 0x27;
@@ -581,7 +581,7 @@ static void phy_cca_ctrl(CCA_STATE state) {
             reg_cca_cntl = 0x10;
             reg_idl_wait = 0x00;
         } else
-        if (state == CCA_IDLE_EN) {
+        if (state == IDLE_DETECT) {
             reg_cca_cntl = 0x18;
             reg_idl_wait = 0x64;
         } else
@@ -1172,40 +1172,6 @@ void phy_rxStart(void)
 }
 
 
-void phy_ackStart(BUFFER buff)
-{
-    uint8_t reg_data[2];
-    uint16_t length = buff.len;
-    uint8_t *payload = buff.data;
-
-    //HAL_delayMicroseconds(1000);
-    //HAL_delayMicroseconds(1000);
-
-//  reg_data[0] = PHY_REG_SET_TX_DONE_RX;
-    reg_data[0] = PHY_REG_SET_TX_DONE_OFF;
-    reg_wr(REG_ADR_ACK_TIMER_EN, reg_data, 1);
-
-    reg_rd(REG_ADR_PACKET_MODE_SET, reg_data, 1);
-    reg_data[0] |= 0x04;    // auto tx on
-    reg_wr(REG_ADR_PACKET_MODE_SET, reg_data, 1);
-
-    phy_inten(HW_EVENT_TX_DONE);
-
-    // make fcf
-    reg_data[0] = 0x18;             // PHR
-    reg_data[1] = 2 + length;       // length : crc size + payload length
-    reg_wr(REG_ADR_WR_TX_FIFO, reg_data, 2); 
-
-    // make payload
-    fifo_wr(REG_ADR_WR_TX_FIFO, payload, length);
-
-#ifndef LAZURITE_IDE
-    if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s,%lx,%d\n",
-            __FILE__,__func__,(unsigned long)payload,length);
-    PAYLOADDUMP(payload,length);
-#endif
-}
-
 /******************************************************************************/
 /*! @brief Writing in data to FIFO
  * Delay 300usec is intended to prevent FIFO access during TX_ON transition.
@@ -1217,8 +1183,10 @@ void phy_txStart(BUFFER buff,uint8_t mode)
     uint16_t length = buff.len;
     uint8_t *payload = buff.data;
 
-    phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
-    phy_rst();
+    if (mode != 2) {
+        phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+        phy_rst();
+    }
 
     reg_data[0] = PHY_REG_SET_TX_DONE_OFF;
     reg_wr(REG_ADR_ACK_TIMER_EN, reg_data, 1);
@@ -1279,7 +1247,7 @@ CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry)
     if(reg_data&0x03){
 #if 1   // when it force retrying CCA, is zero.
         if(!count){
-           state = CCA_IDLE_EN;
+           state = IDLE_DETECT;
            phy_cca_ctrl(state);
         }else
 #endif
@@ -1287,11 +1255,11 @@ CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry)
            state = CCA_RETRY;
            phy_cca_ctrl(state); 
         }else{
-           state = CCA_CANCEL;
+           state = CCA_ABORT;
            phy_cca_ctrl(state);
         }
     }else{
-        state = CCA_STOP;
+        state = CCA_IDLE;
         phy_cca_ctrl(state);
         phy_set_trx_state(PHY_ST_TXON);
         phy_inten(HW_EVENT_TX_DONE);
@@ -1303,47 +1271,15 @@ CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry)
 }
 
 
-void phy_ccaStop(void)
+void phy_ccaAbort(void)
 {
-    phy_cca_ctrl(CCA_STOP);
+    phy_cca_ctrl(CCA_ABORT);
 }
 
 
 void phy_txdone(void)
 {
     phy_intclr(HW_EVENT_TX_DONE | HW_EVENT_TX_FIFO_DONE | HW_EVENT_RF_STATUS);
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-}
-
-
-int phy_ackRxdone(BUFFER buff)
-{
-    int status=STATUS_OK;
-    uint16_t data_size;
-    uint8_t reg_data[2];
-
-    phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
-
-    // Notice: A following must not change.
-    reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
-    phy_intclr(~(HW_EVENT_ALL_MASK | HW_EVENT_FIFO_CLEAR));
-
-    if (reg_data[0]&0x30){       // crc error
-        phy_rst();
-        status=STATUS_FAIL;
-    }else{
-        reg_rd(REG_ADR_RD_RX_FIFO, reg_data, 2);
-        data_size = (((unsigned int)reg_data[0] << 8) | reg_data[1]) & 0x07ff; 
-        buff.len = data_size + 1; // add ED vale
-        fifo_rd(REG_ADR_RD_RX_FIFO, buff.data, buff.len);
-    }
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%d,%d\n",
-            __FILE__,__func__,(unsigned long)buff.data,buff.len,data_size);
-#endif
-    return status;
 }
 
 
@@ -1358,6 +1294,7 @@ int phy_rxdone(BUFFER buff)
     // Notice: A following must not change.
     reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
     phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
+//  phy_intclr(~(HW_EVENT_ALL_MASK | HW_EVENT_FIFO_CLEAR));
 
     if (reg_data[0]&0x30){        // crc error
         phy_rst();
