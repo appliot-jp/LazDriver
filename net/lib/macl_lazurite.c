@@ -54,7 +54,7 @@ static void macl_rxdone_handler(void)
 
     if(status == STATUS_OK && macl.ack.data) {
 	    phy_sint_handler(macl_ack_txdone_handler);
-        phy_ackSend(macl.ack);
+        phy_ackStart(macl.ack);
         macl_rx_irq(NULL,NULL);
     } else {
         // not requeset ack, or crc errc
@@ -119,9 +119,9 @@ static void macl_ccadone_handler(void)
 #endif
     if(cca_state == CCA_IDLE_EN){
         macl.ccaCount++;
-	    phy_sint_handler(macl_ccadone_handler);
         phy_timer_start(500);
         phy_timer_handler(macl_cca_abort_handler);
+	    phy_sint_handler(macl_ccadone_handler);
         phy_wait_phy_event();
     }else if(cca_state == CCA_RETRY){
         macl.ccaCount++;
@@ -131,6 +131,7 @@ static void macl_ccadone_handler(void)
         phy_stop();
         phy_wakeup_mac_event();
     }else if(cca_state == CCA_STOP){
+        phy_timer_stop();
 	    phy_sint_handler(macl_txdone_handler);
         phy_wait_phy_event();
     }
@@ -146,6 +147,8 @@ static void macl_cca_abort_handler(void)
 	phy_sint_di();
     phy_timer_stop();
     phy_stop();
+    phy_ccaStop();
+//  phy_wakeup_phy_event();
     phy_wakeup_mac_event();
 	phy_sint_ei();
 }
@@ -208,11 +211,22 @@ static void macl_ack_timeout_handler(void)
     phy_stop();
     if(macl.resendingNum < macl.txRetry){
         macl.resendingNum++;
-	  //phy_sint_handler(macl_fifodone_handler);
-        phy_txStart(macl.phy->out);
-        macl_fifodone_handler();
-      //phy_wait_phy_event();
+        if (macl.txMode == 0) {
+            phy_txStart(macl.phy->out,macl.txMode);
+            phy_sint_handler(macl_ccadone_handler);
+            phy_ccaStart();
+        }else
+        if (macl.txMode == 1) {
+            phy_sint_handler(macl_fifodone_handler);
+            phy_txStart(macl.phy->out,macl.txMode);
+        }else
+        if (macl.txMode == 2) {
+            phy_sint_handler(macl_txdone_handler);
+            phy_txStart(macl.phy->out,macl.txMode);
+        }
+        phy_wait_phy_event();
     }else{
+//      phy_wakeup_phy_event();
         phy_wakeup_mac_event();
     }
 	phy_sint_ei();
@@ -230,6 +244,8 @@ MACL_PARAM* macl_init(void)
 
 	memset(&macl,0,sizeof(MACL_PARAM));
 	macl.phy = phy_init();
+    // 0:normal, 1:wait at fifodone, 2:no cca
+    macl.txMode = 0;
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,in.data:%lx,out.data:%lx\n",
             __FILE__,__func__,(unsigned long)macl.phy->in.data,(unsigned long)macl.phy->out.data);
@@ -379,10 +395,22 @@ int	macl_xmit_sync(BUFFER buff)
     macl.resendingNum = 0;
     macl.ccaCount=0;
     macl.sequnceNum= buff.data[2];
-//	phy_sint_handler(macl_fifodone_handler);
-    phy_txStart(macl.phy->out);
-    macl_fifodone_handler();
-//  phy_wait_phy_event();
+
+    if (macl.txMode == 0) {
+        phy_txStart(macl.phy->out,macl.txMode);
+        phy_sint_handler(macl_ccadone_handler);
+        phy_ccaStart();
+    }else
+    if (macl.txMode == 1) {
+        phy_sint_handler(macl_fifodone_handler);
+        phy_txStart(macl.phy->out,macl.txMode);
+    }else
+    if (macl.txMode == 2) {
+        phy_sint_handler(macl_txdone_handler);
+        phy_txStart(macl.phy->out,macl.txMode);
+    }
+
+    phy_wait_phy_event();
     phy_wait_mac_event();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%lx\n",

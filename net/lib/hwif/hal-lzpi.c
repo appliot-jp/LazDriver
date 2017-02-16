@@ -342,6 +342,10 @@ int HAL_wait_event(uint8_t event)
 int HAL_wakeup_event(uint8_t event)
 {
 	int status=0;
+    if (event == HAL_PHY_EVENT) {
+	    que_th2ex = 1;
+	    wake_up_interruptible(&tx_done);
+    }else
     if (event == HAL_MAC_EVENT) {
         que_macl = 1;
 	    wake_up_interruptible(&mac_done);

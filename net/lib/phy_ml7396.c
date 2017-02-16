@@ -573,11 +573,11 @@ static void phy_cca_ctrl(CCA_STATE state) {
         reg_wr(REG_ADR_IDLE_WAIT_L, &reg_idl_wait, 1);
         reg_wr(REG_ADR_CCA_CNTRL, &reg_cca_cntl, 1);
     }else{
-        reg_data = 0x00;
-        reg_wr(REG_ADR_DEMSET3, &reg_data, 1);
-        reg_wr(REG_ADR_DEMSET14,&reg_data, 1);
-
         if (state == CCA_FAST) {
+            reg_data = 0x00;
+            reg_wr(REG_ADR_DEMSET3, &reg_data, 1);
+            reg_wr(REG_ADR_DEMSET14,&reg_data, 1);
+
             reg_cca_cntl = 0x10;
             reg_idl_wait = 0x00;
         } else
@@ -844,6 +844,15 @@ void phy_wait_mac_event(void)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
     HAL_wait_event(HAL_MAC_EVENT);
+}
+
+
+void phy_wakeup_phy_event(void)
+{
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+    HAL_wakeup_event(HAL_PHY_EVENT);
 }
 
 
@@ -1141,7 +1150,8 @@ PHY_PARAM *phy_init(void)
 
 void phy_promiscuous(void)
 {
-    phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
+//  phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
+    phy_inten(HW_EVENT_RX_DONE);
     phy_set_trx_state(PHY_ST_RXON);
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
@@ -1152,7 +1162,9 @@ void phy_promiscuous(void)
 void phy_rxStart(void)
 {
     phy_intclr(~(HW_EVENT_ALL_MASK | HW_EVENT_FIFO_CLEAR));
-    phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
+//  phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
+    phy_inten(HW_EVENT_RX_DONE);
+    phy_rst();
     phy_set_trx_state(PHY_ST_RXON);
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
@@ -1160,7 +1172,7 @@ void phy_rxStart(void)
 }
 
 
-void phy_ackSend(BUFFER buff)
+void phy_ackStart(BUFFER buff)
 {
     uint8_t reg_data[2];
     uint16_t length = buff.len;
@@ -1169,22 +1181,27 @@ void phy_ackSend(BUFFER buff)
     //HAL_delayMicroseconds(1000);
     //HAL_delayMicroseconds(1000);
 
-    reg_data[0] = PHY_REG_SET_TX_DONE_RX;
+//  reg_data[0] = PHY_REG_SET_TX_DONE_RX;
+    reg_data[0] = PHY_REG_SET_TX_DONE_OFF;
     reg_wr(REG_ADR_ACK_TIMER_EN, reg_data, 1);
+
     reg_rd(REG_ADR_PACKET_MODE_SET, reg_data, 1);
     reg_data[0] |= 0x04;    // auto tx on
     reg_wr(REG_ADR_PACKET_MODE_SET, reg_data, 1);
+
     phy_inten(HW_EVENT_TX_DONE);
 
     // make fcf
     reg_data[0] = 0x18;             // PHR
     reg_data[1] = 2 + length;       // length : crc size + payload length
     reg_wr(REG_ADR_WR_TX_FIFO, reg_data, 2); 
+
     // make payload
     fifo_wr(REG_ADR_WR_TX_FIFO, payload, length);
 
 #ifndef LAZURITE_IDE
-    if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s,%lx,%d\n",__FILE__,__func__,(unsigned long)payload,length);
+    if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s,%lx,%d\n",
+            __FILE__,__func__,(unsigned long)payload,length);
     PAYLOADDUMP(payload,length);
 #endif
 }
@@ -1194,7 +1211,7 @@ void phy_ackSend(BUFFER buff)
  * Delay 300usec is intended to prevent FIFO access during TX_ON transition.
  * It may become the PLL unlocking when FIFO accesses it.
  ******************************************************************************/
-void phy_txStart(BUFFER buff)
+void phy_txStart(BUFFER buff,uint8_t mode)
 {
     uint8_t reg_data[2];
     uint16_t length = buff.len;
@@ -1203,9 +1220,25 @@ void phy_txStart(BUFFER buff)
     phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
     phy_rst();
 
-    reg_rd(REG_ADR_PACKET_MODE_SET, reg_data, 1);
-    reg_data[0] &= ~0x04;    // auto tx off
-    reg_wr(REG_ADR_PACKET_MODE_SET, reg_data, 1);
+    reg_data[0] = PHY_REG_SET_TX_DONE_OFF;
+    reg_wr(REG_ADR_ACK_TIMER_EN, reg_data, 1);
+
+
+    if(mode == 1) {
+        phy_inten(HW_EVENT_TX_FIFO_DONE);
+    }else
+    if(mode == 2) {
+        reg_rd(REG_ADR_PACKET_MODE_SET, reg_data, 1);
+        reg_data[0] |= 0x04;    // auto tx on
+        reg_wr(REG_ADR_PACKET_MODE_SET, reg_data, 1);
+
+        phy_inten(HW_EVENT_TX_DONE);
+    }else
+    {
+        reg_rd(REG_ADR_PACKET_MODE_SET, reg_data, 1);
+        reg_data[0] &= ~0x04;    // auto tx off
+        reg_wr(REG_ADR_PACKET_MODE_SET, reg_data, 1);
+    }
 
     // make fcf
     reg_data[0] = 0x18;             // PHR
@@ -1215,13 +1248,9 @@ void phy_txStart(BUFFER buff)
     // make payload
     fifo_wr(REG_ADR_WR_TX_FIFO, payload, length);
 
-    reg_data[0] = PHY_REG_SET_TX_DONE_OFF;
-    reg_wr(REG_ADR_ACK_TIMER_EN, reg_data, 1);
-
-//    phy_inten(HW_EVENT_TX_FIFO_DONE);
 #ifndef LAZURITE_IDE
     if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%d,SequnceNumber:%d\n",
-                    __FILE__,__func__,(unsigned long)payload,length,payload[2]);
+            __FILE__,__func__,(unsigned long)payload,length,payload[2]);
     PAYLOADDUMP(payload,length);
 #endif
 }
@@ -1274,10 +1303,15 @@ CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry)
 }
 
 
+void phy_ccaStop(void)
+{
+    phy_cca_ctrl(CCA_STOP);
+}
+
+
 void phy_txdone(void)
 {
     phy_intclr(HW_EVENT_TX_DONE | HW_EVENT_TX_FIFO_DONE | HW_EVENT_RF_STATUS);
-    phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
@@ -1291,9 +1325,11 @@ int phy_ackRxdone(BUFFER buff)
     uint8_t reg_data[2];
 
     phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
-    phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
 
+    // Notice: A following must not change.
     reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
+    phy_intclr(~(HW_EVENT_ALL_MASK | HW_EVENT_FIFO_CLEAR));
+
     if (reg_data[0]&0x30){       // crc error
         phy_rst();
         status=STATUS_FAIL;
@@ -1318,9 +1354,11 @@ int phy_rxdone(BUFFER buff)
     uint8_t reg_data[2];
 
     phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+
+    // Notice: A following must not change.
+    reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
     phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
 
-    reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
     if (reg_data[0]&0x30){        // crc error
         phy_rst();
         status=STATUS_FAIL;

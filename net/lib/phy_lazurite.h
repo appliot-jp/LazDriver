@@ -79,6 +79,7 @@ extern int phy_timer_tick(uint32_t *msec);
  */
 extern void phy_wait_phy_event(void);
 extern void phy_wait_mac_event(void);
+extern void phy_wakeup_phy_event(void);
 extern void phy_wakeup_mac_event(void);
 
 extern PHY_PARAM *phy_init(void);
@@ -86,10 +87,11 @@ extern int phy_setup(uint8_t page,uint8_t ch);
 
 extern void phy_promiscuous(void);
 extern void phy_rxStart(void);
-extern void phy_ackSend(BUFFER buff);
-extern void phy_txStart(BUFFER buff);
+extern void phy_ackStart(BUFFER buff);
+extern void phy_txStart(BUFFER buff,uint8_t mode);
 extern void phy_ccaStart(void);
 extern CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry);
+void phy_ccaStop(void);
 extern void phy_txdone(void);
 extern int phy_rxdone(BUFFER buff);
 extern int phy_ackRxdone(BUFFER buff);

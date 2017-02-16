@@ -32,6 +32,7 @@ typedef struct {
     uint8_t ccaCount;
 	uint8_t txPower;
 	uint8_t txRetry;
+	uint8_t txMode;
     uint8_t sequnceNum;
 	uint8_t resendingNum;
 	bool promiscuous;
