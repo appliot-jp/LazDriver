@@ -39,21 +39,13 @@ class TestClass < Minitest::Test
     #		@@laz.init(module_test = 0x1000) #PHY 
     #		@@laz.init(module_test = 0x0000) #non
     #		@@laz.init(module_test = 0xFF00) #all
-<<<<<<< HEAD
             @@laz.begin(46,0xabcd,100,20)
-=======
-            @@laz.begin(36,0xabcd,100,20)
->>>>>>> 95a1fa8a98cf319639d8ebeea732de34498fad70
             for num in 1..3 do
-                @@laz.send(0xffff,0xffff,"LAPIS Lazurite RF system")
+                @@laz.send(0xabcd,0x5f6e,"LAPIS Lazurite RF system")
             end
             @@laz.remove()
-<<<<<<< HEAD
             sleep(1)
-        end
-=======
-        #end
->>>>>>> 95a1fa8a98cf319639d8ebeea732de34498fad70
+     #  end
 	end
 end
 

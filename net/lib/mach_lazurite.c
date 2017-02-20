@@ -825,7 +825,7 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 
 	if(rx->len == 0) {
 		status = -1;
-		goto wend;
+		goto end;
 	}
 
 	// set rx buffer
