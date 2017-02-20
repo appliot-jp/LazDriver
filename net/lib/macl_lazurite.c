@@ -49,16 +49,16 @@ static void macl_rxdone_handler(void)
     int status;
 
 	phy_timer_di();
-    status = phy_rxdone(macl.phy->in);
+    status = phy_rxdone(&macl.phy->in);
     if(module_test & MODE_MACH_DEBUG){
-		printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,__LINE__);
+		printk(KERN_INFO"%s,%s,%d,%d\n", __FILE__,__func__,__LINE__,macl.phy->in.len);
 		PAYLOADDUMP(macl.phy->in.data,macl.phy->in.len);
 	}
     macl_rx_irq(&macl.phy->in,&macl.ack);
 
     if(status == STATUS_OK && macl.ack.data) {
 	    phy_sint_handler(macl_ack_txdone_handler);
-        phy_txStart(macl.ack,2);
+        phy_txStart(&macl.ack,2);
         macl_rx_irq(NULL,NULL);
     } else {
         // not requeset ack, or crc errc
@@ -186,7 +186,7 @@ static void macl_ack_rxdone_handler(void)
     int status;
 
 	phy_timer_di();
-    status = phy_rxdone(macl.phy->in);
+    status = phy_rxdone(&macl.phy->in);
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG){
         printk(KERN_INFO"%s,%s,%d,%d,%d\n",__FILE__,__func__,macl.phy->in.data[2],macl.sequnceNum,macl.phy->in.len);
@@ -218,17 +218,17 @@ static void macl_ack_timeout_handler(void)
     if(macl.resendingNum < macl.txRetry){
         macl.resendingNum++;
         if (macl.txMode == 0) {
-            phy_txStart(macl.phy->out,macl.txMode);
+            phy_txStart(&macl.phy->out,macl.txMode);
             phy_sint_handler(macl_ccadone_handler);
             phy_ccaStart();
         }else
         if (macl.txMode == 1) {
             phy_sint_handler(macl_fifodone_handler);
-            phy_txStart(macl.phy->out,macl.txMode);
+            phy_txStart(&macl.phy->out,macl.txMode);
         }else
         if (macl.txMode == 2) {
             phy_sint_handler(macl_txdone_handler);
-            phy_txStart(macl.phy->out,macl.txMode);
+            phy_txStart(&macl.phy->out,macl.txMode);
         }
         phy_wait_phy_event();
     }else{
@@ -302,17 +302,17 @@ int	macl_xmit_sync(BUFFER buff)
     macl.sequnceNum= buff.data[2];
 
     if (macl.txMode == 0) {
-        phy_txStart(macl.phy->out,macl.txMode);
+        phy_txStart(&macl.phy->out,macl.txMode);
         phy_sint_handler(macl_ccadone_handler);
         phy_ccaStart();
     }else
     if (macl.txMode == 1) {
         phy_sint_handler(macl_fifodone_handler);
-        phy_txStart(macl.phy->out,macl.txMode);
+        phy_txStart(&macl.phy->out,macl.txMode);
     }else
     if (macl.txMode == 2) {
         phy_sint_handler(macl_txdone_handler);
-        phy_txStart(macl.phy->out,macl.txMode);
+        phy_txStart(&macl.phy->out,macl.txMode);
     }
 
     phy_wait_phy_event();

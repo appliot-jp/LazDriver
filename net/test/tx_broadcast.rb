@@ -33,18 +33,15 @@ class TestClass < Minitest::Test
 	end
 
 	def test_phy
-        for num in 1..10
-            @@laz.init(module_test = 0x3000) #PHY/MACL
-    #		@@laz.init(module_test = 0x1000) #PHY 
-    #		@@laz.init(module_test = 0x0000) #non
-    #		@@laz.init(module_test = 0xFF00) #all
-            @@laz.begin(46,0xabcd,100,20)
-            for num in 1..3 do
-                @@laz.send(0xffff,0xffff,"LAPIS Lazurite RF system")
-            end
-            @@laz.remove()
-            sleep(1)
+        @@laz.init(module_test = 0x3000) #PHY/MACL
+#		@@laz.init(module_test = 0x1000) #PHY 
+#		@@laz.init(module_test = 0x0000) #non
+#		@@laz.init(module_test = 0xFF00) #all
+        @@laz.begin(46,0xabcd,100,20)
+        for num in 1..100 do
+            @@laz.send(0xffff,0xffff,"LAPIS Lazurite RF system")
         end
+        @@laz.remove()
 	end
 end
 

@@ -1178,11 +1178,11 @@ void phy_rxStart(void)
  * Delay 300usec is intended to prevent FIFO access during TX_ON transition.
  * It may become the PLL unlocking when FIFO accesses it.
  ******************************************************************************/
-void phy_txStart(BUFFER buff,uint8_t mode)
+void phy_txStart(BUFFER *buff,uint8_t mode)
 {
     uint8_t reg_data[2];
-    uint16_t length = buff.len;
-    uint8_t *payload = buff.data;
+    uint16_t length = buff->len;
+    uint8_t *payload = buff->data;
 
     if (mode != 2) {
         phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
@@ -1284,7 +1284,7 @@ void phy_txdone(void)
 }
 
 
-int phy_rxdone(BUFFER buff)
+int phy_rxdone(BUFFER *buff)
 {
     int status=STATUS_OK;
     uint16_t data_size;
@@ -1303,13 +1303,13 @@ int phy_rxdone(BUFFER buff)
     }else{
         reg_rd(REG_ADR_RD_RX_FIFO, reg_data, 2);
         data_size = (((unsigned int)reg_data[0] << 8) | reg_data[1]) & 0x07ff; 
-        buff.len = data_size + 1; // add ED vale
-        fifo_rd(REG_ADR_RD_RX_FIFO, buff.data, buff.len);
+        buff->len = data_size + 1; // add ED vale
+        fifo_rd(REG_ADR_RD_RX_FIFO, buff->data, buff->len);
     }
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG){
-        printk(KERN_INFO"%s,%s,%lx,%d,%d\n",__FILE__,__func__,(unsigned long)buff.data,buff.len,data_size);
-        PAYLOADDUMP(buff.data,buff.len);
+        printk(KERN_INFO"%s,%s,%lx,%d,%d\n",__FILE__,__func__,(unsigned long)buff->data,buff->len,data_size);
+        PAYLOADDUMP(buff->data,buff->len);
     }
 #endif
     return status;

@@ -38,7 +38,7 @@ class TestClass < Minitest::Test
     #		@@laz.init(module_test = 0x1000) #PHY 
     #		@@laz.init(module_test = 0x0000) #non
     #		@@laz.init(module_test = 0xFF00) #all
-            @@laz.begin(42,0xabcd,100,20)
+            @@laz.begin(46,0xabcd,100,20)
             for num in 1..3 do
                 @@laz.send(0xabcd,0x5f6e,"LAPIS Lazurite RF system")
             end

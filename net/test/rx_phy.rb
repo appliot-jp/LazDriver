@@ -33,12 +33,12 @@ class TestClass < Minitest::Test
 	end
 
 	def test_phy
-        for num in 1..10
-            @@laz.init(module_test = 0x4000) #PHY/MACL
+        for num in 1..1
+            @@laz.init(module_test = 0x7000) #PHY/MACL
     #		@@laz.init(module_test = 0x1000) #PHY 
     #		@@laz.init(module_test = 0x0000) #non
     #		@@laz.init(module_test = 0xFF00) #all
-            @@laz.begin(42,0xabcd,100,20)
+            @@laz.begin(46,0xabcd,100,20)
             @@laz.rxEnable()
             p @@laz.available()
             rcv = @@laz.read()

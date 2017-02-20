@@ -823,6 +823,11 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 		ack->size = mach.ack.raw.size;
 	}
 
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d,%lx,%d\n",__FILE__,__func__,__LINE__,
+				(unsigned long)rx->data,rx->len);
+		PAYLOADDUMP(mach.rx.input.data, mach.rx.raw.len);
+    }
 	if(rx->len == 0) {
 		status = -1;
 		goto end;

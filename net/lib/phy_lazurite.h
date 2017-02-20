@@ -87,12 +87,12 @@ extern int phy_setup(uint8_t page,uint8_t ch);
 
 extern void phy_promiscuous(void);
 extern void phy_rxStart(void);
-extern void phy_txStart(BUFFER buff,uint8_t mode);
+extern void phy_txStart(BUFFER *buff,uint8_t mode);
 extern void phy_ccaStart(void);
 extern CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry);
 void phy_ccaAbort(void);
 extern void phy_txdone(void);
-extern int phy_rxdone(BUFFER buff);
+extern int phy_rxdone(BUFFER *buff);
 extern void phy_stop(void);
 
 extern void phy_addr_filt(void);
