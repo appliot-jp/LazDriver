@@ -34,7 +34,7 @@ class TestClass < Minitest::Test
 
 	def test_phy
         for num in 1..10
-            @@laz.init(module_test = 0x3000) #PHY/MACL
+            @@laz.init(module_test = 0x4000) #PHY/MACL
     #		@@laz.init(module_test = 0x1000) #PHY 
     #		@@laz.init(module_test = 0x0000) #non
     #		@@laz.init(module_test = 0xFF00) #all

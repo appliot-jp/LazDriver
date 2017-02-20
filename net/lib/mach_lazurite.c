@@ -175,12 +175,12 @@ static int mach_make_header(struct mac_header *header) {
 				}
 				break;
 			case 2:
-				if((header->dst.panid.data == 0xffff) ||
+				if(((header->dst.panid.data == 0xffff)&&(header->dst.addr.short_addr!=0xffff)) ||
 						(header->dst.panid.data == 0xfffe) ||
 						(header->dst.panid.enb == false))
 				{
 #ifndef LAZURITE_IDE
-						printk(KERN_ERR"invalid panid for short address.%s,%s,%d\n", __FILE__, __func__, __LINE__);
+					printk(KERN_ERR"invalid panid for short address.%s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -EINVAL;
 					goto error;
@@ -461,7 +461,7 @@ bool mach_make_ack_header(void) {
 	// genenrate ack data
 	mach.ack.fc.fc16 = 0;
 	mach.ack.fc.fc_bit.frame_type = IEEE802154_FC_TYPE_ACK;
-//	mach.ack.fc.fc_bit.panid_comp = 1;
+	//	mach.ack.fc.fc_bit.panid_comp = 1;
 	mach.ack.fc.fc_bit.panid_comp = 0;
 	mach.ack.fc.fc_bit.seq_comp = mach.rx.fc.fc_bit.seq_comp;
 	mach.ack.fc.fc_bit.frame_ver = mach.rx.fc.fc_bit.frame_ver;
@@ -506,18 +506,16 @@ struct mach_param *mach_init(void)
 	macl_sleep(true);
 	get_mac_addr(mach.my_addr.ieee_addr);
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"mach_setup,%02x%02x%02x%02x%02x%02x%02x%02x\n",
-				mach.my_addr.ieee_addr[7],
-				mach.my_addr.ieee_addr[6],
-				mach.my_addr.ieee_addr[5],
-				mach.my_addr.ieee_addr[4],
-				mach.my_addr.ieee_addr[3],
-				mach.my_addr.ieee_addr[2],
-				mach.my_addr.ieee_addr[1],
-				mach.my_addr.ieee_addr[0]
-			  );
-	}
+	printk(KERN_INFO"Lazurite SubGHz 64bit address:: %02x%02x %02x%02x %02x%02x %02x%02x\n",
+			mach.my_addr.ieee_addr[7],
+			mach.my_addr.ieee_addr[6],
+			mach.my_addr.ieee_addr[5],
+			mach.my_addr.ieee_addr[4],
+			mach.my_addr.ieee_addr[3],
+			mach.my_addr.ieee_addr[2],
+			mach.my_addr.ieee_addr[1],
+			mach.my_addr.ieee_addr[0]
+		  );
 #endif
 
 	return &mach;
@@ -540,8 +538,10 @@ int mach_start(BUFFER *rxbuf) {
 	mach.rx.payload.size = rxbuf->size;
 	mach.rx.payload.len = 0;
 
-	printk(KERN_INFO"%s,%s,%d,%lx,%d\n",__FILE__,__func__,__LINE__,(unsigned long)mach.rx.raw.data,mach.rx.raw.len);
-    PAYLOADDUMP(mach.rx.raw.data, mach.rx.raw.len);
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d,%lx,%d\n",__FILE__,__func__,__LINE__,(unsigned long)mach.rx.raw.data,mach.rx.raw.len);
+		PAYLOADDUMP(mach.rx.raw.data, mach.rx.raw.len);
+	}
 
 	status = macl_start();
 
@@ -581,7 +581,7 @@ int mach_setup(struct rf_param *rf) {
 	// set setting CCA
 	if((status = macl_set_csma_params(rf->cca_min_be,rf->cca_max_be,rf->cca_retry)) != STATUS_OK) goto error;
 	if((status = macl_set_frame_retries(rf->tx_retry,rf->ack_timeout)) != STATUS_OK) goto error;
-//	if((status = macl_ch_scan(rf->cca_interval)) != STATUS_OK) goto error;				// add 
+	//	if((status = macl_ch_scan(rf->cca_interval)) != STATUS_OK) goto error;				// add 
 	cca.mode = rf->cca_mode;
 	cca.opt = rf->cca_opt;
 	if((status = macl_set_cca_mode(&cca)) != STATUS_OK) goto error;
@@ -765,11 +765,13 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 	   goto error;
 	   }
 	   */
-  //printk(KERN_INFO"RAW\n");
-  //PAYLOADDUMP(mach.tx.raw.data,mach.tx.raw.len);
-  //printk(KERN_INFO"PAYLOAD\n");
-  //PAYLOADDUMP(mach.tx.payload.data,mach.tx.payload.len);
-//	status = macl_xmit_sync(mach.tx.raw);
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
+		PAYLOADDUMP(mach.tx.raw.data,mach.tx.raw.len);
+	}
+	//printk(KERN_INFO"PAYLOAD\n");
+	//PAYLOADDUMP(mach.tx.payload.data,mach.tx.payload.len);
+	//	status = macl_xmit_sync(mach.tx.raw);
 	macl_xmit_sync(mach.tx.raw);
 	if(status == STATUS_OK) {
 		status = mach.tx.rssi;
@@ -813,7 +815,6 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 	if(!rx) {
 		goto update;
 	}
-
 	// receiving data during tx
 	if(ack) {
 		// initialize ack buffer
@@ -822,10 +823,21 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 		ack->size = mach.ack.raw.size;
 	}
 
+	if(rx->len == 0) {
+		status = -1;
+		goto wend;
+	}
+
 	// set rx buffer
 	mach.rx.input.data = rx->data;
 	mach.rx.input.len = rx->len;
 	mach.rx.input.size = rx->size;
+
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d,%lx,%d\n",__FILE__,__func__,__LINE__,
+				(unsigned long)mach.rx.raw.data,mach.rx.raw.len);
+		PAYLOADDUMP(mach.rx.input.data, mach.rx.raw.len);
+	}
 
 	// parse raw data
 	if((status = mach_parse_data(&mach.rx))!= STATUS_OK) {
@@ -872,7 +884,11 @@ update:
 		// get rssi
 		mach.rx.rssi = mach.rx.raw.data[mach.rx.raw.len-1];
 		// decriment raw length for ed
-		mach.rx.raw.len -= 1;
+		if(mach.rx.raw.len != 0) mach.rx.raw.len -= 1;
+		if(module_test & MODE_MACH_DEBUG) {
+			printk(KERN_INFO"%s,%s,%d,%lx,%d\n",__FILE__,__func__,__LINE__,(unsigned long)mach.rx.raw.data,mach.rx.raw.len);
+			PAYLOADDUMP(mach.rx.input.data, mach.rx.raw.len);
+		}
 		mach_rx_irq(&mach.rx);
 	} else {								// match sequence number
 #ifndef LAZURITE_IDE
