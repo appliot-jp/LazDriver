@@ -178,6 +178,10 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 	
 error:
 	subghz_param.tx_stat.status = result;
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s %s %d %d %d \n",__FILE__,__func__,__LINE__,msg,result);
+	}
+	
 	return msg;
 }
 
@@ -285,7 +289,8 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 	//subghz_txdone(rssi,result);
 	subghz_param.sending = false;
 
-	if(result > 0){
+	// @@ issue check error code
+	if(result == 0){
 		msg = SUBGHZ_OK;
 		subghz_param.tx_stat.rssi = result;
 		subghz_param.tx_stat.status = result;
@@ -316,6 +321,10 @@ int mach_rx_irq(struct mac_header *rx)
 	subghz_param.rx_stat.rssi = rx->rssi;
 	subghz_param.rx_stat.status = rx->raw.len;
 
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,__LINE__);
+		PAYLOADDUMP(rx->raw.data, rx->raw.len);
+	}
 	if(subghz_param.rx_callback != NULL) {
 		subghz_param.rx_callback(rx->raw.data, rx->rssi, rx->raw.len);
 	}
