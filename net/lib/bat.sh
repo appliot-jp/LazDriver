@@ -1,9 +1,10 @@
 #! /bin/bash
 
-make clean
+#make clean
 make
-../test/phyTeset.rb
-sleep 1
-dmesg > log
-vi log
+../test/tx_phy.rb
+#sleep 1
+#dmesg
+#dmesg > log
+#vi log
 
