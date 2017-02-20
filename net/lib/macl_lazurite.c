@@ -133,7 +133,7 @@ static void macl_ccadone_handler(void)
     }else if(cca_state == CCA_IDLE){
         phy_timer_stop();
 	    phy_sint_handler(macl_txdone_handler);
-        phy_wait_phy_event();
+//      phy_wait_phy_event();
     }
 	phy_timer_ei();
 }
@@ -183,6 +183,12 @@ static void macl_ack_rxdone_handler(void)
 
 	phy_timer_di();
     status = phy_rxdone(macl.phy->in);
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG){
+        printk(KERN_INFO"%s,%s,%d,%d,%d\n",__FILE__,__func__,macl.phy->in.data[2],macl.sequnceNum,macl.phy->in.len);
+        PAYLOADDUMP(macl.phy->in.data,macl.phy->in.len);
+    }
+#endif
     if(status == STATUS_OK && macl.phy->in.data[2] == macl.sequnceNum){
         phy_timer_stop();
         phy_stop();
@@ -192,10 +198,6 @@ static void macl_ack_rxdone_handler(void)
         phy_rxStart();
         phy_wait_phy_event();
     }
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d,%d\n",
-            __FILE__,__func__,macl.phy->in.data[2],macl.sequnceNum);
-#endif
 	phy_timer_ei();
 }
 
@@ -203,7 +205,7 @@ static void macl_ack_rxdone_handler(void)
 static void macl_ack_timeout_handler(void)
 {
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%lx,%d\n",
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%lx,Retry:%d\n",
             __FILE__,__func__,(unsigned long)macl.phy->out.data,macl.txRetry);
 #endif
 	phy_sint_di();

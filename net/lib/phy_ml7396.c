@@ -505,8 +505,9 @@ static void phy_set_trx_state(PHY_TRX_STATE state) {
     uint8_t reg_data = state;
     reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
     HAL_delayMicroseconds(200);
+    reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,state);
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s,%x\n",__FILE__,__func__,reg_data);
 #endif
 }
 
@@ -1215,7 +1216,7 @@ void phy_txStart(BUFFER buff,uint8_t mode)
 
     // make payload
     fifo_wr(REG_ADR_WR_TX_FIFO, payload, length);
-
+    if(mode == 2) phy_set_trx_state(PHY_ST_TXON);
 #ifndef LAZURITE_IDE
     if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%d,SequnceNumber:%d\n",
             __FILE__,__func__,(unsigned long)payload,length,payload[2]);
@@ -1306,8 +1307,10 @@ int phy_rxdone(BUFFER buff)
         fifo_rd(REG_ADR_RD_RX_FIFO, buff.data, buff.len);
     }
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%d,%d\n",
-            __FILE__,__func__,(unsigned long)buff.data,buff.len,data_size);
+	if(module_test & MODE_PHY_DEBUG){
+        printk(KERN_INFO"%s,%s,%lx,%d,%d\n",__FILE__,__func__,(unsigned long)buff.data,buff.len,data_size);
+        PAYLOADDUMP(buff.data,buff.len);
+    }
 #endif
     return status;
 }

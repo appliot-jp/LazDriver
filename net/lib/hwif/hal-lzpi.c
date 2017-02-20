@@ -329,7 +329,7 @@ int HAL_wait_event(uint8_t event)
 	int status=0;
     if (event == HAL_PHY_EVENT) {
 	    que_th2ex = 0;
-	    wait_event_interruptible_timeout(tx_done, que_th2ex,2);
+	    wait_event_interruptible_timeout(tx_done, que_th2ex,1);
     }else
     if (event == HAL_MAC_EVENT) {
         que_macl = 0;
