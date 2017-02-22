@@ -562,9 +562,7 @@ static void phy_cca_ctrl(CCA_STATE state) {
     uint8_t reg_idl_wait;
     uint8_t reg_data;
 
-    phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
-
-    if (state == CCA_ABORT || state == CCA_IDLE){
+    if (state == CCA_FAILURE || state == CCA_IDLE){
         reg_data = 0x64;
         reg_wr(REG_ADR_DEMSET3, &reg_data, 1);
         reg_data = 0x27;
@@ -574,6 +572,9 @@ static void phy_cca_ctrl(CCA_STATE state) {
         reg_wr(REG_ADR_IDLE_WAIT_L, &reg_idl_wait, 1);
         reg_wr(REG_ADR_CCA_CNTRL, &reg_cca_cntl, 1);
     }else{
+
+        phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+
         if (state == CCA_FAST) {
             reg_data = 0x00;
             reg_wr(REG_ADR_DEMSET3, &reg_data, 1);
@@ -1218,9 +1219,10 @@ void phy_txStart(BUFFER *buff,uint8_t mode)
     fifo_wr(REG_ADR_WR_TX_FIFO, payload, length);
     if(mode == 2) phy_set_trx_state(PHY_ST_TXON);
 #ifndef LAZURITE_IDE
-    if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,%lx,%d,SequnceNumber:%d\n",
-            __FILE__,__func__,(unsigned long)payload,length,payload[2]);
-    PAYLOADDUMP(payload,length);
+    if(module_test & MODE_PHY_DEBUG){
+        printk(KERN_INFO"%s,%s,%lx,%d,SequnceNumber:%d\n",__FILE__,__func__,(unsigned long)payload,length,payload[2]);
+     // PAYLOADDUMP(payload,length);
+    }
 #endif
 }
 
@@ -1256,7 +1258,7 @@ CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry)
            state = CCA_RETRY;
            phy_cca_ctrl(state); 
         }else{
-           state = CCA_ABORT;
+           state = CCA_FAILURE;
            phy_cca_ctrl(state);
         }
     }else{
@@ -1274,7 +1276,7 @@ CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry)
 
 void phy_ccaAbort(void)
 {
-    phy_cca_ctrl(CCA_ABORT);
+    phy_cca_ctrl(CCA_FAILURE);
 }
 
 
@@ -1289,6 +1291,7 @@ int phy_rxdone(BUFFER *buff)
     int status=STATUS_OK;
     uint16_t data_size;
     uint8_t reg_data[2];
+    uint8_t crc_err;
 
     phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
 
@@ -1297,7 +1300,9 @@ int phy_rxdone(BUFFER *buff)
     phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
 //  phy_intclr(~(HW_EVENT_ALL_MASK | HW_EVENT_FIFO_CLEAR));
 
-    if (reg_data[0]&0x30){        // crc error
+    crc_err = reg_data[0]%0x30;
+
+    if (crc_err){
         phy_rst();
         status=STATUS_FAIL;
     }else{
@@ -1309,7 +1314,7 @@ int phy_rxdone(BUFFER *buff)
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG){
         printk(KERN_INFO"%s,%s,%lx,%d,%d\n",__FILE__,__func__,(unsigned long)buff->data,buff->len,data_size);
-        PAYLOADDUMP(buff->data,buff->len);
+     // PAYLOADDUMP(buff->data,buff->len);
     }
 #endif
     return status;
@@ -1318,10 +1323,10 @@ int phy_rxdone(BUFFER *buff)
 
 void phy_stop(void)
 {
-      phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
-      phy_intclr(~(HW_EVENT_ALL_MASK | HW_EVENT_FIFO_CLEAR));
-      phy_inten(HW_EVENT_ALL_MASK);
-      phy_rst();
+    phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+    phy_intclr(~(HW_EVENT_ALL_MASK | HW_EVENT_FIFO_CLEAR));
+    phy_inten(HW_EVENT_ALL_MASK);
+    phy_rst();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif

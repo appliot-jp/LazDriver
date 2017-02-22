@@ -33,13 +33,12 @@ class TestClass < Minitest::Test
 	end
 
 	def test_phy
-
+        @@laz.init(module_test = 0x3000) #MACH:0x4000, MACH:0x2000, PHY:0x1000
         printf("input channel number(24-60):")
 		ch = gets().to_i
         @@laz.begin(ch,0xabcd,100,20)
-        @@laz.init(module_test = 0x3000) #MACH:0x4000, MACH:0x2000, PHY:0x1000
-        for num in 1..100 do
-            @@laz.send(0xffff,0xffff,"LAPIS Lazurite RF system")
+        for num in 1..10 do
+            @@laz.send(0xabcd,0x5f6e,"LAPIS Lazurite RF system")
         end
         @@laz.remove()
 	end

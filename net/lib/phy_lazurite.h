@@ -53,7 +53,7 @@ typedef enum {
 	CCA_FAST,                   /* CCA minmum */
 	IDLE_DETECT,                /* CCA Idle detection */
 	CCA_RETRY,                  /* CCA with BACKOFF */
-	CCA_ABORT,                  /* CCA abort */
+	CCA_FAILURE,                /* CCA failure */
 } CCA_STATE;
 
 

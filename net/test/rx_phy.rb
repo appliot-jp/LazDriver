@@ -33,25 +33,23 @@ class TestClass < Minitest::Test
 	end
 
 	def test_phy
-        for num in 1..1
-            @@laz.init(module_test = 0x7000) #PHY/MACL
-    #		@@laz.init(module_test = 0x1000) #PHY 
-    #		@@laz.init(module_test = 0x0000) #non
-    #		@@laz.init(module_test = 0xFF00) #all
-            @@laz.begin(46,0xabcd,100,20)
-            @@laz.rxEnable()
-            p @@laz.available()
-            rcv = @@laz.read()
-            p rcv
-            p @@laz.available()
-            rcv = @@laz.read()
-            p rcv
-            p @@laz.available()
-            rcv = @@laz.read()
-            p rcv
-            sleep(3)
-            @@laz.remove()
-        end
+
+        @@laz.init(module_test = 0x3000) #MACH:0x4000, MACH:0x2000, PHY:0x1000
+        printf("input channel number(24-60):")
+		ch = gets().to_i
+        @@laz.begin(ch,0xabcd,100,20)
+        @@laz.rxEnable()
+        p @@laz.available()
+        rcv = @@laz.read()
+        p rcv
+        p @@laz.available()
+        rcv = @@laz.read()
+        p rcv
+        p @@laz.available()
+        rcv = @@laz.read()
+        p rcv
+        sleep(10)
+        @@laz.remove()
 	end
 end
 

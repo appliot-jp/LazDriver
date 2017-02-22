@@ -35,6 +35,7 @@ typedef struct {
 	uint8_t txMode;
     uint8_t sequnceNum;
 	uint8_t resendingNum;
+	uint8_t rxOnEnable;
 	bool promiscuous;
 	uint16_t ack_timeout;
 	PHY_PARAM *phy;

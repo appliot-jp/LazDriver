@@ -50,10 +50,6 @@ static void macl_rxdone_handler(void)
 
 	phy_timer_di();
     status = phy_rxdone(&macl.phy->in);
-    if(module_test & MODE_MACH_DEBUG){
-		printk(KERN_INFO"%s,%s,%d,%d\n", __FILE__,__func__,__LINE__,macl.phy->in.len);
-		PAYLOADDUMP(macl.phy->in.data,macl.phy->in.len);
-	}
     macl_rx_irq(&macl.phy->in,&macl.ack);
 
     if(status == STATUS_OK && macl.ack.data) {
@@ -131,8 +127,14 @@ static void macl_ccadone_handler(void)
         macl.ccaCount++;
 	    phy_sint_handler(macl_ccadone_handler);
         phy_wait_phy_event();
-    }else if(cca_state == CCA_ABORT){
-        phy_stop();
+    }else if(cca_state == CCA_FAILURE){
+        if(macl.rxOnEnable){
+            phy_sint_handler(macl_rxdone_handler);
+            phy_rxStart();
+            phy_wait_phy_event();
+        }else{
+            phy_stop();
+        }
         phy_wakeup_mac_event();
     }else if(cca_state == CCA_IDLE){
         phy_timer_stop();
@@ -150,8 +152,14 @@ static void macl_cca_abort_handler(void)
 #endif
 	phy_sint_di();
     phy_timer_stop();
-    phy_stop();
     phy_ccaAbort();
+    if(macl.rxOnEnable){
+        phy_sint_handler(macl_rxdone_handler);
+        phy_rxStart();
+        phy_wait_phy_event();
+    }else{
+        phy_stop();
+    }
 //  phy_wakeup_phy_event();
     phy_wakeup_mac_event();
 	phy_sint_ei();
@@ -160,21 +168,28 @@ static void macl_cca_abort_handler(void)
 
 static void macl_txdone_handler(void)
 {
+    uint8_t ack_req;
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d,%lx,%d\n",
             __FILE__,__func__,macl.ack_timeout,(unsigned long)macl.ack.data,macl.phy->out.data[0]);
 #endif
 	phy_timer_di();
     phy_txdone();
-    // ack request
-    if (macl.phy->out.data[0]&0x20) {
+    ack_req = macl.phy->out.data[0]&0x20;
+    if(ack_req){
         phy_timer_start(macl.ack_timeout);
         phy_timer_handler(macl_ack_timeout_handler);
         phy_sint_handler(macl_ack_rxdone_handler);
         phy_rxStart();
         phy_wait_phy_event();
     }else{
-        phy_stop();
+        if(macl.rxOnEnable){
+            phy_sint_handler(macl_rxdone_handler);
+            phy_rxStart();
+            phy_wait_phy_event();
+        }else{
+            phy_stop();
+        }
         phy_wakeup_mac_event();
     }
 	phy_timer_ei();
@@ -195,7 +210,13 @@ static void macl_ack_rxdone_handler(void)
 #endif
     if(status == STATUS_OK && macl.phy->in.data[2] == macl.sequnceNum){
         phy_timer_stop();
-        phy_stop();
+        if(macl.rxOnEnable){
+            phy_sint_handler(macl_rxdone_handler);
+            phy_rxStart();
+            phy_wait_phy_event();
+        }else{
+            phy_stop();
+        }
         phy_wakeup_mac_event();
     }else{
         phy_sint_handler(macl_ack_rxdone_handler);
@@ -232,6 +253,11 @@ static void macl_ack_timeout_handler(void)
         }
         phy_wait_phy_event();
     }else{
+        if(macl.rxOnEnable){
+            phy_sint_handler(macl_rxdone_handler);
+            phy_rxStart();
+            phy_wait_phy_event();
+        }
 //      phy_wakeup_phy_event();
         phy_wakeup_mac_event();
     }
@@ -271,6 +297,7 @@ int	macl_start(void)
 {
 	int status=STATUS_OK;
 
+    macl.rxOnEnable = 1;
     phy_sint_handler(macl_rxdone_handler);
     phy_rxStart();
     phy_wait_phy_event();
@@ -285,6 +312,7 @@ int	macl_stop(void)
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
+    macl.rxOnEnable = 0;
     phy_stop();
 	return status;
 }

@@ -33,16 +33,17 @@ class TestClass < Minitest::Test
 	end
 
 	def test_phy
-        for num in 1..10
-            @@laz.init(module_test = 0x3000) #PHY/MACL
-    #		@@laz.init(module_test = 0x1000) #PHY 
-    #		@@laz.init(module_test = 0x0000) #non
-    #		@@laz.init(module_test = 0xFF00) #all
-            @@laz.begin(46,0xabcd,100,20)
-            for num in 1..3 do
+
+
+        printf("input channel number(24-60):")
+		ch = gets().to_i
+
+        for num1 in 1..10 do
+            @@laz.init(module_test = 0x3000) #MACH:0x4000, MACH:0x2000, PHY:0x1000
+            @@laz.begin(ch,0xabcd,100,20)
+            for num2 in 1..3 do
                 @@laz.send(0xabcd,0x5f6e,"LAPIS Lazurite RF system")
             end
-            sleep(1)
             @@laz.rxEnable()
             p @@laz.available()
             rcv = @@laz.read()
