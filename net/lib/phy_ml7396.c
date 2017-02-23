@@ -1327,25 +1327,27 @@ void phy_addrFilt(uint16_t panid, uint16_t uc_addr, uint16_t bc_addr)
 }
 
 
-int phy_ed(void)
+void phy_ed(uint8_t *level, uint8_t rfMode)
 {
-/* ED値読み出し
- *  REG_RXCONTINUE() でFIFOに残ったCRCの破棄とED値を読みだすので読み出し処理の最後に実行する事
- */
-//#define REG_RXDONE(_buffer)
-//        uint8_t _reg_data[4];
-//        ON_ERROR(reg_rd(REG_ADR_RD_RX_FIFO, _reg_data, RXCRC_SIZE));
-//        ON_ERROR(reg_rd(REG_ADR_RD_RX_FIFO, &(_buffer)->opt.common.ed, 1));
-//
+    if(!rfMode)phy_set_trx_state(PHY_ST_RXON);
+    reg_rd(REG_ADR_ED_RSLT, level, 1);
+    if(!rfMode)phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s,ED_value:%x\n",__FILE__,__func__,*level);
 #endif
-    return 0;
 }
 
 
 void phy_sleep(void)
 {
+    uint8_t reg_data;
+
+    phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+	reg_rd(REG_ADR_CLK_SET, &reg_data, 1);
+	reg_data |=  0x20;
+	reg_wr(REG_ADR_CLK_SET, &reg_data, 1);
+    reg_data = 0x00;
+	reg_wr(REG_ADR_2DIV_CNTRL, &reg_data, 1);
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif

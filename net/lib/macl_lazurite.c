@@ -358,8 +358,7 @@ int	macl_xmit_sync(BUFFER buff)
 int	macl_ed(uint8_t *level)
 {
 	int status=STATUS_OK;
-	*level = 0xa5;
-	phy_ed();
+	phy_ed(level, macl.rxOnEnable | macl.promiscuousMode);
 	return status;
 }
 int	macl_set_channel(uint8_t page,uint8_t ch)

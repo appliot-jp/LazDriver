@@ -94,9 +94,8 @@ extern void phy_ccaAbort(void);
 extern void phy_txdone(void);
 extern int phy_rxdone(BUFFER *buff);
 extern void phy_stop(void);
-
 extern void phy_addrFilt(uint16_t panid, uint16_t uc_addr, uint16_t bc_addr);
-extern int phy_ed(void);
+extern void phy_ed(uint8_t *level, uint8_t rfMode);
 extern void phy_sleep(void);
 
 
