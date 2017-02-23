@@ -600,56 +600,6 @@ static void phy_cca_ctrl(CCA_STATE state) {
 }
 
 
-#if 0
-/******************************************************************************/
-/*! @brief Sint event handler
- * @detail 
- ******************************************************************************/
-static void sint_handler(void) {
-	uint32_t hw_event, hw_done;
-	ml7396_hwif_timer_di();
-	// REG_INTSRC(hw_event);
-	printk(KERN_INFO"%s %s %d %08x\n",__FILE__,__func__,__LINE__,hw_event);
-	hw_done = 0;
-//	em_data.store_hw_event = 0;
-#ifdef LAZURITE_IDE 
-	if((em_data.state == ML7396_StateSending) &&
-			hw_event&(HW_EVENT_CCA_DONE|
-				HW_EVENT_FIFO_EMPTY|HW_EVENT_TX_DONE)) {
-
-		em_data.store_hw_event = hw_event;
-		if(hw_event & HW_EVENT_CCA_DONE){
-			reg_rd(REG_ADR_CCA_CNTRL, &em_data.cca_rslt, 1);
-			em_data.cca_rslt &= 0x03;
-		}
-		hw_event &= ~HW_EVENT_TX_FIFO_DONE;
-		REG_INTCLR(hw_event);
-	}else
-#endif
-	{
-		//em_main(&em_data, NULL, 0, hw_event, &hw_done);
-		//REG_INTCLR(hw_done);
-	}
-	ml7396_hwif_timer_ei();
-}
-
-/******************************************************************************/
-/*! @brief Sint event handler
- * @detail 
- ******************************************************************************/
-static void timer_handler(void) {
-	uint32_t hw_event, hw_done;
-	ml7396_hwif_sint_di();
-	hw_event = ETIMEDOUT, hw_done = 0;
-	// em_main(&em_data, NULL, 0, hw_event, &hw_done);
-	ml7396_hwif_sint_ei();
-}
-#endif
-
-
-
-
-
 /*
  -------------------------------------------------------------
                     Public interrupt section
@@ -1300,8 +1250,7 @@ int phy_rxdone(BUFFER *buff)
     phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
 //  phy_intclr(~(HW_EVENT_ALL_MASK | HW_EVENT_FIFO_CLEAR));
 
-    crc_err = reg_data[0]%0x30;
-
+    crc_err = reg_data[0]&0x30;
     if (crc_err){
         phy_rst();
         status=STATUS_FAIL;
@@ -1333,10 +1282,45 @@ void phy_stop(void)
 }
 
 
-void phy_addr_filt(void)
+void phy_addrFilt(uint16_t panid, uint16_t uc_addr, uint16_t bc_addr)
 {
+    uint8_t reg_data[2];
+
+	reg_data[0] = 0x1A;
+	reg_wr(REG_ADR_ADDFIL_CNTRL, reg_data, 1);
+
+	reg_data[0] = panid>>0&0xff;
+	reg_data[1] = panid>>8&0xff;
+	reg_wr(REG_ADR_PANID_L, reg_data, 2);
+
+	reg_data[0] = uc_addr>>0&0xff;
+	reg_data[1] = uc_addr>>8&0xff;
+	reg_wr(REG_ADR_SHT_ADDR0_L, reg_data, 2);
+
+	reg_data[0] = bc_addr>>0&0xff;
+	reg_data[1] = bc_addr>>8&0xff;
+	reg_wr(REG_ADR_SHT_ADDR1_L, reg_data, 2);
+
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	if(module_test & MODE_PHY_DEBUG){
+
+	    printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+
+        reg_rd(REG_ADR_ADDFIL_CNTRL, reg_data, 1);
+        printk(KERN_INFO"ADDFIL_CNTRL: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
+
+        reg_rd(REG_ADR_PANID_L, reg_data, 2);
+        printk(KERN_INFO"PANID_L_L: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
+        printk(KERN_INFO"PANID_L_H: %s,%s,%x\n",__FILE__,__func__,reg_data[1]);
+
+        reg_rd(REG_ADR_SHT_ADDR0_L, reg_data, 2);
+        printk(KERN_INFO"ADDR0_L: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
+        printk(KERN_INFO"ADDR0_H: %s,%s,%x\n",__FILE__,__func__,reg_data[1]);
+
+        reg_rd(REG_ADR_SHT_ADDR1_L, reg_data, 2);
+        printk(KERN_INFO"ADDR1_L: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
+        printk(KERN_INFO"ADDR1_H: %s,%s,%x\n",__FILE__,__func__,reg_data[1]);
+    }
 #endif
 }
 
