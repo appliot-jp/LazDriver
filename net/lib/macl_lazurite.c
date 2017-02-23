@@ -51,11 +51,11 @@ static void macl_rxdone_handler(void)
 	phy_timer_di();
     status = phy_rxdone(&macl.phy->in);
     macl_rx_irq(&macl.phy->in,&macl.ack);
+    macl_rx_irq(NULL,NULL);
 
-    if(status == STATUS_OK && macl.ack.data) {
+    if(!macl.promiscuousMode && status == STATUS_OK && macl.ack.data) {
 	    phy_sint_handler(macl_ack_txdone_handler);
         phy_txStart(&macl.ack,2);
-        macl_rx_irq(NULL,NULL);
     } else {
         // not requeset ack, or crc errc
         phy_sint_handler(macl_rxdone_handler);
@@ -64,7 +64,7 @@ static void macl_rxdone_handler(void)
     }
 #ifndef LAZURITE_IDE
     if(module_test & MODE_MACL_DEBUG){
-        if(macl.ack.data) {
+        if(!macl.promiscuousMode && status == STATUS_OK && macl.ack.data) {
             printk(KERN_INFO"%s,%s,%d,%08lx,%d\n",__FILE__,__func__,__LINE__,
                     (unsigned long)macl.ack.data,macl.ack.len);
             PAYLOADDUMP(macl.ack.data,macl.ack.len);
@@ -460,12 +460,17 @@ int	macl_set_frame_retries(uint8_t retries,uint16_t timeout)
 int	macl_set_promiscuous_mode(const bool on)
 {
 	int status=STATUS_OK;
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,on);
-#endif
-	phy_sint_handler(macl_rxdone_handler);
-	phy_promiscuous();
-	phy_wait_phy_event();
+
+    macl.promiscuousMode = on;
+
+    if (macl.promiscuousMode){
+	    phy_sint_handler(macl_rxdone_handler);
+        phy_rxStart();
+	    phy_wait_phy_event();
+    }else{
+        phy_stop();
+    }
+
 	return status;
 }
 

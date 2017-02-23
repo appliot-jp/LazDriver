@@ -1100,6 +1100,7 @@ PHY_PARAM *phy_init(void)
 }
 
 
+/*
 void phy_promiscuous(void)
 {
 //  phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
@@ -1109,6 +1110,7 @@ void phy_promiscuous(void)
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 }
+*/
 
 
 void phy_rxStart(void)
