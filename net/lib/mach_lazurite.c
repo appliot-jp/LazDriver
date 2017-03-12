@@ -592,12 +592,16 @@ error:
 
 /********************************************************************/
 /*! @brief set 64bit address for distination
+  @param[in]	panid	panid
   @param[in]	*addr	64bit distination address
   @return    STATUS_OK
   @exception none
  ********************************************************************/
-int mach_set_dst_ieee_addr(uint8_t *addr)
+int mach_set_dst_ieee_addr(uint16_t panid,uint8_t *addr)
 {
+	mach.tx.dst.panid.enb = true;
+	mach.tx.dst.panid.data = panid;
+	mach.tx.dst.addr_type = IEEE802154_FC_ADDR_IEEE;
 	memcpy(mach.tx.dst.addr.ieee_addr,addr,sizeof(8));
 	return STATUS_OK;
 }

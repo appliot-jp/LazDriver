@@ -211,6 +211,15 @@ class LazGem::Device
 			
     	return rcv
 	end
+	def send64(panid,addr,payload)
+		set_tx_panid(panid)
+		set_tx_addr0((addr >>  0)&0x000000000000ffff)
+		set_tx_addr1((addr >> 16)&0x000000000000ffff)
+		set_tx_addr2((addr >> 32)&0x000000000000ffff)
+		set_tx_addr3((addr >> 48)&0x000000000000ffff)
+		@@device_wr.write(payload)
+		sleep 0.001
+	end
 	def send(panid,addr,payload)
 		set_tx_panid(panid)
 		set_tx_addr0(addr)

@@ -83,6 +83,7 @@ static struct {
 	struct timespec rx_time;
 	int rx_status;
 	int tx_status;
+	bool tx64;
 } p = {
 	0,		// drv_mode
 	36,		// default ch
@@ -364,9 +365,19 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					ret += p.tx_addr[(param-IOCTL_GET_RX_ADDR0)+0];
 					break;
 				case IOCTL_SET_RX_ADDR0:			// set panid
+					p.tx64 = false;
+					if((arg >= 0) && (arg <= 0xffff)) {
+						p.tx_addr[(param-IOCTL_SET_RX_ADDR0)+1] = (arg >> 8) & 0x000000ff;
+						p.tx_addr[(param-IOCTL_SET_RX_ADDR0)+0] = arg  & 0x000000ff;
+						ret = arg;
+					} else {
+						ret = -EINVAL;
+					}
+					break;
 				case IOCTL_SET_RX_ADDR1:			// set panid
 				case IOCTL_SET_RX_ADDR2:			// set panid
 				case IOCTL_SET_RX_ADDR3:			// set panid
+					p.tx64 = true;
 					if((arg >= 0) && (arg <= 0xffff)) {
 						p.tx_addr[(param-IOCTL_SET_RX_ADDR0)+1] = (arg >> 8) & 0x000000ff;
 						p.tx_addr[(param-IOCTL_SET_RX_ADDR0)+0] = arg  & 0x000000ff;
@@ -591,6 +602,7 @@ static void tx_callback(uint8_t rssi,int status) {
 	}
 	return;
 }
+
 static ssize_t chardev_write (struct file * file, const char __user * buf,
 		size_t count, loff_t * ppos) {
 	int status = 0;
@@ -600,17 +612,21 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 
 	if(count<DATA_SIZE)
 	{
-		uint16_t tx_addr;
-		tx_addr = p.tx_addr[1];
-		tx_addr = (tx_addr << 8 ) | p.tx_addr[0];
 		if(copy_from_user(payload,buf,count))
 		{
 			status = -EFAULT;
 			goto error;
 		}
 		EXT_set_tx_led(0);
+		if(p.tx64) {
+			status = SubGHz.send64(p.tx_panid,p.tx_addr,payload,count,tx_callback);
+		}else {
+			uint16_t tx_addr;
+			tx_addr = p.tx_addr[1];
+			tx_addr = (tx_addr << 8 ) | p.tx_addr[0];
 
-		status = SubGHz.send(p.tx_panid,tx_addr,payload,count,tx_callback);
+			status = SubGHz.send(p.tx_panid,tx_addr,payload,count,tx_callback);
+		}
 		p.tx_status = status;
 		if(status == SUBGHZ_OK)
 		{
@@ -701,7 +717,7 @@ static int __init drv_param_init(void) {
 	   EXT_I2C_read(0x25,p.my_addr[2],1);
 	   EXT_I2C_read(0x26,p.my_addr[1],1);
 	   EXT_I2C_read(0x27,p.my_addr[0],1);
-	   */
+	 */
 
 	printk(KERN_INFO "[drv-lazurite] End of init\n");
 	mutex_init( &chrdev.lock );

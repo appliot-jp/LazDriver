@@ -1,0 +1,76 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+LazGem	device.rb	/^class LazGem::Device$/;"	c
+LazGem	ioctl.rb	/^class LazGem::Device$/;"	c
+LazGem	version.rb	/^module LazGem$/;"	m
+available	device.rb	/^	def available()$/;"	f	class:LazGem
+begin	ioctl.rb	/^	def begin(ch,panid,bps,pwr)$/;"	f	class:LazGem
+close	ioctl.rb	/^	def close()$/;"	f	class:LazGem
+eeprom_read	ioctl.rb	/^	def eeprom_read(addr)$/;"	f	class:LazGem
+getAddrType	ioctl.rb	/^	def getAddrType()$/;"	f	class:LazGem
+getMyAddress	ioctl.rb	/^	def getMyAddress()$/;"	f	class:LazGem
+getSendMode	ioctl.rb	/^	def getSendMode()$/;"	f	class:LazGem
+getTxRetry	ioctl.rb	/^	def getTxRetry()$/;"	f	class:LazGem
+get_addr_size	ioctl.rb	/^	def get_addr_size()$/;"	f	class:LazGem
+get_addr_type	ioctl.rb	/^	def get_addr_type()$/;"	f	class:LazGem
+get_bps	ioctl.rb	/^	def get_bps()$/;"	f	class:LazGem
+get_cca_wait	ioctl.rb	/^	def get_cca_wait()$/;"	f	class:LazGem
+get_ch	ioctl.rb	/^	def get_ch()$/;"	f	class:LazGem
+get_drv_mode	ioctl.rb	/^	def get_drv_mode()$/;"	f	class:LazGem
+get_my_addr0	ioctl.rb	/^	def get_my_addr0()$/;"	f	class:LazGem
+get_my_addr1	ioctl.rb	/^	def get_my_addr1()$/;"	f	class:LazGem
+get_my_addr2	ioctl.rb	/^	def get_my_addr2()$/;"	f	class:LazGem
+get_my_addr3	ioctl.rb	/^	def get_my_addr3()$/;"	f	class:LazGem
+get_my_panid	ioctl.rb	/^	def get_my_panid()$/;"	f	class:LazGem
+get_pwr	ioctl.rb	/^	def get_pwr()$/;"	f	class:LazGem
+get_rx_rssi	ioctl.rb	/^	def get_rx_rssi()$/;"	f	class:LazGem
+get_rx_time	ioctl.rb	/^	def get_rx_time()$/;"	f	class:LazGem
+get_sense_time	ioctl.rb	/^	def get_sense_time()$/;"	f	class:LazGem
+get_tx_addr0	ioctl.rb	/^	def get_tx_addr0()$/;"	f	class:LazGem
+get_tx_addr1	ioctl.rb	/^	def get_tx_addr1()$/;"	f	class:LazGem
+get_tx_addr2	ioctl.rb	/^	def get_tx_addr2()$/;"	f	class:LazGem
+get_tx_addr3	ioctl.rb	/^	def get_tx_addr3()$/;"	f	class:LazGem
+get_tx_interval	ioctl.rb	/^	def get_tx_interval()$/;"	f	class:LazGem
+get_tx_panid	ioctl.rb	/^	def get_tx_panid()$/;"	f	class:LazGem
+get_tx_retry	ioctl.rb	/^	def get_tx_retry()$/;"	f	class:LazGem
+get_tx_rssi	ioctl.rb	/^	def get_tx_rssi()$/;"	f	class:LazGem
+init	device.rb	/^	def init(module_test=0x0000)$/;"	f	class:LazGem
+read	device.rb	/^	def read()$/;"	f	class:LazGem
+remove	device.rb	/^	def remove()$/;"	f	class:LazGem
+rf_reg_read	ioctl.rb	/^	def rf_reg_read(addr)$/;"	f	class:LazGem
+rf_reg_write	ioctl.rb	/^	def rf_reg_write(addr,data)$/;"	f	class:LazGem
+rxDisable	ioctl.rb	/^	def rxDisable()$/;"	f	class:LazGem
+rxEnable	ioctl.rb	/^	def rxEnable()$/;"	f	class:LazGem
+rx_led	ioctl.rb	/^	def rx_led(time)$/;"	f	class:LazGem
+send	device.rb	/^	def send(panid,addr,payload)$/;"	f	class:LazGem
+send64	device.rb	/^	def send64(panid,addr,payload)$/;"	f	class:LazGem
+setAddrType	ioctl.rb	/^	def setAddrType(addr_type)$/;"	f	class:LazGem
+setAes	ioctl.rb	/^	def setAes(key)$/;"	f	class:LazGem
+setSendMode	ioctl.rb	/^	def setSendMode(param)$/;"	f	class:LazGem
+setTxRetry	ioctl.rb	/^	def setTxRetry(cycle)$/;"	f	class:LazGem
+set_addr_size	ioctl.rb	/^	def set_addr_size(size)$/;"	f	class:LazGem
+set_addr_type	ioctl.rb	/^	def set_addr_type(type)$/;"	f	class:LazGem
+set_begin	ioctl.rb	/^	def set_begin()$/;"	f	class:LazGem
+set_bps	ioctl.rb	/^	def set_bps(bps)$/;"	f	class:LazGem
+set_cca_wait	ioctl.rb	/^	def set_cca_wait(cca_wait)$/;"	f	class:LazGem
+set_ch	ioctl.rb	/^	def set_ch(ch)$/;"	f	class:LazGem
+set_drv_mode	ioctl.rb	/^	def set_drv_mode(mode)$/;"	f	class:LazGem
+set_my_addr0	ioctl.rb	/^	def set_my_addr0(addr)$/;"	f	class:LazGem
+set_my_addr1	ioctl.rb	/^	def set_my_addr1(addr)$/;"	f	class:LazGem
+set_my_addr2	ioctl.rb	/^	def set_my_addr2(addr)$/;"	f	class:LazGem
+set_my_addr3	ioctl.rb	/^	def set_my_addr3(addr)$/;"	f	class:LazGem
+set_my_panid	ioctl.rb	/^	def set_my_panid(panid)$/;"	f	class:LazGem
+set_pwr	ioctl.rb	/^	def set_pwr(pwr)$/;"	f	class:LazGem
+set_sense_time	ioctl.rb	/^	def set_sense_time(sense_time)$/;"	f	class:LazGem
+set_tx_addr0	ioctl.rb	/^	def set_tx_addr0(addr)$/;"	f	class:LazGem
+set_tx_addr1	ioctl.rb	/^	def set_tx_addr1(addr)$/;"	f	class:LazGem
+set_tx_addr2	ioctl.rb	/^	def set_tx_addr2(addr)$/;"	f	class:LazGem
+set_tx_addr3	ioctl.rb	/^	def set_tx_addr3(addr)$/;"	f	class:LazGem
+set_tx_interval	ioctl.rb	/^	def set_tx_interval(tx_interval)$/;"	f	class:LazGem
+set_tx_panid	ioctl.rb	/^	def set_tx_panid(panid)$/;"	f	class:LazGem
+set_tx_retry	ioctl.rb	/^	def set_tx_retry(tx_retry)$/;"	f	class:LazGem
+tx_led	ioctl.rb	/^	def tx_led(time)$/;"	f	class:LazGem

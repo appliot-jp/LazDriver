@@ -146,7 +146,7 @@ extern struct mach_param *mach_init(void);
 extern int mach_sleep(bool on);
 extern int mach_setup(struct rf_param *rf);
 extern int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr);
-extern int mach_set_dst_ieee_addr(uint8_t *addr);
+extern int mach_set_dst_ieee_addr(uint16_t panid,uint8_t *addr);
 extern int mach_set_dst_short_addr(uint16_t panid,uint16_t short_addr);
 extern int mach_set_src_addr(uint8_t addr_mode);
 extern int mach_tx(struct mac_fc_alignment,uint8_t addr_type,BUFFER *txbuf);
