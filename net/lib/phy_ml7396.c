@@ -1241,7 +1241,7 @@ void phy_txdone(void)
 int phy_rxdone(BUFFER *buff)
 {
     int status=STATUS_OK;
-    uint16_t data_size;
+    uint16_t data_size=0;
     uint8_t reg_data[2];
     uint8_t crc_err;
 

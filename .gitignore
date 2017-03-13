@@ -7,3 +7,4 @@ Module.symvers
 *.o
 modules.order
 DRV_802154.*
+tags

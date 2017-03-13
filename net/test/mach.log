@@ -1,0 +1,140 @@
+[ 1027.574494] /home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_init
+[ 1027.574514] /home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_sleep,1
+[ 1027.574521] mach_setup,001d12900063600c
+[ 1027.574525] [drv-lazurite] End of init
+[ 1027.845377] ch at 100kbps = 23 error!! must be 24-31, 33-60
+[ 1027.845589] ch at 100kbps = 32 error!! must be 24-31, 33-60
+[ 1027.845682] ch at 100kbps = 61 error!! must be 24-31, 33-60
+[ 1027.845772] ch at 50kbps = 23 error!! must be 24-61
+[ 1027.845907] ch at 50kbps = 62 error!! must be 24-61
+[ 1027.845987] bps = 31 error!! must be 50 or 100
+[ 1027.846168] bps = 65 error!! must be 50 or 100
+[ 1027.846562] pwr = 2 error!! must be 1 or 20
+[ 1027.846701] bps = 80000 error!! must be 50 or 100
+[ 1027.846809] bps = 80000 error!! must be 50 or 100
+[ 1027.874227] [drv-lazurite] exit remove
+[ 1028.013144] /home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_init
+[ 1028.013158] /home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_sleep,1
+[ 1028.013164] mach_setup,001d12900063600c
+[ 1028.013168] [drv-lazurite] End of init
+[ 1028.264641] /home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_sleep,0
+[ 1028.264656] /home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_set_channel,2,48
+[ 1028.264662] /home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_set_txpower,20
+[ 1028.264667] /home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_set_csma_params,0,7
+[ 1028.264672] /home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_set_frame_retries,3
+[ 1028.264677] /home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_ch_scan,20
+[ 1028.264683] /home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_set_cca_mode,2,0
+[ 1028.264687] /home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_set_cca_ed_level,1
+[ 1028.264696] /home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_set_hw_addr_filt, 001d12900063600c,abcd,600c,1
+[ 1028.264740] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_set_dst_short_addr
+[ 1028.264747] ***** TX TEST ******!!/home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_tx,743
+[ 1028.264754] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_make_header,a821
+[ 1028.264758]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[ 1028.264762] -----------------------------------------------------------
+[ 1028.264766] 00000000   21 A8 01 CD AB 34 12 0C  60 68 65 6C 6C 6F 
+[ 1028.264795] ***** ACK TEST ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync,256
+[ 1028.264800] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,825
+[ 1028.264805] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,831
+[ 1028.264810] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,331
+[ 1028.264815] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,335
+[ 1028.264820] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,343
+[ 1028.264825] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,348
+[ 1028.264830] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,353
+[ 1028.264835] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,359
+[ 1028.264840] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,366
+[ 1028.264844] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,372
+[ 1028.264849] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,375
+[ 1028.264854] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,382
+[ 1028.264859] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,393
+[ 1028.264864] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,837
+[ 1028.264869] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,858
+[ 1028.264874] not ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1028.264878] ***** ACK TEST2 ******!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1028.264883] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,825
+[ 1028.264888] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,831
+[ 1028.264893] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,331
+[ 1028.264898] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,335
+[ 1028.264903] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,343
+[ 1028.264907] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,348
+[ 1028.264912] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,353
+[ 1028.264917] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,359
+[ 1028.264922] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,366
+[ 1028.264926] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,372
+[ 1028.264931] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,375
+[ 1028.264936] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,382
+[ 1028.264941] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,393
+[ 1028.264945] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,837
+[ 1028.264950] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,858
+[ 1028.264955] ACK Received!!/home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_xmit_sync
+[ 1028.266058] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,825
+[ 1028.266063] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,831
+[ 1028.266068] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,331
+[ 1028.266073] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,335
+[ 1028.266128] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,343
+[ 1028.266145] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,348
+[ 1028.266157] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,353
+[ 1028.266168] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,359
+[ 1028.266180] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,366
+[ 1028.266191] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,372
+[ 1028.266204] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,375
+[ 1028.266215] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,382
+[ 1028.266226] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,393
+[ 1028.266237]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[ 1028.266247] -----------------------------------------------------------
+[ 1028.266255] 00000000   68 65 6C 6C 6F 
+[ 1028.266297] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,837
+[ 1028.266309] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,840
+[ 1028.266321] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,843
+[ 1028.266332] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,851
+[ 1028.266344] /home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_start,72,7f36f084,3
+[ 1028.266356] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_rx_irq,787
+[ 1028.266369]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[ 1028.266379] -----------------------------------------------------------
+[ 1028.266389] 00000000   21 A8 01 CD AB 34 12 34  12 68 65 6C 6C 6F 
+[ 1028.266424] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,825
+[ 1028.266429] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,831
+[ 1028.266434] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,331
+[ 1028.266439] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,335
+[ 1028.266443] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,343
+[ 1028.266448] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,348
+[ 1028.266453] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,353
+[ 1028.266458] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,359
+[ 1028.266463] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,366
+[ 1028.266467] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,372
+[ 1028.266472] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,375
+[ 1028.266477] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,382
+[ 1028.266486] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,393
+[ 1028.266490]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[ 1028.266494] -----------------------------------------------------------
+[ 1028.266500] 00000000   68 65 6C 6C 6F 
+[ 1028.266513] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,837
+[ 1028.266518] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,840
+[ 1028.266523] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,843
+[ 1028.266528] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,851
+[ 1028.266534] /home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_start,86,7f36f084,3
+[ 1028.266539] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_rx_irq,787
+[ 1028.266543]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[ 1028.266547] -----------------------------------------------------------
+[ 1028.266550] 00000000   21 E8 01 CD AB 34 12 0C  60 63 00 90 12 1D 00 68  
+00000010   65 6C 6C 6F 
+[ 1028.266588] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,825
+[ 1028.266592] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,831
+[ 1028.266597] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,331
+[ 1028.266602] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,335
+[ 1028.266607] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,343
+[ 1028.266612] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,348
+[ 1028.266617] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,353
+[ 1028.266624] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,359
+[ 1028.266629] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,366
+[ 1028.266634] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,372
+[ 1028.266638] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,375
+[ 1028.266643] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,382
+[ 1028.266648] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,mach_parse_data,393
+[ 1028.266652]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[ 1028.266656] -----------------------------------------------------------
+[ 1028.266659] 00000000   68 65 6C 6C 6F 
+[ 1028.266672] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,837
+[ 1028.266677] /home/pi/driver/LazDriver/net/lib/mach_lazurite.c,macl_rx_irq,840
+[ 1028.266682] /home/pi/driver/LazDriver/net/lib/macl_lazurite.c,macl_start,106,NO ACK
+[ 1028.293364] [drv-lazurite] exit remove
+
