@@ -78,6 +78,17 @@ class LazGem::Device
 	def getMyAddress()
 		return get_my_addr0()
 	end
+	def getMyAddr64()
+		data = get_my_addr3();
+		addr = data << 48;
+		data = get_my_addr2();
+		addr = addr | (data << 32);
+		data = get_my_addr1();
+		addr = addr | (data << 16);
+		data = get_my_addr0();
+		addr = addr | (data << 0);
+		return addr;
+	end
 	def rxDisable()
 		rxon = 0;
 		ret = @@device_wr.ioctl(IOCTL_SET_RXOFF,rxon)

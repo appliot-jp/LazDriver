@@ -125,7 +125,7 @@ static SUBGHZ_MSG subghz_remove(void)
 }
 static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUBGHZ_POWER txPower)
 {
-	SUBGHZ_MSG msg=SUBGHZ_OK;
+	SUBGHZ_MSG msg;
 	int result;
 	uint16_t short_addr=0;
 
@@ -251,6 +251,7 @@ SUBGHZ_MSG subghz_halt_until_complete(void)
 static SUBGHZ_MSG subghz_tx64(uint16_t panid, uint8_t *dstAddr64, uint8_t *data, uint16_t len, void (*callback)(uint8_t rssi, int status)) {
 	SUBGHZ_MSG msg;
 	int result;
+	uint8_t addr_type;
 	struct mac_fc_alignment fc;
 
 	// initializing buffer
@@ -269,7 +270,19 @@ static SUBGHZ_MSG subghz_tx64(uint16_t panid, uint8_t *dstAddr64, uint8_t *data,
 	mach_set_src_addr(IEEE802154_FC_ADDR_IEEE);
 	subghz_param.sending = true;
 	// @issue check rssi
-	result = mach_tx(fc,subghz_param.addr_type,&subghz_param.tx);
+	addr_type = subghz_param.addr_type;
+	switch(addr_type) {
+	case 0:
+		if(panid==0xfffe) addr_type = 1;
+		break;
+	case 4:
+		if(panid==0xfffe) addr_type = 5;
+		break;
+	case 6:
+		if(panid==0xfffe) addr_type = 7;
+		break;
+	}
+	result = mach_tx(fc,addr_type,&subghz_param.tx);
 
 	if(callback) {
 		callback(result,result);

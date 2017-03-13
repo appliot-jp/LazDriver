@@ -34,7 +34,7 @@ class TestClass < Minitest::Test
 
 	def test_phy
 
-        @@laz.init(module_test = 0x3000) #MACH:0x4000, MACH:0x2000, PHY:0x1000
+        @@laz.init(module_test = 0x4000) #MACH:0x4000, MACH:0x2000, PHY:0x1000
         printf("input channel number(24-60):")
 		ch = gets().to_i
         @@laz.begin(ch,0xabcd,100,20)

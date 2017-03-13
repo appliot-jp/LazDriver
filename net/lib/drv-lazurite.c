@@ -336,13 +336,24 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					}
 					break;
 				case IOCTL_GET_MY_ADDR0:			// get panid
-					ret = SubGHz.getMyAddress();
-					p.my_addr[1] = (ret >> 8) & 0x00ff;
-					p.my_addr[0] = ret  & 0x000000ff;
+					ret = p.my_addr[1];
+					ret = (ret << 8) | p.my_addr[0];
+					ret &= 0x0000ffff;
 					break;
 				case IOCTL_GET_MY_ADDR1:			// get panid
+					ret = p.my_addr[3];
+					ret = (ret << 8) | p.my_addr[2];
+					ret &= 0x0000ffff;
+					break;
 				case IOCTL_GET_MY_ADDR2:			// get panid
+					ret = p.my_addr[5];
+					ret = (ret << 8) | p.my_addr[4];
+					ret &= 0x0000ffff;
+					break;
 				case IOCTL_GET_MY_ADDR3:			// get panid
+					ret = p.my_addr[7];
+					ret = (ret << 8) | p.my_addr[6];
+					ret &= 0x0000ffff;
 					break;
 				case IOCTL_SET_MY_ADDR0:			// set panid
 					if((arg >= 0) && (arg <= 0xffff)&&(p.drv_mode==0x0000FFFF)) {
@@ -707,17 +718,17 @@ static int __init drv_param_init(void) {
 	status = SubGHz.init();
 	if(status != SUBGHZ_OK) goto error_device_create;
 
-	// get address
-	/*
-	   EXT_I2C_read(0x20,p.my_addr[7],1);
-	   EXT_I2C_read(0x21,p.my_addr[6],1);
-	   EXT_I2C_read(0x22,p.my_addr[5],1);
-	   EXT_I2C_read(0x23,p.my_addr[4],1);
-	   EXT_I2C_read(0x24,p.my_addr[3],1);
-	   EXT_I2C_read(0x25,p.my_addr[2],1);
-	   EXT_I2C_read(0x26,p.my_addr[1],1);
-	   EXT_I2C_read(0x27,p.my_addr[0],1);
-	 */
+	SubGHz.getMyAddr64(p.my_addr);
+	printk(KERN_INFO"Lazurite MAC address: %02x%02x %02x%02x %02x%02x %02x%02x\n",
+			p.my_addr[7],
+			p.my_addr[6],
+			p.my_addr[5],
+			p.my_addr[4],
+			p.my_addr[3],
+			p.my_addr[2],
+			p.my_addr[1],
+			p.my_addr[0]
+		);
 
 	printk(KERN_INFO "[drv-lazurite] End of init\n");
 	mutex_init( &chrdev.lock );

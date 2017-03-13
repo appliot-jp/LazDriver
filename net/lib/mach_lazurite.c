@@ -117,7 +117,7 @@ static int mach_make_header(struct mac_header *header) {
 	// dst panid
 	if(enb_dst_panid&BIT(header->addr_type))
 	{
-		if(!header->dst.panid.enb)
+		if((!header->dst.panid.enb) || (header->dst.panid.data == 0xFFFE))
 		{
 #ifndef LAZURITE_IDE
 			printk(KERN_ERR"dst panid is invalid in %s,%s,%d\n", __FILE__, __func__, __LINE__);
@@ -602,7 +602,8 @@ int mach_set_dst_ieee_addr(uint16_t panid,uint8_t *addr)
 	mach.tx.dst.panid.enb = true;
 	mach.tx.dst.panid.data = panid;
 	mach.tx.dst.addr_type = IEEE802154_FC_ADDR_IEEE;
-	memcpy(mach.tx.dst.addr.ieee_addr,addr,sizeof(8));
+	memcpy(mach.tx.dst.addr.ieee_addr,addr,8);
+	PAYLOADDUMP(mach.tx.dst.addr.ieee_addr,8);
 	return STATUS_OK;
 }
 
