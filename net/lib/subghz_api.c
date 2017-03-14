@@ -353,11 +353,11 @@ int mach_rx_irq(struct mac_header *rx)
 	subghz_param.rx_stat.status = rx->raw.len;
 
 	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,__LINE__);
+		printk(KERN_INFO"[rx]%s,%s,%d\n",__FILE__,__func__,__LINE__);
 		PAYLOADDUMP(rx->raw.data, rx->raw.len);
 	}
 	if(subghz_param.rx_callback != NULL) {
-		subghz_param.rx_callback(rx->raw.data, rx->rssi, rx->raw.len);
+		subghz_param.rx_callback(rx->raw.data, rx->rssi,rx->raw.len);
 	} else {
 		memcpy(subghz_param.rx.data,rx->raw.data,rx->raw.len);
 		subghz_param.rx.len = rx->raw.len;

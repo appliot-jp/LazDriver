@@ -109,6 +109,9 @@ int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 	const uint8_t *in;
 	uint8_t *out;
 
+	printk(KERN_INFO"[rx]%s,%s,%d\n",__FILE__,__func__,__LINE__);
+	PAYLOADDUMP(raw, len);
+
 	new_data = kmalloc(sizeof(struct list_data), GFP_KERNEL);
 	if (new_data == NULL) {
 		printk(KERN_ERR "[DRV-Lazurite] kmalloc (list_data) GFP_KERNEL no memory\n");
@@ -152,18 +155,17 @@ int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 
 	return 0;
 }
-void rx_callback(const uint8_t *data, uint8_t rssi, int status)
-{
-	if(status > 0) {
-		//@issue temporary delete LED flash
-		//EXT_rx_led_flash(2);
+void rx_callback(const uint8_t *data, uint8_t rssi, int status) {
+	//@issue temporary delete LED flash
+	printk(KERN_INFO"%s,%s,%d,%d,%d\n",__FILE__,__func__,__LINE__,rssi,status);
+	EXT_rx_led_flash(1);
 #ifdef LAZURITE_IDE
-		if(module_test & MODE_MACH_DEBUG) {
-			printk(KERN_INFO"%s,%s,%d, RSSI=%d\n",__FILE__,__func__,__LINE__,rssi);
-		}
-#endif
-		write_list_data(data,status,rssi);
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d,%d,%d\n",__FILE__,__func__,__LINE__,rssi,status);
+		PAYLOADDUMP(mach.rx.input.data, mach.rx.raw.len);
 	}
+#endif
+	write_list_data(data,status,rssi);
 	return;
 
 }
@@ -226,29 +228,29 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 						break;
 					}
 				case IOCTL_SET_AES:
-                    {
-                        unsigned char i; 
-                        unsigned char index;
-                        unsigned char ckey[32]; 
-                        unsigned char shift;
-                        unsigned char hex;
-		                memcpy(ckey,(const void *)arg,32);
+					{
+						unsigned char i; 
+						unsigned char index;
+						unsigned char ckey[32]; 
+						unsigned char shift;
+						unsigned char hex;
+						memcpy(ckey,(const void *)arg,32);
 						printk(KERN_ERR"AES = %s\n",(char *)arg);
 						printk(KERN_ERR"AES = %s\n",ckey);
-                        for(i=0;i < 32;i++){
-                            index = ckey[i]&0x0f;
-                            // a - f or A - f
-                            if(ckey[i]&0xc0) index +=10;
-                            hex = chr_to_hex[index];
-                            // LSB side is 0 shift, MSB side is 4 bits shifth
-                            shift = 4*(i%2);
-                            p.key[i/2] |= (hex >> shift);
-						    printk(KERN_ERR"AES = %x %x %d %d %d %x\n",p.key[i/2],ckey[i],shift,index,i/2,hex);
-                        }
-                        ret = SubGHz.setAes(p.key,aes_workspace);
-                        if(ret != SUBGHZ_OK) ret = EFAULT;
-                        break;
-                    }
+						for(i=0;i < 32;i++){
+							index = ckey[i]&0x0f;
+							// a - f or A - f
+							if(ckey[i]&0xc0) index +=10;
+							hex = chr_to_hex[index];
+							// LSB side is 0 shift, MSB side is 4 bits shifth
+							shift = 4*(i%2);
+							p.key[i/2] |= (hex >> shift);
+							printk(KERN_ERR"AES = %x %x %d %d %d %x\n",p.key[i/2],ckey[i],shift,index,i/2,hex);
+						}
+						ret = SubGHz.setAes(p.key,aes_workspace);
+						if(ret != SUBGHZ_OK) ret = EFAULT;
+						break;
+					}
 				default:
 					ret = -ENOTTY;
 					break;
@@ -599,10 +601,10 @@ end:
 }
 static void tx_callback(uint8_t rssi,int status) {
 #ifndef LAZURITE_IDE
-		if(module_test & MODE_MACH_DEBUG) {
-			printk(KERN_INFO"%s,%s,%d,rssi=%02x\n",
-					__FILE__,__func__,__LINE__,rssi);
-		}
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d,rssi=%02x\n",
+				__FILE__,__func__,__LINE__,rssi);
+	}
 #endif
 	p.tx_rssi = rssi;
 	p.tx_status = status;
@@ -728,7 +730,7 @@ static int __init drv_param_init(void) {
 			p.my_addr[2],
 			p.my_addr[1],
 			p.my_addr[0]
-		);
+		  );
 
 	printk(KERN_INFO "[drv-lazurite] End of init\n");
 	mutex_init( &chrdev.lock );

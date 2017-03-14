@@ -603,7 +603,6 @@ int mach_set_dst_ieee_addr(uint16_t panid,uint8_t *addr)
 	mach.tx.dst.panid.data = panid;
 	mach.tx.dst.addr_type = IEEE802154_FC_ADDR_IEEE;
 	memcpy(mach.tx.dst.addr.ieee_addr,addr,8);
-	PAYLOADDUMP(mach.tx.dst.addr.ieee_addr,8);
 	return STATUS_OK;
 }
 

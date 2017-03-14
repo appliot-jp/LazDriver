@@ -39,16 +39,16 @@ class TestClass < Minitest::Test
 		ch = gets().to_i
         @@laz.begin(ch,0xabcd,100,20)
         @@laz.rxEnable()
-        p @@laz.available()
-        rcv = @@laz.read()
-        p rcv
-        p @@laz.available()
-        rcv = @@laz.read()
-        p rcv
-        p @@laz.available()
-        rcv = @@laz.read()
-        p rcv
         sleep(10)
+        p @@laz.available()
+        rcv = @@laz.read()
+        p rcv
+        p @@laz.available()
+        rcv = @@laz.read()
+        p rcv
+        p @@laz.available()
+        rcv = @@laz.read()
+        p rcv
         @@laz.remove()
 	end
 end
