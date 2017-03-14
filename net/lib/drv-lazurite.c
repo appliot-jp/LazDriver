@@ -109,9 +109,6 @@ int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 	const uint8_t *in;
 	uint8_t *out;
 
-	printk(KERN_INFO"[rx]%s,%s,%d\n",__FILE__,__func__,__LINE__);
-	PAYLOADDUMP(raw, len);
-
 	new_data = kmalloc(sizeof(struct list_data), GFP_KERNEL);
 	if (new_data == NULL) {
 		printk(KERN_ERR "[DRV-Lazurite] kmalloc (list_data) GFP_KERNEL no memory\n");
@@ -157,7 +154,6 @@ int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 }
 void rx_callback(const uint8_t *data, uint8_t rssi, int status) {
 	//@issue temporary delete LED flash
-	printk(KERN_INFO"%s,%s,%d,%d,%d\n",__FILE__,__func__,__LINE__,rssi,status);
 	EXT_rx_led_flash(1);
 #ifdef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) {
