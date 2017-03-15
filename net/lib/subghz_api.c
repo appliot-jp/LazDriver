@@ -125,7 +125,7 @@ static SUBGHZ_MSG subghz_remove(void)
 }
 static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUBGHZ_POWER txPower)
 {
-	SUBGHZ_MSG msg;
+	SUBGHZ_MSG msg = SUBGHZ_OK;
 	int result;
 	uint16_t short_addr=0;
 

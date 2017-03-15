@@ -443,44 +443,50 @@ bool mach_make_ack_header(void) {
 	bool ack_condition=false;
 	uint16_t offset = 0;
 
-	if((!(mach.rx.addr_type & ACK_ENB)) &&
-			(mach.my_addr.pan_coord == true) &&
-			(mach.coord_addr.pan_coord == true) &&
-			((mach.rx.dst.addr.short_addr == 0xFFFF) ||
-			 (mach.rx.dst.addr.short_addr == 0xFFFE) )&&
-			((mach.rx.src.addr.short_addr == 0xFFFF) ||
-			 (mach.rx.src.addr.short_addr == 0xFFFE) ))
-		goto noack;
-	if( (mach.rx.fc.fc_bit.panid_comp == 1) &&
-			(mach.my_addr.pan_id != mach.coord_addr.pan_id))
-		goto noack;
-	if( (mach.rx.fc.fc_bit.panid_comp == 0) &&
-			(mach.my_addr.pan_id != mach.rx.dst.panid.data))
-		goto noack;
-
-	// genenrate ack data
-	mach.ack.fc.fc16 = 0;
-	mach.ack.fc.fc_bit.frame_type = IEEE802154_FC_TYPE_ACK;
-	//	mach.ack.fc.fc_bit.panid_comp = 1;
-	mach.ack.fc.fc_bit.panid_comp = 0;
-	mach.ack.fc.fc_bit.seq_comp = mach.rx.fc.fc_bit.seq_comp;
-	mach.ack.fc.fc_bit.frame_ver = mach.rx.fc.fc_bit.frame_ver;
-	ack_condition = true;
-
-	// output mac header to memory
-	H2LBS(mach.ack.raw.data[offset],mach.ack.fc.fc16), offset+=2;
-
-	// output sequence number
-	if(!mach.ack.fc.fc_bit.seq_comp) {
-		mach.ack.seq = mach.rx.seq;
-		mach.ack.raw.data[offset] = mach.ack.seq,offset++;
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 	}
-	mach.ack.raw.len = offset;
 
+	if( ((mach.rx.addr_type == 6) || (mach.rx.addr_type == 7)) &&
+			(mach.rx.fc.fc_bit.ack_req) &&
+			(	((mach.rx.dst.addr_type == IEEE802154_FC_ADDR_SHORT) && (mach.rx.dst.addr.short_addr != 0xFFFF)) ||
+				((mach.rx.dst.addr_type == IEEE802154_FC_ADDR_IEEE) && (
+					(mach.rx.dst.addr.ieee_addr[0] != 0xFF) ||
+					(mach.rx.dst.addr.ieee_addr[1] != 0xFF) ||
+					(mach.rx.dst.addr.ieee_addr[2] != 0xFF) ||
+					(mach.rx.dst.addr.ieee_addr[3] != 0xFF) ||
+					(mach.rx.dst.addr.ieee_addr[4] != 0xFF) ||
+					(mach.rx.dst.addr.ieee_addr[5] != 0xFF) ||
+					(mach.rx.dst.addr.ieee_addr[6] != 0xFF) ||
+					(mach.rx.dst.addr.ieee_addr[7] != 0xFF))
+				))) {
+		// genenrate ack data
+		mach.ack.fc.fc16 = 0;
+		mach.ack.fc.fc_bit.frame_type = IEEE802154_FC_TYPE_ACK;
+		//	mach.ack.fc.fc_bit.panid_comp = 1;
+		mach.ack.fc.fc_bit.panid_comp = 0;
+		mach.ack.fc.fc_bit.seq_comp = mach.rx.fc.fc_bit.seq_comp;
+		mach.ack.fc.fc_bit.frame_ver = mach.rx.fc.fc_bit.frame_ver;
+		ack_condition = true;
 
-noack:
+		// output mac header to memory
+		H2LBS(mach.ack.raw.data[offset],mach.ack.fc.fc16), offset+=2;
+
+		// output sequence number
+		if(!mach.ack.fc.fc_bit.seq_comp) {
+			mach.ack.seq = mach.rx.seq;
+			mach.ack.raw.data[offset] = mach.ack.seq,offset++;
+		}
+		mach.ack.raw.len = offset;
+		if(module_test & MODE_MACH_DEBUG) {
+			printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
+			PAYLOADDUMP(mach.ack.raw.data, mach.ack.raw.len);
+		}
+	}
+
 	return ack_condition;
 }
+
 int mach_update_rx_data(void)
 {
 	int status = STATUS_OK;

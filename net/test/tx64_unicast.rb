@@ -36,8 +36,8 @@ class TestClass < Minitest::Test
 		@@laz.init(module_test = 0x3000) #MACH:0x4000, MACH:0x2000, PHY:0x1000
 		printf("%016x\n",@@laz.getMyAddr64())
 		@@laz.begin(24,0xabcd,100,20)
-		@@laz.send64(0xabcd,0x0011223344556677,"LAPIS Lazurite RF system")
-		@@laz.send64(0xfffe,0x8899aabbccddeeff,"LAPIS Lazurite RF system")
+		@@laz.send64(0xabcd,0x001d129000047fba,"LAPIS Lazurite RF system")
+		@@laz.send64(0xfffe,0x001d129000047fba,"LAPIS Lazurite RF system")
 		@@laz.remove()
 	end
 end
