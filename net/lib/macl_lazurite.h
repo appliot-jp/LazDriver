@@ -38,6 +38,9 @@ typedef struct {
 	uint8_t rxOnEnable;
 	bool promiscuousMode;
 	uint16_t ack_timeout;
+    unsigned long total_send_bytes;
+	unsigned long start_send_time;
+	unsigned long last_send_time;
 	PHY_PARAM *phy;
 	BUFFER ack;
 } MACL_PARAM;

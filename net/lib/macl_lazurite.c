@@ -26,6 +26,7 @@
 #include "errno.h"
 #include "endian.h"
 #include "common-lzpi.h"
+#include "hwif/hal.h"
 
 MACL_PARAM macl;
 
@@ -44,6 +45,61 @@ static void macl_ack_rxdone_handler(void);
 static void macl_ack_timeout_handler(void);
 
 
+static int macl_total_transmission_time(uint8_t len)
+{
+	unsigned long current_time;
+	unsigned long tmp_ttl_byte;
+	unsigned long duration;
+
+	int status=STATUS_OK;
+
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+
+	// check total send bytes in an hours -- an hours
+	current_time = HAL_millis();
+	duration = current_time - macl.start_send_time;
+	if(duration > 3600000L)
+	{
+		macl.total_send_bytes = 0;
+		macl.start_send_time = current_time;
+	}
+	
+	// check total send bytes in an hours -- calcurate total send bytes
+	tmp_ttl_byte = macl.total_send_bytes;
+	switch(macl.pages)
+	{
+    case 1:  /*  50kbps */
+		tmp_ttl_byte += len; // + SUBGHZ_HEADER_SIZE;
+    case 2:  /* 100kbps */
+		tmp_ttl_byte += len; //  + SUBGHZ_HEADER_SIZE;
+		if(tmp_ttl_byte>45000000)
+		{
+			status = STATUS_FAIL;
+		}
+		break;
+	default:
+		status = STATUS_FAIL;
+		break;
+	}
+	
+	// CHECK ARIB condition -- interval --
+	duration = current_time - macl.last_send_time;
+	
+	if((macl.ch >= 24)&&(macl.ch<=32))
+	{
+		if(duration < 50)
+		{
+			HAL_sleep(50-duration);
+		}
+	}
+	
+
+	return status;
+}
+
+
 static void macl_rxdone_handler(void)
 {
     int status;
@@ -53,7 +109,8 @@ static void macl_rxdone_handler(void)
     macl_rx_irq(&macl.phy->in,&macl.ack);
     macl_rx_irq(NULL,NULL);
 
-    if(!macl.promiscuousMode && status == STATUS_OK && macl.ack.data) {
+    if(!macl.promiscuousMode && status == STATUS_OK && macl.ack.data &&
+            (macl_total_transmission_time(macl.phy->out.len) == STATUS_OK)){
 	    phy_sint_handler(macl_ack_txdone_handler);
         phy_txStart(&macl.ack,2);
     } else {
@@ -236,7 +293,9 @@ static void macl_ack_timeout_handler(void)
 	phy_sint_di();
     phy_timer_stop();
     phy_stop();
-    if(macl.resendingNum < macl.txRetry){
+    if((macl.resendingNum < macl.txRetry) &&
+        (macl_total_transmission_time(macl.phy->out.len) == STATUS_OK)){
+
         macl.resendingNum++;
         if (macl.txMode == 0) {
             phy_txStart(&macl.phy->out,macl.txMode);
@@ -329,22 +388,25 @@ int	macl_xmit_sync(BUFFER buff)
     macl.ccaCount=0;
     macl.sequnceNum= buff.data[2];
 
-    if (macl.txMode == 0) {
-        phy_txStart(&macl.phy->out,macl.txMode);
-        phy_sint_handler(macl_ccadone_handler);
-        phy_ccaStart();
-    }else
-    if (macl.txMode == 1) {
-        phy_sint_handler(macl_fifodone_handler);
-        phy_txStart(&macl.phy->out,macl.txMode);
-    }else
-    if (macl.txMode == 2) {
-        phy_sint_handler(macl_txdone_handler);
-        phy_txStart(&macl.phy->out,macl.txMode);
-    }
+    if (macl_total_transmission_time(macl.phy->out.len) == STATUS_OK){
 
-    phy_wait_phy_event();
-    phy_wait_mac_event();
+        if (macl.txMode == 0) {
+            phy_txStart(&macl.phy->out,macl.txMode);
+            phy_sint_handler(macl_ccadone_handler);
+            phy_ccaStart();
+        }else
+        if (macl.txMode == 1) {
+            phy_sint_handler(macl_fifodone_handler);
+            phy_txStart(&macl.phy->out,macl.txMode);
+        }else
+        if (macl.txMode == 2) {
+            phy_sint_handler(macl_txdone_handler);
+            phy_txStart(&macl.phy->out,macl.txMode);
+        }
+
+        phy_wait_phy_event();
+        phy_wait_mac_event();
+    }
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) {
 		printk(KERN_INFO"%s,%s,%lx\n",
@@ -367,6 +429,8 @@ int	macl_set_channel(uint8_t page,uint8_t ch)
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,page,ch);
 #endif
+    macl.pages = page;
+    macl.ch = ch;
 	phy_setup(page,ch);
 	return status;
 }

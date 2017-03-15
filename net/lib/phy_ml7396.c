@@ -1261,6 +1261,9 @@ int phy_rxdone(BUFFER *buff)
         data_size = (((unsigned int)reg_data[0] << 8) | reg_data[1]) & 0x07ff; 
         buff->len = data_size + 1; // add ED vale
         fifo_rd(REG_ADR_RD_RX_FIFO, buff->data, buff->len);
+        // delete crc data
+        buff->data[buff->len-3] = buff->data[buff->len-1];
+        buff->len -= 2;
     }
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG){
