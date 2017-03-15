@@ -22,13 +22,14 @@
 #define _ERROR_H_
 
 #define STATUS_OK	0
-#define STATUS_FAIL	1
 
 #define EIO			5			// hardware error
+#define EAGAIN      11          // over 10% duty
 #define ENOMEM		12			// data size error
 #define EFAULT		14			// bad pointer
 #define EBUSY		16			// resource busy(CCA)
 #define EINVAL		22			// invalid parameters
 #define EFBIG		27			// File too large
+#define EBADE		52			// crc error
 #define ETIMEDOUT	110			// no ack
 #endif

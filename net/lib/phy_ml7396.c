@@ -1255,7 +1255,7 @@ int phy_rxdone(BUFFER *buff)
     crc_err = reg_data[0]&0x30;
     if (crc_err){
         phy_rst();
-        status=STATUS_FAIL;
+        status=-EBADE;
     }else{
         reg_rd(REG_ADR_RD_RX_FIFO, reg_data, 2);
         data_size = (((unsigned int)reg_data[0] << 8) | reg_data[1]) & 0x07ff; 

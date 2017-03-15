@@ -76,11 +76,11 @@ static int macl_total_transmission_time(uint8_t len)
 		tmp_ttl_byte += len; //  + SUBGHZ_HEADER_SIZE;
 		if(tmp_ttl_byte>45000000)
 		{
-			status = STATUS_FAIL;
+			status = -EAGAIN;
 		}
 		break;
 	default:
-		status = STATUS_FAIL;
+		status = -EAGAIN;
 		break;
 	}
 	
