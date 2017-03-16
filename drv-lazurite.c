@@ -32,7 +32,7 @@
 #include "common-lzpi.h"
 #include "subghz_api.h"
 #include "drv-lazurite.h"
-#include "CTI/hwif/hal.h"
+#include "hwif/hal.h"
 
 #define DATA_SIZE		256+16
 #define DRV_NAME		"lzgw"
@@ -40,6 +40,9 @@
 wait_queue_head_t tx_done;
 extern int que_th2ex;
 
+int module_test=0;
+module_param(module_test,int,S_IRUGO | S_IWUSR);
+		
 struct list_data {				
 	uint8_t	data[DATA_SIZE];
 	int		len;
@@ -80,6 +83,7 @@ static struct {
 	struct timespec rx_time;
 	int rx_status;
 	int tx_status;
+	bool tx64;
 } p = {
 	0,		// drv_mode
 	36,		// default ch
@@ -148,12 +152,16 @@ int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 
 	return 0;
 }
-void rx_callback(const uint8_t *data, uint8_t rssi, int status)
-{
-	if(status > 0) {
-		EXT_rx_led_flash(2);
-		write_list_data(data,status,rssi);
+void rx_callback(const uint8_t *data, uint8_t rssi, int status) {
+	//@issue temporary delete LED flash
+	EXT_rx_led_flash(1);
+#ifdef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d,%d,%d\n",__FILE__,__func__,__LINE__,rssi,status);
+		PAYLOADDUMP(mach.rx.input.data, mach.rx.raw.len);
 	}
+#endif
+	write_list_data(data,status,rssi);
 	return;
 
 }
@@ -216,29 +224,29 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 						break;
 					}
 				case IOCTL_SET_AES:
-                    {
-                        unsigned char i; 
-                        unsigned char index;
-                        unsigned char ckey[32]; 
-                        unsigned char shift;
-                        unsigned char hex;
-		                memcpy(ckey,(const void *)arg,32);
+					{
+						unsigned char i; 
+						unsigned char index;
+						unsigned char ckey[32]; 
+						unsigned char shift;
+						unsigned char hex;
+						memcpy(ckey,(const void *)arg,32);
 						printk(KERN_ERR"AES = %s\n",(char *)arg);
 						printk(KERN_ERR"AES = %s\n",ckey);
-                        for(i=0;i < 32;i++){
-                            index = ckey[i]&0x0f;
-                            // a - f or A - f
-                            if(ckey[i]&0xc0) index +=10;
-                            hex = chr_to_hex[index];
-                            // LSB side is 0 shift, MSB side is 4 bits shifth
-                            shift = 4*(i%2);
-                            p.key[i/2] |= (hex >> shift);
-						    printk(KERN_ERR"AES = %x %x %d %d %d %x\n",p.key[i/2],ckey[i],shift,index,i/2,hex);
-                        }
-                        ret = SubGHz.setAes(p.key,aes_workspace);
-                        if(ret != SUBGHZ_OK) ret = EFAULT;
-                        break;
-                    }
+						for(i=0;i < 32;i++){
+							index = ckey[i]&0x0f;
+							// a - f or A - f
+							if(ckey[i]&0xc0) index +=10;
+							hex = chr_to_hex[index];
+							// LSB side is 0 shift, MSB side is 4 bits shifth
+							shift = 4*(i%2);
+							p.key[i/2] |= (hex >> shift);
+							printk(KERN_ERR"AES = %x %x %d %d %d %x\n",p.key[i/2],ckey[i],shift,index,i/2,hex);
+						}
+						ret = SubGHz.setAes(p.key,aes_workspace);
+						if(ret != SUBGHZ_OK) ret = EFAULT;
+						break;
+					}
 				default:
 					ret = -ENOTTY;
 					break;
@@ -326,13 +334,24 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					}
 					break;
 				case IOCTL_GET_MY_ADDR0:			// get panid
-					ret = SubGHz.getMyAddress();
-					p.my_addr[1] = (ret >> 8) & 0x00ff;
-					p.my_addr[0] = ret  & 0x000000ff;
+					ret = p.my_addr[1];
+					ret = (ret << 8) | p.my_addr[0];
+					ret &= 0x0000ffff;
 					break;
 				case IOCTL_GET_MY_ADDR1:			// get panid
+					ret = p.my_addr[3];
+					ret = (ret << 8) | p.my_addr[2];
+					ret &= 0x0000ffff;
+					break;
 				case IOCTL_GET_MY_ADDR2:			// get panid
+					ret = p.my_addr[5];
+					ret = (ret << 8) | p.my_addr[4];
+					ret &= 0x0000ffff;
+					break;
 				case IOCTL_GET_MY_ADDR3:			// get panid
+					ret = p.my_addr[7];
+					ret = (ret << 8) | p.my_addr[6];
+					ret &= 0x0000ffff;
 					break;
 				case IOCTL_SET_MY_ADDR0:			// set panid
 					if((arg >= 0) && (arg <= 0xffff)&&(p.drv_mode==0x0000FFFF)) {
@@ -355,9 +374,19 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					ret += p.tx_addr[(param-IOCTL_GET_RX_ADDR0)+0];
 					break;
 				case IOCTL_SET_RX_ADDR0:			// set panid
+					p.tx64 = false;
+					if((arg >= 0) && (arg <= 0xffff)) {
+						p.tx_addr[(param-IOCTL_SET_RX_ADDR0)+1] = (arg >> 8) & 0x000000ff;
+						p.tx_addr[(param-IOCTL_SET_RX_ADDR0)+0] = arg  & 0x000000ff;
+						ret = arg;
+					} else {
+						ret = -EINVAL;
+					}
+					break;
 				case IOCTL_SET_RX_ADDR1:			// set panid
 				case IOCTL_SET_RX_ADDR2:			// set panid
 				case IOCTL_SET_RX_ADDR3:			// set panid
+					p.tx64 = true;
 					if((arg >= 0) && (arg <= 0xffff)) {
 						p.tx_addr[(param-IOCTL_SET_RX_ADDR0)+1] = (arg >> 8) & 0x000000ff;
 						p.tx_addr[(param-IOCTL_SET_RX_ADDR0)+0] = arg  & 0x000000ff;
@@ -567,6 +596,12 @@ end:
 	return bytes_read;
 }
 static void tx_callback(uint8_t rssi,int status) {
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d,rssi=%02x\n",
+				__FILE__,__func__,__LINE__,rssi);
+	}
+#endif
 	p.tx_rssi = rssi;
 	p.tx_status = status;
 
@@ -576,6 +611,7 @@ static void tx_callback(uint8_t rssi,int status) {
 	}
 	return;
 }
+
 static ssize_t chardev_write (struct file * file, const char __user * buf,
 		size_t count, loff_t * ppos) {
 	int status = 0;
@@ -585,16 +621,21 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 
 	if(count<DATA_SIZE)
 	{
-		uint16_t tx_addr;
-		tx_addr = p.tx_addr[1];
-		tx_addr = (tx_addr << 8 ) | p.tx_addr[0];
 		if(copy_from_user(payload,buf,count))
 		{
 			status = -EFAULT;
 			goto error;
 		}
 		EXT_set_tx_led(0);
-		status = SubGHz.send(p.tx_panid,tx_addr,payload,count,tx_callback);
+		if(p.tx64) {
+			status = SubGHz.send64(p.tx_panid,p.tx_addr,payload,count,tx_callback);
+		}else {
+			uint16_t tx_addr;
+			tx_addr = p.tx_addr[1];
+			tx_addr = (tx_addr << 8 ) | p.tx_addr[0];
+
+			status = SubGHz.send(p.tx_panid,tx_addr,payload,count,tx_callback);
+		}
 		p.tx_status = status;
 		if(status == SUBGHZ_OK)
 		{
@@ -675,17 +716,17 @@ static int __init drv_param_init(void) {
 	status = SubGHz.init();
 	if(status != SUBGHZ_OK) goto error_device_create;
 
-	// get address
-	/*
-	   EXT_I2C_read(0x20,p.my_addr[7],1);
-	   EXT_I2C_read(0x21,p.my_addr[6],1);
-	   EXT_I2C_read(0x22,p.my_addr[5],1);
-	   EXT_I2C_read(0x23,p.my_addr[4],1);
-	   EXT_I2C_read(0x24,p.my_addr[3],1);
-	   EXT_I2C_read(0x25,p.my_addr[2],1);
-	   EXT_I2C_read(0x26,p.my_addr[1],1);
-	   EXT_I2C_read(0x27,p.my_addr[0],1);
-	 */
+	SubGHz.getMyAddr64(p.my_addr);
+	printk(KERN_INFO"Lazurite MAC address: %02x%02x %02x%02x %02x%02x %02x%02x\n",
+			p.my_addr[7],
+			p.my_addr[6],
+			p.my_addr[5],
+			p.my_addr[4],
+			p.my_addr[3],
+			p.my_addr[2],
+			p.my_addr[1],
+			p.my_addr[0]
+		  );
 
 	printk(KERN_INFO "[drv-lazurite] End of init\n");
 	mutex_init( &chrdev.lock );
