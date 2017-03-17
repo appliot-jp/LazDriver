@@ -28,14 +28,14 @@
 #include <linux/stddef.h>
 #endif
 
-#include "hwif/random.h"
-#include "hwif/hal.h"
-#include "hwif/hal-lzpi.h"
-#include "errno.h"
-#include "endian.h"
-#include "common_lazurite.h"
-#include "common-lzpi.h"
-#include "phy_lazurite.h"
+#include "../hwif/random.h"
+#include "../hwif/hal.h"
+#include "../hwif/hal-lzpi.h"
+#include "../errno.h"
+#include "../endian.h"
+#include "../common_lazurite.h"
+#include "../common-lzpi.h"
+#include "../phy_lazurite.h"
 #include "phy_ml7396.h"
 
 

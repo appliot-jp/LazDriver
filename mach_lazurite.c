@@ -511,18 +511,6 @@ struct mach_param *mach_init(void)
 	mach.ack.raw.len = 0;
 	macl_sleep(true);
 	get_mac_addr(mach.my_addr.ieee_addr);
-#ifndef LAZURITE_IDE
-	printk(KERN_INFO"Lazurite SubGHz 64bit address:: %02x%02x %02x%02x %02x%02x %02x%02x\n",
-			mach.my_addr.ieee_addr[7],
-			mach.my_addr.ieee_addr[6],
-			mach.my_addr.ieee_addr[5],
-			mach.my_addr.ieee_addr[4],
-			mach.my_addr.ieee_addr[3],
-			mach.my_addr.ieee_addr[2],
-			mach.my_addr.ieee_addr[1],
-			mach.my_addr.ieee_addr[0]
-		  );
-#endif
 
 	return &mach;
 }
