@@ -48,6 +48,42 @@ static unsigned long hal_previous_time;
 //*****************************************************
 // Function
 //*****************************************************
+static bool event_flag_mac;
+static bool event_flag_phy;
+
+int HAL_wait_event(uint8_t event)
+{
+	int status=0;
+    bool *flag;
+	uint32_t time;
+
+    if (event == HAL_PHY_EVENT) {
+        event_flag_phy=false;
+        flag = event_flag_phy;
+        time=1000;
+    }else
+    if (event == HAL_MAC_EVENT) {
+        event_flag_mac=false;
+        flag = event_flag_mac;
+        time=5000;
+    }
+    wait_event_timeout(&flag,time);
+	return status;
+}
+
+
+int HAL_wakeup_event(uint8_t event)
+{
+	int status=0;
+    if (event == HAL_PHY_EVENT) {
+        event_flag_phy=true;
+    }else
+    if (event == HAL_MAC_EVENT) {
+        event_flag_mac=true;
+    }
+	return status;
+}
+
 // api_debug add 4
 int HAL_init(void){
 
