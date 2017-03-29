@@ -1,4 +1,4 @@
-/* macl_lazurite.h - 
+/* macl.h - 
  *
  * Copyright (c) 2015  LAPIS Semiconductor Co.,Ltd.
  * All rights reserved.
@@ -18,14 +18,14 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#ifndef LAZURITE_IDE
+	#include <linux/module.h>
+	#include "common-lzpi.h"
+#endif
 
-#include <linux/module.h>
-#include "common_lazurite.h"
-#include "phy_lazurite.h"
-#include "macl_lazurite.h"
+#include "macl.h"
 #include "errno.h"
 #include "endian.h"
-#include "common-lzpi.h"
 #include "hwif/hal.h"
 
 MACL_PARAM macl;

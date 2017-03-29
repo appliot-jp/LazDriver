@@ -21,8 +21,12 @@
 #ifndef _MACL_H_
 #define _MACL_H_
 
-#include "common_lazurite.h"
-#include "phy_lazurite.h"
+#ifdef LAZURIE_IDE
+	#include <common.h>
+#endif
+
+#include "common_subghz.h"
+#include "phy.h"
 
 typedef struct {
 	uint8_t pages;
@@ -97,7 +101,7 @@ enum ieee802154_hw_addr_filt_flags {
 	IEEE802154_AFILT_SADDR_CHANGED		= BIT(0),
 	IEEE802154_AFILT_IEEEADDR_CHANGED	= BIT(1),
 	IEEE802154_AFILT_PANID_CHANGED		= BIT(2),
-	IEEE802154_AFILT_PANC_CHANGED		= BIT(3),
+	IEEE802154_AFILT_PANC_CHANGED		= BIT(3)
 };
 
 struct ieee802154_hw_addr_filt {
@@ -135,3 +139,4 @@ extern int	macl_rx_irq_notification(void);
 extern int	macl_sleep(bool on);
 
 #endif
+

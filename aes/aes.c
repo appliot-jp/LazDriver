@@ -55,11 +55,10 @@ NOTE:   String length must be evenly divisible by 16byte (str_len % 16 == 0)
 /* Includes:                                                                 */
 /*****************************************************************************/
 #ifdef LAZURITE_IDE
-#include <stdint.h>
-#include <string.h> // CBC mode, for memset
+	#include <string.h> // CBC mode, for memset
 #else
-#include <linux/string.h>
-#include <linux/kernel.h>
+	#include <linux/string.h>
+	#include <linux/kernel.h>
 #endif
 
 #include "aes.h"

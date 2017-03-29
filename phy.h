@@ -1,4 +1,4 @@
-/* phy_lazurite.h - 
+/* phy.h - 
  *
  * Copyright (c) 2015  LAPIS Semiconductor Co.,Ltd.
  * All rights reserved.
@@ -19,25 +19,19 @@
  */
 
 
-#ifndef _PHY_H_
-#define _PHY_H_
+ #ifndef _PHY_H_
+ #define _PHY_H_
 
-#ifdef LAZURITE_IDE
-#include "lazurite.h"
-#include "hal.h"
-#include "string.h"
-#include "lp_manage.h"
-#include "driver_irq.h"
-#else
-#include <linux/string.h>
-#include <linux/sched.h>
-#include <linux/wait.h>
-#endif
-#include "common_lazurite.h"
 
-#define INIT_SLEEP
-//#define TEST_SEND_INTERVAL
+ #ifdef LAZURITE_IDE
+ 	#include <common.h>
+ #else
+ 	#include <linux/string.h>
+ 	#include <linux/sched.h>
+ 	#include <linux/wait.h>
+ #endif
 
+#include "common_subghz.h"
 
 typedef struct {
 	uint8_t id;
@@ -46,17 +40,13 @@ typedef struct {
 	BUFFER out;
 } PHY_PARAM;
 
-
-
 typedef enum {
 	CCA_IDLE,                   /* CCA pass */
 	CCA_FAST,                   /* CCA minmum */
 	IDLE_DETECT,                /* CCA Idle detection */
 	CCA_RETRY,                  /* CCA with BACKOFF */
-	CCA_FAILURE,                /* CCA failure */
+	CCA_FAILURE                /* CCA failure */
 } CCA_STATE;
-
-
 
 /*
  -------------------------------------------------------------
@@ -98,6 +88,5 @@ extern void phy_addrFilt(uint16_t panid, uint16_t uc_addr, uint16_t bc_addr);
 extern void phy_ed(uint8_t *level, uint8_t rfMode);
 extern void phy_sleep(void);
 
-
-
 #endif
+

@@ -22,7 +22,7 @@
 #define _AES_H_
 
 #ifdef LAZURITE_IDE
-#include <stdint.h>
+#include <lazurite.h>
 #else
 #include <linux/kernel.h>
 #endif

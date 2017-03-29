@@ -24,7 +24,7 @@
 
 
 #ifdef	LAZURITE_IDE
-//#include <stdint.h>
+	#include <lazurite_system.h>
 #else	// LAZURITE_IDE
 #include <linux/delay.h>
 #endif	// LAZURITE_IDE
@@ -73,13 +73,13 @@ extern void HAL_EX_enableInterrupt(void);
 extern void HAL_EX_disableInterrupt(void);
 
 #ifdef LAZURITE_IDE
-#define HAL_delayMicroseconds(v) delay_microseconds((unsigned long)v)
-#define HAL_millis() millis()
-#define HAL_sleep(v) sleep(v)
+	#define HAL_delayMicroseconds(v) delay_microseconds((unsigned long)v)
+	#define HAL_millis() millis()
+	#define HAL_sleep(v) sleep(v)
 #else
-#define HAL_delayMicroseconds(v) udelay((unsigned long)v)
-extern uint32_t HAL_millis(void);
-extern void HAL_sleep(uint32_t time);
+	#define HAL_delayMicroseconds(v) udelay((unsigned long)v)
+	extern uint32_t HAL_millis(void);
+	extern void HAL_sleep(uint32_t time);
 #endif
 
 extern int EXT_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize);

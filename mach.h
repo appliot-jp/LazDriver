@@ -18,23 +18,18 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _MAC_LAZURITE_H_
-#define _MAC_LAZURITE_H_
+#ifndef _MACH_H_
+#define _MACH_H_
 
 #ifdef LAZURITE_IDE
-#include "lazurite.h"
-#include "string.h"
+	#include <common.h>
 #else
-#include <linux/string.h>
-#include <linux/sched.h>
-#include <linux/wait.h>
+	#include <linux/string.h>
+	#include <linux/sched.h>
+	#include <linux/wait.h>
 #endif
 
-#define INIT_SLEEP
-//#define TEST_SEND_INTERVAL
-
-#include "macl_lazurite.h"
-#include "common_lazurite.h"
+#include "macl.h"
 #include "endian.h"
 
 // @issue check parameter. interval may not be needed.
@@ -71,19 +66,19 @@ struct fc_addr {
   bit alightment of mac header
   */
 #ifdef LITTLE_ENDIAN
-struct mac_fc_alignment{
-	uint8_t frame_type:3;
-	uint8_t sec_enb:1;
-	uint8_t pending:1;
-	uint8_t ack_req:1;
-	uint8_t panid_comp:1;
-	uint8_t nop:1;
-	uint8_t seq_comp:1;
-	uint8_t ielist:1;
-	uint8_t dst_addr_type:2;
-	uint8_t frame_ver:2;
-	uint8_t src_addr_type:2;
-};
+	struct mac_fc_alignment{
+		uint8_t frame_type:3;
+		uint8_t sec_enb:1;
+		uint8_t pending:1;
+		uint8_t ack_req:1;
+		uint8_t panid_comp:1;
+		uint8_t nop:1;
+		uint8_t seq_comp:1;
+		uint8_t ielist:1;
+		uint8_t dst_addr_type:2;
+		uint8_t frame_ver:2;
+		uint8_t src_addr_type:2;
+	};
 #endif
 
 union mac_frame_control {
@@ -155,4 +150,6 @@ extern int mach_stop(void);
 extern int mach_parse_data(struct mac_header *header);
 extern int mach_ed(uint8_t *ed);
 extern int mach_rx_irq(struct mac_header *rx);
+
 #endif
+

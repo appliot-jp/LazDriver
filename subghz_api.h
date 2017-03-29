@@ -23,11 +23,12 @@
 #define _SUBGHZ_API_H_
 
 #ifdef LAZURITE_IDE
-#include "common.h"
-#include "lazurite.h"
+//#include "common.h"
+#include <lazurite.h>
 #endif
-#include "common_lazurite.h"
-#include "mach_lazurite.h"
+
+//#include "common_lazurite.h"
+#include "mach.h"
 
 typedef enum {
 	SUBGHZ_OK = 0,
@@ -62,14 +63,12 @@ typedef enum {
 	SUBGHZ_PWR_1MW = 1
 } SUBGHZ_POWER;
 
-typedef struct
-{
+typedef struct {
 	uint8_t rssi;
 	int status;
 } SUBGHZ_STATUS;
 
-typedef struct
-{
+typedef struct{
 	uint8_t addrType;
 	uint8_t senseTime;
 	uint8_t txRetry;
@@ -78,28 +77,7 @@ typedef struct
 	uint16_t ccaWait;
 } SUBGHZ_PARAM;
 
-/*
-typedef struct {
-	uint8_t frame_type:3;
-	uint8_t sec_enb:1;
-	uint8_t pending:1;
-	uint8_t ack_req:1;
-	uint8_t panid_comp:1;
-	uint8_t nop:1;
-	uint8_t seq_comp:1;
-	uint8_t ielist:1;
-	uint8_t tx_addr_type:2;
-	uint8_t frame_ver:2;
-	uint8_t rx_addr_type:2;
-} s_MAC_HEADER_BIT_ALIGNMENT;
-typedef union {
-	uint8_t data[2];
-	uint16_t header;
-	s_MAC_HEADER_BIT_ALIGNMENT alignment;
-} u_MAC_HEADER;
-*/
-typedef struct
-{
+typedef struct{
 	union mac_frame_control mac_header;
 	uint8_t seq_num;
 	uint8_t addr_type;

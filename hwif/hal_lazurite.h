@@ -23,7 +23,7 @@
 #define _HAL_LAZURITE_H_
 
 
-#include <stdint.h>
+//#include <stdint.h>
 
 
 /* タイマー割り込みコントロール関数 HAL_TIMER_enableInterrupt() と

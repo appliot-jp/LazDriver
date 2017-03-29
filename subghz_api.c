@@ -20,33 +20,28 @@
 
 
 #ifdef LAZURITE_IDE
-#include "lazurite.h"
-#include "hal.h"
-#include "string.h"
-#include "lp_manage.h"
-#include "driver_irq.h"
+	#include <common.h>
+	#include <string.h>
+	#include <lp_manage.h>
+	#include <driver_irq.h>
 #else
-#include <linux/string.h>
-#include <linux/sched.h>
-#include <linux/wait.h>
-#include "common-lzpi.h"
+	#include <linux/string.h>
+	#include <linux/sched.h>
+	#include <linux/wait.h>
+	#include "common-lzpi.h"
 #endif
 
+#include "common_subghz.h"
+#include "mach.h"
 #include "subghz_api.h"
-#include "mach_lazurite.h"
-#include "common_lazurite.h"
 #include "errno.h"
 // @issue why application layer access to hardware if
 #include "hwif/hal.h"
 #include "aes/aes.h"
 
-#define INIT_SLEEP
-//#define TEST_SEND_INTERVAL
-
-
 #ifndef LAZURITE_IDE
-extern wait_queue_head_t tx_done;
-extern int que_th2ex;
+	extern wait_queue_head_t tx_done;
+	extern int que_th2ex;
 #endif
 
 // this proto-type is for linux
@@ -178,10 +173,11 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 
 error:
 	subghz_param.tx_stat.status = result;
+#ifndef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) {
 		printk(KERN_INFO"%s %s %d %d %d \n",__FILE__,__func__,__LINE__,msg,result);
 	}
-
+#endif
 	return msg;
 }
 
@@ -219,6 +215,7 @@ subghz_param.tx_callback(rssi, status);
 }
 }
  */
+/*
 SUBGHZ_MSG subghz_halt_until_complete(void)
 {
 	SUBGHZ_MSG msg = SUBGHZ_OK;
@@ -247,7 +244,7 @@ SUBGHZ_MSG subghz_halt_until_complete(void)
 
 	return msg;
 }
-
+*/
 static SUBGHZ_MSG subghz_tx64(uint16_t panid, uint8_t *dstAddr64, uint8_t *data, uint16_t len, void (*callback)(uint8_t rssi, int status)) {
 	SUBGHZ_MSG msg;
 	int result;
@@ -351,11 +348,12 @@ int mach_rx_irq(struct mac_header *rx)
 
 	subghz_param.rx_stat.rssi = rx->rssi;
 	subghz_param.rx_stat.status = rx->raw.len;
-
+#ifndef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) {
 		printk(KERN_INFO"[rx]%s,%s,%d\n",__FILE__,__func__,__LINE__);
 		PAYLOADDUMP(rx->raw.data, rx->raw.len);
 	}
+#endif
 	if(subghz_param.rx_callback != NULL) {
 		subghz_param.rx_callback(rx->raw.data, rx->rssi,rx->raw.len);
 	} else {

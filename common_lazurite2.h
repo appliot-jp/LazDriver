@@ -23,13 +23,13 @@
 
 #ifdef LAZURITE_IDE
 #include "lazurite.h"
-#include "hal.h"
-#include "string.h"
-#include "driver_irq.h"
+//#include "hwif/hal.h"
+//#include "string.h"
+//#include "driver_irq.h"
 #else
 #include <linux/string.h>
-#include <linux/sched.h>
-#include <linux/wait.h>
+//#include <linux/sched.h>
+//#include <linux/wait.h>
 #endif
 
 /*! @brief buffer definision for subghz common 
@@ -46,5 +46,7 @@ typedef struct {
 
 #define DBM_TO_MBM(gain)	(gain*100)
 #define MBM_TO_DBM(gain)	(gain/100)
+
+#define BIT(n)				(0x01<<n)
 
 #endif

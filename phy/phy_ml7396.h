@@ -1,4 +1,4 @@
-/* ml7396_reg.h -ML7396 register address header file 
+/* phy_ml7396.h -ML7396 register address header file 
  * 
  * Copyright (c) 2015  Communication Technology Inc.,
  * All rights reserved.
@@ -22,9 +22,9 @@
 #define _INCLUDE_ML7396_REG_H
 
 
-#ifdef LAZURITE_IDE
-#include <stdint.h>
-#endif
+//#ifdef LAZURITE_IDE
+//	include <common.h>
+//#endif
 
 /** Register map
  */
@@ -232,3 +232,4 @@
 
 
 #endif  /* #ifndef _INCLUDE_ML7396_REG_H */
+

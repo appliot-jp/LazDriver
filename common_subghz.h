@@ -1,4 +1,4 @@
-/* arib_lazurite.h - 
+/* common_subghz.h - 
  *
  * Copyright (c) 2015  LAPIS Semiconductor Co.,Ltd.
  * All rights reserved.
@@ -18,20 +18,33 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _ARIB_LAZURITE_H_
-#define _ARIB_LAZURITE_H_
+#ifndef _COMMON_SUBGHZ_H_
+#define _COMMON_SUBGHZ_H_
 
 #ifdef LAZURITE_IDE
-#include "lazurite.h"
-//#include "string.h"
+	#include <common.h>
 #else
-#include <linux/string.h>
-#include <linux/sched.h>
-#include <linux/wait.h>
+	#include <linux/string.h>
 #endif
 
+/*! @brief buffer definision for subghz common 
+ @struct BUFFER
+	@uint8_t *data	starting pointer of data buffer
+	@uint16_t len	length of data
+	@int16_t size	buffer size
+*/
 
-extern void arib_init(void);
-extern void arib_tx_end(uint8_t pages, uint8_t ch, uint16_t size);
-extern bool arib_tx_check(uint8_t pages, uint8_t ch, uint16_t size);
+
+typedef struct {
+	uint8_t *data;		// pointer of buffer
+	uint16_t len;		// data length
+	int size;			// size <= 0 : size unknown
+} BUFFER;
+
+#define DBM_TO_MBM(gain)	(gain*100)
+#define MBM_TO_DBM(gain)	(gain/100)
+
+#define BIT(n)				(0x01<<n)
+
 #endif
+

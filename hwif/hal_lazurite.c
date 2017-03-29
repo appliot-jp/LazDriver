@@ -20,15 +20,16 @@
 
 
 
-#include "lazurite.h"
-#include "spi0.h"
-#include "wire0.h"
-#include "driver_timer.h"
-#include "driver_extirq.h"
-#include "driver_irq.h"
-#include "driver_gpio.h"
+#include <common.h>
+#include <lazurite_system.h>
+#include <driver_timer.h>
+#include <driver_extirq.h>
+#include <driver_irq.h>
+#include <driver_gpio.h>
 #include "hal.h"
 #include "hal_lazurite.h"
+#include "spi0.h"
+#include "wire0.h"
 
 //*****************************************************
 // Local definition
@@ -65,11 +66,10 @@ int HAL_init(void){
 	drv_pinMode(HAL_GPIO_CSB,OUTPUT);
 
     drv_digitalWrite(HAL_GPIO_RESETN, 0);
-    for (t = wait_t; wait_t - t <= 3; ml7396_hwif_timer_tick(&wait_t)) // (A)‚©‚ç3msecˆÈãŒo‰ß‚ð‘Ò‚Â - (B) 
+	HAL_sleep(3);
     //    idle();
     drv_digitalWrite(HAL_GPIO_RESETN, 1);
-    for (t = wait_t; wait_t - t <= 3; ml7396_hwif_timer_tick(&wait_t)) // (B)‚©‚ç3msecˆÈãŒo‰ß‚ð‘Ò‚Â
-    //    idle();
+	HAL_sleep(3);
 
     // I2C init
 	Wire0.begin();

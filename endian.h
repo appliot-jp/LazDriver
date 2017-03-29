@@ -22,8 +22,10 @@
 #ifndef	_ENDIAN_H_
 #define _ENDIAN_H_
 
+#if ((!defined(LITTLE_ENDIAN)) & (!defined(BIG_ENDIAN)))
 #define LITTLE_ENDIAN
 // #define BIG_ENDIAN
+#endif
 
 // similar to htons, htonl, ntohs, ntohl
 // Little endian's byte buffer to host's endian

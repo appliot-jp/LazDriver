@@ -20,23 +20,21 @@
 
 
 #ifdef LAZURITE_IDE
-#include <stddef.h>
-#include <stdint.h>
-#include "hwif/core/ml7396_hwif.h"
-#include "hwif/core/ml7396_reg.h"
+	#include <common.h>
+//	#include <stddef.h>
+//	#include <stdint.h>
 #else
-#include <linux/stddef.h>
+	#include <linux/stddef.h>
+	#include "../common-lzpi.h"
 #endif
 
+#include "../phy.h"
+#include "phy_ml7396.h"
 #include "../hwif/random.h"
 #include "../hwif/hal.h"
-#include "../hwif/hal-lzpi.h"
 #include "../errno.h"
 #include "../endian.h"
-#include "../common_lazurite.h"
-#include "../common-lzpi.h"
-#include "../phy_lazurite.h"
-#include "phy_ml7396.h"
+#include "../common_subghz.h"
 
 
 /*
@@ -176,7 +174,7 @@ typedef enum{
     PHY_ST_FORCE_TRXOFF=0x03,
     PHY_ST_RXON=0x06,
     PHY_ST_TXON=0x09,
-    PHY_ST_TRXOFF=0x08,
+    PHY_ST_TRXOFF=0x08
 } PHY_TRX_STATE;
 
 
