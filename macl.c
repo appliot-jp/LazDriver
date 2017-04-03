@@ -250,7 +250,8 @@ static void macl_txdone_handler(void)
         phy_sint_handler(macl_ack_rxdone_handler);
         phy_rxStart();
         #ifndef LAZURITE_IDE
-        phy_wait_phy_event();
+        // This event may not neccessarily following since it already have timeout.
+        // phy_wait_phy_event();
         #endif
     }else{
         if(macl.rxOnEnable){
