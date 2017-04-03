@@ -44,7 +44,6 @@ typedef struct {
 #define DBM_TO_MBM(gain)	(gain*100)
 #define MBM_TO_DBM(gain)	(gain/100)
 
-#define BIT(n)				(0x01<<n)
 
 #endif
 

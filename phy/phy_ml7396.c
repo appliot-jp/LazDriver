@@ -36,6 +36,7 @@
 #include "../endian.h"
 #include "../common_subghz.h"
 
+#undef ML7396_HWIF_NOTHAVE_TIMER_DI
 
 /*
  --------------------------------------------------------------
@@ -140,19 +141,7 @@ static volatile struct {
     }
 };
 
-#ifdef ML7396_HWIF_NOTHAVE_TIMER_DI
-static void timer_handler(void) {
-    switch (hwif.timer.active) {
-    case Enable:
-        if (hwif.timer.handler != NULL)
-            hwif.timer.handler();
-        break;
-    case Disable:
-        ++hwif.timer.call_count;
-        break;
-    }
-}
-#endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
+
 
 /* register setting fixed number */
 
@@ -294,6 +283,19 @@ static PHY_PARAM phy;
                       Private function section
  ------------------------------------------------------------------
  */
+#ifdef ML7396_HWIF_NOTHAVE_TIMER_DI
+static void timer_handler(void) {
+    switch (hwif.timer.active) {
+    case Enable:
+        if (hwif.timer.handler != NULL)
+            hwif.timer.handler();
+        break;
+    case Disable:
+        ++hwif.timer.call_count;
+        break;
+    }
+}
+#endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
 /******************************************************************************/
 /*! @brief Register access of the ML7396 module
    The reading and writing of the SPI bus
@@ -535,7 +537,6 @@ static void vco_cal(void) {
     reg_wr(REG_ADR_RX_ALARM_HL,reg_data,1);
     reg_data[0]=0x01;
     reg_wr(REG_ADR_VCO_CAL_START, reg_data,1);
-    phy_inten(HW_EVENT_ALL_MASK);
 	do {
         HAL_delayMicroseconds(100);
         reg_rd(REG_ADR_INT_SOURCE_GRP1, reg_data, 1);
@@ -689,7 +690,7 @@ int phy_timer_ei(void)
         break;
     }
 #else  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
-    HAL_TIMER_enableInterrupt();
+//       HAL_TIMER_enableInterrupt();
 #endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
     status = 0;
     return status;
@@ -715,7 +716,7 @@ int phy_timer_di(void)
         break;
     }
 #else  /** #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
-    HAL_TIMER_disableInterrupt();
+//    HAL_TIMER_disableInterrupt();
 #endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
     status = 0;
     return status;
@@ -837,6 +838,9 @@ int phy_setup(uint8_t page,uint8_t ch)
     uint8_t reg_data[4];
 
     phy_rst();
+
+    phy_inten(HW_EVENT_ALL_MASK);
+    phy_intclr(~(HW_EVENT_ALL_MASK | HW_EVENT_FIFO_CLEAR));
 
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
@@ -1177,9 +1181,14 @@ void phy_txStart(BUFFER *buff,uint8_t mode)
 }
 
 
-void phy_ccaStart(void)
+void phy_ccaStart(CCA_STATE state)
 {
-    phy_cca_ctrl(CCA_FAST);
+    phy_cca_ctrl(state);
+
+    if(state == CCA_IDLE){
+        phy_inten(HW_EVENT_TX_DONE);
+        phy_set_trx_state(PHY_ST_TXON);
+    }
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
@@ -1201,21 +1210,15 @@ CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry)
 #if 1   // when it force retrying CCA, is zero.
         if(!count){
            state = IDLE_DETECT;
-           phy_cca_ctrl(state);
         }else
 #endif
         if(count < retry){
            state = CCA_RETRY;
-           phy_cca_ctrl(state); 
         }else{
            state = CCA_FAILURE;
-           phy_cca_ctrl(state);
         }
     }else{
         state = CCA_IDLE;
-        phy_cca_ctrl(state);
-        phy_set_trx_state(PHY_ST_TXON);
-        phy_inten(HW_EVENT_TX_DONE);
     }
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);

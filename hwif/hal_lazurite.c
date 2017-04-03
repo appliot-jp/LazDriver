@@ -48,26 +48,21 @@ static unsigned long hal_previous_time;
 //*****************************************************
 // Function
 //*****************************************************
-static bool event_flag_mac;
-static bool event_flag_phy;
-
 int HAL_wait_event(uint8_t event)
 {
 	int status=0;
     bool *flag;
-	uint32_t time;
 
-    if (event == HAL_PHY_EVENT) {
-        event_flag_phy=false;
-        flag = event_flag_phy;
-        time=1000;
+    if (event == HAL_PHY_EVENT){
+        event_flag_phy=0;
+        flag = &event_flag_phy;
+        wait_event_timeout(flag,8000);
     }else
-    if (event == HAL_MAC_EVENT) {
-        event_flag_mac=false;
-        flag = event_flag_mac;
-        time=5000;
+    if (event == HAL_MAC_EVENT){
+        event_flag_mac=0;
+        flag = &event_flag_mac;
+        wait_event_timeout(flag,8000);
     }
-    wait_event_timeout(&flag,time);
 	return status;
 }
 
@@ -76,10 +71,10 @@ int HAL_wakeup_event(uint8_t event)
 {
 	int status=0;
     if (event == HAL_PHY_EVENT) {
-        event_flag_phy=true;
+        event_flag_phy=1;
     }else
     if (event == HAL_MAC_EVENT) {
-        event_flag_mac=true;
+        event_flag_mac=1;
     }
 	return status;
 }
@@ -138,6 +133,7 @@ int HAL_SPI_transfer(const unsigned char *wdata, uint16_t wsize,unsigned char *r
 int HAL_GPIO_setInterrupt(void (*func)(void))
 {
 	hal_gpio_func = func;
+	drv_attachInterrupt(HAL_GPIO_SINTN,BP3596A_SINTN_IRQNUM,hal_gpio_func,LOW,false,false);
 	return HAL_STATUS_OK;
 }
 

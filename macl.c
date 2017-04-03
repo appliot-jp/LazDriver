@@ -35,6 +35,7 @@ MACL_PARAM macl;
                Private handler section
  ******************************************************
  */
+static void macl_dummy_handler(void);
 static void macl_rxdone_handler(void);
 static void macl_ack_txdone_handler(void);
 static void macl_fifodone_handler(void);
@@ -100,6 +101,12 @@ static int macl_total_transmission_time(uint8_t len)
 }
 
 
+static void macl_dummy_handler(void)
+{
+    phy_stop();
+}
+
+
 static void macl_rxdone_handler(void)
 {
     int status;
@@ -132,7 +139,7 @@ static void macl_rxdone_handler(void)
         }
     }
 #endif
-	phy_timer_di();
+	phy_timer_ei();
 }
 
 
@@ -159,7 +166,7 @@ static void macl_fifodone_handler(void)
 #endif
 	phy_timer_di();
 	phy_sint_handler(macl_ccadone_handler);
-    phy_ccaStart();
+    phy_ccaStart(CCA_FAST);
     phy_wait_phy_event();
 	phy_timer_ei();
 }
@@ -167,7 +174,7 @@ static void macl_fifodone_handler(void)
 
 static void macl_ccadone_handler(void)
 {
-    int cca_state;
+    CCA_STATE cca_state;
 
 	phy_timer_di();
     cca_state = phy_ccadone(macl.ccaBe,macl.ccaCount,macl.ccaRetry);
@@ -176,15 +183,18 @@ static void macl_ccadone_handler(void)
 #endif
     if(cca_state == IDLE_DETECT){
         macl.ccaCount++;
-        phy_timer_start(500);
         phy_timer_handler(macl_cca_abort_handler);
+        phy_timer_start(500);
 	    phy_sint_handler(macl_ccadone_handler);
+        phy_ccaStart(cca_state);
         phy_wait_phy_event();
     }else if(cca_state == CCA_RETRY){
         macl.ccaCount++;
 	    phy_sint_handler(macl_ccadone_handler);
+        phy_ccaStart(cca_state);
         phy_wait_phy_event();
     }else if(cca_state == CCA_FAILURE){
+        phy_ccaStart(cca_state);
         if(macl.rxOnEnable){
             phy_sint_handler(macl_rxdone_handler);
             phy_rxStart();
@@ -196,6 +206,7 @@ static void macl_ccadone_handler(void)
     }else if(cca_state == CCA_IDLE){
         phy_timer_stop();
 	    phy_sint_handler(macl_txdone_handler);
+        phy_ccaStart(cca_state);
 //      phy_wait_phy_event();
     }
 	phy_timer_ei();
@@ -234,11 +245,13 @@ static void macl_txdone_handler(void)
     phy_txdone();
     ack_req = macl.phy->out.data[0]&0x20;
     if(ack_req){
-        phy_timer_start(macl.ack_timeout);
         phy_timer_handler(macl_ack_timeout_handler);
+        phy_timer_start(macl.ack_timeout);
         phy_sint_handler(macl_ack_rxdone_handler);
         phy_rxStart();
+        #ifndef LAZURITE_IDE
         phy_wait_phy_event();
+        #endif
     }else{
         if(macl.rxOnEnable){
             phy_sint_handler(macl_rxdone_handler);
@@ -300,7 +313,7 @@ static void macl_ack_timeout_handler(void)
         if (macl.txMode == 0) {
             phy_txStart(&macl.phy->out,macl.txMode);
             phy_sint_handler(macl_ccadone_handler);
-            phy_ccaStart();
+            phy_ccaStart(CCA_FAST);
         }else
         if (macl.txMode == 1) {
             phy_sint_handler(macl_fifodone_handler);
@@ -310,7 +323,9 @@ static void macl_ack_timeout_handler(void)
             phy_sint_handler(macl_txdone_handler);
             phy_txStart(&macl.phy->out,macl.txMode);
         }
+        #ifndef LAZURITE_IDE
         phy_wait_phy_event();
+        #endif
     }else{
         if(macl.rxOnEnable){
             phy_sint_handler(macl_rxdone_handler);
@@ -341,6 +356,7 @@ MACL_PARAM* macl_init(void)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,in.data:%lx,out.data:%lx\n",
             __FILE__,__func__,(unsigned long)macl.phy->in.data,(unsigned long)macl.phy->out.data);
 #endif
+	phy_sint_handler(macl_dummy_handler);
 	phy_sint_ei(); phy_timer_ei();
 	return &macl;
 }
@@ -393,7 +409,7 @@ int	macl_xmit_sync(BUFFER buff)
         if (macl.txMode == 0) {
             phy_txStart(&macl.phy->out,macl.txMode);
             phy_sint_handler(macl_ccadone_handler);
-            phy_ccaStart();
+            phy_ccaStart(CCA_FAST);
         }else
         if (macl.txMode == 1) {
             phy_sint_handler(macl_fifodone_handler);

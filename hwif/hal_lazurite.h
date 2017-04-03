@@ -29,7 +29,6 @@
 /* タイマー割り込みコントロール関数 HAL_TIMER_enableInterrupt() と
  * HAL_TIMER_disableInterrupt() が定義されている場合はコメントアウト
  */
-#define ML7396_HWIF_NOTHAVE_TIMER_DI
 
 /* 戻り値定義
  *  0以上=正常終了, 0未満=異常終了
@@ -53,5 +52,8 @@
 #define HAL_GPIO_DMON   5
 #define HAL_GPIO_SINTN  27
 #define BP3596A_SINTN_IRQNUM	3
+
+unsigned char event_flag_mac;
+unsigned char event_flag_phy;
 
 #endif  //_HAL_LAZURIE_H_
