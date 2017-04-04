@@ -53,7 +53,4 @@
 #define HAL_GPIO_SINTN  27
 #define BP3596A_SINTN_IRQNUM	3
 
-unsigned char event_flag_mac;
-unsigned char event_flag_phy;
-
 #endif  //_HAL_LAZURIE_H_

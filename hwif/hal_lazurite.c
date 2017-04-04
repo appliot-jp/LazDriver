@@ -39,6 +39,7 @@ void (*hal_gpio_func)(void);
 static unsigned long hal_previous_time;
 // 2015.12.14 Eiichi Saito: for preference of SubGHz
 //static unsigned char hal_setbit_exi;
+unsigned char event_flag;
 
 
 //*****************************************************
@@ -54,14 +55,12 @@ int HAL_wait_event(uint8_t event)
     bool *flag;
 
     if (event == HAL_PHY_EVENT){
-        event_flag_phy=0;
-        flag = &event_flag_phy;
-        wait_event_timeout(flag,8000);
+        wait_timeout(2000);
     }else
     if (event == HAL_MAC_EVENT){
-        event_flag_mac=0;
-        flag = &event_flag_mac;
-        wait_event_timeout(flag,8000);
+        event_flag=0;
+        flag = &event_flag;
+        wait_event(flag);
     }
 	return status;
 }
@@ -71,10 +70,10 @@ int HAL_wakeup_event(uint8_t event)
 {
 	int status=0;
     if (event == HAL_PHY_EVENT) {
-        event_flag_phy=1;
+	    timer_16bit_stop(6);
     }else
     if (event == HAL_MAC_EVENT) {
-        event_flag_mac=1;
+        event_flag=1;
     }
 	return status;
 }

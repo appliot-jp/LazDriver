@@ -124,6 +124,7 @@ static void macl_rxdone_handler(void)
         // not requeset ack, or crc errc
         phy_sint_handler(macl_rxdone_handler);
         phy_rxStart();
+        // @issue : the following my not need
         phy_wait_phy_event();
     }
 #ifndef LAZURITE_IDE
@@ -154,6 +155,7 @@ static void macl_ack_txdone_handler(void)
     macl.ack.len = 0;
     phy_sint_handler(macl_rxdone_handler);
     phy_rxStart();
+    // @issue : the following my not need
     phy_wait_phy_event();
 	phy_timer_ei();
 }
@@ -198,6 +200,7 @@ static void macl_ccadone_handler(void)
         if(macl.rxOnEnable){
             phy_sint_handler(macl_rxdone_handler);
             phy_rxStart();
+            // @issue : the following my not need
             phy_wait_phy_event();
         }else{
             phy_stop();
@@ -224,6 +227,7 @@ static void macl_cca_abort_handler(void)
     if(macl.rxOnEnable){
         phy_sint_handler(macl_rxdone_handler);
         phy_rxStart();
+        // @issue : the following my not need
         phy_wait_phy_event();
     }else{
         phy_stop();
@@ -249,14 +253,11 @@ static void macl_txdone_handler(void)
         phy_timer_start(macl.ack_timeout);
         phy_sint_handler(macl_ack_rxdone_handler);
         phy_rxStart();
-        #ifndef LAZURITE_IDE
-        // This event may not neccessarily following since it already have timeout.
-        // phy_wait_phy_event();
-        #endif
     }else{
         if(macl.rxOnEnable){
             phy_sint_handler(macl_rxdone_handler);
             phy_rxStart();
+            // @issue : the following my not need
             phy_wait_phy_event();
         }else{
             phy_stop();
@@ -284,6 +285,7 @@ static void macl_ack_rxdone_handler(void)
         if(macl.rxOnEnable){
             phy_sint_handler(macl_rxdone_handler);
             phy_rxStart();
+            // @issue : the following my not need
             phy_wait_phy_event();
         }else{
             phy_stop();
@@ -292,6 +294,7 @@ static void macl_ack_rxdone_handler(void)
     }else{
         phy_sint_handler(macl_ack_rxdone_handler);
         phy_rxStart();
+        // @issue : the following my not need
         phy_wait_phy_event();
     }
 	phy_timer_ei();
@@ -324,13 +327,12 @@ static void macl_ack_timeout_handler(void)
             phy_sint_handler(macl_txdone_handler);
             phy_txStart(&macl.phy->out,macl.txMode);
         }
-        #ifndef LAZURITE_IDE
         phy_wait_phy_event();
-        #endif
     }else{
         if(macl.rxOnEnable){
             phy_sint_handler(macl_rxdone_handler);
             phy_rxStart();
+            // @issue : the following my not need
             phy_wait_phy_event();
         }
 //      phy_wakeup_phy_event();
@@ -376,6 +378,7 @@ int	macl_start(void)
     macl.rxOnEnable = 1;
     phy_sint_handler(macl_rxdone_handler);
     phy_rxStart();
+    // @issue : the following my not need
     phy_wait_phy_event();
 
 	return status;
@@ -546,6 +549,7 @@ int	macl_set_promiscuous_mode(const bool on)
     if (macl.promiscuousMode){
 	    phy_sint_handler(macl_rxdone_handler);
         phy_rxStart();
+        // @issue : the following my not need
 	    phy_wait_phy_event();
     }else{
         phy_stop();

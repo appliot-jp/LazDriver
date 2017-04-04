@@ -253,7 +253,6 @@ int spi_probe(void){
 	init_waitqueue_head( &rx_led_q );
 	init_waitqueue_head( &tx_led_q );
 	init_waitqueue_head( &ext_q );
-    // ssdebug
 	init_waitqueue_head( &mac_done );
 
 	// create GPIO irq
