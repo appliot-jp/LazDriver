@@ -29,6 +29,7 @@
 #include "phy.h"
 
 typedef struct {
+	uint8_t status;
 	uint8_t pages;
 	uint8_t ch;
 	uint8_t ccaRetry;

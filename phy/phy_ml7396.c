@@ -555,50 +555,6 @@ static void phy_backoffTimer(void){
 }
 
 
-static void phy_cca_ctrl(CCA_STATE state) {
-
-    uint8_t reg_cca_cntl;
-    uint8_t reg_idl_wait;
-    uint8_t reg_data;
-
-    if (state == CCA_FAILURE || state == CCA_IDLE){
-        reg_data = 0x64;
-        reg_wr(REG_ADR_DEMSET3, &reg_data, 1);
-        reg_data = 0x27;
-        reg_wr(REG_ADR_DEMSET14, &reg_data, 1);
-        reg_cca_cntl = 0x00;
-        reg_idl_wait = 0x00;
-        reg_wr(REG_ADR_IDLE_WAIT_L, &reg_idl_wait, 1);
-        reg_wr(REG_ADR_CCA_CNTRL, &reg_cca_cntl, 1);
-    }else{
-
-        phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
-
-        if (state == CCA_FAST) {
-            reg_data = 0x00;
-            reg_wr(REG_ADR_DEMSET3, &reg_data, 1);
-            reg_wr(REG_ADR_DEMSET14,&reg_data, 1);
-
-            reg_cca_cntl = 0x10;
-            reg_idl_wait = 0x00;
-        } else
-        if (state == IDLE_DETECT) {
-            reg_cca_cntl = 0x18;
-            reg_idl_wait = 0x64;
-        } else
-        if (state == CCA_RETRY) {
-            phy_backoffTimer();
-            reg_cca_cntl = 0x10;
-            reg_idl_wait = 0x64;
-        }
-        phy_inten(HW_EVENT_CCA_DONE);
-        reg_wr(REG_ADR_IDLE_WAIT_L, &reg_idl_wait, 1);
-        reg_wr(REG_ADR_CCA_CNTRL, &reg_cca_cntl, 1);
-        phy_set_trx_state(PHY_ST_RXON);
-    }
-}
-
-
 /*
  -------------------------------------------------------------
                     Public interrupt section
@@ -1181,17 +1137,52 @@ void phy_txStart(BUFFER *buff,uint8_t mode)
 }
 
 
-void phy_ccaStart(CCA_STATE state)
-{
-    phy_cca_ctrl(state);
+void phy_ccaCtrl(CCA_STATE state) {
 
-    if(state == CCA_IDLE){
-        phy_inten(HW_EVENT_TX_DONE);
-        phy_set_trx_state(PHY_ST_TXON);
+    uint8_t reg_cca_cntl;
+    uint8_t reg_idl_wait;
+    uint8_t reg_data;
+
+    if (state == CCA_FAILURE || state == CCA_IDLE){
+        reg_data = 0x64;
+        reg_wr(REG_ADR_DEMSET3, &reg_data, 1);
+        reg_data = 0x27;
+        reg_wr(REG_ADR_DEMSET14, &reg_data, 1);
+        reg_cca_cntl = 0x00;
+        reg_idl_wait = 0x00;
+        reg_wr(REG_ADR_IDLE_WAIT_L, &reg_idl_wait, 1);
+        reg_wr(REG_ADR_CCA_CNTRL, &reg_cca_cntl, 1);
+
+        if(state == CCA_IDLE){
+            phy_inten(HW_EVENT_TX_DONE);
+            phy_set_trx_state(PHY_ST_TXON);
+        }
+    }else{
+
+        phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+
+        if (state == CCA_FAST) {
+            reg_data = 0x00;
+            reg_wr(REG_ADR_DEMSET3, &reg_data, 1);
+            reg_wr(REG_ADR_DEMSET14,&reg_data, 1);
+
+            reg_cca_cntl = 0x10;
+            reg_idl_wait = 0x00;
+        } else
+        if (state == IDLE_DETECT) {
+            reg_cca_cntl = 0x18;
+            reg_idl_wait = 0x64;
+        } else
+        if (state == CCA_RETRY) {
+            phy_backoffTimer();
+            reg_cca_cntl = 0x10;
+            reg_idl_wait = 0x64;
+        }
+        phy_inten(HW_EVENT_CCA_DONE);
+        reg_wr(REG_ADR_IDLE_WAIT_L, &reg_idl_wait, 1);
+        reg_wr(REG_ADR_CCA_CNTRL, &reg_cca_cntl, 1);
+        phy_set_trx_state(PHY_ST_RXON);
     }
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
 }
 
 
@@ -1224,12 +1215,6 @@ CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry)
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
     return state;
-}
-
-
-void phy_ccaAbort(void)
-{
-    phy_cca_ctrl(CCA_FAILURE);
 }
 
 

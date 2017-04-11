@@ -168,7 +168,7 @@ static void macl_fifodone_handler(void)
 #endif
 	phy_timer_di();
 	phy_sint_handler(macl_ccadone_handler);
-    phy_ccaStart(CCA_FAST);
+    phy_ccaCtrl(CCA_FAST);
     phy_wait_phy_event();
 	phy_timer_ei();
 }
@@ -188,15 +188,15 @@ static void macl_ccadone_handler(void)
         phy_timer_handler(macl_cca_abort_handler);
         phy_timer_start(500);
 	    phy_sint_handler(macl_ccadone_handler);
-        phy_ccaStart(cca_state);
-        phy_wait_phy_event();
+        phy_ccaCtrl(cca_state);
+        // phy_wait_phy_event();
     }else if(cca_state == CCA_RETRY){
         macl.ccaCount++;
 	    phy_sint_handler(macl_ccadone_handler);
-        phy_ccaStart(cca_state);
+        phy_ccaCtrl(cca_state);
         phy_wait_phy_event();
     }else if(cca_state == CCA_FAILURE){
-        phy_ccaStart(cca_state);
+        phy_ccaCtrl(cca_state);
         if(macl.rxOnEnable){
             phy_sint_handler(macl_rxdone_handler);
             phy_rxStart();
@@ -205,11 +205,12 @@ static void macl_ccadone_handler(void)
         }else{
             phy_stop();
         }
+        macl.status = -EBUSY;
         phy_wakeup_mac_event();
     }else if(cca_state == CCA_IDLE){
         phy_timer_stop();
 	    phy_sint_handler(macl_txdone_handler);
-        phy_ccaStart(cca_state);
+        phy_ccaCtrl(cca_state);
 //      phy_wait_phy_event();
     }
 	phy_timer_ei();
@@ -223,7 +224,7 @@ static void macl_cca_abort_handler(void)
 #endif
 	phy_sint_di();
     phy_timer_stop();
-    phy_ccaAbort();
+    phy_ccaCtrl(CCA_FAILURE);
     if(macl.rxOnEnable){
         phy_sint_handler(macl_rxdone_handler);
         phy_rxStart();
@@ -233,6 +234,7 @@ static void macl_cca_abort_handler(void)
         phy_stop();
     }
 //  phy_wakeup_phy_event();
+    macl.status = -EBUSY;
     phy_wakeup_mac_event();
 	phy_sint_ei();
 }
@@ -317,7 +319,7 @@ static void macl_ack_timeout_handler(void)
         if (macl.txMode == 0) {
             phy_txStart(&macl.phy->out,macl.txMode);
             phy_sint_handler(macl_ccadone_handler);
-            phy_ccaStart(CCA_FAST);
+            phy_ccaCtrl(CCA_FAST);
         }else
         if (macl.txMode == 1) {
             phy_sint_handler(macl_fifodone_handler);
@@ -336,6 +338,7 @@ static void macl_ack_timeout_handler(void)
             phy_wait_phy_event();
         }
 //      phy_wakeup_phy_event();
+        macl.status = -ETIMEDOUT;
         phy_wakeup_mac_event();
     }
 	phy_sint_ei();
@@ -399,10 +402,7 @@ int	macl_stop(void)
 
 int	macl_xmit_sync(BUFFER buff)
 {
-	int status=STATUS_OK;
-
-	//BUFFER ack;
-
+	macl.status=STATUS_OK;
     macl.phy->out = buff;
     macl.resendingNum = 0;
     macl.ccaCount=0;
@@ -413,7 +413,7 @@ int	macl_xmit_sync(BUFFER buff)
         if (macl.txMode == 0) {
             phy_txStart(&macl.phy->out,macl.txMode);
             phy_sint_handler(macl_ccadone_handler);
-            phy_ccaStart(CCA_FAST);
+            phy_ccaCtrl(CCA_FAST);
         }else
         if (macl.txMode == 1) {
             phy_sint_handler(macl_fifodone_handler);
@@ -434,7 +434,7 @@ int	macl_xmit_sync(BUFFER buff)
 		PAYLOADDUMP(macl.phy->out.data,macl.phy->out.len);
 	}
 #endif
-	return status;
+	return macl.status;
 }
 //extern int	macl_xmit_async(BUFFER buff);								// for linux. does not support
 int	macl_ed(uint8_t *level)
