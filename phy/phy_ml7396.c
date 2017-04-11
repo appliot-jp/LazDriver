@@ -1358,3 +1358,11 @@ void phy_sleep(void)
 }
 
 
+int phy_regread(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
+    reg_rd(bank, addr, data, size);
+}
+
+
+int phy_regwrite(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
+    reg_wr(bank, addr, data, size);
+}
