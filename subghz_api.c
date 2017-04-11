@@ -59,6 +59,7 @@ static struct {
 	bool read;
 	struct rf_param rf;
 	struct mach_param *mach;
+	short short_addr;
 	BUFFER tx;
 	BUFFER rx;
 } subghz_param;
@@ -102,8 +103,17 @@ static SUBGHZ_MSG subghz_init(void)
 	subghz_param.sending = false;
 	subghz_param.read = false;
 	subghz_param.open = false;
-	msg =  SUBGHZ_OK;
 
+	// data to myaddress and grobal address in specified PANID can be received.
+	subghz_param.short_addr = (uint16_t)subghz_param.mach->my_addr.ieee_addr[0] | 
+		((uint16_t)subghz_param.mach->my_addr.ieee_addr[1]<<8);
+	result = mach_set_my_short_addr(0xabcd,subghz_param.short_addr);
+	if(result != STATUS_OK)
+	{
+		msg = SUBGHZ_MYADDR_FAIL;
+		goto error;
+	}
+	msg =  SUBGHZ_OK;
 
 error:
 	subghz_param.tx_stat.status = result;
@@ -122,7 +132,6 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 {
 	SUBGHZ_MSG msg = SUBGHZ_OK;
 	int result;
-	uint16_t short_addr=0;
 
 	if(subghz_param.open == false)
 	{
@@ -147,6 +156,8 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 		msg = SUBGHZ_SETUP_FAIL;
 		goto error;
 	}
+	
+	mach_set_my_short_addr(panid,subghz_param.short_addr);
 
 	if(txPower == 1) 
 		subghz_param.rf.tx_power = DBM_TO_MBM(1);
@@ -158,17 +169,7 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 		msg = SUBGHZ_SETUP_FAIL;
 		goto error;
 	}
-
-	// data to myaddress and grobal address in specified PANID can be received.
-	short_addr = (uint16_t)subghz_param.mach->my_addr.ieee_addr[0] | 
-		((uint16_t)subghz_param.mach->my_addr.ieee_addr[1]<<8);
-	result = mach_set_my_short_addr(panid,short_addr);
-	if(result != STATUS_OK)
-	{
-		msg = SUBGHZ_PANID;
-		goto error;
-	}
-
+	
 	msg = SUBGHZ_OK;
 
 error:
@@ -199,52 +200,6 @@ error:
 	return msg;
 }
 
-/*
-   static void subghz_txdone(uint8_t rssi, int status)
-   {
-   subghz_param.sending = false;
-   subghz_param.tx_stat.rssi = rssi;
-   subghz_param.tx_stat.status = status;
-//#ifdef DEBUG
-//	Serial.print("status=");
-//	Serial.println_long(status,DEC);
-//#endif
-if(subghz_param.tx_callback != NULL)
-{
-subghz_param.tx_callback(rssi, status);
-}
-}
- */
-/*
-SUBGHZ_MSG subghz_halt_until_complete(void)
-{
-	SUBGHZ_MSG msg = SUBGHZ_OK;
-
-	// @issue 
-#ifdef LAZURITE_IDE
-	while(subghz_param.sending == true)
-	{
-		lp_setHaltMode();
-		// 2016.03.14 tx send event
-		BP3596_sendIdle();
-	}
-#else
-	que_th2ex = 0;
-	wait_event_interruptible_timeout(tx_done, que_th2ex,HZ);
-#endif
-	if(subghz_param.tx_stat.status > 0) {
-		msg = SUBGHZ_OK;
-	} else if(subghz_param.tx_stat.status == -EBUSY) {
-		msg = SUBGHZ_TX_CCA_FAIL;
-	} else if(subghz_param.tx_stat.status == -ETIMEDOUT) {
-		msg = SUBGHZ_TX_ACK_FAIL;
-	} else {
-		msg = -EIO;
-	}
-
-	return msg;
-}
-*/
 static SUBGHZ_MSG subghz_tx64(uint16_t panid, uint8_t *dstAddr64, uint8_t *data, uint16_t len, void (*callback)(uint8_t rssi, int status)) {
 	SUBGHZ_MSG msg;
 	int result;
@@ -469,11 +424,20 @@ void subghz_get_my_short_addr(uint16_t *short_addr)
 }
 static uint16_t subghz_getMyAddress(void)
 {
-	return subghz_param.mach->my_addr.short_addr;
+	return subghz_param.short_addr;
 }
 static void subghz_getMyAddr64(uint8_t *addr)
 {
-	if(addr) memcpy(addr,subghz_param.mach->my_addr.ieee_addr,8);
+	if(addr) {
+		addr[0] = subghz_param.mach->my_addr.ieee_addr[7];
+		addr[1] = subghz_param.mach->my_addr.ieee_addr[6];
+		addr[2] = subghz_param.mach->my_addr.ieee_addr[5];
+		addr[3] = subghz_param.mach->my_addr.ieee_addr[4];
+		addr[4] = subghz_param.mach->my_addr.ieee_addr[3];
+		addr[5] = subghz_param.mach->my_addr.ieee_addr[2];
+		addr[6] = subghz_param.mach->my_addr.ieee_addr[1];
+		addr[7] = subghz_param.mach->my_addr.ieee_addr[0];
+	}
 	return ;
 }
 
@@ -567,6 +531,12 @@ static SUBGHZ_MSG subghz_setSendMode(SUBGHZ_PARAM *param)
 static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len)
 {
 	struct mac_header header;
+	header.input.data = raw;
+	header.input.len = raw_len;
+	header.input.size = raw_len;
+	header.raw.data = raw;
+	header.raw.len = raw_len;
+	header.raw.size = raw_len;
 	mach_parse_data(&header);
 
 	mac->mac_header.fc16=header.fc.fc16;
