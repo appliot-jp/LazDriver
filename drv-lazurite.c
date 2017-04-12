@@ -70,9 +70,9 @@ static struct {
 	unsigned char bps;
 	unsigned char addr_type;
 	unsigned short my_panid;
-	unsigned short tx_panid;
+	unsigned short dst_panid;
 	unsigned char my_addr[8];
-	unsigned char tx_addr[8];
+	unsigned char dst_addr[8];
 	unsigned char key[16];
 	unsigned char rx_rssi;
 	unsigned char tx_rssi;
@@ -322,12 +322,12 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					}
 					break;
 				case IOCTL_GET_RX_PANID:			// get panid
-					ret = p.tx_panid;
+					ret = p.dst_panid;
 					break;
 				case IOCTL_SET_RX_PANID:			// set panid
 					if((arg >= 0) && (arg <= 0xffff)) {
-						p.tx_panid = arg;
-						ret = p.tx_panid;
+						p.dst_panid = arg;
+						ret = p.dst_panid;
 					} else {
 						printk(KERN_ERR"bps = %lx error!! must be 50 or 100\n",arg);
 						ret = -EINVAL;
@@ -369,15 +369,15 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 				case IOCTL_GET_RX_ADDR1:			// get panid
 				case IOCTL_GET_RX_ADDR2:			// get panid
 				case IOCTL_GET_RX_ADDR3:			// get panid
-					ret = p.tx_addr[(param-IOCTL_GET_RX_ADDR0)+1];
+					ret = p.dst_addr[(param-IOCTL_GET_RX_ADDR0)+1];
 					ret <<= 8;
-					ret += p.tx_addr[(param-IOCTL_GET_RX_ADDR0)+0];
+					ret += p.dst_addr[(param-IOCTL_GET_RX_ADDR0)+0];
 					break;
 				case IOCTL_SET_RX_ADDR0:			// set panid
 					p.tx64 = false;
 					if((arg >= 0) && (arg <= 0xffff)) {
-						p.tx_addr[(param-IOCTL_SET_RX_ADDR0)+1] = (arg >> 8) & 0x000000ff;
-						p.tx_addr[(param-IOCTL_SET_RX_ADDR0)+0] = arg  & 0x000000ff;
+						p.dst_addr[(param-IOCTL_SET_RX_ADDR0)+1] = (arg >> 8) & 0x000000ff;
+						p.dst_addr[(param-IOCTL_SET_RX_ADDR0)+0] = arg  & 0x000000ff;
 						ret = arg;
 					} else {
 						ret = -EINVAL;
@@ -388,8 +388,8 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 				case IOCTL_SET_RX_ADDR3:			// set panid
 					p.tx64 = true;
 					if((arg >= 0) && (arg <= 0xffff)) {
-						p.tx_addr[(param-IOCTL_SET_RX_ADDR0)+1] = (arg >> 8) & 0x000000ff;
-						p.tx_addr[(param-IOCTL_SET_RX_ADDR0)+0] = arg  & 0x000000ff;
+						p.dst_addr[(param-IOCTL_SET_RX_ADDR0)+1] = (arg >> 8) & 0x000000ff;
+						p.dst_addr[(param-IOCTL_SET_RX_ADDR0)+0] = arg  & 0x000000ff;
 						ret = arg;
 					} else {
 						ret = -EINVAL;
@@ -628,18 +628,13 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 		}
 		EXT_set_tx_led(0);
 		if(p.tx64) {
-			uint8_t addr_be[8];
-			int i;
-			for(i=0;i<8;i++) {
-				addr_be[7-i] = p.tx_addr[i];
-			}
-			status = SubGHz.send64(p.tx_panid,addr_be,payload,count,tx_callback);
+			status = SubGHz.send64le(p.dst_panid,p.dst_addr,payload,count,tx_callback);
 		}else {
-			uint16_t tx_addr;
-			tx_addr = p.tx_addr[1];
-			tx_addr = (tx_addr << 8 ) | p.tx_addr[0];
+			uint16_t dst_addr;
+			dst_addr = p.dst_addr[1];
+			dst_addr = (dst_addr << 8 ) | p.dst_addr[0];
 
-			status = SubGHz.send(p.tx_panid,tx_addr,payload,count,tx_callback);
+			status = SubGHz.send(p.dst_panid,dst_addr,payload,count,tx_callback);
 		}
 		p.tx_status = status;
 		if(status == SUBGHZ_OK)

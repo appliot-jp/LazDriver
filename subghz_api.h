@@ -98,7 +98,8 @@ typedef struct
 	SUBGHZ_MSG (*begin)(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUBGHZ_POWER txPower);
 	SUBGHZ_MSG (*close)(void);
 	SUBGHZ_MSG (*send)(uint16_t panid, uint16_t dstAddr, uint8_t *data, uint16_t len, void (*callback)(uint8_t rssi, int status));
-	SUBGHZ_MSG (*send64)(uint16_t panid, uint8_t *dstAddr, uint8_t *data, uint16_t len, void (*callback)(uint8_t rssi, int status));
+	SUBGHZ_MSG (*send64le)(uint16_t panid, uint8_t *dstAddr_le, uint8_t *data, uint16_t len, void (*callback)(uint8_t rssi, int status));
+	SUBGHZ_MSG (*send64be)(uint16_t panid, uint8_t *dstAddr_be, uint8_t *data, uint16_t len, void (*callback)(uint8_t rssi, int status));
 	SUBGHZ_MSG (*rxEnable)(void (*callback)(const uint8_t *data, uint8_t rssi, int status));
 	SUBGHZ_MSG (*rxDisable)(void);
 	short (*readData)(uint8_t *data, uint16_t max_size);

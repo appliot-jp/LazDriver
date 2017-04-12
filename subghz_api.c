@@ -200,14 +200,11 @@ error:
 	return msg;
 }
 
-static SUBGHZ_MSG subghz_tx64(uint16_t panid, uint8_t *addr_be, uint8_t *data, uint16_t len, void (*callback)(uint8_t rssi, int status)) {
+static SUBGHZ_MSG subghz_tx64le(uint16_t panid, uint8_t *addr_le, uint8_t *data, uint16_t len, void (*callback)(uint8_t rssi, int status)) {
 	SUBGHZ_MSG msg;
 	int result;
 	uint8_t addr_type;
 	struct mac_fc_alignment fc;
-	uint8_t addr_tmp;
-	uint8_t *addr_le = addr_be;
-	int i;
 
 	// initializing buffer
 	subghz_param.tx.data = data;
@@ -220,12 +217,6 @@ static SUBGHZ_MSG subghz_tx64(uint16_t panid, uint8_t *addr_be, uint8_t *data, u
 	fc.frame_type = IEEE802154_FC_TYPE_DATA;
 	fc.frame_ver = IEEE802154_FC_VER_4E;
 	fc.ack_req = 1;
-
-	for(i=7;i>3;i--){
-		addr_tmp = addr_be[i];
-		addr_le[i] = addr_be[7-i];
-		addr_le[7-i] = addr_tmp;
-	}
 
 	mach_set_dst_ieee_addr(panid,addr_le);
 	mach_set_src_addr(IEEE802154_FC_ADDR_IEEE);
@@ -264,6 +255,20 @@ static SUBGHZ_MSG subghz_tx64(uint16_t panid, uint8_t *addr_be, uint8_t *data, u
 
 	return msg;
 }
+
+static SUBGHZ_MSG subghz_tx64be(uint16_t panid, uint8_t *addr_be, uint8_t *data, uint16_t len, void (*callback)(uint8_t rssi, int status)) {
+	uint8_t addr_le[8];
+	addr_le[7] = addr_be[0];
+	addr_le[6] = addr_be[1];
+	addr_le[5] = addr_be[2];
+	addr_le[4] = addr_be[3];
+	addr_le[3] = addr_be[4];
+	addr_le[2] = addr_be[5];
+	addr_le[1] = addr_be[6];
+	addr_le[0] = addr_be[7];
+	return subghz_tx64le(panid,addr_le,data,len,callback);
+}
+
 static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uint16_t len, void (*callback)(uint8_t rssi, int status))
 {
 	SUBGHZ_MSG msg;
@@ -582,7 +587,8 @@ const SubGHz_CTRL SubGHz = {
 	subghz_begin,
 	subghz_close,
 	subghz_tx,
-	subghz_tx64,
+	subghz_tx64le,
+	subghz_tx64be,
 	subghz_rxEnable,
 	subghz_rxDisable,
 	subghz_readData,
