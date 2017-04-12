@@ -628,7 +628,12 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 		}
 		EXT_set_tx_led(0);
 		if(p.tx64) {
-			status = SubGHz.send64(p.tx_panid,p.tx_addr,payload,count,tx_callback);
+			uint8_t addr_be[8];
+			int i;
+			for(i=0;i<8;i++) {
+				addr_be[7-i] = p.tx_addr[i];
+			}
+			status = SubGHz.send64(p.tx_panid,addr_be,payload,count,tx_callback);
 		}else {
 			uint16_t tx_addr;
 			tx_addr = p.tx_addr[1];
