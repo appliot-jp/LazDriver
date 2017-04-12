@@ -78,15 +78,16 @@ extern int phy_setup(uint8_t page,uint8_t ch);
 // extern void phy_promiscuous(void);
 extern void phy_rxStart(void);
 extern void phy_txStart(BUFFER *buff,uint8_t mode);
-extern void phy_ccaStart(CCA_STATE state);
+extern void phy_ccaCtrl(CCA_STATE state);
 extern CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry);
-extern void phy_ccaAbort(void);
 extern void phy_txdone(void);
 extern int phy_rxdone(BUFFER *buff);
 extern void phy_stop(void);
 extern void phy_addrFilt(uint16_t panid, uint16_t uc_addr, uint16_t bc_addr);
 extern void phy_ed(uint8_t *level, uint8_t rfMode);
 extern void phy_sleep(void);
+extern void phy_regread(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size);
+extern void phy_regwrite(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size);
 
 #endif
 
