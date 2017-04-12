@@ -106,7 +106,6 @@ static void macl_dummy_handler(void)
     phy_stop();
 }
 
-
 static void macl_rxdone_handler(void)
 {
     int status;
@@ -115,6 +114,10 @@ static void macl_rxdone_handler(void)
     status = phy_rxdone(&macl.phy->in);
     macl_rx_irq(&macl.phy->in,&macl.ack);
     macl_rx_irq(NULL,NULL);
+
+#ifndef LAZURITE_IDE
+	HAL_sleep(1);
+#endif
 
     if(!macl.promiscuousMode && status == STATUS_OK && macl.ack.data &&
             (macl_total_transmission_time(macl.phy->out.len) == STATUS_OK)){
