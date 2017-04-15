@@ -701,6 +701,24 @@ int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr)
 		filt.pan_coord = mach.my_addr.pan_coord;
 		filt.short_addr = mach.my_addr.short_addr;
 		memcpy(filt.ieee_addr,mach.my_addr.ieee_addr,8);
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
+		printk(KERN_INFO"addr: 0x%04x %d 0x%04x %02x%02x%02x%02x%02x%02x%02x%02x\n",
+			filt.pan_id,
+			filt.pan_coord,
+			filt.short_addr,
+			filt.ieee_addr[7],
+			filt.ieee_addr[6],
+			filt.ieee_addr[5],
+			filt.ieee_addr[4],
+			filt.ieee_addr[3],
+			filt.ieee_addr[2],
+			filt.ieee_addr[1],
+			filt.ieee_addr[0]
+			);
+	}
+#endif
 		macl_set_hw_addr_filt(&filt,0x0f);			// update all of addr filter
 	}
 	return status;

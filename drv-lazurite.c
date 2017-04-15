@@ -321,10 +321,10 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 						ret = -EINVAL;
 					}
 					break;
-				case IOCTL_GET_RX_PANID:			// get panid
+				case IOCTL_GET_DST_PANID:			// get panid
 					ret = p.dst_panid;
 					break;
-				case IOCTL_SET_RX_PANID:			// set panid
+				case IOCTL_SET_DST_PANID:			// set panid
 					if((arg >= 0) && (arg <= 0xffff)) {
 						p.dst_panid = arg;
 						ret = p.dst_panid;
@@ -365,31 +365,31 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 				case IOCTL_SET_MY_ADDR2:			// set panid
 				case IOCTL_SET_MY_ADDR3:			// set panid
 					break;
-				case IOCTL_GET_RX_ADDR0:			// get panid
-				case IOCTL_GET_RX_ADDR1:			// get panid
-				case IOCTL_GET_RX_ADDR2:			// get panid
-				case IOCTL_GET_RX_ADDR3:			// get panid
-					ret = p.dst_addr[(param-IOCTL_GET_RX_ADDR0)+1];
+				case IOCTL_GET_DST_ADDR0:			// get distination address
+				case IOCTL_GET_DST_ADDR1:			// get distination address
+				case IOCTL_GET_DST_ADDR2:			// get distination address
+				case IOCTL_GET_DST_ADDR3:			// get distination address
+					ret = p.dst_addr[(param-IOCTL_GET_DST_ADDR0)+1];
 					ret <<= 8;
-					ret += p.dst_addr[(param-IOCTL_GET_RX_ADDR0)+0];
+					ret += p.dst_addr[(param-IOCTL_GET_DST_ADDR0)+0];
 					break;
-				case IOCTL_SET_RX_ADDR0:			// set panid
+				case IOCTL_SET_DST_ADDR0:			// set distination address
 					p.tx64 = false;
 					if((arg >= 0) && (arg <= 0xffff)) {
-						p.dst_addr[(param-IOCTL_SET_RX_ADDR0)+1] = (arg >> 8) & 0x000000ff;
-						p.dst_addr[(param-IOCTL_SET_RX_ADDR0)+0] = arg  & 0x000000ff;
+						p.dst_addr[(param-IOCTL_SET_DST_ADDR0)+1] = (arg >> 8) & 0x000000ff;
+						p.dst_addr[(param-IOCTL_SET_DST_ADDR0)+0] = arg  & 0x000000ff;
 						ret = arg;
 					} else {
 						ret = -EINVAL;
 					}
 					break;
-				case IOCTL_SET_RX_ADDR1:			// set panid
-				case IOCTL_SET_RX_ADDR2:			// set panid
-				case IOCTL_SET_RX_ADDR3:			// set panid
+				case IOCTL_SET_DST_ADDR1:			// set distination address
+				case IOCTL_SET_DST_ADDR2:			// set distination address
+				case IOCTL_SET_DST_ADDR3:			// set distination address
 					p.tx64 = true;
 					if((arg >= 0) && (arg <= 0xffff)) {
-						p.dst_addr[(param-IOCTL_SET_RX_ADDR0)+1] = (arg >> 8) & 0x000000ff;
-						p.dst_addr[(param-IOCTL_SET_RX_ADDR0)+0] = arg  & 0x000000ff;
+						p.dst_addr[(param-IOCTL_SET_DST_ADDR0)+1] = (arg >> 8) & 0x000000ff;
+						p.dst_addr[(param-IOCTL_SET_DST_ADDR0)+0] = arg  & 0x000000ff;
 						ret = arg;
 					} else {
 						ret = -EINVAL;
@@ -718,14 +718,14 @@ static int __init drv_param_init(void) {
 
 	SubGHz.getMyAddr64(p.my_addr);
 	printk(KERN_INFO"Lazurite MAC address: %02x%02x %02x%02x %02x%02x %02x%02x\n",
-			p.my_addr[7],
-			p.my_addr[6],
-			p.my_addr[5],
-			p.my_addr[4],
-			p.my_addr[3],
-			p.my_addr[2],
+			p.my_addr[0],
 			p.my_addr[1],
-			p.my_addr[0]
+			p.my_addr[2],
+			p.my_addr[3],
+			p.my_addr[4],
+			p.my_addr[5],
+			p.my_addr[6],
+			p.my_addr[7]
 		  );
 
 	printk(KERN_INFO "[drv-lazurite] End of init\n");

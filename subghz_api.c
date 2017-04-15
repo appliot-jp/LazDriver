@@ -557,15 +557,15 @@ static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len)
 	mac->seq_num=header.seq;
 	mac->addr_type=header.addr_type;
 	if(header.dst.panid.enb)
-		mac->rx_panid=header.dst.panid.data;
+		mac->dst_panid=header.dst.panid.data;
 	else
-		mac->rx_panid=0xfffe;
+		mac->dst_panid=0xfffe;
 	if(header.src.panid.enb)
-		mac->tx_panid=header.src.panid.data;
+		mac->src_panid=header.src.panid.data;
 	else
-		mac->tx_panid=0xfffe;
-	memcpy(mac->rx_addr,header.dst.addr.ieee_addr,8);
-	memcpy(mac->tx_addr,header.src.addr.ieee_addr,8);
+		mac->src_panid=0xfffe;
+	memcpy(mac->dst_addr,header.dst.addr.ieee_addr,8);
+	memcpy(mac->src_addr,header.src.addr.ieee_addr,8);
 	mac->raw = raw;
 	mac->raw_len = raw_len;
 	mac->payload = header.payload.data;

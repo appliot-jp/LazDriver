@@ -81,10 +81,10 @@ typedef struct{
 	union mac_frame_control mac_header;
 	uint8_t seq_num;
 	uint8_t addr_type;
-	uint16_t rx_panid;
-	uint8_t  rx_addr[8];
-	uint16_t tx_panid;
-	uint8_t  tx_addr[8];
+	uint16_t dst_panid;
+	uint8_t  dst_addr[8];
+	uint16_t src_panid;
+	uint8_t  src_addr[8];
 	uint8_t *raw;
 	int16_t raw_len;
 	uint8_t *payload;
