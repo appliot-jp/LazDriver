@@ -59,7 +59,8 @@ static struct {
 	bool read;
 	struct rf_param rf;
 	struct mach_param *mach;
-	short short_addr;
+	uint16_t panid;
+	uint16_t short_addr;
 	BUFFER tx;
 	BUFFER rx;
 } subghz_param;
@@ -157,7 +158,8 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 		goto error;
 	}
 	
-	mach_set_my_short_addr(panid,subghz_param.short_addr);
+	subghz_param.panid = panid;
+	mach_set_my_short_addr(subghz_param.panid,subghz_param.short_addr);
 
 	if(txPower == 1) 
 		subghz_param.rf.tx_power = DBM_TO_MBM(1);
@@ -369,6 +371,7 @@ static SUBGHZ_MSG subghz_rxEnable(void (*callback)(const uint8_t *data, uint8_t 
 	subghz_param.rx_callback = callback;
 	if(subghz_param.read == false)
 	{
+		mach_set_my_short_addr(subghz_param.panid,subghz_param.short_addr);
 		if((result=mach_start(&subghz_param.rx))!=STATUS_OK) {
 			msg = SUBGHZ_RX_ENB_FAIL;
 			goto error;

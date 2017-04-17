@@ -607,6 +607,22 @@ int mach_set_dst_ieee_addr(uint16_t panid,uint8_t *addr)
 	mach.tx.dst.panid.data = panid;
 	mach.tx.dst.addr_type = IEEE802154_FC_ADDR_IEEE;
 	memcpy(mach.tx.dst.addr.ieee_addr,addr,8);
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
+		printk(KERN_INFO"dst: %04x %02x%02x%02x%02x%02x%02x%02x%02x\n",
+			mach.tx.dst.panid.data,
+			mach.tx.dst.addr.ieee_addr[7],
+			mach.tx.dst.addr.ieee_addr[6],
+			mach.tx.dst.addr.ieee_addr[5],
+			mach.tx.dst.addr.ieee_addr[4],
+			mach.tx.dst.addr.ieee_addr[3],
+			mach.tx.dst.addr.ieee_addr[2],
+			mach.tx.dst.addr.ieee_addr[1],
+			mach.tx.dst.addr.ieee_addr[0]
+			);
+	}
+#endif
 	return STATUS_OK;
 }
 

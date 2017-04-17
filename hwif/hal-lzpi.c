@@ -369,6 +369,7 @@ int HAL_init(uint8_t i2c_addr, uint8_t addr_bits){
 
 int HAL_remove(void)
 {
+	HAL_TIMER_stop();
 	HAL_GPIO_disableInterrupt();
 	ext_irq_func = NULL;
 	free_irq(gpio_to_irq(GPIO_SINTN), NULL);
