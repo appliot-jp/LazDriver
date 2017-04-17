@@ -479,7 +479,7 @@ int	macl_set_hw_addr_filt(struct ieee802154_hw_addr_filt *filt,unsigned long cha
 			  );
 	}
 #endif
-	phy_addrFilt(filt->pan_id,filt->short_addr,0xffff);
+	phy_addrFilt(filt->pan_id, filt->ieee_addr, filt->short_addr,0xffff);
 	return status;
 }
 int	macl_set_txpower(uint32_t mbm)

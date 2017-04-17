@@ -1273,16 +1273,29 @@ void phy_stop(void)
 }
 
 
-void phy_addrFilt(uint16_t panid, uint16_t uc_addr, uint16_t bc_addr)
+void phy_addrFilt(uint16_t panid, uint8_t *ieee_addr, uint16_t uc_addr, uint16_t bc_addr)
 {
-    uint8_t reg_data[2];
+    uint8_t reg_data[8];
 
-	reg_data[0] = 0x1A;
+	reg_data[0] = 0x1E;
 	reg_wr(REG_ADR_ADDFIL_CNTRL, reg_data, 1);
 
 	reg_data[0] = panid>>0&0xff;
 	reg_data[1] = panid>>8&0xff;
 	reg_wr(REG_ADR_PANID_L, reg_data, 2);
+
+    /*
+	reg_data[0] = ieee_addr[0];
+	reg_data[1] = ieee_addr[1];
+	reg_data[2] = ieee_addr[2];
+	reg_data[3] = ieee_addr[3];
+	reg_data[4] = ieee_addr[4];
+	reg_data[5] = ieee_addr[5];
+	reg_data[6] = ieee_addr[6];
+	reg_data[7] = ieee_addr[7];
+	reg_wr(REG_ADR_64ADDR1, reg_data, 8);
+    */
+	reg_wr(REG_ADR_64ADDR1, ieee_addr, 8);
 
 	reg_data[0] = uc_addr>>0&0xff;
 	reg_data[1] = uc_addr>>8&0xff;
