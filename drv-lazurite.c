@@ -334,23 +334,23 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					}
 					break;
 				case IOCTL_GET_MY_ADDR0:			// get panid
-					ret = p.my_addr[1];
-					ret = (ret << 8) | p.my_addr[0];
+					ret = p.my_addr[0];
+					ret = (ret << 8) | p.my_addr[1];
 					ret &= 0x0000ffff;
 					break;
 				case IOCTL_GET_MY_ADDR1:			// get panid
-					ret = p.my_addr[3];
-					ret = (ret << 8) | p.my_addr[2];
+					ret = p.my_addr[2];
+					ret = (ret << 8) | p.my_addr[3];
 					ret &= 0x0000ffff;
 					break;
 				case IOCTL_GET_MY_ADDR2:			// get panid
-					ret = p.my_addr[5];
-					ret = (ret << 8) | p.my_addr[4];
+					ret = p.my_addr[4];
+					ret = (ret << 8) | p.my_addr[5];
 					ret &= 0x0000ffff;
 					break;
 				case IOCTL_GET_MY_ADDR3:			// get panid
-					ret = p.my_addr[7];
-					ret = (ret << 8) | p.my_addr[6];
+					ret = p.my_addr[6];
+					ret = (ret << 8) | p.my_addr[7];
 					ret &= 0x0000ffff;
 					break;
 				case IOCTL_SET_MY_ADDR0:			// set panid
@@ -628,7 +628,7 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 		}
 		EXT_set_tx_led(0);
 		if(p.tx64) {
-			status = SubGHz.send64le(p.dst_panid,p.dst_addr,payload,count,tx_callback);
+			status = SubGHz.send64le(p.dst_addr,payload,count,tx_callback);
 		}else {
 			uint16_t dst_addr;
 			dst_addr = p.dst_addr[1];
