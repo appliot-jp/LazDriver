@@ -194,6 +194,7 @@ static void macl_ccadone_handler(void)
         phy_ccaCtrl(cca_state);
         // phy_wait_phy_event();
     }else if(cca_state == CCA_RETRY){
+        phy_timer_stop(); // stop for cca abort timer
         macl.ccaCount++;
 	    phy_sint_handler(macl_ccadone_handler);
         phy_ccaCtrl(cca_state);
