@@ -28,7 +28,27 @@
 #include "common_subghz.h"
 #include "phy.h"
 
+
+typedef enum {
+    SUBGHZ_ST_TX_START = 0,
+    SUBGHZ_ST_CCA_FAST,             // 1
+    SUBGHZ_ST_CCA_IDLE_DETECT,      // 2
+    SUBGHZ_ST_CCA_ABORT,            // 3
+    SUBGHZ_ST_CCA_RETRY,            // 4
+    SUBGHZ_ST_CCA_FAILURE,          // 5
+    SUBGHZ_ST_CCA_DONE,             // 6
+    SUBGHZ_ST_TX_DONE,              // 7
+    SUBGHZ_ST_TX_ACK_TIMEOUT,       // 8
+    SUBGHZ_ST_TX_ACK_DONE,          // 9
+    SUBGHZ_ST_RX_START,             // 10
+    SUBGHZ_ST_RX_DONE,              // 11
+    SUBGHZ_ST_RX_ACK_DONE,          // 12
+    SUBGHZ_ST_DUMMY                 // --
+} SUBGHZ_MAC_STATE;
+
+
 typedef struct {
+	uint8_t condition;
 	uint8_t status;
 	uint8_t pages;
 	uint8_t ch;
@@ -130,6 +150,7 @@ extern int	macl_set_cca_ed_level(uint32_t mbm);
 extern int	macl_set_csma_params(uint8_t min_be, uint8_t max_be, uint8_t retries);
 extern int	macl_set_frame_retries(uint8_t retries,uint16_t timeout);
 extern int	macl_set_promiscuous_mode(const bool on);
+extern int	macl_get_condition(void);
 
 /*! @brief  macl_rx_irq(BUFFER *rx,BUFFER *ack)
     

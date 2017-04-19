@@ -111,6 +111,7 @@ static void macl_rxdone_handler(void)
     int status;
 
 	phy_timer_di();
+    macl.condition=SUBGHZ_ST_RX_DONE;
     status = phy_rxdone(&macl.phy->in);
     macl_rx_irq(&macl.phy->in,&macl.ack);
     macl_rx_irq(NULL,NULL);
@@ -154,6 +155,7 @@ static void macl_ack_txdone_handler(void)
             __FILE__,__func__,macl.ack_timeout,(unsigned long)macl.ack.data);
 #endif
 	phy_timer_di();
+    macl.condition=SUBGHZ_ST_RX_ACK_DONE;
     macl.ack.data = NULL;
     macl.ack.len = 0;
     phy_sint_handler(macl_rxdone_handler);
@@ -187,6 +189,7 @@ static void macl_ccadone_handler(void)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s CCA STATE:%d\n",__FILE__,__func__,cca_state);
 #endif
     if(cca_state == IDLE_DETECT){
+        macl.condition=SUBGHZ_ST_CCA_IDLE_DETECT;
         macl.ccaCount++;
         phy_timer_handler(macl_cca_abort_handler);
         phy_timer_start(500);
@@ -194,12 +197,14 @@ static void macl_ccadone_handler(void)
         phy_ccaCtrl(cca_state);
         // phy_wait_phy_event();
     }else if(cca_state == CCA_RETRY){
+        macl.condition=SUBGHZ_ST_CCA_RETRY;
         phy_timer_stop(); // stop for cca abort timer
         macl.ccaCount++;
 	    phy_sint_handler(macl_ccadone_handler);
         phy_ccaCtrl(cca_state);
         phy_wait_phy_event();
     }else if(cca_state == CCA_FAILURE){
+        macl.condition=SUBGHZ_ST_CCA_FAILURE;
         phy_ccaCtrl(cca_state);
         if(macl.rxOnEnable){
             phy_sint_handler(macl_rxdone_handler);
@@ -212,6 +217,7 @@ static void macl_ccadone_handler(void)
         macl.status = -EBUSY;
         phy_wakeup_mac_event();
     }else if(cca_state == CCA_IDLE){
+        macl.condition=SUBGHZ_ST_CCA_DONE;
         phy_timer_stop();
 	    phy_sint_handler(macl_txdone_handler);
         phy_ccaCtrl(cca_state);
@@ -227,6 +233,7 @@ static void macl_cca_abort_handler(void)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 	phy_sint_di();
+    macl.condition=SUBGHZ_ST_CCA_ABORT;
     phy_timer_stop();
     phy_ccaCtrl(CCA_FAILURE);
     if(macl.rxOnEnable){
@@ -252,6 +259,7 @@ static void macl_txdone_handler(void)
             __FILE__,__func__,macl.ack_timeout,(unsigned long)macl.ack.data,macl.phy->out.data[0]);
 #endif
 	phy_timer_di();
+    macl.condition=SUBGHZ_ST_TX_DONE;
     phy_txdone();
     ack_req = macl.phy->out.data[0]&0x20;
     if(ack_req){
@@ -279,6 +287,7 @@ static void macl_ack_rxdone_handler(void)
     int status;
 
 	phy_timer_di();
+    macl.condition=SUBGHZ_ST_TX_ACK_DONE;
     status = phy_rxdone(&macl.phy->in);
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG){
@@ -314,6 +323,7 @@ static void macl_ack_timeout_handler(void)
             __FILE__,__func__,(unsigned long)macl.phy->out.data,macl.txRetry);
 #endif
 	phy_sint_di();
+    macl.condition=SUBGHZ_ST_TX_ACK_TIMEOUT;
     phy_timer_stop();
     phy_stop();
     if((macl.resendingNum < macl.txRetry) &&
@@ -382,6 +392,7 @@ int	macl_start(void)
 {
 	int status=STATUS_OK;
 
+    macl.condition=SUBGHZ_ST_RX_START;
     macl.rxOnEnable = 1;
     phy_sint_handler(macl_rxdone_handler);
     phy_rxStart();
@@ -406,6 +417,7 @@ int	macl_stop(void)
 
 int	macl_xmit_sync(BUFFER buff)
 {
+    macl.condition=SUBGHZ_ST_TX_START;
 	macl.status=STATUS_OK;
     macl.phy->out = buff;
     macl.resendingNum = 0;
@@ -418,6 +430,7 @@ int	macl_xmit_sync(BUFFER buff)
             phy_txStart(&macl.phy->out,macl.txMode);
             phy_sint_handler(macl_ccadone_handler);
             phy_ccaCtrl(CCA_FAST);
+            macl.condition=SUBGHZ_ST_CCA_FAST;
         }else
         if (macl.txMode == 1) {
             phy_sint_handler(macl_fifodone_handler);
@@ -572,3 +585,8 @@ int	macl_sleep(bool on)
 	return status;
 }
 
+
+int	macl_get_condition(void)
+{
+    return macl.condition;
+}
