@@ -319,8 +319,51 @@ static int mach_make_header(struct mac_header *header) {
 	header->fc.fc_bit.nop = 0;
 	if(header->raw.size >= (offset + header->payload.len)) {
 		if(header->payload.len != 0) {
-		    // ssdebug ここにAESを移動する。
-			memcpy(&header->raw.data[offset], header->payload.data, header->payload.len);
+
+            if (AES128_getStatus()){
+                mach.rx.fc.fc_bit.sec_enb = 1;
+            }
+
+            if (AES128_getStatus()){
+                uint8_t pad;
+                if (mach.rx.fc.fc_bit.seq_comp){
+        	        pad = AES128_CBC_encrypt(&header->raw.data[offset], header->payload.data, header->payload.len,0) ;
+                //  pad = AES128_CBC_encrypt(&mach.tx.payload, (uint8_t *)data, size, 0); 
+                }else{
+        	        pad = AES128_CBC_encrypt(&header->raw.data[offset], header->payload.data, header->payload.len,header->seq) ;
+                //  pad = AES128_CBC_encrypt(&mach.tx.payload, (uint8_t *)data, size, header.seq);
+                }
+             // api.tx.buffer.size += pad;
+                offset += pad;
+        #ifdef DEBUG_AES
+                {
+                    uint8_t i;
+                    Serial.print(data);
+                    Serial.print("\r\n");
+                    for(i=0;i<size-1;i++)
+                    {
+                        Serial.print_long((long)*((uint8_t *)data+i),HEX);
+                    }
+                    Serial.print("\r\n");
+                    Serial.print("total,payload,pad,seq: ");
+                    Serial.print_long( api.tx.buffer.size, DEC);
+                    Serial.print(" ");
+                    Serial.print_long( size, DEC);
+                    Serial.print(" ");
+                    Serial.print_long( pad, DEC);
+                    Serial.print(" ");
+                    Serial.print_long( seq, DEC);
+                    Serial.print("\r\n");
+                    for(i=0;i<size+pad-1;i++)
+                    {
+                        Serial.print_long((long)*(payload+i),HEX);
+                    }
+                    Serial.print("\r\n");
+                }
+        #endif
+            }else{
+			    memcpy(&header->raw.data[offset], header->payload.data, header->payload.len);
+            }
 		}
 		offset+=header->payload.len;
 		header->raw.len = offset;
@@ -787,7 +830,7 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 	mach.tx.addr_type = addr_type;
 	memcpy(&mach.tx.fc.fc_bit,&fc,sizeof(fc)) ;
 
-    // ssdebug ここでlayload.data(user領域） ⇒ raw.data(PHY領域）にコピーされる。
+    // This here will copy to raw.data(PHY) from layload.data(user)
 	if((status = mach_make_header(&mach.tx))!=STATUS_OK) {
 		goto error;
 	}
@@ -797,54 +840,7 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 	   goto error;
 	   }
 	   */
-/*
-    if (AES128_getStatus()){
-        mach.rx.fc.fc_bit.sec_enb = 1;
-    }
 
-    if (AES128_getStatus()){
-        uint8_t pad;
-        if (mach.rx.fc.fc_bit.seq_comp){
-        // ssdebug
-	    //  pad = AES128_CBC_encrypt(&mach.tx.fc.fc_bit,&fc,sizeof(fc),0) ;
-        //    pad = AES128_CBC_encrypt(&mach.tx.payload, (uint8_t *)data, size, 0); 
-        }else{
-        // ssdebug
-	    //  pad = AES128_CBC_encrypt(&mach.tx.fc.fc_bit,&fc,sizeof(fc),header.req) ;
-        //    pad = AES128_CBC_encrypt(&mach.tx.payload, (uint8_t *)data, size, header.seq);
-        }
-     // ssdebug
-     // api.tx.buffer.size += pad;
-#ifdef DEBUG_AES
-        {
-            uint8_t i;
-            Serial.print(data);
-            Serial.print("\r\n");
-            for(i=0;i<size-1;i++)
-            {
-                Serial.print_long((long)*((uint8_t *)data+i),HEX);
-            }
-            Serial.print("\r\n");
-            Serial.print("total,payload,pad,seq: ");
-            Serial.print_long( api.tx.buffer.size, DEC);
-            Serial.print(" ");
-            Serial.print_long( size, DEC);
-            Serial.print(" ");
-            Serial.print_long( pad, DEC);
-            Serial.print(" ");
-            Serial.print_long( seq, DEC);
-            Serial.print("\r\n");
-            for(i=0;i<size+pad-1;i++)
-            {
-                Serial.print_long((long)*(payload+i),HEX);
-            }
-            Serial.print("\r\n");
-        }
-#endif
-    }else{
-	    memcpy(&mach.tx.fc.fc_bit,&fc,sizeof(fc)) ;
-    }
-*/
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) {
 		printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);

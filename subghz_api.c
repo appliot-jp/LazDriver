@@ -357,9 +357,9 @@ int mach_rx_irq(struct mac_header *rx)
 		PAYLOADDUMP(rx->raw.data, rx->raw.len);
 	}
 
-//    if(subghz_decrypt(rx->raw.data,aes_outbuf)){
-//        memcpy((uint8_t *)subghz_param.rx.data, aes_outbuf, subghz_param.rx_stat.status);
-//    }
+    if(subghz_decrypt(rx->raw.data,aes_outbuf)){
+        memcpy((uint8_t *)subghz_param.rx.data, aes_outbuf, subghz_param.rx_stat.status);
+    }
 #endif
 	if(subghz_param.rx_callback != NULL) {
 		subghz_param.rx_callback(rx->raw.data, rx->rssi,rx->raw.len);
