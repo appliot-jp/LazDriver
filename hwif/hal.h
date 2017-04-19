@@ -89,4 +89,7 @@ extern void EXT_rx_led_flash(uint32_t time);
 extern void EXT_set_tx_led(int value);
 extern void EXT_set_rx_led(int value);
 
+// debug monitor function
+extern void HAL_set_timer0_function(void (*func)(uint32_t sys_timer_count));
+
 #endif  /* #ifndef _INCLUDE_HAL_H */

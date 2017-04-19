@@ -204,6 +204,10 @@ int HAL_TIMER_stop(void)
 }
 
 
+void HAL_set_timer0_function(void (*func)(uint32_t sys_timer_count)) {
+	set_timer0_function(func);
+}
+
 #if 0
 // 2015.12.14 Eiichi Saito: for preference of SubGHz
 void HAL_EX_disableInterrupt(void)
