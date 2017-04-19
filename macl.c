@@ -21,6 +21,8 @@
 #ifndef LAZURITE_IDE
 	#include <linux/module.h>
 	#include "common-lzpi.h"
+#else
+	#include "serial.h"
 #endif
 
 #include "macl.h"
@@ -45,6 +47,16 @@ static void macl_txdone_handler(void);
 static void macl_ack_rxdone_handler(void);
 static void macl_ack_timeout_handler(void);
 
+static void	macl_system_monitor(uint32_t data)
+{
+#ifndef LAZURITE_IDE
+	printk(KERN_INFO"lazurite syslog: %d\n", macl.condition);
+#else
+	Serial.print("lazyrite syslog: ");
+	Serial.println_long(macl.condition,DEC);
+#endif
+	return;
+}
 
 static int macl_total_transmission_time(uint8_t len)
 {
@@ -378,6 +390,8 @@ MACL_PARAM* macl_init(void)
 #endif
 	phy_sint_handler(macl_dummy_handler);
 	phy_sint_ei(); phy_timer_ei();
+
+	HAL_set_timer0_function(macl_system_monitor);
 	return &macl;
 }
 
@@ -586,7 +600,3 @@ int	macl_sleep(bool on)
 }
 
 
-int	macl_get_condition(void)
-{
-    return macl.condition;
-}
