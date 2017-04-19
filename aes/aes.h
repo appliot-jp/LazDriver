@@ -22,7 +22,7 @@
 #define _AES_H_
 
 #ifdef LAZURITE_IDE
-#include <lazurite.h>
+#include "common.h"
 #else
 #include <linux/kernel.h>
 #endif
@@ -64,7 +64,7 @@ void AES128_CBC_decrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length,
 // 2016.11.15 Eiichi Saito AES
 uint8_t AES128_CBC_encrypt (uint8_t* output, uint8_t* input, uint32_t length, uint8_t index);
 uint8_t AES128_CBC_decrypt (uint8_t* output, uint8_t* input, uint32_t length, uint8_t index);
-void AES128_setAes(uint8_t *key, uint8_t *workspace);
+void AES128_setKey(uint8_t *key);
 uint8_t AES128_getStatus(void);
 
 

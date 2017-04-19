@@ -1,21 +1,29 @@
 /* aes.c
- *
- * Copyright (c) 2016  Lapis Semiconductor Co.,Ltd.
- * All rights reserved.
- *
- * This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * as published by the Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/>.
+
+This is free and unencumbered software released into the public domain.
+
+Anyone is free to copy, modify, publish, use, compile, sell, or
+distribute this software, either in source code form or as a compiled
+binary, for any purpose, commercial or non-commercial, and by any
+means.
+
+In jurisdictions that recognize copyright laws, the author or authors
+of this software dedicate any and all copyright interest in the
+software to the public domain. We make this dedication for the benefit
+of the public at large and to the detriment of our heirs and
+successors. We intend this dedication to be an overt act of
+relinquishment in perpetuity of all present and future rights to this
+software under copyright law.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+For more information, please refer to <http://unlicense.org/>
  */
 
 
@@ -85,11 +93,10 @@ NOTE:   String length must be evenly divisible by 16byte (str_len % 16 == 0)
 
 // 2016.11.15 Eiichi Saito AES
 static uint8_t *p_key;
-static uint8_t *p_workspace;
 static uint8_t secEn;
-#define IVLEN 16
 #define PAD 0x00
-static uint8_t ivTable[IVLEN];
+static uint8_t ivTable[16];
+static uint8_t workspace[256];
 
 /*****************************************************************************/
 /* Private variables:                                                        */
@@ -619,11 +626,11 @@ uint8_t AES128_CBC_encrypt(uint8_t* output, uint8_t* input, uint32_t length, uin
     uint8_t i;
 
     //iv = *(p_key + (index&0x0f)) ^ index;
-    for(i=0; i < IVLEN; i++) {
+    for(i=0; i < 16; i++) {
         *(ivTable+i) = *(p_key+i) ^ index;
     }
 
-    memcpy(p_workspace, input, length);
+    memcpy(workspace, input, length);
 
     padLen = (~(length % 16) + 1)&0x0f;
 
@@ -632,13 +639,13 @@ uint8_t AES128_CBC_encrypt(uint8_t* output, uint8_t* input, uint32_t length, uin
     }
 
     for(i=0; i < padLen; i++){
-       *(p_workspace + length + i) = PAD;
+       *(workspace + length + i) = PAD;
     }
 
-    *(p_workspace + length + i - 1) = padLen;
+    *(workspace + length + i - 1) = padLen;
 
 
-    AES128_CBC_encrypt_buffer(output, p_workspace, length+padLen, p_key, (uint8_t *)&ivTable);
+    AES128_CBC_encrypt_buffer(output, workspace, length+padLen, p_key, (uint8_t *)&ivTable);
 
     return padLen;
 }
@@ -649,21 +656,20 @@ uint8_t AES128_CBC_decrypt(uint8_t* output, uint8_t* input, uint32_t length, uin
     uint8_t i;
 
     //iv = *(p_key + (index&0x0f)) ^ index;
-    for(i=0; i < IVLEN; i++) {
+    for(i=0; i < 16; i++) {
         *(ivTable+i) = *(p_key+i) ^ index;
     }
 
-    AES128_CBC_decrypt_buffer(p_workspace, input, length, p_key, (uint8_t *)&ivTable);
-    padLen = *(p_workspace + length - 1);
-    memcpy(output, p_workspace, length-padLen);
+    AES128_CBC_decrypt_buffer(workspace, input, length, p_key, (uint8_t *)&ivTable);
+    padLen = *(workspace + length - 1);
+    memcpy(output, workspace, length-padLen);
 
     return padLen;
 }
 
-void AES128_setAes(uint8_t *key, uint8_t *workspace)
+void AES128_setKey(uint8_t *key)
 {
     p_key = key;
-    p_workspace = workspace;
 
     if (p_key == NULL) secEn = 0;
     else secEn = 1;

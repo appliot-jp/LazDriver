@@ -32,6 +32,12 @@
 #include "errno.h"
 #include "endian.h"
 
+#include "aes/aes.h"
+
+#ifdef DEBUG_AES
+#include "Serial.h"
+#endif
+
 static struct mach_param mach;
 /*! @uint8_t ackbuf[32]
   @brief  data buffer to make ack data
@@ -313,6 +319,7 @@ static int mach_make_header(struct mac_header *header) {
 	header->fc.fc_bit.nop = 0;
 	if(header->raw.size >= (offset + header->payload.len)) {
 		if(header->payload.len != 0) {
+		    // ssdebug ここにAESを移動する。
 			memcpy(&header->raw.data[offset], header->payload.data, header->payload.len);
 		}
 		offset+=header->payload.len;
@@ -717,24 +724,6 @@ int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr)
 		filt.pan_coord = mach.my_addr.pan_coord;
 		filt.short_addr = mach.my_addr.short_addr;
 		memcpy(filt.ieee_addr,mach.my_addr.ieee_addr,8);
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
-		printk(KERN_INFO"addr: 0x%04x %d 0x%04x %02x%02x%02x%02x%02x%02x%02x%02x\n",
-			filt.pan_id,
-			filt.pan_coord,
-			filt.short_addr,
-			filt.ieee_addr[7],
-			filt.ieee_addr[6],
-			filt.ieee_addr[5],
-			filt.ieee_addr[4],
-			filt.ieee_addr[3],
-			filt.ieee_addr[2],
-			filt.ieee_addr[1],
-			filt.ieee_addr[0]
-			);
-	}
-#endif
 		macl_set_hw_addr_filt(&filt,0x0f);			// update all of addr filter
 	}
 	return status;
@@ -798,6 +787,7 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 	mach.tx.addr_type = addr_type;
 	memcpy(&mach.tx.fc.fc_bit,&fc,sizeof(fc)) ;
 
+    // ssdebug ここでlayload.data(user領域） ⇒ raw.data(PHY領域）にコピーされる。
 	if((status = mach_make_header(&mach.tx))!=STATUS_OK) {
 		goto error;
 	}
@@ -807,6 +797,54 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 	   goto error;
 	   }
 	   */
+/*
+    if (AES128_getStatus()){
+        mach.rx.fc.fc_bit.sec_enb = 1;
+    }
+
+    if (AES128_getStatus()){
+        uint8_t pad;
+        if (mach.rx.fc.fc_bit.seq_comp){
+        // ssdebug
+	    //  pad = AES128_CBC_encrypt(&mach.tx.fc.fc_bit,&fc,sizeof(fc),0) ;
+        //    pad = AES128_CBC_encrypt(&mach.tx.payload, (uint8_t *)data, size, 0); 
+        }else{
+        // ssdebug
+	    //  pad = AES128_CBC_encrypt(&mach.tx.fc.fc_bit,&fc,sizeof(fc),header.req) ;
+        //    pad = AES128_CBC_encrypt(&mach.tx.payload, (uint8_t *)data, size, header.seq);
+        }
+     // ssdebug
+     // api.tx.buffer.size += pad;
+#ifdef DEBUG_AES
+        {
+            uint8_t i;
+            Serial.print(data);
+            Serial.print("\r\n");
+            for(i=0;i<size-1;i++)
+            {
+                Serial.print_long((long)*((uint8_t *)data+i),HEX);
+            }
+            Serial.print("\r\n");
+            Serial.print("total,payload,pad,seq: ");
+            Serial.print_long( api.tx.buffer.size, DEC);
+            Serial.print(" ");
+            Serial.print_long( size, DEC);
+            Serial.print(" ");
+            Serial.print_long( pad, DEC);
+            Serial.print(" ");
+            Serial.print_long( seq, DEC);
+            Serial.print("\r\n");
+            for(i=0;i<size+pad-1;i++)
+            {
+                Serial.print_long((long)*(payload+i),HEX);
+            }
+            Serial.print("\r\n");
+        }
+#endif
+    }else{
+	    memcpy(&mach.tx.fc.fc_bit,&fc,sizeof(fc)) ;
+    }
+*/
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) {
 		printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);

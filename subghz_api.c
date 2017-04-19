@@ -38,6 +38,9 @@
 // @issue why application layer access to hardware if
 #include "hwif/hal.h"
 #include "aes/aes.h"
+#ifndef	LAZURITE_IDE
+static uint8_t aes_outbuf[256];
+#endif
 
 #ifndef LAZURITE_IDE
 	extern wait_queue_head_t tx_done;
@@ -90,7 +93,7 @@ static SUBGHZ_MSG subghz_init(void)
 	subghz_param.rf.cca_mode = NL802154_CCA_CARRIER;
 	subghz_param.rf.cca_opt = NL802154_CCA_OPT_ENERGY_CARRIER_AND;
 	subghz_param.rf.tx_retry = 3;
-	AES128_setAes(NULL,NULL);
+    AES128_setKey(NULL);
 
 	// reset
 	if((subghz_param.mach = mach_init())==NULL)
@@ -304,6 +307,45 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 	return msg;
 }
 
+
+static bool subghz_decrypt(uint8_t *inbuf, uint8_t *outbuf)
+{
+      SUBGHZ_MAC_PARAM mac;
+
+      subghz_decMac(&mac,(uint8_t *)subghz_param.rx.data,subghz_param.rx_stat.status);
+
+// ssdebug
+//    if (mac.mac_header->fc.fc_bit.sec_enb && AES128_getStatus()){
+      if (AES128_getStatus()){
+        uint8_t mhr_len;
+        uint8_t pad;
+
+// ssdebug
+//        if (mac.mac_header.fc.fc_bit.seq_comp){
+//            mac.mac_header.alignment.seq=0;
+//        }
+        mhr_len = mac.raw_len - mac.payload_len;
+        memcpy(outbuf, subghz_param.rx.data,mhr_len);
+        pad = AES128_CBC_decrypt(outbuf+mhr_len, mac.payload, mac.payload_len, mac.seq_num);
+        subghz_param.rx_stat.status -= pad;
+#ifdef DEBUG_AES
+        Serial.print("\r\n");
+        Serial.print(outbuf+mhr_len);
+        Serial.print("\r\n");
+        Serial.print("total,payload,pad: ");
+        Serial.print_long((long)mac.raw_len,DEC);
+        Serial.print(" ");
+        Serial.print_long((long)mac.payload_len,DEC);
+        Serial.print(" ");
+        Serial.println_long((long)pad,DEC);
+#endif
+        return 1;
+    }
+
+	return 0;
+}
+
+
 int mach_rx_irq(struct mac_header *rx)
 {
 
@@ -314,6 +356,10 @@ int mach_rx_irq(struct mac_header *rx)
 		printk(KERN_INFO"[rx]%s,%s,%d\n",__FILE__,__func__,__LINE__);
 		PAYLOADDUMP(rx->raw.data, rx->raw.len);
 	}
+
+//    if(subghz_decrypt(rx->raw.data,aes_outbuf)){
+//        memcpy((uint8_t *)subghz_param.rx.data, aes_outbuf, subghz_param.rx_stat.status);
+//    }
 #endif
 	if(subghz_param.rx_callback != NULL) {
 		subghz_param.rx_callback(rx->raw.data, rx->rssi,rx->raw.len);
@@ -567,9 +613,9 @@ static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len)
 	return;
 }
 
-static SUBGHZ_MSG subghz_setAes(uint8_t *key, uint8_t *workspace)
+static SUBGHZ_MSG subghz_setKey(uint8_t *key)
 {
-	AES128_setAes(key,workspace);
+    AES128_setKey(key);
 	return SUBGHZ_OK;
 }
 
@@ -592,5 +638,5 @@ const SubGHz_CTRL SubGHz = {
 	subghz_setSendMode,
 	subghz_getSendMode,
 	subghz_decMac,
-	subghz_setAes,
+	subghz_setKey,
 };

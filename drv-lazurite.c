@@ -96,7 +96,6 @@ static struct {
 	{0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff},		// tx addr
 };
 
-static unsigned char aes_workspace[256];
 static const char chr_to_hex[] = {0x00,0x10,0x20,0x30,0x40,0x50,0x60,0x70,0x80,0x90,0x00,0xa0,0xb0,0xc0,0xd0,0xe0,0xf0};
 
 // *****************************************************************
@@ -243,7 +242,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 							p.key[i/2] |= (hex >> shift);
 							printk(KERN_ERR"AES = %x %x %d %d %d %x\n",p.key[i/2],ckey[i],shift,index,i/2,hex);
 						}
-						ret = SubGHz.setAes(p.key,aes_workspace);
+                        ret = SubGHz.setKey(p.key);
 						if(ret != SUBGHZ_OK) ret = EFAULT;
 						break;
 					}
