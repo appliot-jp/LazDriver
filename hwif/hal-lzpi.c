@@ -556,6 +556,7 @@ void EXT_rx_led_flash(uint32_t time)
 		que_rx_led = 1;
 		wake_up_interruptible(&rx_led_q);
 }
+
 // no need in Raspberry Pi
 void HAL_EX_disableInterrupt(void)
 {
@@ -566,3 +567,11 @@ void HAL_EX_enableInterrupt(void)
 {
 }
 
+int HAL_GPIO_setValue(uint8_t pin, uint8_t value) {
+	gpio_set_value(pin,value);
+	return 0;
+}
+int HAL_GPIO_getValue(uint8_t pin, uint8_t *value) {
+	*value = gpio_get_value(pin);
+	return 0;
+}

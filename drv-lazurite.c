@@ -33,6 +33,7 @@
 #include "subghz_api.h"
 #include "drv-lazurite.h"
 #include "hwif/hal.h"
+#include "hwif/hal-lzpi.h"
 
 #define DATA_SIZE		256+16
 #define DRV_NAME		"lzgw"
@@ -745,9 +746,7 @@ error:
 //			unload driver 
 // *****************************************************************
 static void __exit drv_param_exit(void) {
-	//void drv_param_exit(void) {
-	//	mac_802154e_exit();
-	//list delete 
+	HAL_GPIO_setValue(GPIO_RESETN,0);
 	while (!list_empty(&head.list)) {
 		struct list_data *data;
 		data = list_entry(head.list.next, struct list_data, list);
