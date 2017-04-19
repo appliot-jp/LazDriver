@@ -45,9 +45,11 @@
 #define	LED_FLASH_TIME	1					// LED Flashing time
 static struct timespec start_time;			// memory of tick timer
 static struct timer_list g_timer;			// timer handler
+static struct timer_list syslog_timer;		// timer handler
 static void (*ext_timer_func)(void);
 static void (*ext_irq_func)(void);
 static void (*act_irq_func)(void);
+static void (*syslog_timer_ext_func)(uint32_t data);
 static bool ext_irq_enb;
 
 volatile int que_th2ex = 0;
@@ -125,8 +127,23 @@ uint32_t HAL_millis(void)
 	return res;
 }
 
+void HAL_set_timer0_function(void (*func)(uint32_t sys_timer_count)) {
+	syslog_timer_ext_func = func;
+}
+static void syslog_timer_isr(unsigned long data) {
+	if(syslog_timer_ext_func) syslog_timer_ext_func(jiffies);
+	syslog_timer.expires = jiffies + HZ*2;
+	add_timer(&syslog_timer);
+}
 int rf_main_thread(void *p)
 {
+	// system logging start
+	syslog_timer_ext_func = NULL;
+	init_timer(&syslog_timer);
+	syslog_timer.expires = jiffies + HZ*2;
+	syslog_timer.function = syslog_timer_isr;
+	add_timer(&syslog_timer);
+
 	m.trigger=0;
 	while(!kthread_should_stop()) {
 		// printk(KERN_INFO"%s %s %d %d %d %d\n",__FILE__,__func__,__LINE__,flag_irq_enable,gpio_get_value(GPIO_SINTN),m.trigger);
@@ -369,6 +386,7 @@ int HAL_init(uint8_t i2c_addr, uint8_t addr_bits){
 
 int HAL_remove(void)
 {
+	del_timer(&syslog_timer);
 	HAL_TIMER_stop();
 	HAL_GPIO_disableInterrupt();
 	ext_irq_func = NULL;
@@ -458,7 +476,6 @@ int HAL_TIMER_setup(void)
 	getnstimeofday(&start_time);
 	return HAL_STATUS_OK;
 }
-
 
 static bool timer_flag=false;
 void timer_function(unsigned long data)
@@ -556,6 +573,7 @@ void EXT_rx_led_flash(uint32_t time)
 		que_rx_led = 1;
 		wake_up_interruptible(&rx_led_q);
 }
+
 // no need in Raspberry Pi
 void HAL_EX_disableInterrupt(void)
 {
@@ -566,3 +584,11 @@ void HAL_EX_enableInterrupt(void)
 {
 }
 
+int HAL_GPIO_setValue(uint8_t pin, uint8_t value) {
+	gpio_set_value(pin,value);
+	return 0;
+}
+int HAL_GPIO_getValue(uint8_t pin, uint8_t *value) {
+	*value = gpio_get_value(pin);
+	return 0;
+}
