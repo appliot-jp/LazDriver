@@ -1143,6 +1143,8 @@ void phy_ccaCtrl(CCA_STATE state) {
     uint8_t reg_idl_wait;
     uint8_t reg_data;
 
+    phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+
     if (state == CCA_FAILURE || state == CCA_IDLE){
         reg_data = 0x64;
         reg_wr(REG_ADR_DEMSET3, &reg_data, 1);
@@ -1158,9 +1160,6 @@ void phy_ccaCtrl(CCA_STATE state) {
             phy_set_trx_state(PHY_ST_TXON);
         }
     }else{
-
-        phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
-
         if (state == CCA_FAST) {
             reg_data = 0x00;
             reg_wr(REG_ADR_DEMSET3, &reg_data, 1);
