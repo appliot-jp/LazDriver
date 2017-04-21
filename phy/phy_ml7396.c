@@ -514,7 +514,7 @@ static void phy_inten(uint32_t inten)
 static void phy_intclr(uint32_t intclr)
 {
     uint8_t reg_data[4];
-//  phy_mesg();
+    phy_mesg();
     reg_data[0] = ~(uint8_t)((intclr) >>  0);
     reg_data[1] = ~(uint8_t)((intclr) >>  8);
     reg_data[2] = ~(uint8_t)((intclr) >> 16);
