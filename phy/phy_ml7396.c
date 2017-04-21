@@ -373,6 +373,15 @@ static void reg_wr(uint8_t bank, uint8_t addr, const uint8_t *data, uint8_t size
         ml7396_hwif_spi_transfer(reg.wdata, reg.rdata, size + 1);
     }
     --reg.lock;
+/*
+    while(1){
+        if(reg.lock){
+            __asm("nop");
+        }else{
+            break;
+        }
+    }
+*/
 //	__EI();
 }
 
@@ -419,6 +428,15 @@ static void reg_rd(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size)
         memcpy(data, reg.rdata, size);
     }
     --reg.lock;
+/*
+    while(1){
+        if(reg.lock){
+            __asm("nop");
+        }else{
+            break;
+        }
+    }
+*/
 //	__EI();
 }
 
@@ -443,10 +461,10 @@ static void fifo_rd(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size)
 }
 
 
-static void phy_pi_mesg(void)
+static void phy_mesg(void)
 {
+    uint8_t reg_data[4];
 #ifndef LAZURITE_IDE
-    uint8_t reg_data[6];
     if(module_test & MODE_PHY_DEBUG) {
 
         reg_rd(REG_ADR_INT_EN_GRP1, reg_data, 4);
@@ -464,6 +482,10 @@ static void phy_pi_mesg(void)
         reg_rd(REG_ADR_RF_STATUS, reg_data, 1);
         printk(KERN_INFO"DEBUG PHY: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
     }
+#else
+    reg_rd(REG_ADR_INT_EN_GRP1, reg_data, 4);
+    reg_rd(REG_ADR_INT_SOURCE_GRP1, reg_data, 4);
+    reg_rd(REG_ADR_RF_STATUS, reg_data, 1);
 #endif
 }
 
@@ -492,7 +514,7 @@ static void phy_inten(uint32_t inten)
 static void phy_intclr(uint32_t intclr)
 {
     uint8_t reg_data[4];
-    phy_pi_mesg();
+//  phy_mesg();
     reg_data[0] = ~(uint8_t)((intclr) >>  0);
     reg_data[1] = ~(uint8_t)((intclr) >>  8);
     reg_data[2] = ~(uint8_t)((intclr) >> 16);
@@ -1234,8 +1256,6 @@ int phy_rxdone(BUFFER *buff)
 
     // Notice: A following must not change.
     reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
-    phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
-//  phy_intclr(~(HW_EVENT_ALL_MASK | HW_EVENT_FIFO_CLEAR));
 
     crc_err = reg_data[0]&0x30;
     if (crc_err){
@@ -1250,6 +1270,10 @@ int phy_rxdone(BUFFER *buff)
         buff->data[buff->len-3] = buff->data[buff->len-1];
         buff->len -= 2;
     }
+
+    phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
+//  phy_intclr(~(HW_EVENT_ALL_MASK | HW_EVENT_FIFO_CLEAR));
+
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG){
         printk(KERN_INFO"%s,%s,%lx,%d,%d\n",__FILE__,__func__,(unsigned long)buff->data,buff->len,data_size);
