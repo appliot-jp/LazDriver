@@ -806,6 +806,7 @@ int mach_set_coord_addr(uint16_t panid,uint16_t short_addr,uint8_t *ieee_addr)
 int mach_set_promiscuous(bool on)
 {
 	int status;
+	printk(KERN_INFO"%s,%s,%d %d\n",__FILE__,__func__,__LINE__,on);
 	if (macl_set_promiscuous_mode(on)==STATUS_OK)
 	{
 		mach.promiscuous = true;

@@ -132,8 +132,8 @@ struct mach_param {
 	struct mac_header rx;
 	struct mac_header rx_prev;
 	struct mac_header ack;
-	bool promiscuous;
 	bool coordinator;
+	bool promiscuous;
 	struct rf_param *rf;
 };
 
@@ -150,6 +150,7 @@ extern int mach_stop(void);
 extern int mach_parse_data(struct mac_header *header);
 extern int mach_ed(uint8_t *ed);
 extern int mach_rx_irq(struct mac_header *rx);
+extern int mach_set_promiscuous(bool on);
 
 #endif
 

@@ -353,17 +353,17 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					ret = (ret << 8) | p.my_addr[7];
 					ret &= 0x0000ffff;
 					break;
-				case IOCTL_SET_MY_ADDR0:			// set panid
-					if((arg >= 0) && (arg <= 0xffff)&&(p.drv_mode==0x0000FFFF)) {
-						p.my_addr[(param-IOCTL_SET_MY_ADDR0)+1] = (arg >> 8) & 0x000000ff;
-						p.my_addr[(param-IOCTL_SET_MY_ADDR0)+0] = arg  & 0x000000ff;
+				case IOCTL_SET_MY_SHORT_ADDR:			//
+					if((arg >= 0) && (arg <= 0xfffe)) {
+						uint16_t short_addr = arg & 0x0000ffff;
+						SubGHz.setMyAddress(short_addr);
 						ret = arg;
 					} else {
 						ret = -EINVAL;
 					}
-				case IOCTL_SET_MY_ADDR1:			// set panid
-				case IOCTL_SET_MY_ADDR2:			// set panid
-				case IOCTL_SET_MY_ADDR3:			// set panid
+					break;
+				case IOCTL_GET_MY_SHORT_ADDR:			// set panid
+					ret = SubGHz.getMyAddress();
 					break;
 				case IOCTL_GET_DST_ADDR0:			// get distination address
 				case IOCTL_GET_DST_ADDR1:			// get distination address
@@ -481,6 +481,12 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					break;
 				case IOCTL_GET_TX_RSSI:
 					ret = p.tx_rssi;
+					break;
+				case IOCTL_SET_PROMISCUOUS:
+					printk(KERN_INFO"%s,%s,%d %lx\n",__FILE__,__func__,__LINE__,arg);
+					if(arg == 0) SubGHz.setPromiscuous(false);
+					else SubGHz.setPromiscuous(true);
+					ret = 0;
 					break;
 				default:
 					ret = -ENOTTY;
