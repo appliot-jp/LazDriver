@@ -83,11 +83,13 @@ extern CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry);
 extern void phy_txdone(void);
 extern int phy_rxdone(BUFFER *buff);
 extern void phy_stop(void);
+extern void phy_clrAddrFilt(void);
 extern void phy_addrFilt(uint16_t panid, uint8_t *ieee_addr, uint16_t uc_addr, uint16_t bc_addr);
 extern void phy_ed(uint8_t *level, uint8_t rfMode);
 extern void phy_sleep(void);
 extern void phy_regread(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size);
 extern void phy_regwrite(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size);
+//extern uint8_t phy_is_reglock(void);
 
 #endif
 

@@ -590,6 +590,7 @@ int	macl_set_promiscuous_mode(const bool on)
 	    phy_wait_phy_event();
     }else{
         phy_stop();
+	    phy_clrAddrFilt();
     }
 
 	return status;

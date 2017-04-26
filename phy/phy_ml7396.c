@@ -1296,6 +1296,15 @@ void phy_stop(void)
 }
 
 
+void phy_clrAddrFilt(void)
+{
+    uint8_t reg_data;
+
+	reg_data = 0x00;
+	reg_wr(REG_ADR_ADDFIL_CNTRL, &reg_data, 1);
+}
+
+
 void phy_addrFilt(uint16_t panid, uint8_t *ieee_addr, uint16_t uc_addr, uint16_t bc_addr)
 {
     uint8_t reg_data[8];
