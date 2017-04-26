@@ -1299,7 +1299,6 @@ void phy_stop(void)
 void phy_clrAddrFilt(void)
 {
     uint8_t reg_data;
-
 	reg_data = 0x00;
 	reg_wr(REG_ADR_ADDFIL_CNTRL, &reg_data, 1);
 }
