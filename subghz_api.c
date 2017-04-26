@@ -53,13 +53,13 @@ static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len);
 // local parameters
 static struct {
 	uint8_t addr_type;
+	bool read;
 	SUBGHZ_STATUS tx_stat;
 	SUBGHZ_STATUS rx_stat;
 	volatile bool sending;
 	volatile bool open;
 	void (*rx_callback)(const uint8_t *data, uint8_t rssi, int status);		// change api
 	void (*tx_callback)(uint8_t rssi, int status);
-	bool read;
 	struct rf_param rf;
 	struct mach_param *mach;
 	uint16_t panid;
@@ -619,6 +619,20 @@ static SUBGHZ_MSG subghz_setKey(uint8_t *key)
 	return SUBGHZ_OK;
 }
 
+static SUBGHZ_MSG subghz_setMyAddress(uint16_t my_addr)
+{
+	if(my_addr != 0xffff) {
+		subghz_param.short_addr = my_addr;
+		mach_set_my_short_addr(subghz_param.panid,subghz_param.short_addr);
+		return SUBGHZ_MYADDR_FAIL;
+	}
+	return SUBGHZ_OK;
+}
+static SUBGHZ_MSG subghz_setPromiscuous(bool on) {
+	mach_set_promiscuous(on);
+
+	return SUBGHZ_OK;
+}
 // setting of function
 const SubGHz_CTRL SubGHz = {
 	subghz_init,
@@ -629,10 +643,12 @@ const SubGHz_CTRL SubGHz = {
 	subghz_tx64le,
 	subghz_tx64be,
 	subghz_rxEnable,
+	subghz_setPromiscuous,
 	subghz_rxDisable,
 	subghz_readData,
 	subghz_getMyAddress,
 	subghz_getMyAddr64,
+	subghz_setMyAddress,
 	subghz_getStatus,
 	subghz_msgOut,
 	subghz_setSendMode,
