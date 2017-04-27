@@ -26,6 +26,7 @@
 	#include "serial.h"
 #endif
 
+#include "mach.h"
 #include "macl.h"
 #include "errno.h"
 #include "endian.h"
@@ -329,7 +330,7 @@ static void macl_ack_rxdone_handler(void)
         PAYLOADDUMP(macl.phy->in.data,macl.phy->in.len);
     }
 #endif
-    if(status == STATUS_OK && macl.phy->in.data[2] == macl.sequnceNum){
+    if(status == STATUS_OK && ((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_ACK) && (macl.phy->in.data[2] == macl.sequnceNum)){
         phy_timer_stop();
         if(macl.rxOnEnable){
             phy_sint_handler(macl_rxdone_handler);
@@ -342,7 +343,7 @@ static void macl_ack_rxdone_handler(void)
         macl_rx_irq(&macl.phy->in,NULL);
         phy_wakeup_mac_event();
     }else{
-        phy_sint_handler(macl_ack_rxdone_handler);
+//      phy_sint_handler(macl_ack_rxdone_handler);
         phy_rxStart();
         // @issue : the following my not need
         phy_wait_phy_event();
