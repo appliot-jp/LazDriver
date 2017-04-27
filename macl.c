@@ -51,7 +51,18 @@ static void macl_ack_timeout_handler(void);
 static void	macl_system_monitor(uint32_t data)
 {
 #ifndef LAZURITE_IDE
-	printk(KERN_INFO"lazurite syslog: %d\n", macl.condition);
+    /*
+    uint8_t rdata[4];
+    phy_regread(0, 0x24, rdata, 4);
+	printk(KERN_INFO"INT SOURCE:: %x,%x,%x,%x\n", rdata[0],rdata[1],rdata[2],rdata[3]);
+    phy_regread(0, 0x2A, rdata, 4);
+	printk(KERN_INFO"INT ENABLE:: %x,%x,%x,%x\n", rdata[0],rdata[1],rdata[2],rdata[3]);
+    phy_regread(0, 0x6c, rdata, 1);
+	printk(KERN_INFO"RF STATUS:: %x\n", rdata[0]);
+    phy_regread(0, 0x15, rdata, 1);
+    printk(KERN_INFO"RF CCA CNTL:: %x\n", rdata[0]);
+    */
+	printk(KERN_INFO"lazurite syslog: %d, sending retry counter: %d\n", macl.condition,macl.resendingNum);
 #else
 	Serial.print("lazyrite syslog: ");
 	Serial.println_long(macl.condition,DEC);
@@ -591,7 +602,6 @@ int	macl_set_promiscuous_mode(const bool on)
     }else{
         phy_stop();
 	    phy_clrAddrFilt();
-
     }
 
 	return status;
