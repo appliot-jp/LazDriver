@@ -446,6 +446,11 @@ int	macl_stop(void)
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
+    // @issue : provisional for REG LOCK
+    if(macl.condition == SUBGHZ_ST_RX_DONE){
+        phy_wait_mac_event();
+    }
+
     macl.rxOnEnable = 0;
     phy_stop();
 	return status;
@@ -462,7 +467,7 @@ int	macl_xmit_sync(BUFFER buff)
     macl.sequnceNum= buff.data[2];
 
     // @issue : provisional for REG LOCK
-    if(macl_getCondition() == SUBGHZ_ST_RX_DONE){
+    if(macl.condition == SUBGHZ_ST_RX_DONE){
         phy_wait_mac_event();
     }
 

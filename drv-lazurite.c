@@ -34,7 +34,7 @@
 #include "drv-lazurite.h"
 #include "hwif/hal.h"
 #include "hwif/hal-lzpi.h"
-#include "macl.h"
+//#include "macl.h"
 
 #define DATA_SIZE		256+16
 #define DRV_NAME		"lzgw"
