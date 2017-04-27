@@ -154,6 +154,8 @@ static void macl_rxdone_handler(void)
         phy_rxStart();
         // @issue : the following my not need
         phy_wait_phy_event();
+        // ssdebug 1
+        phy_wakeup_mac_event();
     }
 #ifndef LAZURITE_IDE
     if(module_test & MODE_MACL_DEBUG){
@@ -186,6 +188,8 @@ static void macl_ack_txdone_handler(void)
     phy_rxStart();
     // @issue : the following my not need
     phy_wait_phy_event();
+    // ssdebug 1
+    phy_wakeup_mac_event();
 	phy_timer_ei();
 }
 
@@ -235,6 +239,8 @@ static void macl_ccadone_handler(void)
             phy_rxStart();
             // @issue : the following my not need
             phy_wait_phy_event();
+            // ssdebug 1
+            phy_wakeup_mac_event();
         }else{
             phy_stop();
         }
@@ -265,6 +271,8 @@ static void macl_cca_abort_handler(void)
         phy_rxStart();
         // @issue : the following my not need
         phy_wait_phy_event();
+        // ssdebug 1
+        phy_wakeup_mac_event();
     }else{
         phy_stop();
     }
@@ -595,11 +603,7 @@ int	macl_set_promiscuous_mode(const bool on)
     macl.promiscuousMode = on;
 
     if (macl.promiscuousMode){
-	    phy_sint_handler(macl_rxdone_handler);
 	    phy_clrAddrFilt();
-        phy_rxStart();
-        // @issue : the following my not need
-	    phy_wait_phy_event();
     }else{
         phy_stop();
     }
@@ -618,3 +622,7 @@ int	macl_sleep(bool on)
 }
 
 
+uint8_t	macl_getCondition(void)
+{
+    return macl.condition;
+}

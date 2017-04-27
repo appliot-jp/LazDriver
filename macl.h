@@ -158,6 +158,7 @@ extern int	macl_rx_irq(BUFFER *rx,BUFFER *ack);
 extern int	macl_rx_irq_notification(void);
 
 extern int	macl_sleep(bool on);
+extern uint8_t	macl_getCondition(void);
 
 #endif
 
