@@ -484,6 +484,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					ret = p.tx_rssi;
 					break;
 				case IOCTL_SET_PROMISCUOUS:
+					printk(KERN_INFO"%s,%s,%d %lx\n",__FILE__,__func__,__LINE__,arg);
 					if(arg == 0) SubGHz.setPromiscuous(false);
 					else SubGHz.setPromiscuous(true);
 					ret = 0;
@@ -628,10 +629,12 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 
 	mutex_lock( &chrdev.lock );
 
+    /*
     // @issue : provisional for REG LOCK
     if(macl_getCondition() == SUBGHZ_ST_RX_DONE){
         phy_wait_mac_event();
     }
+    */
 
 	if(count<DATA_SIZE)
 	{

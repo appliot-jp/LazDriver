@@ -461,6 +461,11 @@ int	macl_xmit_sync(BUFFER buff)
     macl.ccaCount=0;
     macl.sequnceNum= buff.data[2];
 
+    // @issue : provisional for REG LOCK
+    if(macl_getCondition() == SUBGHZ_ST_RX_DONE){
+        phy_wait_mac_event();
+    }
+
     if (macl_total_transmission_time(macl.phy->out.len) == STATUS_OK){
 
 #ifdef LAZURITE_IDE
