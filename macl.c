@@ -48,6 +48,7 @@ static void macl_txdone_handler(void);
 static void macl_ack_rxdone_handler(void);
 static void macl_ack_timeout_handler(void);
 
+#if 0
 static void	macl_system_monitor(uint32_t data)
 {
 #ifndef LAZURITE_IDE
@@ -69,6 +70,7 @@ static void	macl_system_monitor(uint32_t data)
 #endif
 	return;
 }
+#endif
 
 static int macl_total_transmission_time(uint8_t len)
 {
@@ -337,6 +339,7 @@ static void macl_ack_rxdone_handler(void)
         }else{
             phy_stop();
         }
+        macl_rx_irq(&macl.phy->in,NULL);
         phy_wakeup_mac_event();
     }else{
         phy_sint_handler(macl_ack_rxdone_handler);
@@ -411,7 +414,7 @@ MACL_PARAM* macl_init(void)
 	phy_sint_handler(macl_dummy_handler);
 	phy_sint_ei(); phy_timer_ei();
 
-	HAL_set_timer0_function(macl_system_monitor);
+	//HAL_set_timer0_function(macl_system_monitor);
 	return &macl;
 }
 
