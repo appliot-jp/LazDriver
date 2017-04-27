@@ -1,0 +1,1648 @@
+[14953.821955] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14953.821964] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14953.821978] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14953.821986]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14953.821994] -----------------------------------------------------------
+[14953.822002] 00000000   01 A8 79 CD AB 2A C4 EA  3F 2D 32 2E 38 32 2C 2D  
+00000010   38 37 2E 31 33 8F 
+[14953.822086] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14953.974358] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14953.974659] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14953.974843] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14953.974855] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14953.974866] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14953.974876] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14953.974913] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14953.974924] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14953.974934] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14953.974944] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14953.974975] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14953.975010] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14953.975025] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14953.975038] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14953.975057] [DRV-802154E] add_list PHY Size error
+[14953.975068] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14953.975078] [DRV-802154E] add_list PHY Size error
+[14953.976089] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14953.976126] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14953.976136] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14953.976146] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14953.976155] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14953.976192] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14953.976203] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14953.976213] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14953.976222] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14953.976256] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14953.976568] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14953.976578] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14953.976588] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14953.976598] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14953.976611] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14953.976619]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14953.976628] -----------------------------------------------------------
+[14953.976635] 00000000   01 A8 9B CD AB 2A C4 E9  3F 31 30 2E 39 35 2C 2D  
+00000010   39 30 2E 31 30 CA 
+[14953.976719] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14953.989167] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14953.989469] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14953.989648] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14953.989659] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14953.989670] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14953.989680] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14953.989712] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14953.989722] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14953.989733] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14953.989743] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14953.989774] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14953.989806] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14953.989819] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14953.989831] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14953.989849] [DRV-802154E] add_list PHY Size error
+[14953.989861] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14953.989870] [DRV-802154E] add_list PHY Size error
+[14953.990883] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14953.990920] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14953.990931] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14953.990941] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14953.990950] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14953.990984] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14953.990994] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14953.991004] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14953.991014] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14953.991040] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14953.991332] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14953.991341] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14953.991352] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14953.991362] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14953.991374] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14953.991384]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14953.991392] -----------------------------------------------------------
+[14953.991400] 00000000   01 A8 7A CD AB 2A C4 EA  3F 2D 32 2E 38 30 2C 2D  
+00000010   38 37 2E 31 31 93 
+[14953.991483] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14954.018119] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14954.018459] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.018768] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.018782] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.018792] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.018802] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.018850] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.018860] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.018870] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14954.018880] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.018921] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.018964] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,59,60
+[14954.018978] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,59
+[14954.018992] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.019014] [DRV-802154E] add_list PHY Size error
+[14954.019026] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.019036] [DRV-802154E] add_list PHY Size error
+[14954.020064] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14954.020158] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.020170] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.020181] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.020191] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.020242] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.020252] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14954.020262] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.020272] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.020321] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.020674] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.020684] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14954.020694] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14954.020708] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14954.020724] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,59,NO ACK
+[14954.020733]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14954.020742] -----------------------------------------------------------
+[14954.020751] 00000000   01 A8 BA CD AB 59 5F 2A  C4 53 54 58 2C 2D 38 33  
+00000010   2E 36 32 2C 2D 31 30 33  2E 39 30 2C 31 30 2E 39  
+00000020   35 2C 2D 39 30 2E 31 30  2C 2D 32 2E 38 30 2C 2D  
+00000030   38 37 2E 31 31 2C 45 54  58 0A E2 
+[14954.020959] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14954.134442] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14954.134736] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.134906] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.134918] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.134930] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.134939] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.134976] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.134987] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.134997] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14954.135007] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.135038] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.135073] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14954.135086] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14954.135098] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.135115] [DRV-802154E] add_list PHY Size error
+[14954.135126] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.135135] [DRV-802154E] add_list PHY Size error
+[14954.136147] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14954.136184] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.136195] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.136204] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.136214] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.136249] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.136259] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14954.136270] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.136280] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.136309] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.136609] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.136619] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14954.136630] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14954.136640] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14954.136652] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14954.136661]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14954.136669] -----------------------------------------------------------
+[14954.136677] 00000000   01 A8 9C CD AB 2A C4 E9  3F 31 30 2E 39 32 2C 2D  
+00000010   39 30 2E 31 34 CF 
+[14954.136761] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14954.141702] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14954.142016] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.142236] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.142248] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.142260] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.142270] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.142316] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.142326] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.142338] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14954.142347] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.142385] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.142423] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14954.142436] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14954.142450] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.142469] [DRV-802154E] add_list PHY Size error
+[14954.142480] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.142490] [DRV-802154E] add_list PHY Size error
+[14954.143501] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14954.143545] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.143556] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.143566] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.143576] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.143623] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.143634] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14954.143644] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.143654] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.143691] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.144016] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.144027] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14954.144038] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14954.144048] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14954.144061] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14954.144071]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14954.144079] -----------------------------------------------------------
+[14954.144087] 00000000   01 A8 7B CD AB 2A C4 EA  3F 2D 32 2E 38 31 2C 2D  
+00000010   38 37 2E 30 39 95 
+[14954.144172] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14954.179148] lazurite syslog: 11, sending retry counter: 0
+[14954.294527] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14954.294907] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.295240] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.295261] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.295274] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.295284] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.295340] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.295351] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.295369] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14954.295381] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.295427] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.295474] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14954.295490] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14954.295506] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.295533] [DRV-802154E] add_list PHY Size error
+[14954.295547] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.295559] [DRV-802154E] add_list PHY Size error
+[14954.296576] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14954.296669] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.296686] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.296696] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.296706] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.296763] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.296775] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14954.296792] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.296802] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.296849] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.297205] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.297218] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14954.297234] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14954.297245] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14954.297258] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14954.297267]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14954.297275] -----------------------------------------------------------
+[14954.297283] 00000000   01 A8 9D CD AB 2A C4 E9  3F 31 30 2E 39 33 2C 2D  
+00000010   39 30 2E 31 31 D0 
+[14954.297375] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14954.302635] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14954.302973] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.303206] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.303223] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.303234] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.303244] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.303295] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.303306] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.303316] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14954.303326] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.303367] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.303413] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14954.303429] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14954.303445] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.303463] [DRV-802154E] add_list PHY Size error
+[14954.303476] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.303485] [DRV-802154E] add_list PHY Size error
+[14954.304502] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14954.304540] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.304550] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.304560] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.304570] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.304605] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.304616] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14954.304626] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.304635] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.304665] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.304973] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.304983] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14954.304993] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14954.305002] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14954.305015] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14954.305024]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14954.305032] -----------------------------------------------------------
+[14954.305040] 00000000   01 A8 7C CD AB 2A C4 EA  3F 2D 32 2E 38 31 2C 2D  
+00000010   38 37 2E 30 39 4D 
+[14954.305123] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14954.337841] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14954.338135] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.338380] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.338392] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.338403] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.338413] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.338449] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.338460] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.338471] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14954.338480] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.338510] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.338545] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,59,60
+[14954.338557] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,59
+[14954.338570] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.338588] [DRV-802154E] add_list PHY Size error
+[14954.338600] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.338609] [DRV-802154E] add_list PHY Size error
+[14954.339621] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14954.339661] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.339671] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.339681] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.339691] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.339727] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.339737] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14954.339747] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.339757] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.339787] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.340091] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.340101] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14954.340111] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14954.340121] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14954.340133] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,59,NO ACK
+[14954.340143]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14954.340151] -----------------------------------------------------------
+[14954.340160] 00000000   01 A8 BB CD AB 59 5F 2A  C4 53 54 58 2C 2D 38 33  
+00000010   2E 36 30 2C 2D 31 30 33  2E 38 35 2C 31 30 2E 39  
+00000020   33 2C 2D 39 30 2E 31 31  2C 2D 32 2E 38 31 2C 2D  
+00000030   38 37 2E 30 39 2C 45 54  58 0A D7 
+[14954.340361] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14954.454471] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14954.454768] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.454935] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.454946] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.454957] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.454967] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.455005] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.455015] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.455025] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14954.455036] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.455067] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.455102] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14954.455117] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14954.455130] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.455150] [DRV-802154E] add_list PHY Size error
+[14954.455161] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.455170] [DRV-802154E] add_list PHY Size error
+[14954.456181] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14954.456219] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.456229] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.456240] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.456249] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.456285] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.456295] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14954.456305] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.456314] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.456344] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.456646] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.456656] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14954.456666] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14954.456677] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14954.456689] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14954.456698]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14954.456706] -----------------------------------------------------------
+[14954.456713] 00000000   01 A8 9E CD AB 2A C4 E9  3F 31 30 2E 39 32 2C 2D  
+00000010   39 30 2E 31 33 CC 
+[14954.456796] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14954.469153] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14954.469451] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.469630] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.469643] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.469654] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.469663] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.469701] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.469712] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.469722] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14954.469732] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.469763] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.469799] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14954.469812] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14954.469825] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.469844] [DRV-802154E] add_list PHY Size error
+[14954.469855] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.469865] [DRV-802154E] add_list PHY Size error
+[14954.470876] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14954.470912] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.470922] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.470932] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.470942] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.470978] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.470988] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14954.470998] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.471007] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.471037] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.471338] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.471348] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14954.471357] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14954.471369] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14954.471381] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14954.471390]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14954.471398] -----------------------------------------------------------
+[14954.471405] 00000000   01 A8 7D CD AB 2A C4 EA  3F 2D 32 2E 38 30 2C 2D  
+00000010   38 37 2E 30 37 8E 
+[14954.471489] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14954.614562] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14954.614859] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.615043] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.615055] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.615065] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.615075] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.615111] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.615122] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.615133] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14954.615143] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.615173] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.615208] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14954.615221] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14954.615233] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.615251] [DRV-802154E] add_list PHY Size error
+[14954.615262] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.615271] [DRV-802154E] add_list PHY Size error
+[14954.616282] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14954.616320] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.616330] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.616340] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.616350] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.616387] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.616397] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14954.616407] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.616416] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.616447] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.616750] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.616760] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14954.616769] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14954.616779] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14954.616793] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14954.616803]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14954.616811] -----------------------------------------------------------
+[14954.616820] 00000000   01 A8 9F CD AB 2A C4 E9  3F 31 30 2E 39 33 2C 2D  
+00000010   39 30 2E 31 34 CB 
+[14954.616904] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14954.624544] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14954.624836] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.625021] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.625033] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.625044] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.625055] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.625093] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.625103] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.625113] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14954.625123] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.625155] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.625190] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14954.625203] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14954.625217] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.625232] [DRV-802154E] add_list PHY Size error
+[14954.625243] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.625252] [DRV-802154E] add_list PHY Size error
+[14954.626263] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14954.626303] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.626313] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.626323] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.626333] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.626371] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.626381] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14954.626391] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.626401] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.626433] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.626744] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.626753] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14954.626763] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14954.626774] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14954.626787] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14954.626795]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14954.626803] -----------------------------------------------------------
+[14954.626811] 00000000   01 A8 7E CD AB 2A C4 EA  3F 2D 32 2E 38 31 2C 2D  
+00000010   38 37 2E 30 37 8E 
+[14954.626894] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14954.657591] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14954.657966] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.658294] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.658316] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.658328] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.658338] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.658395] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.658406] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.658416] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14954.658426] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.658458] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.658498] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,59,60
+[14954.658511] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,59
+[14954.658524] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.658543] [DRV-802154E] add_list PHY Size error
+[14954.658555] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.658564] [DRV-802154E] add_list PHY Size error
+[14954.659587] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14954.659709] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.659720] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.659730] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.659740] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.659791] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.659802] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14954.659812] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.659823] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.659876] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.660224] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.660235] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14954.660246] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14954.660259] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14954.660277] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,59,NO ACK
+[14954.660287]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14954.660295] -----------------------------------------------------------
+[14954.660303] 00000000   01 A8 BC CD AB 59 5F 2A  C4 53 54 58 2C 2D 38 33  
+00000010   2E 36 36 2C 2D 31 30 33  2E 38 34 2C 31 30 2E 39  
+00000020   33 2C 2D 39 30 2E 31 34  2C 2D 32 2E 38 31 2C 2D  
+00000030   38 37 2E 30 37 2C 45 54  58 0A D1 
+[14954.660511] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14954.774600] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14954.774890] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.775058] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.775069] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.775080] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.775090] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.775127] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.775138] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.775148] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14954.775158] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.775188] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.775224] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14954.775237] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14954.775249] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.775266] [DRV-802154E] add_list PHY Size error
+[14954.775277] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.775287] [DRV-802154E] add_list PHY Size error
+[14954.776298] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14954.776335] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.776345] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.776355] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.776366] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.776401] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.776412] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14954.776422] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.776432] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.776462] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.776765] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.776775] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14954.776785] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14954.776795] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14954.776809] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14954.776819]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14954.776827] -----------------------------------------------------------
+[14954.776836] 00000000   01 A8 A0 CD AB 2A C4 E9  3F 31 30 2E 39 31 2C 2D  
+00000010   39 30 2E 31 33 CB 
+[14954.776935] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14954.785419] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14954.785710] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.785883] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.785895] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.785911] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.785921] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.785957] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.785968] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.785978] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14954.785988] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.786018] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.786053] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14954.786066] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14954.786078] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.786093] [DRV-802154E] add_list PHY Size error
+[14954.786103] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.786113] [DRV-802154E] add_list PHY Size error
+[14954.787124] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14954.787162] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.787172] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.787182] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.787192] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.787229] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.787239] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14954.787253] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.787263] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.787297] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.787620] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.787631] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14954.787642] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14954.787654] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14954.787666] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14954.787675]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14954.787683] -----------------------------------------------------------
+[14954.787691] 00000000   01 A8 7F CD AB 2A C4 EA  3F 2D 32 2E 38 31 2C 2D  
+00000010   38 37 2E 30 38 8B 
+[14954.787781] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14954.934626] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14954.934931] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.935117] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.935129] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.935140] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.935150] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.935188] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.935198] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.935208] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14954.935218] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.935249] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.935285] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14954.935297] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14954.935310] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.935328] [DRV-802154E] add_list PHY Size error
+[14954.935339] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.935348] [DRV-802154E] add_list PHY Size error
+[14954.936359] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14954.936398] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.936408] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.936418] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.936429] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.936464] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.936475] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14954.936485] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.936495] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.936524] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.936827] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.936837] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14954.936847] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14954.936857] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14954.936870] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14954.936879]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14954.936887] -----------------------------------------------------------
+[14954.936895] 00000000   01 A8 A1 CD AB 2A C4 E9  3F 31 30 2E 38 39 2C 2D  
+00000010   39 30 2E 31 32 CA 
+[14954.936979] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14954.946421] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14954.946740] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.946985] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.947001] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.947013] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.947023] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.947073] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.947084] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.947094] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14954.947105] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.947148] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.947192] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14954.947207] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14954.947222] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.947238] [DRV-802154E] add_list PHY Size error
+[14954.947249] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.947258] [DRV-802154E] add_list PHY Size error
+[14954.948269] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14954.948341] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.948354] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.948364] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.948374] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.948426] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.948437] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14954.948448] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.948458] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.948501] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.948851] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.948863] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14954.948875] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14954.948887] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14954.948902] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14954.948912]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14954.948920] -----------------------------------------------------------
+[14954.948928] 00000000   01 A8 80 CD AB 2A C4 EA  3F 2D 32 2E 38 30 2C 2D  
+00000010   38 37 2E 30 39 89 
+[14954.949015] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14954.977335] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14954.977623] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.977847] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.977859] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.977870] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.977880] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.977916] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.977926] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.977936] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14954.977946] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.977975] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.978010] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,59,60
+[14954.978025] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,59
+[14954.978038] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.978055] [DRV-802154E] add_list PHY Size error
+[14954.978066] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14954.978075] [DRV-802154E] add_list PHY Size error
+[14954.979155] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14954.979226] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14954.979242] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.979265] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14954.979288] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.979330] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14954.979340] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14954.979351] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.979361] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14954.979389] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14954.979682] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14954.979693] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14954.979702] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14954.979712] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14954.979725] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,59,NO ACK
+[14954.979734]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14954.979742] -----------------------------------------------------------
+[14954.979749] 00000000   01 A8 BD CD AB 59 5F 2A  C4 53 54 58 2C 2D 38 33  
+00000010   2E 36 37 2C 2D 31 30 33  2E 38 33 2C 31 30 2E 38  
+00000020   39 2C 2D 39 30 2E 31 32  2C 2D 32 2E 38 30 2C 2D  
+00000030   38 37 2E 30 39 2C 45 54  58 0A D3 
+[14954.980008] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14955.094705] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14955.094993] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.095158] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.095169] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.095180] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.095190] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.095226] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.095236] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.095246] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14955.095257] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.095288] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.095323] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14955.095336] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14955.095348] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.095364] [DRV-802154E] add_list PHY Size error
+[14955.095376] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.095385] [DRV-802154E] add_list PHY Size error
+[14955.096396] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14955.096432] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.096442] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.096452] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.096462] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.096497] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.096507] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14955.096517] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.096527] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.096557] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.096858] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.096868] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14955.096878] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14955.096888] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14955.096901] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14955.096909]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14955.096917] -----------------------------------------------------------
+[14955.096925] 00000000   01 A8 A2 CD AB 2A C4 E9  3F 31 30 2E 39 31 2C 2D  
+00000010   39 30 2E 31 37 CC 
+[14955.097010] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14955.107446] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14955.107736] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.107902] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.107914] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.107924] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.107934] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.107971] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.107982] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.107992] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14955.108002] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.108031] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.108066] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14955.108079] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14955.108093] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.108107] [DRV-802154E] add_list PHY Size error
+[14955.108118] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.108127] [DRV-802154E] add_list PHY Size error
+[14955.109140] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14955.109180] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.109200] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.109223] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.109246] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.109292] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.109311] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14955.109334] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.109348] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.109378] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.109671] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.109681] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14955.109690] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14955.109700] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14955.109713] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14955.109721]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14955.109730] -----------------------------------------------------------
+[14955.109738] 00000000   01 A8 81 CD AB 2A C4 EA  3F 2D 32 2E 37 39 2C 2D  
+00000010   38 37 2E 31 31 8B 
+[14955.109820] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14955.254751] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14955.255041] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.255207] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.255219] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.255230] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.255240] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.255277] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.255288] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.255298] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14955.255308] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.255337] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.255373] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14955.255388] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14955.255401] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.255418] [DRV-802154E] add_list PHY Size error
+[14955.255430] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.255439] [DRV-802154E] add_list PHY Size error
+[14955.256449] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14955.256489] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.256499] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.256509] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.256519] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.256556] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.256566] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14955.256576] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.256586] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.256620] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.256930] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.256940] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14955.256950] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14955.256962] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14955.256974] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14955.256982]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14955.256991] -----------------------------------------------------------
+[14955.256999] 00000000   01 A8 A3 CD AB 2A C4 E9  3F 31 30 2E 38 39 2C 2D  
+00000010   39 30 2E 31 35 CC 
+[14955.257083] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14955.268392] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14955.268699] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.268893] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.268906] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.268918] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.268928] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.268973] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.268983] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.268994] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14955.269003] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.269041] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.269081] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14955.269145] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14955.269161] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.269194] [DRV-802154E] add_list PHY Size error
+[14955.269218] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.269241] [DRV-802154E] add_list PHY Size error
+[14955.270264] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14955.270331] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.270344] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.270356] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.270366] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.270418] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.270429] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14955.270439] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.270451] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.270498] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.270857] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.270868] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14955.270878] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14955.270891] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14955.270906] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14955.270915]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14955.270923] -----------------------------------------------------------
+[14955.270931] 00000000   01 A8 82 CD AB 2A C4 EA  3F 2D 32 2E 37 39 2C 2D  
+00000010   38 37 2E 31 34 8C 
+[14955.271021] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14955.296973] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14955.297275] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.297502] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.297515] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.297526] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.297536] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.297574] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.297584] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.297594] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14955.297603] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.297635] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.297670] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,59,60
+[14955.297683] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,59
+[14955.297697] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.297715] [DRV-802154E] add_list PHY Size error
+[14955.297727] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.297736] [DRV-802154E] add_list PHY Size error
+[14955.298747] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14955.298791] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.298802] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.298812] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.298821] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.298857] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.298867] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14955.298877] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.298887] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.298918] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.299231] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.299256] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14955.299279] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14955.299302] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14955.299327] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,59,NO ACK
+[14955.299350]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14955.299371] -----------------------------------------------------------
+[14955.299392] 00000000   01 A8 BE CD AB 59 5F 2A  C4 53 54 58 2C 2D 38 33  
+00000010   2E 36 39 2C 2D 31 30 33  2E 38 30 2C 31 30 2E 38  
+00000020   39 2C 2D 39 30 2E 31 35  2C 2D 32 2E 37 39 2C 2D  
+00000030   38 37 2E 31 34 2C 45 54  58 0A CD 
+[14955.299618] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14955.414773] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14955.415072] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.415253] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.415265] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.415275] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.415285] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.415323] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.415333] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.415343] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14955.415353] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.415383] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.415428] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14955.415442] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14955.415455] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.415472] [DRV-802154E] add_list PHY Size error
+[14955.415483] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.415492] [DRV-802154E] add_list PHY Size error
+[14955.416503] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14955.416540] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.416550] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.416560] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.416571] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.416609] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.416619] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14955.416629] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.416639] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.416670] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.416971] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.416981] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14955.416991] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14955.417001] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14955.417014] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14955.417022]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14955.417031] -----------------------------------------------------------
+[14955.417040] 00000000   01 A8 A4 CD AB 2A C4 E9  3F 31 30 2E 39 31 2C 2D  
+00000010   39 30 2E 31 37 CC 
+[14955.417123] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14955.429334] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14955.429626] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.429816] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.429829] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.429841] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.429850] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.429889] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.429899] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.429909] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14955.429919] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.429951] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.429988] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14955.430002] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14955.430016] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.430036] [DRV-802154E] add_list PHY Size error
+[14955.430048] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.430059] [DRV-802154E] add_list PHY Size error
+[14955.431071] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14955.431120] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.431133] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.431143] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.431153] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.431191] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.431201] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14955.431211] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.431221] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.431251] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.431560] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.431570] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14955.431580] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14955.431590] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14955.431603] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14955.431611]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14955.431620] -----------------------------------------------------------
+[14955.431627] 00000000   01 A8 83 CD AB 2A C4 EA  3F 2D 32 2E 37 39 2C 2D  
+00000010   38 37 2E 31 34 8D 
+[14955.431710] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14955.574825] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14955.575120] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.575286] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.575298] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.575309] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.575319] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.575356] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.575366] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.575377] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14955.575386] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.575417] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.575455] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14955.575468] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14955.575482] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.575500] [DRV-802154E] add_list PHY Size error
+[14955.575511] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.575521] [DRV-802154E] add_list PHY Size error
+[14955.576532] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14955.576579] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.576590] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.576600] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.576609] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.576645] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.576655] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14955.576665] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.576675] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.576706] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.577008] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.577018] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14955.577028] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14955.577038] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14955.577050] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14955.577058]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14955.577066] -----------------------------------------------------------
+[14955.577074] 00000000   01 A8 A5 CD AB 2A C4 E9  3F 31 30 2E 39 31 2C 2D  
+00000010   39 30 2E 31 36 CA 
+[14955.577157] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14955.599185] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14955.599489] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.599672] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.599684] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.599695] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.599705] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.599741] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.599751] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.599761] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14955.599771] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.599801] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.599837] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14955.599850] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14955.599863] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.599881] [DRV-802154E] add_list PHY Size error
+[14955.599893] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.599902] [DRV-802154E] add_list PHY Size error
+[14955.600916] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14955.601018] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.601034] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.601044] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.601055] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.601122] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.601133] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14955.601145] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.601155] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.601202] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.601624] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.601653] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14955.601664] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14955.601675] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14955.601691] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14955.601700]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14955.601708] -----------------------------------------------------------
+[14955.601717] 00000000   01 A8 84 CD AB 2A C4 EA  3F 2D 32 2E 38 30 2C 2D  
+00000010   38 37 2E 31 36 8B 
+[14955.601803] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14955.616776] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14955.617090] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.617348] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.617362] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.617372] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.617382] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.617419] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.617429] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.617439] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14955.617449] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.617479] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.617515] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,59,60
+[14955.617528] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,59
+[14955.617543] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.617559] [DRV-802154E] add_list PHY Size error
+[14955.617571] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.617580] [DRV-802154E] add_list PHY Size error
+[14955.618591] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14955.618636] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.618646] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.618656] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.618666] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.618702] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.618712] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14955.618722] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.618732] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.618762] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.619065] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.619075] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14955.619134] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14955.619148] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14955.619168] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,59,NO ACK
+[14955.619186]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14955.619208] -----------------------------------------------------------
+[14955.619230] 00000000   01 A8 BF CD AB 59 5F 2A  C4 53 54 58 2C 2D 38 33  
+00000010   2E 37 33 2C 2D 31 30 33  2E 38 37 2C 31 30 2E 39  
+00000020   31 2C 2D 39 30 2E 31 36  2C 2D 32 2E 38 30 2C 2D  
+00000030   38 37 2E 31 36 2C 45 54  58 0A C7 
+[14955.619541] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14955.734838] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14955.735164] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.735381] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.735394] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.735406] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.735416] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.735467] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.735478] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.735488] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14955.735498] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.735541] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.735586] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14955.735600] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14955.735614] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.735637] [DRV-802154E] add_list PHY Size error
+[14955.735650] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.735660] [DRV-802154E] add_list PHY Size error
+[14955.736671] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14955.736725] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.736735] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.736745] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.736755] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.736803] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.736813] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14955.736823] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.736833] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.736875] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.737220] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.737230] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14955.737240] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14955.737251] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14955.737265] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14955.737273]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14955.737282] -----------------------------------------------------------
+[14955.737291] 00000000   01 A8 A6 CD AB 2A C4 E9  3F 31 30 2E 39 32 2C 2D  
+00000010   39 30 2E 31 37 CB 
+[14955.737374] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14955.751255] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14955.751542] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.751707] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.751719] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.751729] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.751739] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.751776] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.751786] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.751796] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14955.751806] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.751835] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.751871] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14955.751883] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14955.751895] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.751913] [DRV-802154E] add_list PHY Size error
+[14955.751924] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.751933] [DRV-802154E] add_list PHY Size error
+[14955.752944] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14955.752981] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.752991] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.753002] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.753011] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.753047] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.753058] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14955.753068] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.753077] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.753109] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.753412] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.753422] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14955.753432] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14955.753442] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14955.753455] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14955.753463]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14955.753472] -----------------------------------------------------------
+[14955.753479] 00000000   01 A8 85 CD AB 2A C4 EA  3F 2D 32 2E 37 39 2C 2D  
+00000010   38 37 2E 31 37 8C 
+[14955.753562] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14955.894969] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14955.895323] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.895605] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.895617] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.895628] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.895638] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.895690] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.895701] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.895711] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14955.895721] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.895764] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.895810] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14955.895825] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14955.895840] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.895864] [DRV-802154E] add_list PHY Size error
+[14955.895876] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.895886] [DRV-802154E] add_list PHY Size error
+[14955.896898] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14955.896973] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.896986] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.896996] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.897006] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.897061] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.897074] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14955.897084] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.897094] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.897136] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.897477] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.897488] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14955.897498] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14955.897509] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14955.897521] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14955.897530]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14955.897538] -----------------------------------------------------------
+[14955.897545] 00000000   01 A8 A7 CD AB 2A C4 E9  3F 31 30 2E 39 31 2C 2D  
+00000010   39 30 2E 31 38 C9 
+[14955.897629] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14955.912250] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14955.912565] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.912775] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.912788] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.912800] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.912812] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.912859] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.912870] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.912880] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14955.912890] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.912926] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.912965] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14955.912979] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14955.912992] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.913013] [DRV-802154E] add_list PHY Size error
+[14955.913024] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.913033] [DRV-802154E] add_list PHY Size error
+[14955.914044] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14955.914095] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.914106] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.914116] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.914126] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.914169] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.914179] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14955.914189] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.914199] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.914236] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.914561] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.914571] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14955.914581] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14955.914592] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14955.914604] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14955.914613]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14955.914621] -----------------------------------------------------------
+[14955.914629] 00000000   01 A8 86 CD AB 2A C4 EA  3F 2D 32 2E 37 39 2C 2D  
+00000010   38 37 2E 32 30 8C 
+[14955.914712] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14955.936449] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14955.936751] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.936998] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.937010] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.937022] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.937032] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.937069] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.937079] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.937089] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14955.937100] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.937131] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.937166] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,59,60
+[14955.937181] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,59
+[14955.937194] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.937211] [DRV-802154E] add_list PHY Size error
+[14955.937222] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14955.937232] [DRV-802154E] add_list PHY Size error
+[14955.938243] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14955.938283] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14955.938293] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.938304] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14955.938313] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.938350] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14955.938360] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14955.938370] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.938380] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14955.938411] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14955.938721] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14955.938731] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14955.938742] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14955.938752] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14955.938765] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,59,NO ACK
+[14955.938774]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14955.938782] -----------------------------------------------------------
+[14955.938790] 00000000   01 A8 C0 CD AB 59 5F 2A  C4 53 54 58 2C 2D 38 33  
+00000010   2E 37 30 2C 2D 31 30 33  2E 38 33 2C 31 30 2E 39  
+00000020   31 2C 2D 39 30 2E 31 38  2C 2D 32 2E 37 39 2C 2D  
+00000030   38 37 2E 31 37 2C 45 54  58 0A CA 
+[14955.938994] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14956.054936] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14956.055233] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.055414] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.055427] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.055437] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.055448] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.055486] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.055496] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.055506] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14956.055516] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.055546] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.055581] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14956.055595] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14956.055608] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14956.055626] [DRV-802154E] add_list PHY Size error
+[14956.055637] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14956.055646] [DRV-802154E] add_list PHY Size error
+[14956.056657] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14956.056702] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.056714] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.056724] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.056733] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.056770] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.056780] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14956.056790] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.056800] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.056829] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.057136] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.057146] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14956.057155] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14956.057166] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14956.057179] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14956.057187]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14956.057196] -----------------------------------------------------------
+[14956.057203] 00000000   01 A8 A8 CD AB 2A C4 E9  3F 31 30 2E 39 30 2C 2D  
+00000010   39 30 2E 31 38 CC 
+[14956.057286] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14956.073159] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14956.073453] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.073635] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.073647] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.073658] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.073668] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.073705] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.073716] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.073726] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14956.073735] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.073767] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.073803] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14956.073817] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14956.073830] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14956.073847] [DRV-802154E] add_list PHY Size error
+[14956.073860] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14956.073869] [DRV-802154E] add_list PHY Size error
+[14956.074879] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14956.074918] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.074928] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.074938] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.074948] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.074985] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.074995] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14956.075005] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.075015] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.075047] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.075352] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.075362] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14956.075372] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14956.075382] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14956.075395] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14956.075403]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14956.075411] -----------------------------------------------------------
+[14956.075419] 00000000   01 A8 87 CD AB 2A C4 EA  3F 2D 32 2E 37 39 2C 2D  
+00000010   38 37 2E 32 31 8F 
+[14956.075504] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14956.179150] lazurite syslog: 11, sending retry counter: 0
+[14956.214969] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14956.215279] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.215476] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.215488] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.215499] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.215509] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.215549] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.215559] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.215569] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14956.215578] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.215611] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.215648] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14956.215661] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14956.215673] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14956.215692] [DRV-802154E] add_list PHY Size error
+[14956.215703] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14956.215714] [DRV-802154E] add_list PHY Size error
+[14956.216725] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14956.216766] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.216777] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.216787] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.216797] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.216835] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.216845] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14956.216855] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.216865] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.216899] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.217233] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.217246] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14956.217256] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14956.217266] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14956.217280] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14956.217289]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14956.217297] -----------------------------------------------------------
+[14956.217306] 00000000   01 A8 A9 CD AB 2A C4 E9  3F 31 30 2E 39 33 2C 2D  
+00000010   39 30 2E 31 34 CD 
+[14956.217393] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14956.234129] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14956.234424] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.234590] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.234601] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.234612] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.234622] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.234659] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.234669] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.234679] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14956.234689] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.234719] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.234754] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14956.234766] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14956.234779] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14956.234794] [DRV-802154E] add_list PHY Size error
+[14956.234805] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14956.234815] [DRV-802154E] add_list PHY Size error
+[14956.235826] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14956.235863] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.235873] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.235883] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.235893] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.235928] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.235939] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14956.235948] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.235958] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.235989] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.236291] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.236301] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14956.236310] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14956.236321] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14956.236335] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14956.236345]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14956.236353] -----------------------------------------------------------
+[14956.236361] 00000000   01 A8 88 CD AB 2A C4 EA  3F 2D 32 2E 37 38 2C 2D  
+00000010   38 37 2E 32 32 92 
+[14956.236445] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14956.256135] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14956.256451] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.256686] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.256698] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.256709] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.256719] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.256761] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.256771] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.256782] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14956.256791] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.256823] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.256860] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,59,60
+[14956.256873] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,59
+[14956.256888] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14956.256906] [DRV-802154E] add_list PHY Size error
+[14956.256918] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14956.256928] [DRV-802154E] add_list PHY Size error
+[14956.257939] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14956.257981] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.257992] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.258002] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.258012] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.258051] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.258061] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14956.258071] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.258081] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.258112] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.258424] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.258434] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14956.258445] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14956.258456] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14956.258469] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,59,NO ACK
+[14956.258479]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14956.258487] -----------------------------------------------------------
+[14956.258495] 00000000   01 A8 C1 CD AB 59 5F 2A  C4 53 54 58 2C 2D 38 33  
+00000010   2E 37 35 2C 2D 31 30 33  2E 38 34 2C 31 30 2E 39  
+00000020   33 2C 2D 39 30 2E 31 34  2C 2D 32 2E 37 39 2C 2D  
+00000030   38 37 2E 32 31 2C 45 54  58 0A CF 
+[14956.258698] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14956.374973] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14956.375279] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.375460] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.375472] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.375483] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.375493] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.375531] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.375543] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.375553] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14956.375562] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.375596] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.375633] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14956.375646] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14956.375659] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14956.375678] [DRV-802154E] add_list PHY Size error
+[14956.375691] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14956.375700] [DRV-802154E] add_list PHY Size error
+[14956.376712] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14956.376766] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.376778] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.376788] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.376797] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.376836] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.376847] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14956.376856] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.376866] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.376898] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.377210] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.377221] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14956.377232] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14956.377242] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14956.377256] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14956.377265]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14956.377273] -----------------------------------------------------------
+[14956.377281] 00000000   01 A8 AA CD AB 2A C4 E9  3F 31 30 2E 39 36 2C 2D  
+00000010   39 30 2E 31 33 CC 
+[14956.377365] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14956.395119] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14956.395419] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.395612] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.395625] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.395637] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.395647] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.395686] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.395697] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.395708] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14956.395718] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.395748] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.395784] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14956.395796] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14956.395809] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14956.395826] [DRV-802154E] add_list PHY Size error
+[14956.395837] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14956.395846] [DRV-802154E] add_list PHY Size error
+[14956.396857] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14956.396899] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.396911] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.396921] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.396930] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.396969] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.396979] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14956.396989] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.396999] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.397029] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.397326] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.397336] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14956.397347] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14956.397357] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14956.397369] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14956.397379]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14956.397387] -----------------------------------------------------------
+[14956.397394] 00000000   01 A8 89 CD AB 2A C4 EA  3F 2D 32 2E 37 39 2C 2D  
+00000010   38 37 2E 32 36 90 
+[14956.397479] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14956.535054] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14956.535350] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.535533] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.535545] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.535556] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.535565] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.535602] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.535612] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.535622] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14956.535632] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.535663] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.535698] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14956.535710] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14956.535723] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14956.535741] [DRV-802154E] add_list PHY Size error
+[14956.535752] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14956.535762] [DRV-802154E] add_list PHY Size error
+[14956.536773] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14956.536809] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.536819] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.536829] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.536840] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.536875] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.536885] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14956.536895] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.536904] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.536934] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.537235] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.537245] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14956.537255] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14956.537266] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14956.537278] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14956.537287]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14956.537295] -----------------------------------------------------------
+[14956.537302] 00000000   01 A8 AB CD AB 2A C4 E9  3F 31 30 2E 39 36 2C 2D  
+00000010   39 30 2E 31 32 CD 
+[14956.537386] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14956.556041] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14956.556334] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.556520] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.556532] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.556542] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.556552] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.556590] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.556601] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.556612] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14956.556622] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.556652] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.556687] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,22,23
+[14956.556700] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,22
+[14956.556712] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14956.556732] [DRV-802154E] add_list PHY Size error
+[14956.556743] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14956.556753] [DRV-802154E] add_list PHY Size error
+[14956.557763] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14956.557800] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.557811] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.557820] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.557831] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.557866] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.557878] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14956.557887] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.557897] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.557926] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.558227] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.558238] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14956.558247] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14956.558257] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14956.558270] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,22,NO ACK
+[14956.558278]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14956.558286] -----------------------------------------------------------
+[14956.558294] 00000000   01 A8 8A CD AB 2A C4 EA  3F 2D 32 2E 37 38 2C 2D  
+00000010   38 37 2E 32 34 91 
+[14956.558378] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14956.575874] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_di
+[14956.576158] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.576383] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.576395] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.576406] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.576415] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.576451] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.576462] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.576472] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14956.576481] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.576512] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.576547] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxdone,7f4383d7,59,60
+[14956.576561] /home/pi/driver/LazDriver/mach.c,macl_rx_irq,912,59
+[14956.576574] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14956.576590] [DRV-802154E] add_list PHY Size error
+[14956.576602] [rx]/home/pi/driver/LazDriver/subghz_api.c,mach_rx_irq,356
+[14956.576611] [DRV-802154E] add_list PHY Size error
+[14956.577622] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_sint_handler
+[14956.577659] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.577669] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.577680] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.577689] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.577725] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.577735] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,8
+[14956.577745] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.577755] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.577784] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.578084] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.578094] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_rxStart
+[14956.578104] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wait_phy_event
+[14956.578114] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_wakeup_mac_event
+[14956.578126] /home/pi/driver/LazDriver/macl.c,macl_rxdone_handler,7f4383d7,59,NO ACK
+[14956.578135]  [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
+[14956.578144] -----------------------------------------------------------
+[14956.578151] 00000000   01 A8 C2 CD AB 59 5F 2A  C4 53 54 58 2C 2D 38 33  
+00000010   2E 36 39 2C 2D 31 30 33  2E 38 37 2C 31 30 2E 39  
+00000020   36 2C 2D 39 30 2E 31 32  2C 2D 32 2E 37 39 2C 2D  
+00000030   38 37 2E 32 36 2C 45 54  58 0A CB 
+[14956.578353] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_timer_ei
+[14956.641943] /home/pi/driver/LazDriver/macl.c,macl_stop
+[14956.642233] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.642272] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.642284] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.642294] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c
+[14956.642304] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.642340] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.642351] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,4
+[14956.642361] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.642371] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.642401] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.642516] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_stop
+[14956.642548] /home/pi/driver/LazDriver/drv-lazurite.c,chardev_ioctl,487 0
+[14956.642999] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_set_trx_state
+[14956.643040] DEBUG PHY INTEN1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,c0
+[14956.643050] DEBUG PHY INTEN2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.643060] DEBUG PHY INTEN3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.643070] DEBUG PHY INTEN4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.643108] DEBUG PHY INTS1: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,40
+[14956.643118] DEBUG PHY INTS2: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.643128] DEBUG PHY INTS3: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.643138] DEBUG PHY INTS4: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,0
+[14956.643170] DEBUG PHY: /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_mesg,83
+[14956.643240] /home/pi/driver/LazDriver/phy/phy_ml7396.c,phy_stop
+[14956.695135] [HAL] rf_main_thread thread end
+[14956.695236] [HAL] tx_led_thread thread end
+[14956.695280] [HAL] rx_led_thread thread end
+[14956.695373] spi_remove
+[14956.695660] [drv-lazurite] exit remove

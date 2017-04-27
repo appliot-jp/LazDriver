@@ -133,7 +133,6 @@ struct mach_param {
 	struct mac_header rx_prev;
 	struct mac_header ack;
 	bool coordinator;
-	bool promiscuous;
 	struct rf_param *rf;
 };
 

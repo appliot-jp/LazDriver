@@ -20,10 +20,10 @@
 
 /*! @struct MACH_PARAM
   @brief  local parameter for mac high layer
-  */
-  
+ */
+
 #ifndef LAZURITE_IDE
-	#include "common-lzpi.h"
+#include "common-lzpi.h"
 #endif
 
 #include "mach.h"
@@ -41,7 +41,7 @@
 static struct mach_param mach;
 /*! @uint8_t ackbuf[32]
   @brief  data buffer to make ack data
-  */
+ */
 static uint8_t ackbuf[8];
 
 /******************************************************************************/
@@ -50,7 +50,7 @@ static uint8_t ackbuf[8];
 0bit : addrType=0
 1bit : addrType=1
 ...
-*/
+ */
 const uint8_t enb_dst_panid = 0x52;
 const uint8_t enb_src_panid = 0x04;
 const uint8_t addr_len[] = {0x00,0x01,0x02,0x08};
@@ -320,50 +320,50 @@ static int mach_make_header(struct mac_header *header) {
 	if(header->raw.size >= (offset + header->payload.len)) {
 		if(header->payload.len != 0) {
 
-            if (AES128_getStatus()){
-                mach.rx.fc.fc_bit.sec_enb = 1;
-            }
+			if (AES128_getStatus()){
+				mach.rx.fc.fc_bit.sec_enb = 1;
+			}
 
-            if (AES128_getStatus()){
-                uint8_t pad;
-                if (mach.rx.fc.fc_bit.seq_comp){
-        	        pad = AES128_CBC_encrypt(&header->raw.data[offset], header->payload.data, header->payload.len,0) ;
-                //  pad = AES128_CBC_encrypt(&mach.tx.payload, (uint8_t *)data, size, 0); 
-                }else{
-        	        pad = AES128_CBC_encrypt(&header->raw.data[offset], header->payload.data, header->payload.len,header->seq) ;
-                //  pad = AES128_CBC_encrypt(&mach.tx.payload, (uint8_t *)data, size, header.seq);
-                }
-             // api.tx.buffer.size += pad;
-                offset += pad;
-        #ifdef DEBUG_AES
-                {
-                    uint8_t i;
-                    Serial.print(data);
-                    Serial.print("\r\n");
-                    for(i=0;i<size-1;i++)
-                    {
-                        Serial.print_long((long)*((uint8_t *)data+i),HEX);
-                    }
-                    Serial.print("\r\n");
-                    Serial.print("total,payload,pad,seq: ");
-                    Serial.print_long( api.tx.buffer.size, DEC);
-                    Serial.print(" ");
-                    Serial.print_long( size, DEC);
-                    Serial.print(" ");
-                    Serial.print_long( pad, DEC);
-                    Serial.print(" ");
-                    Serial.print_long( seq, DEC);
-                    Serial.print("\r\n");
-                    for(i=0;i<size+pad-1;i++)
-                    {
-                        Serial.print_long((long)*(payload+i),HEX);
-                    }
-                    Serial.print("\r\n");
-                }
-        #endif
-            }else{
-			    memcpy(&header->raw.data[offset], header->payload.data, header->payload.len);
-            }
+			if (AES128_getStatus()){
+				uint8_t pad;
+				if (mach.rx.fc.fc_bit.seq_comp){
+					pad = AES128_CBC_encrypt(&header->raw.data[offset], header->payload.data, header->payload.len,0) ;
+					//  pad = AES128_CBC_encrypt(&mach.tx.payload, (uint8_t *)data, size, 0); 
+				}else{
+					pad = AES128_CBC_encrypt(&header->raw.data[offset], header->payload.data, header->payload.len,header->seq) ;
+					//  pad = AES128_CBC_encrypt(&mach.tx.payload, (uint8_t *)data, size, header.seq);
+				}
+				// api.tx.buffer.size += pad;
+				offset += pad;
+#ifdef DEBUG_AES
+				{
+					uint8_t i;
+					Serial.print(data);
+					Serial.print("\r\n");
+					for(i=0;i<size-1;i++)
+					{
+						Serial.print_long((long)*((uint8_t *)data+i),HEX);
+					}
+					Serial.print("\r\n");
+					Serial.print("total,payload,pad,seq: ");
+					Serial.print_long( api.tx.buffer.size, DEC);
+					Serial.print(" ");
+					Serial.print_long( size, DEC);
+					Serial.print(" ");
+					Serial.print_long( pad, DEC);
+					Serial.print(" ");
+					Serial.print_long( seq, DEC);
+					Serial.print("\r\n");
+					for(i=0;i<size+pad-1;i++)
+					{
+						Serial.print_long((long)*(payload+i),HEX);
+					}
+					Serial.print("\r\n");
+				}
+#endif
+			}else{
+				memcpy(&header->raw.data[offset], header->payload.data, header->payload.len);
+			}
 		}
 		offset+=header->payload.len;
 		header->raw.len = offset;
@@ -596,7 +596,7 @@ int mach_start(BUFFER *rxbuf) {
 		PAYLOADDUMP(mach.rx.raw.data, mach.rx.raw.len);
 	}
 #endif
-	
+
 	status = macl_start();
 
 	return status;
@@ -661,16 +661,16 @@ int mach_set_dst_ieee_addr(uint16_t panid,uint8_t *addr)
 	if(module_test & MODE_MACH_DEBUG) {
 		printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 		printk(KERN_INFO"dst: %04x %02x%02x%02x%02x%02x%02x%02x%02x\n",
-			mach.tx.dst.panid.data,
-			mach.tx.dst.addr.ieee_addr[7],
-			mach.tx.dst.addr.ieee_addr[6],
-			mach.tx.dst.addr.ieee_addr[5],
-			mach.tx.dst.addr.ieee_addr[4],
-			mach.tx.dst.addr.ieee_addr[3],
-			mach.tx.dst.addr.ieee_addr[2],
-			mach.tx.dst.addr.ieee_addr[1],
-			mach.tx.dst.addr.ieee_addr[0]
-			);
+				mach.tx.dst.panid.data,
+				mach.tx.dst.addr.ieee_addr[7],
+				mach.tx.dst.addr.ieee_addr[6],
+				mach.tx.dst.addr.ieee_addr[5],
+				mach.tx.dst.addr.ieee_addr[4],
+				mach.tx.dst.addr.ieee_addr[3],
+				mach.tx.dst.addr.ieee_addr[2],
+				mach.tx.dst.addr.ieee_addr[1],
+				mach.tx.dst.addr.ieee_addr[0]
+			  );
 	}
 #endif
 	return STATUS_OK;
@@ -760,7 +760,7 @@ int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr)
 	}
 	mach.my_addr.pan_coord = true;
 
-	if(!mach.promiscuous)
+	if(!mach.macl->promiscuousMode)
 	{
 		struct ieee802154_hw_addr_filt filt;
 		filt.pan_id = mach.my_addr.pan_id;
@@ -806,13 +806,10 @@ int mach_set_coord_addr(uint16_t panid,uint16_t short_addr,uint8_t *ieee_addr)
 int mach_set_promiscuous(bool on)
 {
 	int status;
-	printk(KERN_INFO"%s,%s,%d %d\n",__FILE__,__func__,__LINE__,on);
 	if (macl_set_promiscuous_mode(on)==STATUS_OK)
 	{
-		mach.promiscuous = true;
 		status = STATUS_OK;
 	} else {
-		mach.promiscuous = false;
 		status = -EIO;
 	}
 	return STATUS_OK;
@@ -831,7 +828,7 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 	mach.tx.addr_type = addr_type;
 	memcpy(&mach.tx.fc.fc_bit,&fc,sizeof(fc)) ;
 
-    // This here will copy to raw.data(PHY) from layload.data(user)
+	// This here will copy to raw.data(PHY) from layload.data(user)
 	if((status = mach_make_header(&mach.tx))!=STATUS_OK) {
 		goto error;
 	}
@@ -840,7 +837,7 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 	   if((arib_tx_check(mach.rf->pages,mach.rf->ch,mach.tx.raw.len))==false) {
 	   goto error;
 	   }
-	   */
+	 */
 
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) {
@@ -860,7 +857,7 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 	/*
 	   if(status == STATUS_OK)
 	   arib_tx_end(mach.rf->pages,mach.rf->ch,mach.tx.raw.len);
-	   */
+	 */
 
 error:
 	return status;
@@ -888,8 +885,7 @@ int mach_sleep(bool on)
  ********************************************************************/
 int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 {
-	int status=STATUS_OK;
-
+	int status;
 	// end of sending ack during rx
 	if(!rx) {
 		goto update;
@@ -902,16 +898,8 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 		ack->size = mach.ack.raw.size;
 	}
 
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d,%lx,%d\n",__FILE__,__func__,__LINE__,
-				(unsigned long)rx->data,rx->len);
-		PAYLOADDUMP(mach.rx.input.data, mach.rx.raw.len);
-    }
-#endif
 	if(rx->len == 0) {
-		status = -1;
-		goto end;
+		return -1;
 	}
 
 	// set rx buffer
@@ -921,64 +909,86 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d,%lx,%d\n",__FILE__,__func__,__LINE__,
-				(unsigned long)mach.rx.raw.data,mach.rx.raw.len);
-		PAYLOADDUMP(mach.rx.input.data, mach.rx.raw.len);
+		printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,__LINE__,mach.rx.input.len);
+		//PAYLOADDUMP(mach.rx.input.data, mach.rx.input.len);
 	}
 #endif
-	// parse raw data
-	if((status = mach_parse_data(&mach.rx))!= STATUS_OK) {
-		goto end;
-	}
+	if(mach.macl->promiscuousMode) {
+	} else {
+		// parse raw data
+		if((status = mach_parse_data(&mach.rx))!= STATUS_OK) {
+#ifndef LAZURITE_IDE
+			if(module_test & MODE_MACH_DEBUG) {
+				printk(KERN_INFO"%s,%s,%d,mach_parse_data error\n",__FILE__,__func__,__LINE__);
+			}
+#endif
+			return STATUS_OK;
+		}
 
-	// data frame and cmd frame
-	if ((mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_DATA) ||
-			(mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_CMD)) {
-		// check sequence number
-		if ((mach.rx.fc.fc_bit.ack_req) &&		// ack is requested
-				(ack) &&
-				(!mach.promiscuous) ) {
-			if(mach_make_ack_header()) {
-				ack->data = mach.ack.raw.data;
-				ack->len = mach.ack.raw.len;
-				ack->size = mach.ack.raw.size;
-				goto end;
+		// data frame and cmd frame
+		if ((mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_DATA) ||
+				(mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_CMD)) {
+			// check sequence number
+			if ((mach.rx.fc.fc_bit.ack_req) &&		// ack is requested
+					(ack) &&
+					(!mach.macl->promiscuousMode) ) {
+				if(mach_make_ack_header()) {
+					ack->data = mach.ack.raw.data;
+					ack->len = mach.ack.raw.len;
+					ack->size = mach.ack.raw.size;
+#ifndef LAZURITE_IDE
+					if(module_test & MODE_MACH_DEBUG) {
+						printk(KERN_INFO"%s,%s,%d,%lx,%d\n",__FILE__,__func__,__LINE__,
+								(unsigned long)mach.rx.raw.data,mach.rx.raw.len);
+					}
+#endif
+					return STATUS_OK;
+				}
 			}
 		}
-	}
-	// ack process
-	else if (mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_ACK) {
-		if(mach.rx.seq == mach.tx.seq) {
-			status = 1;				// check ack
-			mach.tx.rssi = mach.rx.input.data[mach.rx.input.len-1];
+		// ack process
+		else if (mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_ACK) {
+			if(mach.rx.seq == mach.tx.seq) {
+				status = 1;				// check ack
+				mach.tx.rssi = mach.rx.input.data[mach.rx.input.len-1];
+			}
+			return 1;
+		} else {									// other data type
 		}
-		goto end;
-	} else {									// other data type
 	}
 
 update:
-	// rx after sending ack
+	// reporting data to upper layer
 	if(mach.rx.raw.size >= mach.rx.input.len) {
 		// copy phy buffer to application buffer
 		memcpy(mach.rx.raw.data,mach.rx.input.data,mach.rx.input.len);
+		mach.rx.raw.len = mach.rx.input.len;
 	} else {
-		goto end;
+		// buffer error
+#ifndef LAZURITE_IDE
+		if(module_test & MODE_MACH_DEBUG) {
+			printk(KERN_INFO"%s,%s,%d,%lx,%d\n",__FILE__,__func__,__LINE__,
+					(unsigned long)mach.rx.raw.size,mach.rx.raw.len);
+		}
+#endif
+		return STATUS_OK;
 	}
-	if(mach_match_seq_num()==false) {		// check sequence number
+	if((mach.macl->promiscuousMode)||(mach_match_seq_num()==false)) {		// check sequence number
 		// rx data is copy to previous
 		memcpy(&mach.rx_prev,&mach.rx,sizeof(mach.rx));
 
 		// get rssi
 		mach.rx.rssi = mach.rx.raw.data[mach.rx.raw.len-1];
-		// decriment raw length for ed
+		// decriment raw length not to include rssi in raw data.
 		if(mach.rx.raw.len != 0) mach.rx.raw.len -= 1;
+
 #ifndef LAZURITE_IDE
 		if(module_test & MODE_MACH_DEBUG) {
-			printk(KERN_INFO"%s,%s,%d,%lx,%d\n",__FILE__,__func__,__LINE__,(unsigned long)mach.rx.raw.data,mach.rx.raw.len);
-			PAYLOADDUMP(mach.rx.input.data, mach.rx.raw.len);
+			printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,__LINE__);
+			PAYLOADDUMP(mach.rx.raw.data, mach.rx.raw.len);
 		}
 #endif
-		mach_rx_irq(&mach.rx);
+		mach_rx_irq(&mach.rx);				// report data to upper layer
 	} else {								// match sequence number
 #ifndef LAZURITE_IDE
 		if(module_test & MODE_MACH_DEBUG) {
@@ -987,7 +997,6 @@ update:
 #endif
 	}
 
-end:
-	return status;
+	return STATUS_OK;
 }
 
