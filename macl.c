@@ -411,7 +411,7 @@ MACL_PARAM* macl_init(void)
 	phy_sint_handler(macl_dummy_handler);
 	phy_sint_ei(); phy_timer_ei();
 
-	HAL_set_timer0_function(macl_system_monitor);
+	//HAL_set_timer0_function(macl_system_monitor);
 	return &macl;
 }
 
