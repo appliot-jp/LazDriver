@@ -90,7 +90,5 @@ extern void phy_sleep(void);
 extern void phy_regread(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size);
 extern void phy_regwrite(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size);
 
-//extern uint8_t phy_is_reglock(void);
-
 #endif
 

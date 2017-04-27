@@ -154,7 +154,7 @@ static void macl_rxdone_handler(void)
         phy_rxStart();
         // @issue : the following my not need
         phy_wait_phy_event();
-        // ssdebug 1
+        // @issue : provisional for REG LOCK
         phy_wakeup_mac_event();
     }
 #ifndef LAZURITE_IDE
@@ -188,7 +188,7 @@ static void macl_ack_txdone_handler(void)
     phy_rxStart();
     // @issue : the following my not need
     phy_wait_phy_event();
-    // ssdebug 1
+    // @issue : provisional for REG LOCK
     phy_wakeup_mac_event();
 	phy_timer_ei();
 }
@@ -239,7 +239,7 @@ static void macl_ccadone_handler(void)
             phy_rxStart();
             // @issue : the following my not need
             phy_wait_phy_event();
-            // ssdebug 1
+            // @issue : provisional for REG LOCK
             phy_wakeup_mac_event();
         }else{
             phy_stop();
@@ -271,7 +271,7 @@ static void macl_cca_abort_handler(void)
         phy_rxStart();
         // @issue : the following my not need
         phy_wait_phy_event();
-        // ssdebug 1
+        // @issue : provisional for REG LOCK
         phy_wakeup_mac_event();
     }else{
         phy_stop();

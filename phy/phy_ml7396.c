@@ -36,7 +36,10 @@
 #include "../endian.h"
 #include "../common_subghz.h"
 
+#ifndef LAZURITE_IDE
 #undef ML7396_HWIF_NOTHAVE_TIMER_DI
+#endif
+
 
 /*
  --------------------------------------------------------------
@@ -524,12 +527,18 @@ static void phy_intclr(uint32_t intclr)
 
 
 static void phy_set_trx_state(PHY_TRX_STATE state) {
-    uint8_t reg_data = state;
-    reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
-    HAL_delayMicroseconds(200);
-    reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
+    uint8_t set_data,get_data,i;
+    
+    set_data = state;
+    // @issue : provisional for REG LOCK
+    for(i=0;i < 3;i++){
+        reg_wr(REG_ADR_RF_STATUS, &set_data, 1);
+        HAL_delayMicroseconds(200);
+        reg_rd(REG_ADR_RF_STATUS, &get_data, 1);
+        if(set_data == (get_data&0x0F)) break;
+    }
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s,%x\n",__FILE__,__func__,reg_data);
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 }
 
@@ -1202,7 +1211,9 @@ void phy_ccaCtrl(CCA_STATE state) {
         phy_inten(HW_EVENT_CCA_DONE);
         reg_wr(REG_ADR_IDLE_WAIT_L, &reg_idl_wait, 1);
         reg_wr(REG_ADR_CCA_CNTRL, &reg_cca_cntl, 1);
-        phy_set_trx_state(PHY_ST_RXON);
+//      phy_set_trx_state(PHY_ST_RXON);
+        reg_data = 0x06;
+        reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
     }
 }
 

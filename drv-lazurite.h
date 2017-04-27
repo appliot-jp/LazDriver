@@ -73,9 +73,15 @@
 #define	IOCTL_GET_RX_RSSI		0x32
 #define	IOCTL_GET_TX_RSSI		0x34
 #define	IOCTL_SET_PROMISCUOUS	0x35
+/*
 #define	IOCTL_RF				0x2000
 #define	IOCTL_EEPROM			0x3000
 #define	IOCTL_LED				0x4000
+*/
+// @issue : provisional for REG LOCK
+#define	IOCTL_RF				0x0200
+#define	IOCTL_EEPROM			0x0300
+#define	IOCTL_LED				0x0400
 
 #endif // _DRV_802154E_H_
 

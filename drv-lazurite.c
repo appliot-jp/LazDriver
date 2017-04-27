@@ -34,6 +34,7 @@
 #include "drv-lazurite.h"
 #include "hwif/hal.h"
 #include "hwif/hal-lzpi.h"
+#include "macl.h"
 
 #define DATA_SIZE		256+16
 #define DRV_NAME		"lzgw"
@@ -494,6 +495,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 			}
 			break;
 		case IOCTL_RF:
+            printk(KERN_INFO"IOCTL_RF\n");
 			if(param<0x7f)	// read
 			{
 				uint8_t rdata[1];
@@ -513,6 +515,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 			}
 			break;
 		case IOCTL_EEPROM:
+            printk(KERN_INFO"IOCTL_EEPROM\n");
 			{
 				uint8_t data;
 				EXT_I2C_read(param,&data,1);
@@ -520,6 +523,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 				break;
 			}
 		case IOCTL_LED:
+            printk(KERN_INFO"IOCTL_LED\n");
 			if(param == 0x000) {
 				EXT_rx_led_flash(arg);
 			} else {
@@ -624,6 +628,11 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 	uint8_t payload[DATA_SIZE];
 
 	mutex_lock( &chrdev.lock );
+
+    // @issue : provisional for REG LOCK
+    if(macl_getCondition() == SUBGHZ_ST_RX_DONE){
+        phy_wait_mac_event();
+    }
 
 	if(count<DATA_SIZE)
 	{

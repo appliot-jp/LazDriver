@@ -314,13 +314,13 @@ static bool subghz_decrypt(uint8_t *inbuf, uint8_t *outbuf)
 
       subghz_decMac(&mac,(uint8_t *)subghz_param.rx.data,subghz_param.rx_stat.status);
 
-// ssdebug
+// @@ issue AES
 //    if (mac.mac_header->fc.fc_bit.sec_enb && AES128_getStatus()){
       if (AES128_getStatus()){
         uint8_t mhr_len;
         uint8_t pad;
 
-// ssdebug
+// @@ issue AES
 //        if (mac.mac_header.fc.fc_bit.seq_comp){
 //            mac.mac_header.alignment.seq=0;
 //        }

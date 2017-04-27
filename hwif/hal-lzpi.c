@@ -167,8 +167,13 @@ int rf_main_thread(void *p)
 			m.trigger&=~0x02;
 			if(ext_timer_func) {
 				//printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,m.trigger);
-				ext_timer_func();
-				ext_timer_func = NULL;
+			//	ext_timer_func();
+			//	ext_timer_func = NULL;
+                // @issue : provisional for REG LOCK
+			    que_th2ex=1;
+			    wake_up_interruptible(&tx_done);
+				act_irq_func = ext_timer_func;
+                act_irq_func();
 			}
 		}
 		if(m.trigger&0x04) {
@@ -342,14 +347,18 @@ error:
 
 int HAL_wait_event(uint8_t event)
 {
-	int status=0;
+	int status=1;
+
     if (event == HAL_PHY_EVENT) {
+// @issue : provisional for REG LOCK
+#ifdef	LAZURITE_IDE
 	    que_th2ex = 0;
-	    wait_event_interruptible_timeout(tx_done, que_th2ex,1);
+	    status = wait_event_interruptible_timeout(tx_done, que_th2ex,HZ);
+#endif
     }else
     if (event == HAL_MAC_EVENT) {
         que_macl = 0;
-	    wait_event_interruptible(mac_done, que_macl);
+	    status = wait_event_interruptible(mac_done, que_macl);
     }
 	return status;
 }
@@ -524,6 +533,7 @@ void HAL_sleep(uint32_t us) {
 	return udelay(us*1000);
 }
 
+// #include "../phy.h" 
 int EXT_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize)
 {
 	m.spi.wdata = wdata;
@@ -533,10 +543,19 @@ int EXT_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16
 	m.trigger |= 0x04;
 	if(que_irq == 0)
 	{
+        int status; 
 		que_irq = 1;
 		wake_up_interruptible(&rf_irq_q);
 		que_th2ex = 0;
-		wait_event_interruptible_timeout(ext_q,que_th2ex,2);
+		status = wait_event_interruptible_timeout(ext_q,que_th2ex,2);
+        // @issue : provisional for REG LOCK
+        /*
+        if(status == 0){
+            phy_stop();
+            phy_wakeup_mac_event();
+		    printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
+        }
+        */
 	} else {
 		return -EBUSY;
 	}
