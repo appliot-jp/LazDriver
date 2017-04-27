@@ -49,7 +49,6 @@ typedef enum {
 
 typedef struct {
 	uint8_t condition;
-	uint8_t status;
 	uint8_t pages;
 	uint8_t ch;
 	uint8_t ccaRetry;
@@ -63,6 +62,7 @@ typedef struct {
 	uint8_t rxOnEnable;
 	bool promiscuousMode;
 	uint16_t ack_timeout;
+	int status;
     unsigned long total_send_bytes;
 	unsigned long start_send_time;
 	unsigned long last_send_time;
