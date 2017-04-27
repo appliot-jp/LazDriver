@@ -596,12 +596,12 @@ int	macl_set_promiscuous_mode(const bool on)
 
     if (macl.promiscuousMode){
 	    phy_sint_handler(macl_rxdone_handler);
+	    phy_clrAddrFilt();
         phy_rxStart();
         // @issue : the following my not need
 	    phy_wait_phy_event();
     }else{
         phy_stop();
-	    phy_clrAddrFilt();
     }
 
 	return status;
