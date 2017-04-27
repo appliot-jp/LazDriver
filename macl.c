@@ -498,8 +498,7 @@ int	macl_xmit_sync(BUFFER buff)
     }
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) {
-		printk(KERN_INFO"%s,%s,%lx\n",
-				__FILE__,__func__,(unsigned long)macl.phy->out.data);
+		printk(KERN_INFO"%s,%s,%lx,%d\n",__FILE__,__func__,(unsigned long)macl.phy->out.data,macl.status);
 		PAYLOADDUMP(macl.phy->out.data,macl.phy->out.len);
 	}
 #endif
