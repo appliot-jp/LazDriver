@@ -889,118 +889,120 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 {
 	int status;
 	// end of sending ack during rx
-	if(rx) {
-		// receiving data during tx
-		if(ack) {
-			// initialize ack buffer
-			ack->data = NULL;
-			ack->len = 0;
-			ack->size = mach.ack.raw.size;
-		}
+	if(!rx) {
+		goto update;
+	}
+	// receiving data during tx
+	if(ack) {
+		// initialize ack buffer
+		ack->data = NULL;
+		ack->len = 0;
+		ack->size = mach.ack.raw.size;
+	}
 
-		if(rx->len == 0) {
-			return -1;
-		}
+	if(rx->len == 0) {
+		return -1;
+	}
 
-		// set rx buffer
-		mach.rx.input.data = rx->data;
-		mach.rx.input.len = rx->len;
-		mach.rx.input.size = rx->size;
+	// set rx buffer
+	mach.rx.input.data = rx->data;
+	mach.rx.input.len = rx->len;
+	mach.rx.input.size = rx->size;
 
 #ifndef LAZURITE_IDE
-		if(module_test & MODE_MACH_DEBUG) {
-			printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,__LINE__,mach.rx.input.len);
-			//PAYLOADDUMP(mach.rx.input.data, mach.rx.input.len);
-		}
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,__LINE__,mach.rx.input.len);
+		//PAYLOADDUMP(mach.rx.input.data, mach.rx.input.len);
+	}
 #endif
-		if(mach.macl->promiscuousMode) {
-		} else {
-			// parse raw data
-			if((status = mach_parse_data(&mach.rx))!= STATUS_OK) {
-#ifndef LAZURITE_IDE
-				if(module_test & MODE_MACH_DEBUG) {
-					printk(KERN_INFO"%s,%s,%d,mach_parse_data error\n",__FILE__,__func__,__LINE__);
-				}
-#endif
-				return STATUS_OK;
-			}
-
-			// data frame and cmd frame
-			if ((mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_DATA) ||
-					(mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_CMD)) {
-				// check sequence number
-				if ((mach.rx.fc.fc_bit.ack_req) &&		// ack is requested
-						(ack) &&
-						(!mach.macl->promiscuousMode) ) {
-					if(mach_make_ack_header()) {
-						ack->data = mach.ack.raw.data;
-						ack->len = mach.ack.raw.len;
-						ack->size = mach.ack.raw.size;
-#ifndef LAZURITE_IDE
-						if(module_test & MODE_MACH_DEBUG) {
-							printk(KERN_INFO"%s,%s,%d,%lx,%d\n",__FILE__,__func__,__LINE__,
-									(unsigned long)mach.rx.raw.data,mach.rx.raw.len);
-						}
-#endif
-						return STATUS_OK;
-					}
-				}
-			}
-			// ack process
-			else if (mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_ACK) {
-				if((mach.sending)&&(mach.rx.seq == mach.tx.seq)) {
-					status = 1;				// check ack
-					mach.tx.rssi = mach.rx.input.data[mach.rx.input.len-1];
-#ifndef LAZURITE_IDE
-					if(module_test & MODE_MACH_DEBUG) {
-						printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,__LINE__);
-						PAYLOADDUMP(mach.rx.input.data, mach.rx.input.len);
-					}
-#endif
-				}
-				return 1;
-			} else {									// other data type
-			}
-		}
+	if(mach.macl->promiscuousMode) {
 	} else {
-		// reporting data to upper layer
-		if(mach.rx.raw.size >= mach.rx.input.len) {
-			// copy phy buffer to application buffer
-			memcpy(mach.rx.raw.data,mach.rx.input.data,mach.rx.input.len);
-			mach.rx.raw.len = mach.rx.input.len;
-		} else {
-			// buffer error
+		// parse raw data
+		if((status = mach_parse_data(&mach.rx))!= STATUS_OK) {
 #ifndef LAZURITE_IDE
 			if(module_test & MODE_MACH_DEBUG) {
-				printk(KERN_INFO"%s,%s,%d,%lx,%d\n",__FILE__,__func__,__LINE__,
-						(unsigned long)mach.rx.raw.size,mach.rx.raw.len);
+				printk(KERN_INFO"%s,%s,%d,mach_parse_data error\n",__FILE__,__func__,__LINE__);
 			}
 #endif
 			return STATUS_OK;
 		}
-		if((mach.macl->promiscuousMode)||(mach_match_seq_num()==false)) {		// check sequence number
-			// rx data is copy to previous
-			memcpy(&mach.rx_prev,&mach.rx,sizeof(mach.rx));
 
-			// get rssi
-			mach.rx.rssi = mach.rx.raw.data[mach.rx.raw.len-1];
-			// decriment raw length not to include rssi in raw data.
-			if(mach.rx.raw.len != 0) mach.rx.raw.len -= 1;
-
+		// data frame and cmd frame
+		if ((mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_DATA) ||
+				(mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_CMD)) {
+			// check sequence number
+			if ((mach.rx.fc.fc_bit.ack_req) &&		// ack is requested
+					(ack) &&
+					(!mach.macl->promiscuousMode) ) {
+				if(mach_make_ack_header()) {
+					ack->data = mach.ack.raw.data;
+					ack->len = mach.ack.raw.len;
+					ack->size = mach.ack.raw.size;
 #ifndef LAZURITE_IDE
-			if(module_test & MODE_MACH_DEBUG) {
-				printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,__LINE__);
-				PAYLOADDUMP(mach.rx.raw.data, mach.rx.raw.len);
-			}
+					if(module_test & MODE_MACH_DEBUG) {
+						printk(KERN_INFO"%s,%s,%d,%lx,%d\n",__FILE__,__func__,__LINE__,
+								(unsigned long)mach.rx.raw.data,mach.rx.raw.len);
+					}
 #endif
-			mach_rx_irq(&mach.rx);				// report data to upper layer
-		} else {								// match sequence number
-#ifndef LAZURITE_IDE
-			if(module_test & MODE_MACH_DEBUG) {
-				printk(KERN_INFO"Same sequence number!! %s,%s,%d\n",__FILE__,__func__,__LINE__);
+					return STATUS_OK;
+				}
 			}
-#endif
 		}
+		// ack process
+		else if (mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_ACK) {
+			if((mach.sending)&&(mach.rx.seq == mach.tx.seq)) {
+				status = 1;				// check ack
+				mach.tx.rssi = mach.rx.input.data[mach.rx.input.len-1];
+#ifndef LAZURITE_IDE
+				if(module_test & MODE_MACH_DEBUG) {
+					printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,__LINE__);
+					PAYLOADDUMP(mach.rx.input.data, mach.rx.input.len);
+				}
+#endif
+			}
+			return 1;
+		} else {									// other data type
+		}
+	}
+
+update:
+	// reporting data to upper layer
+	if(mach.rx.raw.size >= mach.rx.input.len) {
+		// copy phy buffer to application buffer
+		memcpy(mach.rx.raw.data,mach.rx.input.data,mach.rx.input.len);
+		mach.rx.raw.len = mach.rx.input.len;
+	} else {
+		// buffer error
+#ifndef LAZURITE_IDE
+		if(module_test & MODE_MACH_DEBUG) {
+			printk(KERN_INFO"%s,%s,%d,%lx,%d\n",__FILE__,__func__,__LINE__,
+					(unsigned long)mach.rx.raw.size,mach.rx.raw.len);
+		}
+#endif
+		return STATUS_OK;
+	}
+	if((mach.macl->promiscuousMode)||(mach_match_seq_num()==false)) {		// check sequence number
+		// rx data is copy to previous
+		memcpy(&mach.rx_prev,&mach.rx,sizeof(mach.rx));
+
+		// get rssi
+		mach.rx.rssi = mach.rx.raw.data[mach.rx.raw.len-1];
+		// decriment raw length not to include rssi in raw data.
+		if(mach.rx.raw.len != 0) mach.rx.raw.len -= 1;
+
+#ifndef LAZURITE_IDE
+		if(module_test & MODE_MACH_DEBUG) {
+			printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,__LINE__);
+			PAYLOADDUMP(mach.rx.raw.data, mach.rx.raw.len);
+		}
+#endif
+		mach_rx_irq(&mach.rx);				// report data to upper layer
+	} else {								// match sequence number
+#ifndef LAZURITE_IDE
+		if(module_test & MODE_MACH_DEBUG) {
+			printk(KERN_INFO"Same sequence number!! %s,%s,%d\n",__FILE__,__func__,__LINE__);
+		}
+#endif
 	}
 
 	return STATUS_OK;

@@ -660,7 +660,7 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 		} else if(p.tx_status == SUBGHZ_TX_CCA_FAIL) {
 			status = -EBUSY;
 		} else if (p.tx_status == SUBGHZ_TX_ACK_FAIL) {
-			status = -ENODEV;
+			status = -ETIMEDOUT;
 		} else {
 			status = -EFAULT;
 		}
