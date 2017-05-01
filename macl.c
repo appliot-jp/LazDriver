@@ -346,7 +346,7 @@ static void macl_ack_rxdone_handler(void)
 //      phy_sint_handler(macl_ack_rxdone_handler);
         phy_rxStart();
         // @issue : the following my not need
-        phy_wait_phy_event();
+//      phy_wait_phy_event();
     }
 	phy_timer_ei();
 }
