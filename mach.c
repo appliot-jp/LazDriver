@@ -978,10 +978,12 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 #endif
 			return STATUS_OK;
 		}
-		if((mach.macl->promiscuousMode)||(mach_match_seq_num()==false)) {		// check sequence number
+		if((mach.macl->promiscuousMode)||
+				((mach_match_seq_num()==false) && 
+				((mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_DATA) ||
+				 (mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_CMD)))) {
 			// rx data is copy to previous
 			memcpy(&mach.rx_prev,&mach.rx,sizeof(mach.rx));
-
 			// get rssi
 			mach.rx.rssi = mach.rx.raw.data[mach.rx.raw.len-1];
 			// decriment raw length not to include rssi in raw data.
