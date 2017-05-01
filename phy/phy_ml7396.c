@@ -556,7 +556,7 @@ static void vco_cal(void) {
     uint8_t reg_data[4];
 
     reg_rd(REG_ADR_PACKET_MODE_SET, reg_data,1);
-    reg_data[0] |=  0x1a;
+    reg_data[0] |=  0x3a;
     reg_wr(REG_ADR_PACKET_MODE_SET, reg_data,1);
     reg_rd(REG_ADR_FEC_CRC_SET, reg_data,1);
     reg_data[0] |=  0x0b, reg_data[0] &= ~0x04;
@@ -1287,7 +1287,7 @@ int phy_rxdone(BUFFER *buff)
 
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG){
-        printk(KERN_INFO"%s,%s,%lx,%d,%d\n",__FILE__,__func__,(unsigned long)buff->data,buff->len,data_size);
+        printk(KERN_INFO"%s,%s,%lx,%d,%d,status=%d\n",__FILE__,__func__,(unsigned long)buff->data,buff->len,data_size,status);
      // PAYLOADDUMP(buff->data,buff->len);
     }
 #endif
