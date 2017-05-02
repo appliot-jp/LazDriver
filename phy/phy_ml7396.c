@@ -556,8 +556,9 @@ static void vco_cal(void) {
     uint8_t reg_data[4];
 
     reg_rd(REG_ADR_PACKET_MODE_SET, reg_data,1);
-//  reg_data[0] |=  0x3a;
-    reg_data[0] |=  0x1a;
+//  @issue : Address Filter
+//  reg_data[0] |=  0x1a;
+    reg_data[0] |=  0x3a;
     reg_wr(REG_ADR_PACKET_MODE_SET, reg_data,1);
     reg_rd(REG_ADR_FEC_CRC_SET, reg_data,1);
     reg_data[0] |=  0x0b, reg_data[0] &= ~0x04;
@@ -1278,12 +1279,15 @@ int phy_rxdone(BUFFER *buff)
         status=-EBADE;
     }else{
         // front packet which is not my address is throw.
+        // @issue : Address Filter
+        /*
         if(rx_done&0x20){
             reg_rd(REG_ADR_RD_RX_FIFO, reg_data, 2);
             data_size = (((unsigned int)reg_data[0] << 8) | reg_data[1]) & 0x07ff; 
             buff->len = data_size + 1; // add ED vale
             fifo_rd(REG_ADR_RD_RX_FIFO, buff->data, buff->len);
         }
+        */
         reg_rd(REG_ADR_RD_RX_FIFO, reg_data, 2);
         data_size = (((unsigned int)reg_data[0] << 8) | reg_data[1]) & 0x07ff; 
         buff->len = data_size + 1; // add ED vale
@@ -1299,7 +1303,7 @@ int phy_rxdone(BUFFER *buff)
 
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG){
-        printk(KERN_INFO"%s,%s,%lx,%d,%d,status=%d\n",__FILE__,__func__,(unsigned long)buff->data,buff->len,data_size,status);
+        printk(KERN_INFO"%s,%s,%lx,%d,%d,status=%d,seq=%d\n",__FILE__,__func__,(unsigned long)buff->data,buff->len,data_size,status,buff->data[4]);
      // PAYLOADDUMP(buff->data,buff->len);
     }
 #endif
