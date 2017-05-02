@@ -556,7 +556,8 @@ static void vco_cal(void) {
     uint8_t reg_data[4];
 
     reg_rd(REG_ADR_PACKET_MODE_SET, reg_data,1);
-    reg_data[0] |=  0x3a;
+//  reg_data[0] |=  0x3a;
+    reg_data[0] |=  0x1a;
     reg_wr(REG_ADR_PACKET_MODE_SET, reg_data,1);
     reg_rd(REG_ADR_FEC_CRC_SET, reg_data,1);
     reg_data[0] |=  0x0b, reg_data[0] &= ~0x04;
@@ -1262,6 +1263,7 @@ int phy_rxdone(BUFFER *buff)
     uint16_t data_size=0;
     uint8_t reg_data[2];
     uint8_t crc_err;
+    uint8_t rx_done;
 
     phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
 
@@ -1269,10 +1271,19 @@ int phy_rxdone(BUFFER *buff)
     reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
 
     crc_err = reg_data[0]&0x30;
-    if (crc_err){
+    rx_done = (reg_data[0]&0x0C) << 2;
+
+    if (crc_err & rx_done){
         phy_rst();
         status=-EBADE;
     }else{
+        // front packet which is not my address is throw.
+        if(rx_done&0x20){
+            reg_rd(REG_ADR_RD_RX_FIFO, reg_data, 2);
+            data_size = (((unsigned int)reg_data[0] << 8) | reg_data[1]) & 0x07ff; 
+            buff->len = data_size + 1; // add ED vale
+            fifo_rd(REG_ADR_RD_RX_FIFO, buff->data, buff->len);
+        }
         reg_rd(REG_ADR_RD_RX_FIFO, reg_data, 2);
         data_size = (((unsigned int)reg_data[0] << 8) | reg_data[1]) & 0x07ff; 
         buff->len = data_size + 1; // add ED vale
@@ -1280,6 +1291,7 @@ int phy_rxdone(BUFFER *buff)
         // delete crc data
         buff->data[buff->len-3] = buff->data[buff->len-1];
         buff->len -= 2;
+        phy_rst();
     }
 
     phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
