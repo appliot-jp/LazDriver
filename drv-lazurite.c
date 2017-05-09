@@ -484,9 +484,13 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					ret = p.tx_rssi;
 					break;
 				case IOCTL_SET_PROMISCUOUS:
-					printk(KERN_INFO"%s,%s,%d %lx\n",__FILE__,__func__,__LINE__,arg);
 					if(arg == 0) SubGHz.setPromiscuous(false);
 					else SubGHz.setPromiscuous(true);
+					ret = 0;
+					break;
+				case IOCTL_SET_ACK_REQ:
+					if(arg == 0) SubGHz.setAckReq(false);
+					else SubGHz.setAckReq(true);
 					ret = 0;
 					break;
 				default:

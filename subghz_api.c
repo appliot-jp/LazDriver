@@ -54,6 +54,7 @@ static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len);
 static struct {
 	uint8_t addr_type;
 	bool read;
+	bool ack_req;
 	SUBGHZ_STATUS tx_stat;
 	SUBGHZ_STATUS rx_stat;
 	volatile bool sending;
@@ -79,6 +80,7 @@ static SUBGHZ_MSG subghz_init(void)
 	// setting default value
 	// @issue check parameters
 	subghz_param.addr_type = 6;
+	subghz_param.ack_req = true;
 	subghz_param.rf.cca_min_be = 0;
 	subghz_param.rf.cca_max_be = 7;
 	//	subghz_param.rf.cca_duration = 7;
@@ -111,12 +113,6 @@ static SUBGHZ_MSG subghz_init(void)
 	// data to myaddress and grobal address in specified PANID can be received.
 	subghz_param.short_addr = (uint16_t)subghz_param.mach->my_addr.ieee_addr[0] | 
 		((uint16_t)subghz_param.mach->my_addr.ieee_addr[1]<<8);
-	result = mach_set_my_short_addr(0xabcd,subghz_param.short_addr);
-	if(result != STATUS_OK)
-	{
-		msg = SUBGHZ_MYADDR_FAIL;
-		goto error;
-	}
 	msg =  SUBGHZ_OK;
 
 error:
@@ -162,7 +158,10 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 	}
 	
 	subghz_param.panid = panid;
-	mach_set_my_short_addr(subghz_param.panid,subghz_param.short_addr);
+	if((result = mach_set_my_short_addr(subghz_param.panid,subghz_param.short_addr)) != STATUS_OK) {
+		msg = SUBGHZ_MYADDR_FAIL;
+		goto error;
+	}
 
 	if(txPower == 1) 
 		subghz_param.rf.tx_power = DBM_TO_MBM(1);
@@ -221,7 +220,7 @@ static SUBGHZ_MSG subghz_tx64le(uint8_t *addr_le, uint8_t *data, uint16_t len, v
 	memset(&fc,0,sizeof(fc));
 	fc.frame_type = IEEE802154_FC_TYPE_DATA;
 	fc.frame_ver = IEEE802154_FC_VER_4E;
-	fc.ack_req = 1;
+	fc.ack_req = subghz_param.ack_req;
 
 	mach_set_dst_ieee_addr(0xffff,addr_le);
 	mach_set_src_addr(IEEE802154_FC_ADDR_IEEE);
@@ -286,7 +285,7 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 	memset(&fc,0,sizeof(fc));
 	fc.frame_type = IEEE802154_FC_TYPE_DATA;
 	fc.frame_ver = IEEE802154_FC_VER_4E;
-	fc.ack_req = 1;
+	fc.ack_req = subghz_param.ack_req;
 
 	mach_set_dst_short_addr(panid,dstAddr);
 	mach_set_src_addr(IEEE802154_FC_ADDR_SHORT);
@@ -419,7 +418,6 @@ static SUBGHZ_MSG subghz_rxEnable(void (*callback)(const uint8_t *data, uint8_t 
 	subghz_param.rx_callback = callback;
 	if(subghz_param.read == false)
 	{
-		mach_set_my_short_addr(subghz_param.panid,subghz_param.short_addr);
 		if((result=mach_start(&subghz_param.rx))!=STATUS_OK) {
 			msg = SUBGHZ_RX_ENB_FAIL;
 			goto error;
@@ -633,16 +631,22 @@ static SUBGHZ_MSG subghz_setKey(uint8_t *key)
 
 static SUBGHZ_MSG subghz_setMyAddress(uint16_t my_addr)
 {
-	if(my_addr != 0xffff) {
-		subghz_param.short_addr = my_addr;
-		mach_set_my_short_addr(subghz_param.panid,subghz_param.short_addr);
-		return SUBGHZ_MYADDR_FAIL;
-	}
+	if(my_addr == 0xffff) return SUBGHZ_MYADDR_FAIL;
+	subghz_param.short_addr = my_addr;
 	return SUBGHZ_OK;
 }
+
 static SUBGHZ_MSG subghz_setPromiscuous(bool on) {
 	mach_set_promiscuous(on);
-
+	return SUBGHZ_OK;
+}
+static SUBGHZ_MSG subghz_setAckReq(bool on) {
+	subghz_param.ack_req = on;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,__LINE__,subghz_param.ack_req);
+	}
+#endif
 	return SUBGHZ_OK;
 }
 // setting of function
@@ -656,6 +660,7 @@ const SubGHz_CTRL SubGHz = {
 	subghz_tx64be,
 	subghz_rxEnable,
 	subghz_setPromiscuous,
+	subghz_setAckReq,
 	subghz_rxDisable,
 	subghz_readData,
 	subghz_getMyAddress,

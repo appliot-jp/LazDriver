@@ -73,6 +73,8 @@
 #define	IOCTL_GET_RX_RSSI		0x32
 #define	IOCTL_GET_TX_RSSI		0x34
 #define	IOCTL_SET_PROMISCUOUS	0x35
+#define	IOCTL_SET_ACK_REQ		0x37
+
 /*
 #define	IOCTL_RF				0x2000
 #define	IOCTL_EEPROM			0x3000

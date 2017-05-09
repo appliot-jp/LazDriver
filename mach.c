@@ -753,12 +753,13 @@ int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr)
 	int status=STATUS_OK;
 	mach.my_addr.pan_id = panid;
 	mach.my_addr.short_addr = short_addr;
-	if((panid == 0xffff) || (panid == 0xfffe) || (short_addr == 0xffff) || (short_addr == 0xfffe))
+	if((panid == 0xffff) || (panid == 0xfffe) || (short_addr == 0xffff))
 	{
 		mach.my_addr.pan_coord = false;
 		status = -EINVAL;
+	} else {
+		mach.my_addr.pan_coord = true;
 	}
-	mach.my_addr.pan_coord = true;
 
 	if(!mach.macl->promiscuousMode)
 	{
@@ -768,6 +769,20 @@ int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr)
 		filt.short_addr = mach.my_addr.short_addr;
 		memcpy(filt.ieee_addr,mach.my_addr.ieee_addr,8);
 		macl_set_hw_addr_filt(&filt,0x0f);			// update all of addr filter
+#ifndef LAZURITE_IDE
+		printk(KERN_INFO"Lazurite: My Addr= %02x%02x%02x%02x%02x%02x%02x%02x %d 0x%04x 0x%04x\n",
+			mach.my_addr.ieee_addr[7],
+			mach.my_addr.ieee_addr[6],
+			mach.my_addr.ieee_addr[5],
+			mach.my_addr.ieee_addr[4],
+			mach.my_addr.ieee_addr[3],
+			mach.my_addr.ieee_addr[2],
+			mach.my_addr.ieee_addr[1],
+			mach.my_addr.ieee_addr[0],
+			mach.my_addr.pan_coord,
+			mach.my_addr.pan_id,
+			mach.my_addr.short_addr);
+#endif
 	}
 	return status;
 }
