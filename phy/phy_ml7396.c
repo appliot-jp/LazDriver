@@ -1280,14 +1280,14 @@ int phy_rxdone(BUFFER *buff)
     }else{
         // front packet which is not my address is throw.
         // @issue : Address Filter
-        /*
+#if 1        
         if(rx_done&0x20){
             reg_rd(REG_ADR_RD_RX_FIFO, reg_data, 2);
             data_size = (((unsigned int)reg_data[0] << 8) | reg_data[1]) & 0x07ff; 
             buff->len = data_size + 1; // add ED vale
             fifo_rd(REG_ADR_RD_RX_FIFO, buff->data, buff->len);
         }
-        */
+#endif
         reg_rd(REG_ADR_RD_RX_FIFO, reg_data, 2);
         data_size = (((unsigned int)reg_data[0] << 8) | reg_data[1]) & 0x07ff; 
         buff->len = data_size + 1; // add ED vale
