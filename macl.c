@@ -146,12 +146,9 @@ static void macl_rxdone_handler(void)
 	HAL_sleep(1);
 #endif
 
-	if (status == STATUS_OK) {
-		if(!macl.promiscuousMode && (macl_total_transmission_time(macl.phy->out.len) == STATUS_OK) && macl.ack.data){
+	if ((status == STATUS_OK) && !macl.promiscuousMode && (macl_total_transmission_time(macl.phy->out.len) == STATUS_OK) && macl.ack.data){
 			phy_sint_handler(macl_ack_txdone_handler);
 			phy_txStart(&macl.ack,2);
-		}
-		macl_rx_irq(NULL,NULL);
 	} else {
 		phy_sint_handler(macl_rxdone_handler);
 		phy_rxStart();
@@ -160,6 +157,7 @@ static void macl_rxdone_handler(void)
 		// @issue : provisional for REG LOCK
 		phy_wakeup_mac_event();
 	}
+	if(status == STATUS_OK)	macl_rx_irq(NULL,NULL);
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG){
 		if(!macl.promiscuousMode && status == STATUS_OK && macl.ack.data) {

@@ -365,7 +365,7 @@ int mach_rx_irq(struct mac_header *rx)
 
 	subghz_param.rx_stat.rssi = rx->rssi;
 	subghz_param.rx_stat.status = rx->raw.len;
-	if((!subghz_param.broadcast_enb) && (rx->dst.panid.enb) && (rx->dst.panid.data == 0xFFFF) &&
+	if((!subghz_param.mach->macl->promiscuousMode) && (!subghz_param.broadcast_enb) && (rx->dst.panid.enb) && (rx->dst.panid.data == 0xFFFF) &&
 			(rx->dst.addr_type == 0x02) && (rx->dst.addr.short_addr = 0xFFFF)) {
 #ifndef LAZURITE_IDE
 		if(module_test & MODE_MACH_DEBUG) {
