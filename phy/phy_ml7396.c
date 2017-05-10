@@ -1414,11 +1414,16 @@ void phy_sleep(void)
 }
 
 
-void phy_regread(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
-    reg_rd(bank, addr, data, size);
-}
-
-
-void phy_regwrite(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
-    reg_wr(bank, addr, data, size);
+void phy_monitor(void){
+#ifndef LAZURITE_IDE
+    uint8_t rdata[4];
+    reg_rd(0, 0x24, rdata, 4);
+	printk(KERN_INFO"INT SOURCE:: %x,%x,%x,%x\n", rdata[0],rdata[1],rdata[2],rdata[3]);
+    reg_rd(0, 0x2A, rdata, 4);
+	printk(KERN_INFO"INT ENABLE:: %x,%x,%x,%x\n", rdata[0],rdata[1],rdata[2],rdata[3]);
+    reg_rd(0, 0x6c, rdata, 1);
+	printk(KERN_INFO"RF STATUS:: %x\n", rdata[0]);
+    reg_rd(0, 0x15, rdata, 1);
+    printk(KERN_INFO"RF CCA CNTL:: %x\n", rdata[0]);
+#endif
 }
