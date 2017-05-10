@@ -103,6 +103,7 @@ typedef struct
 	SUBGHZ_MSG (*rxEnable)(void (*callback)(const uint8_t *data, uint8_t rssi, int status));
 	SUBGHZ_MSG (*setPromiscuous)(bool on);
 	SUBGHZ_MSG (*setAckReq)(bool on);
+	SUBGHZ_MSG (*setBroadcastEnb)(bool on);
 	SUBGHZ_MSG (*rxDisable)(void);
 	short (*readData)(uint8_t *data, uint16_t max_size);
 	uint16_t (*getMyAddress)(void);

@@ -493,6 +493,11 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					else SubGHz.setAckReq(true);
 					ret = 0;
 					break;
+				case IOCTL_SET_BROADCAST:
+					if(arg == 0) SubGHz.setBroadcastEnb(false);
+					else SubGHz.setBroadcastEnb(true);
+					ret = 0;
+					break;
 				default:
 					ret = -ENOTTY;
 					break;

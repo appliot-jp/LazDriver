@@ -39,7 +39,7 @@
 #include "hwif/hal.h"
 #include "aes/aes.h"
 #ifndef	LAZURITE_IDE
-static uint8_t aes_outbuf[256];
+//static uint8_t aes_outbuf[256];
 #endif
 
 #ifndef LAZURITE_IDE
@@ -55,6 +55,7 @@ static struct {
 	uint8_t addr_type;
 	bool read;
 	bool ack_req;
+	bool broadcast_enb;
 	SUBGHZ_STATUS tx_stat;
 	SUBGHZ_STATUS rx_stat;
 	volatile bool sending;
@@ -81,6 +82,7 @@ static SUBGHZ_MSG subghz_init(void)
 	// @issue check parameters
 	subghz_param.addr_type = 6;
 	subghz_param.ack_req = true;
+	subghz_param.broadcast_enb = true;
 	subghz_param.rf.cca_min_be = 0;
 	subghz_param.rf.cca_max_be = 7;
 	//	subghz_param.rf.cca_duration = 7;
@@ -319,6 +321,7 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 }
 
 
+/*
 static bool subghz_decrypt(uint8_t *inbuf, uint8_t *outbuf)
 {
       SUBGHZ_MAC_PARAM mac;
@@ -355,28 +358,37 @@ static bool subghz_decrypt(uint8_t *inbuf, uint8_t *outbuf)
 
 	return 0;
 }
-
+*/
 
 int mach_rx_irq(struct mac_header *rx)
 {
 
 	subghz_param.rx_stat.rssi = rx->rssi;
 	subghz_param.rx_stat.status = rx->raw.len;
+	if((!subghz_param.broadcast_enb) && (rx->dst.panid.enb) && (rx->dst.panid.data == 0xFFFF) &&
+			(rx->dst.addr_type == 0x02) && (rx->dst.addr.short_addr = 0xFFFF)) {
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"[rx]%s,%s,%d\n",__FILE__,__func__,__LINE__);
-		PAYLOADDUMP(rx->raw.data, rx->raw.len);
-	}
-
-    if(subghz_decrypt(rx->raw.data,aes_outbuf)){
-        memcpy((uint8_t *)subghz_param.rx.data, aes_outbuf, subghz_param.rx_stat.status);
-    }
+		if(module_test & MODE_MACH_DEBUG) {
+			printk(KERN_INFO"Lazurite:: Ignore Broadcast\n");
+			PAYLOADDUMP(rx->raw.data, rx->raw.len);
+		}
 #endif
-	if(subghz_param.rx_callback != NULL) {
-		subghz_param.rx_callback(rx->raw.data, rx->rssi,rx->raw.len);
 	} else {
-		memcpy(subghz_param.rx.data,rx->raw.data,rx->raw.len);
-		subghz_param.rx.len = rx->raw.len;
+#ifndef LAZURITE_IDE
+		if(module_test & MODE_MACH_DEBUG) {
+			printk(KERN_INFO"[rx]%s,%s,%d\n",__FILE__,__func__,__LINE__);
+			PAYLOADDUMP(rx->raw.data, rx->raw.len);
+		}
+		//if(subghz_decrypt(rx->raw.data,aes_outbuf)){
+		//	memcpy((uint8_t *)subghz_param.rx.data, aes_outbuf, subghz_param.rx_stat.status);
+		//}
+#endif
+		if(subghz_param.rx_callback != NULL) {
+			subghz_param.rx_callback(rx->raw.data, rx->rssi,rx->raw.len);
+		} else {
+			memcpy(subghz_param.rx.data,rx->raw.data,rx->raw.len);
+			subghz_param.rx.len = rx->raw.len;
+		}
 	}
 	return STATUS_OK;
 }
@@ -625,7 +637,7 @@ static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len)
 
 static SUBGHZ_MSG subghz_setKey(uint8_t *key)
 {
-    AES128_setKey(key);
+	AES128_setKey(key);
 	return SUBGHZ_OK;
 }
 
@@ -649,6 +661,15 @@ static SUBGHZ_MSG subghz_setAckReq(bool on) {
 #endif
 	return SUBGHZ_OK;
 }
+static SUBGHZ_MSG subghz_setBroadcastEnb(bool on) {
+	subghz_param.broadcast_enb = on;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,__LINE__,subghz_param.broadcast_enb);
+	}
+#endif
+	return SUBGHZ_OK;
+}
 // setting of function
 const SubGHz_CTRL SubGHz = {
 	subghz_init,
@@ -661,6 +682,7 @@ const SubGHz_CTRL SubGHz = {
 	subghz_rxEnable,
 	subghz_setPromiscuous,
 	subghz_setAckReq,
+	subghz_setBroadcastEnb,
 	subghz_rxDisable,
 	subghz_readData,
 	subghz_getMyAddress,
