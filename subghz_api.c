@@ -38,9 +38,6 @@
 // @issue why application layer access to hardware if
 #include "hwif/hal.h"
 #include "aes/aes.h"
-#ifndef	LAZURITE_IDE
-//static uint8_t aes_outbuf[256];
-#endif
 
 #ifndef LAZURITE_IDE
 	extern wait_queue_head_t tx_done;
@@ -322,7 +319,7 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 
 
 /*
-static bool subghz_decrypt(uint8_t *inbuf, uint8_t *outbuf)
+static bool subghz_decrypt(uint8_t *outbuf)
 {
       SUBGHZ_MAC_PARAM mac;
 
@@ -379,10 +376,22 @@ int mach_rx_irq(struct mac_header *rx)
 			printk(KERN_INFO"[rx]%s,%s,%d\n",__FILE__,__func__,__LINE__);
 			PAYLOADDUMP(rx->raw.data, rx->raw.len);
 		}
-		//if(subghz_decrypt(rx->raw.data,aes_outbuf)){
-		//	memcpy((uint8_t *)subghz_param.rx.data, aes_outbuf, subghz_param.rx_stat.status);
-		//}
 #endif
+
+        // @@ issue AES
+        if (rx->fc.fc_bit.sec_enb && AES128_getStatus()){
+            uint8_t mhr_len;
+            uint8_t pad;
+            uint8_t outbuf[256];
+            //if (rx->fc.fc_bit.seq_comp){
+            //  rx->alignment.seq=0;
+            mhr_len = rx->raw.len - rx->payload.len;
+            memcpy(outbuf, subghz_param.rx.data,mhr_len);
+            pad = AES128_CBC_decrypt(outbuf+mhr_len, rx->raw.data, rx->raw.len, rx->seq);
+            rx->raw.len -= pad;
+            memcpy(rx->raw.data, outbuf, rx->raw.len);
+        }
+
 		if(subghz_param.rx_callback != NULL) {
 			subghz_param.rx_callback(rx->raw.data, rx->rssi,rx->raw.len);
 		} else {
