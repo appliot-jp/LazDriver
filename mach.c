@@ -320,13 +320,10 @@ static int mach_make_header(struct mac_header *header) {
 	if(header->raw.size >= (offset + header->payload.len)) {
 		if(header->payload.len != 0) {
 
-			if (AES128_getStatus()){
-				mach.rx.fc.fc_bit.sec_enb = 1;
-			}
-
             // @@ issue AES
 			if (AES128_getStatus()){
 				uint8_t pad;
+				header->fc.fc_bit.sec_enb = 1;
 				if (mach.rx.fc.fc_bit.seq_comp){
 					pad = AES128_CBC_encrypt(&header->raw.data[offset], header->payload.data, header->payload.len,0) ;
 				//  pad = AES128_CBC_encrypt(&mach.tx.payload, (uint8_t *)data, size, 0); 
