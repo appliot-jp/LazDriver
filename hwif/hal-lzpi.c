@@ -529,8 +529,8 @@ int HAL_TIMER_stop(void)
 	return HAL_STATUS_OK;
 }
 
-void HAL_sleep(uint32_t us) {
-	return udelay(us*1000);
+void HAL_sleep(uint32_t ms) {
+	return udelay(ms*1000);
 }
 
 // #include "../phy.h" 

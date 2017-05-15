@@ -132,9 +132,7 @@ static void macl_rxdone_handler(void)
     status = phy_rxdone(&macl.phy->in);
     macl_rx_irq(&macl.phy->in,&macl.ack);
 
-#ifndef LAZURITE_IDE
-	HAL_sleep(1);
-#endif
+	HAL_delayMicroseconds(1000);
 
 	if ((status == STATUS_OK) && !macl.promiscuousMode && (macl_total_transmission_time(macl.phy->out.len) == STATUS_OK) && macl.ack.data){
 			phy_sint_handler(macl_ack_txdone_handler);

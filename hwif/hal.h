@@ -73,13 +73,13 @@ extern void HAL_EX_enableInterrupt(void);
 extern void HAL_EX_disableInterrupt(void);
 
 #ifdef LAZURITE_IDE
-	#define HAL_delayMicroseconds(v) delay_microseconds((unsigned long)v)
+	#define HAL_delayMicroseconds(us) delay_microseconds((unsigned long)us)
 	#define HAL_millis() millis()
 	#define HAL_sleep(v) sleep(v)
 #else
-	#define HAL_delayMicroseconds(v) udelay((unsigned long)v)
+	#define HAL_delayMicroseconds(us) udelay((unsigned long)us)
 	extern uint32_t HAL_millis(void);
-	extern void HAL_sleep(uint32_t time);
+	extern void HAL_sleep(uint32_t ms);
 #endif
 
 extern int EXT_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize);
