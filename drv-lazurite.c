@@ -663,7 +663,7 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 			status = SubGHz.send(p.dst_panid,dst_addr,payload,count,tx_callback);
 		}
 		p.tx_status = status;
-		if(status == SUBGHZ_OK)
+		if(status > 0)
 		{
 			status = count;
 		} else if(p.tx_status == SUBGHZ_TX_CCA_FAIL) {
