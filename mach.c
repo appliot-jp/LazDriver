@@ -320,18 +320,16 @@ static int mach_make_header(struct mac_header *header) {
 	if(header->raw.size >= (offset + header->payload.len)) {
 		if(header->payload.len != 0) {
 
-			if (AES128_getStatus()){
-				mach.rx.fc.fc_bit.sec_enb = 1;
-			}
-
+            // @@ issue AES
 			if (AES128_getStatus()){
 				uint8_t pad;
+				header->fc.fc_bit.sec_enb = 1;
 				if (mach.rx.fc.fc_bit.seq_comp){
 					pad = AES128_CBC_encrypt(&header->raw.data[offset], header->payload.data, header->payload.len,0) ;
-					//  pad = AES128_CBC_encrypt(&mach.tx.payload, (uint8_t *)data, size, 0); 
+				//  pad = AES128_CBC_encrypt(&mach.tx.payload, (uint8_t *)data, size, 0); 
 				}else{
 					pad = AES128_CBC_encrypt(&header->raw.data[offset], header->payload.data, header->payload.len,header->seq) ;
-					//  pad = AES128_CBC_encrypt(&mach.tx.payload, (uint8_t *)data, size, header.seq);
+				//  pad = AES128_CBC_encrypt(&mach.tx.payload, (uint8_t *)data, size, header.seq);
 				}
 				// api.tx.buffer.size += pad;
 				offset += pad;
@@ -367,6 +365,14 @@ static int mach_make_header(struct mac_header *header) {
 		}
 		offset+=header->payload.len;
 		header->raw.len = offset;
+
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+        printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
+		PAYLOADDUMP(header->payload.data, header->payload.len);
+		PAYLOADDUMP(header->raw.data, header->raw.len);
+    }
+#endif
 	} else {
 		status = -ENOMEM;
 		goto error;
@@ -855,10 +861,7 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 	 */
 
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
-		PAYLOADDUMP(mach.tx.raw.data,mach.tx.raw.len);
-	}
+	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 #endif
 	//printk(KERN_INFO"PAYLOAD\n");
 	//PAYLOADDUMP(mach.tx.payload.data,mach.tx.payload.len);
