@@ -317,46 +317,6 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 	return msg;
 }
 
-
-/*
-static bool subghz_decrypt(uint8_t *outbuf)
-{
-      SUBGHZ_MAC_PARAM mac;
-
-      subghz_decMac(&mac,(uint8_t *)subghz_param.rx.data,subghz_param.rx_stat.status);
-
-// @@ issue AES
-//    if (mac.mac_header->fc.fc_bit.sec_enb && AES128_getStatus()){
-      if (AES128_getStatus()){
-        uint8_t mhr_len;
-        uint8_t pad;
-
-// @@ issue AES
-//        if (mac.mac_header.fc.fc_bit.seq_comp){
-//            mac.mac_header.alignment.seq=0;
-//        }
-        mhr_len = mac.raw_len - mac.payload_len;
-        memcpy(outbuf, subghz_param.rx.data,mhr_len);
-        pad = AES128_CBC_decrypt(outbuf+mhr_len, mac.payload, mac.payload_len, mac.seq_num);
-        subghz_param.rx_stat.status -= pad;
-#ifdef DEBUG_AES
-        Serial.print("\r\n");
-        Serial.print(outbuf+mhr_len);
-        Serial.print("\r\n");
-        Serial.print("total,payload,pad: ");
-        Serial.print_long((long)mac.raw_len,DEC);
-        Serial.print(" ");
-        Serial.print_long((long)mac.payload_len,DEC);
-        Serial.print(" ");
-        Serial.println_long((long)pad,DEC);
-#endif
-        return 1;
-    }
-
-	return 0;
-}
-*/
-
 int mach_rx_irq(struct mac_header *rx)
 {
 
@@ -377,19 +337,23 @@ int mach_rx_irq(struct mac_header *rx)
 			PAYLOADDUMP(rx->raw.data, rx->raw.len);
 		}
 #endif
-
         // @@ issue AES
         if (rx->fc.fc_bit.sec_enb && AES128_getStatus()){
             uint8_t mhr_len;
             uint8_t pad;
             uint8_t outbuf[256];
-            //if (rx->fc.fc_bit.seq_comp){
-            //  rx->alignment.seq=0;
+            if (rx->fc.fc_bit.seq_comp){
+                rx->seq=0;
+            }
             mhr_len = rx->raw.len - rx->payload.len;
-            memcpy(outbuf, subghz_param.rx.data,mhr_len);
-            pad = AES128_CBC_decrypt(outbuf+mhr_len, rx->raw.data, rx->raw.len, rx->seq);
+            memcpy(outbuf, rx->raw.data,mhr_len);
+            pad = AES128_CBC_decrypt(outbuf+mhr_len, rx->payload.data, rx->payload.len, rx->seq);
             rx->raw.len -= pad;
             memcpy(rx->raw.data, outbuf, rx->raw.len);
+#ifdef DEBUG_AES
+            Serial.print("AES ON: pad num: ");
+            Serial.println_long(pad,DEC);
+#endif
         }
 
 		if(subghz_param.rx_callback != NULL) {
