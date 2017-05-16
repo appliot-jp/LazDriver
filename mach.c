@@ -365,6 +365,14 @@ static int mach_make_header(struct mac_header *header) {
 		}
 		offset+=header->payload.len;
 		header->raw.len = offset;
+
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+        printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
+		PAYLOADDUMP(header->payload.data, header->payload.len);
+		PAYLOADDUMP(header->raw.data, header->raw.len);
+    }
+#endif
 	} else {
 		status = -ENOMEM;
 		goto error;
@@ -853,10 +861,7 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 	 */
 
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
-		PAYLOADDUMP(mach.tx.raw.data,mach.tx.raw.len);
-	}
+	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 #endif
 	//printk(KERN_INFO"PAYLOAD\n");
 	//PAYLOADDUMP(mach.tx.payload.data,mach.tx.payload.len);
