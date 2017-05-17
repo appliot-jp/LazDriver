@@ -34,6 +34,7 @@
 
 #include "aes/aes.h"
 
+//#define DEBUG_AES
 #ifdef DEBUG_AES
 #include "Serial.h"
 #endif
@@ -107,6 +108,7 @@ int	get_mac_addr(uint8_t *macaddr)
  ******************************************************************************/
 
 static int mach_make_header(struct mac_header *header) {
+	uint8_t pad;
 	uint16_t offset = 2;
 	int status;
 	bool dst_ffff = true;
@@ -322,7 +324,6 @@ static int mach_make_header(struct mac_header *header) {
 
             // @@ issue AES
 			if (AES128_getStatus()){
-				uint8_t pad;
 				header->fc.fc_bit.sec_enb = 1;
 				if (mach.rx.fc.fc_bit.seq_comp){
 					pad = AES128_CBC_encrypt(&header->raw.data[offset], header->payload.data, header->payload.len,0) ;
@@ -333,32 +334,7 @@ static int mach_make_header(struct mac_header *header) {
 				}
 				// api.tx.buffer.size += pad;
 				offset += pad;
-#ifdef DEBUG_AES
-				{
-					uint8_t i;
-					Serial.print(data);
-					Serial.print("\r\n");
-					for(i=0;i<size-1;i++)
-					{
-						Serial.print_long((long)*((uint8_t *)data+i),HEX);
-					}
-					Serial.print("\r\n");
-					Serial.print("total,payload,pad,seq: ");
-					Serial.print_long( api.tx.buffer.size, DEC);
-					Serial.print(" ");
-					Serial.print_long( size, DEC);
-					Serial.print(" ");
-					Serial.print_long( pad, DEC);
-					Serial.print(" ");
-					Serial.print_long( seq, DEC);
-					Serial.print("\r\n");
-					for(i=0;i<size+pad-1;i++)
-					{
-						Serial.print_long((long)*(payload+i),HEX);
-					}
-					Serial.print("\r\n");
-				}
-#endif
+
 			}else{
 				memcpy(&header->raw.data[offset], header->payload.data, header->payload.len);
 			}
@@ -372,6 +348,25 @@ static int mach_make_header(struct mac_header *header) {
 		PAYLOADDUMP(header->payload.data, header->payload.len);
 		PAYLOADDUMP(header->raw.data, header->raw.len);
     }
+
+#elif defined(DEBUG_AES)
+	{
+		uint8_t i;
+		Serial.print(header->raw.data);
+		Serial.print("\r\n");
+		for(i=0;i<header->raw.len-1;i++)
+		{
+			Serial.print_long((long)*((uint8_t *)header->raw.data+i),HEX);
+		}
+		Serial.print("\r\n");
+		Serial.print("len,pad,seq: ");
+		Serial.print_long( header->raw.len, DEC);
+		Serial.print(" ");
+		Serial.print_long( pad, DEC);
+		Serial.print(" ");
+		Serial.print_long( header->seq, DEC);
+		Serial.print("\r\n");
+	}
 #endif
 	} else {
 		status = -ENOMEM;
