@@ -655,6 +655,7 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 		EXT_set_tx_led(0);
 		if(p.tx64) {
 			status = SubGHz.send64le(p.dst_addr,payload,count,tx_callback);
+			printk("%s %s %d %d\n",__FILE__,__func__,__LINE__,status);
 		}else {
 			uint16_t dst_addr;
 			dst_addr = p.dst_addr[1];
@@ -663,7 +664,7 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 			status = SubGHz.send(p.dst_panid,dst_addr,payload,count,tx_callback);
 		}
 		p.tx_status = status;
-		if(status > 0)
+		if(status == SUBGHZ_OK)
 		{
 			status = count;
 		} else if(p.tx_status == SUBGHZ_TX_CCA_FAIL) {
