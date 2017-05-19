@@ -232,8 +232,6 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 						unsigned char shift;
 						unsigned char hex;
 						memcpy(ckey,(const void *)arg,32);
-						printk(KERN_ERR"AES = %s\n",(char *)arg);
-						printk(KERN_ERR"AES = %s\n",ckey);
 						for(i=0;i < 32;i++){
 							index = ckey[i]&0x0f;
 							// a - f or A - f
@@ -242,8 +240,6 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 							// LSB side is 0 shift, MSB side is 4 bits shifth
 							shift = 4*(i%2);
 							p.key[i/2] |= (hex >> shift);
-							printk(KERN_ERR"AES = %x %x %d %d %d %x\n",p.key[i/2],ckey[i],shift,index,i/2,hex);
-						}
                         ret = SubGHz.setKey(p.key);
 						if(ret != SUBGHZ_OK) ret = EFAULT;
 						break;
