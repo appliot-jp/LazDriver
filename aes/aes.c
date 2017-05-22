@@ -662,6 +662,8 @@ uint8_t AES128_CBC_decrypt(uint8_t* output, uint8_t* input, uint32_t length, uin
 
     AES128_CBC_decrypt_buffer(workspace, input, length, p_key, (uint8_t *)&ivTable);
     padLen = *(workspace + length - 1);
+    // following case is different key.
+    if(padLen > 16) padLen = 16;
     memcpy(output, workspace, length-padLen);
 
     return padLen;
