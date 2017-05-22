@@ -931,7 +931,7 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 			// parse raw data
 			if((status = mach_parse_data(&mach.rx)!= STATUS_OK) ||
 				((mach.rx.dst.addr_type == 3) &&
-				(memcmp(mach.rx.dst.addr.ieee_addr,mach.my_addr.ieee_addr,8)==0))) {
+				(memcmp(mach.rx.dst.addr.ieee_addr,mach.my_addr.ieee_addr,8)!=0))) {
 #ifndef LAZURITE_IDE
 				if(module_test & MODE_MACH_DEBUG) {
 					printk(KERN_INFO"%s,%s,%d,mach_parse_data error\n",__FILE__,__func__,__LINE__);
