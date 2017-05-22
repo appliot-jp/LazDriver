@@ -237,7 +237,7 @@ static SUBGHZ_MSG subghz_tx64le(uint8_t *addr_le, uint8_t *data, uint16_t len, v
 	subghz_param.sending = false;
 
 	// @@ issue check error code
-	if(result > 0){
+	if(result >= 0){
 		msg = SUBGHZ_OK;
 		subghz_param.tx_stat.rssi = result;
 		subghz_param.tx_stat.status = 0;
@@ -299,7 +299,7 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 	subghz_param.sending = false;
 
 	// @@ issue check error code
-	if(result > 0){
+	if(result >= 0){
 		msg = SUBGHZ_OK;
 		subghz_param.tx_stat.rssi = result;
 		subghz_param.tx_stat.status = result;

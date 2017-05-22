@@ -228,10 +228,11 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					{
 						unsigned char i; 
 						unsigned char index;
-						unsigned char ckey[32]; 
+						char ckey[33]; 
 						unsigned char shift;
 						unsigned char hex;
 						memcpy(ckey,(const void *)arg,32);
+						ckey[32]='\0';
 						for(i=0;i < 32;i++){
 							index = ckey[i]&0x0f;
 							// a - f or A - f
@@ -240,14 +241,14 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 							// LSB side is 0 shift, MSB side is 4 bits shifth
 							shift = 4*(i%2);
 							p.key[i/2] |= (hex >> shift);
-                        ret = SubGHz.setKey(p.key);
-						if(ret != SUBGHZ_OK) ret = EFAULT;
-						break;
+						}
+						ret = SubGHz.setKey(p.key);
+						if(ret != SUBGHZ_OK) ret = -EFAULT;
 					}
+					break;
 				default:
 					ret = -ENOTTY;
 					break;
-				}
 			}
 			break;
 		case IOCTL_PARAM:
@@ -501,7 +502,6 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 			}
 			break;
 		case IOCTL_RF:
-            printk(KERN_INFO"IOCTL_RF\n");
 			if(param<0x7f)	// read
 			{
 				uint8_t rdata[1];
@@ -521,7 +521,6 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 			}
 			break;
 		case IOCTL_EEPROM:
-            printk(KERN_INFO"IOCTL_EEPROM\n");
 			{
 				uint8_t data;
 				EXT_I2C_read(param,&data,1);
@@ -529,7 +528,6 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 				break;
 			}
 		case IOCTL_LED:
-            printk(KERN_INFO"IOCTL_LED\n");
 			if(param == 0x000) {
 				EXT_rx_led_flash(arg);
 			} else {
@@ -635,12 +633,12 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 
 	mutex_lock( &chrdev.lock );
 
-    /*
-    // @issue : provisional for REG LOCK
-    if(macl_getCondition() == SUBGHZ_ST_RX_DONE){
-        phy_wait_mac_event();
-    }
-    */
+	/*
+	// @issue : provisional for REG LOCK
+	if(macl_getCondition() == SUBGHZ_ST_RX_DONE){
+	phy_wait_mac_event();
+	}
+	 */
 
 	if(count<DATA_SIZE)
 	{
@@ -652,7 +650,6 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 		EXT_set_tx_led(0);
 		if(p.tx64) {
 			status = SubGHz.send64le(p.dst_addr,payload,count,tx_callback);
-			printk("%s %s %d %d\n",__FILE__,__func__,__LINE__,status);
 		}else {
 			uint16_t dst_addr;
 			dst_addr = p.dst_addr[1];
