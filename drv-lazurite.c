@@ -247,6 +247,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 				default:
 					ret = -ENOTTY;
 					break;
+				}
 			}
 			break;
 		case IOCTL_PARAM:

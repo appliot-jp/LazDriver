@@ -44,7 +44,7 @@ void key_gen(char *key1,size_t key1_len,char* key2,size_t key2_len)
 			strncat(key2, ",", key2_len);
 		}
 	}
-	key2[strlen(key2) - 1] = NULL;
+	key2[strlen(key2) - 1] = '\0';
 	strncat(key2, "};", sizeof(key2));
 	printf("Seeds for Lazurite Pi Gateway::\r\n");
 	printf("%s\r\n\r\n", key1);
@@ -74,8 +74,6 @@ int main(int argc, char *argv[])
 		init_xor128(base);
 		memset(key1, 0, sizeof(key1));
 		memset(key2, 0, sizeof(key2));
-
-		memcpy(seed, seed_origin, sizeof(seed));
 
 		key_gen(key1, sizeof(key1), key2, sizeof(key2));
 
