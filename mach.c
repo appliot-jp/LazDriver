@@ -929,23 +929,22 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 		if(mach.macl->promiscuousMode) {
 		} else {
 			// parse raw data
-			if((status = mach_parse_data(&mach.rx))!= STATUS_OK) {
+			if((status = mach_parse_data(&mach.rx)!= STATUS_OK) ||
+				((mach.rx.dst.addr_type == 3) &&
+				(memcmp(mach.rx.dst.addr.ieee_addr,mach.my_addr.ieee_addr,8)==0))) {
 #ifndef LAZURITE_IDE
 				if(module_test & MODE_MACH_DEBUG) {
 					printk(KERN_INFO"%s,%s,%d,mach_parse_data error\n",__FILE__,__func__,__LINE__);
 				}
 #endif
-				return STATUS_OK;
+				return -1;
 			}
-
 			// data frame and cmd frame
 			if ((mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_DATA) ||
 					(mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_CMD)) {
 				// check sequence number
 				if ((mach.rx.fc.fc_bit.ack_req) &&		// ack is requested
 						(ack) &&
-						(mach.rx.dst.addr_type==3) &&
-						(memcmp(mach.rx.dst.addr.ieee_addr,mach.my_addr.ieee_addr,8) == 0) &&
 						(!mach.macl->promiscuousMode) ) {
 					if(mach_make_ack_header()) {
 						ack->data = mach.ack.raw.data;

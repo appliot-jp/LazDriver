@@ -130,9 +130,10 @@ static void macl_rxdone_handler(void)
 	phy_timer_di();
     macl.condition=SUBGHZ_ST_RX_DONE;
     status = phy_rxdone(&macl.phy->in);
-    macl_rx_irq(&macl.phy->in,&macl.ack);
-
-	HAL_delayMicroseconds(1000);
+	if(status == STATUS_OK) {
+    	status = macl_rx_irq(&macl.phy->in,&macl.ack);
+		HAL_delayMicroseconds(1000);
+	}
 
 	if ((status == STATUS_OK) && !macl.promiscuousMode && (macl_total_transmission_time(macl.phy->out.len) == STATUS_OK) && macl.ack.data){
 			phy_sint_handler(macl_ack_txdone_handler);
