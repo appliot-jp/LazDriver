@@ -140,13 +140,13 @@ static void macl_rxdone_handler(void)
 			phy_txStart(&macl.ack,2);
 	} else {
 		phy_sint_handler(macl_rxdone_handler);
+		if(status == STATUS_OK)	macl_rx_irq(NULL,NULL);
 		phy_rxStart();
 		// @issue : the following my not need
 		phy_wait_phy_event();
 		// @issue : provisional for REG LOCK
 		phy_wakeup_mac_event();
 	}
-	if(status == STATUS_OK)	macl_rx_irq(NULL,NULL);
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG){
 		if(!macl.promiscuousMode && status == STATUS_OK && macl.ack.data) {
@@ -174,6 +174,7 @@ static void macl_ack_txdone_handler(void)
 	macl.condition=SUBGHZ_ST_RX_ACK_DONE;
 	macl.ack.data = NULL;
 	macl.ack.len = 0;
+	macl_rx_irq(NULL,NULL);
 	phy_sint_handler(macl_rxdone_handler);
 	phy_rxStart();
 	// @issue : the following my not need
