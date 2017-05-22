@@ -944,6 +944,8 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 				// check sequence number
 				if ((mach.rx.fc.fc_bit.ack_req) &&		// ack is requested
 						(ack) &&
+						(mach.rx.dst.addr_type==3) &&
+						(memcmp(mach.rx.dst.addr.ieee_addr,mach.my_addr.ieee_addr,8) == 0) &&
 						(!mach.macl->promiscuousMode) ) {
 					if(mach_make_ack_header()) {
 						ack->data = mach.ack.raw.data;
