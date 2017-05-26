@@ -1,3 +1,16 @@
+/*
+ * random function
+ * 
+ * File:  random.c
+ * 
+ * Copyright 2015 Lapis Semiconductor Co.,Ltd.
+ * Author: Naotaka Saito
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
 #include "random.h"
 #include <linux/kernel.h>
 static const int8_t a[] = { 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 7, 7, 7, 7, 7, 8, 8, 9, 9,

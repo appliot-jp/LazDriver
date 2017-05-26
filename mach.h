@@ -1,4 +1,4 @@
-/* mac_lazurite.h - 
+/* mac.h - 
  *
  * Copyright (c) 2015  LAPIS Semiconductor Co.,Ltd.
  * All rights reserved.
@@ -105,16 +105,12 @@ struct rf_param {
 	uint8_t cca_min_be;
 	uint8_t cca_max_be;
 	uint8_t cca_retry;
-//	uint8_t cca_duration;
-//	uint32_t cca_interval;
 	uint8_t tx_min_be;
 	uint8_t tx_max_be;
 	uint8_t tx_retry;
 	uint32_t ack_timeout;
 	int32_t cca_level;		//mbm
 	int32_t tx_power;
-	enum nl802154_cca_modes cca_mode;
-	enum nl802154_cca_opts cca_opt;
 };
 
 struct mac_addr {

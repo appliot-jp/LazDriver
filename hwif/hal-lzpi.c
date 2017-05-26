@@ -1,4 +1,4 @@
-/* FILE NAME: hal_lazurite.c
+/* FILE NAME: hal-lzpi.c
  *
  * Copyright (c) 2015  Lapis Semiconductor Co.,Ltd.
  * All rights reserved.
