@@ -1427,3 +1427,15 @@ void phy_monitor(void){
     printk(KERN_INFO"RF CCA CNTL:: %x\n", rdata[0]);
 #endif
 }
+
+
+// following function is for debug. and test.bin use it.
+
+void phy_regread(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
+    reg_rd(bank, addr, data, size);
+}
+
+
+void phy_regwrite(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
+    reg_wr(bank, addr, data, size);
+}
