@@ -109,11 +109,16 @@ int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 	struct timespec rx_time;
 	const uint8_t *in;
 	uint8_t *out;
+	int errcode = 0;
+
+	mutex_lock( &chrdev.lock );
 
 	new_data = kmalloc(sizeof(struct list_data), GFP_KERNEL);
 	if (new_data == NULL) {
 		printk(KERN_ERR "[DRV-Lazurite] kmalloc (list_data) GFP_KERNEL no memory\n");
-		return -ENOMEM;
+		errcode = -ENOMEM;
+		goto error;
+		//return -ENOMEM;
 	}
 
 	// copy data to list
@@ -148,10 +153,13 @@ int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 	{
 		printk(KERN_ERR "[DRV-802154E] add_list PHY Size error\n");
 		kfree(new_data);
-		return -1;
+		errcode = -1;
+		goto error;
+		// return -1;
 	}
-
-	return 0;
+error:
+	mutex_unlock( &chrdev.lock );
+	return errcode;
 }
 void rx_callback(const uint8_t *data, uint8_t rssi, int status) {
 	//@issue temporary delete LED flash
