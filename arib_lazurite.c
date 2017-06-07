@@ -18,9 +18,6 @@
  * <http://www.gnu.org/licenses/>
  */
 
-/*! @struct MACH_PARAM
-  @brief  local parameter for mac high layer
-  */
 #include "arib_lazurite.h"
 #include "hwif/hal.h"
 

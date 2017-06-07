@@ -75,24 +75,18 @@ static SUBGHZ_MSG subghz_init(void)
 
 	// clear parameter memory
 	memset(&subghz_param,0,sizeof(subghz_param));
-	// setting default value
-	// @issue check parameters
 	subghz_param.addr_type = 6;
 	subghz_param.ack_req = true;
 	subghz_param.broadcast_enb = true;
 	subghz_param.rf.cca_min_be = 0;
 	subghz_param.rf.cca_max_be = 7;
-	//	subghz_param.rf.cca_duration = 7;
 	subghz_param.rf.cca_retry = 20;
 	subghz_param.rf.cca_level = DBM_TO_MBM(-80);
 	subghz_param.rf.tx_min_be = 0;
 	subghz_param.rf.tx_max_be = 7;
 	subghz_param.rf.tx_retry = 3;
-	//	subghz_param.rf.cca_interval = 20;
 	subghz_param.rf.tx_power = DBM_TO_MBM(13);
 	subghz_param.rf.ack_timeout = 500;
-	subghz_param.rf.cca_mode = NL802154_CCA_CARRIER;
-	subghz_param.rf.cca_opt = NL802154_CCA_OPT_ENERGY_CARRIER_AND;
 	subghz_param.rf.tx_retry = 3;
     AES128_setKey(NULL);
 

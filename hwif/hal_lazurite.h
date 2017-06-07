@@ -1,4 +1,4 @@
-/* hal.h - HALヘッダファイル
+/* hal_lazurite.h - header flle for Lazurite IDE
  *
  * Copyright (c) 2015  Communication Technology Inc.,
  * All rights reserved.
@@ -23,30 +23,11 @@
 #define _HAL_LAZURITE_H_
 
 
-//#include <stdint.h>
+#define HAL_STATUS_OK             0
+#define HAL_STATUS_ERROR_PARAM   -1
+#define HAL_STATUS_ERROR_STATE   -2
+#define HAL_STATUS_ERROR_TIMEOUT -3
 
-
-/* タイマー割り込みコントロール関数 HAL_TIMER_enableInterrupt() と
- * HAL_TIMER_disableInterrupt() が定義されている場合はコメントアウト
- */
-
-/* 戻り値定義
- *  0以上=正常終了, 0未満=異常終了
- */
-#define HAL_STATUS_OK             0  /* 正常終了 */
-#define HAL_STATUS_ERROR_PARAM   -1  /* パラメータ異常 */
-#define HAL_STATUS_ERROR_STATE   -2  /* ステート異常 */
-#define HAL_STATUS_ERROR_TIMEOUT -3  /* タイムアウト */
-
-/* pin引数定義
- */
-/*
-#define HAL_GPIO_CSB    19
-#define HAL_GPIO_RESETN 35
-#define HAL_GPIO_DMON   30
-#define HAL_GPIO_SINTN  15
-#define BP3596A_SINTN_IRQNUM	3
-*/
 #define HAL_GPIO_CSB    6
 #define HAL_GPIO_RESETN 7
 #define HAL_GPIO_DMON   5

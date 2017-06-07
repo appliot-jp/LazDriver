@@ -620,7 +620,6 @@ int mach_stop(void) {
  ********************************************************************/
 int mach_setup(struct rf_param *rf) {
 	int status;
-	struct wpan_phy_cca cca;
 
 	// link parameter
 	mach.rf = rf;
@@ -634,13 +633,7 @@ int mach_setup(struct rf_param *rf) {
 	if((status = macl_set_txpower(rf->tx_power)) != STATUS_OK) goto error;
 
 	// set setting CCA
-	if((status = macl_set_csma_params(rf->cca_min_be,rf->cca_max_be,rf->cca_retry)) != STATUS_OK) goto error;
 	if((status = macl_set_frame_retries(rf->tx_retry,rf->ack_timeout)) != STATUS_OK) goto error;
-	//	if((status = macl_ch_scan(rf->cca_interval)) != STATUS_OK) goto error;				// add 
-	cca.mode = rf->cca_mode;
-	cca.opt = rf->cca_opt;
-	if((status = macl_set_cca_mode(&cca)) != STATUS_OK) goto error;
-	if((status = macl_set_cca_ed_level(rf->cca_level)) != STATUS_OK) goto error;
 error:
 	return status;
 }
@@ -719,7 +712,6 @@ int mach_set_src_addr(uint8_t addr_type)
 
 /********************************************************************/
 /*! @brief set dst short address
-  @issue ここから作業する
   @param[in]	addr_type	address type(0: omit, 1:8bit ldd, 2: 16bit, 3: 64bit
   @return    STATUS_OK
  ********************************************************************/
@@ -764,7 +756,7 @@ int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr)
 
 	if(!mach.macl->promiscuousMode)
 	{
-		struct ieee802154_hw_addr_filt filt;
+		struct ieee802154_my_addr filt;
 		filt.pan_id = mach.my_addr.pan_id;
 		filt.pan_coord = mach.my_addr.pan_coord;
 		filt.short_addr = mach.my_addr.short_addr;

@@ -1,4 +1,4 @@
-/* FILE NAME: Wire.c
+/* FILE NAME: Wire0.c
  *
  * Copyright (c) 2015  Lapis Semiconductor Co.,Ltd.
  * All rights reserved.

@@ -1,4 +1,4 @@
-/* hal.h - HALヘッダファイル
+/* hal-lzpi.h  header file for Raspberry Pi
  *
  * Copyright (c) 2015  Communication Technology Inc.,
  * All rights reserved.

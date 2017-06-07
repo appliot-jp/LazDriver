@@ -1,4 +1,4 @@
-/* macl.h - 
+/* macl.c - 
  *
  * Copyright (c) 2015  LAPIS Semiconductor Co.,Ltd.
  * All rights reserved.
@@ -511,7 +511,7 @@ int	macl_set_channel(uint8_t page,uint8_t ch)
 	phy_setup(page,ch);
 	return status;
 }
-int	macl_set_hw_addr_filt(struct ieee802154_hw_addr_filt *filt,unsigned long changed)
+int	macl_set_hw_addr_filt(struct ieee802154_my_addr *filt,unsigned long changed)
 {
 	int status=STATUS_OK;
 #ifndef LAZURITE_IDE
@@ -544,39 +544,7 @@ int	macl_set_txpower(uint32_t mbm)
 #endif
 	return status;
 }
-//extern int	macl_set_lbt(struct ieee802154_hw *hw, bool on);				// does not support
-/*
-   int	macl_ch_scan(uint32_t duration)
-   {
-   int status=STATUS_OK;
-#ifndef LAZURITE_IDE
-macl.ccaInterval = duration;
-if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,duration);
-#endif
-return status;
-}
- */
-int	macl_set_cca_mode(const struct wpan_phy_cca *cca)
-{
-	int status=STATUS_OK;
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,
-				cca->mode,
-				cca->opt
-			  );
-	}
-#endif
-	return status;
-}
-int	macl_set_cca_ed_level(uint32_t mbm)
-{
-	int status=STATUS_OK;
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,mbm);
-#endif
-	return status;
-}
+
 int	macl_set_csma_params(uint8_t min_be, uint8_t max_be, uint8_t retries)
 {
 	int status=STATUS_OK;
@@ -597,7 +565,7 @@ int	macl_set_frame_retries(uint8_t retries,uint16_t timeout)
 #endif
 	return status;
 }
-int	macl_set_promiscuous_mode(const bool on)
+int	macl_set_promiscuous_mode(bool on)
 {
 	int status=STATUS_OK;
 
