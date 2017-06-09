@@ -352,10 +352,9 @@ int mach_rx_irq(struct mac_header *rx)
 
 		if(subghz_param.rx_callback != NULL) {
 			subghz_param.rx_callback(rx->raw.data, rx->rssi,rx->raw.len);
-		} else {
-			memcpy(subghz_param.rx.data,rx->raw.data,rx->raw.len);
-			subghz_param.rx.len = rx->raw.len;
-		}
+		} 
+		memcpy(subghz_param.rx.data,rx->raw.data,rx->raw.len);
+		subghz_param.rx.len = rx->raw.len;
 	}
 	return STATUS_OK;
 }
