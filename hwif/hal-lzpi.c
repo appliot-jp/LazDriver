@@ -30,7 +30,7 @@
 #include	<linux/sched.h>
 #include	<linux/gpio.h>
 #include	<linux/kthread.h>
-#include	<linux/delay.h>
+#include	<linux/unistd.h>
 #include    <linux/wait.h>
 #include	"spi-lzpi.h"
 #include	"i2c-lzpi.h"
@@ -407,6 +407,7 @@ int HAL_remove(void)
 	if(tx_led_task) kthread_stop(tx_led_task);
 	if(rx_led_task) kthread_stop(rx_led_task);
 	HAL_GPIO_disableInterrupt();
+	mdelay(10);
 	gpio_free(GPIO_RESETN);
 	gpio_free(GPIO_TX_LED);
 	gpio_free(GPIO_RX_LED);
@@ -530,7 +531,8 @@ int HAL_TIMER_stop(void)
 }
 
 void HAL_sleep(uint32_t ms) {
-	return udelay(ms*1000);
+	udelay(ms*1000);
+	return;
 }
 
 // #include "../phy.h" 

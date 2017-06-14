@@ -775,7 +775,15 @@ error:
 //			unload driver 
 // *****************************************************************
 static void __exit drv_param_exit(void) {
+	// char dev destroy
+	device_destroy(chrdev.dev_class, MKDEV(chrdev.major, 0));
+	class_destroy(chrdev.dev_class);
+	unregister_chrdev(chrdev.major, chrdev.name);
+
+	// mac remove
 	HAL_GPIO_setValue(GPIO_RESETN,0);
+	SubGHz.remove();
+	
 	while (!list_empty(&head.list)) {
 		struct list_data *data;
 		data = list_entry(head.list.next, struct list_data, list);
@@ -784,12 +792,6 @@ static void __exit drv_param_exit(void) {
 		kfree(data);
 	}
 
-	// char dev destroy
-	device_destroy(chrdev.dev_class, MKDEV(chrdev.major, 0));
-	class_destroy(chrdev.dev_class);
-	unregister_chrdev(chrdev.major, chrdev.name);
-	// mac remove
-	SubGHz.remove();
 	printk(KERN_INFO "[drv-lazurite] exit remove\n");
 	return;
 }
