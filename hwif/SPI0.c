@@ -25,6 +25,8 @@
 #include "digitalio.h"
 #include "pin_assignment.h"
 #include "lp_manage.h"
+#include "driver_uart.h"
+#include "driver_irq.h"
 
 static volatile unsigned char _spi0_transfer(UCHAR _data);
 static void _spi0_attachInterrupt(void);
@@ -97,6 +99,18 @@ static volatile unsigned char _spi0_transfer(UCHAR _data)
 	// wait end of transfer
 	while(get_bit(S0EN)==1)
 	{
+		// w/a for avoiding UART communication data lost
+		if (irq_ua0_checkIRQ()) {
+			irq_ua0_dis();
+			irq_ua0_clearIRQ();
+			uart_rx_isr();
+			irq_ua0_ena();
+		} else if (irq_uaf0_checkIRQ()) {
+			irq_uaf0_dis();
+			irq_uaf0_clearIRQ();
+			uartf_isr();
+			irq_uaf0_ena();
+		}
 		continue;
 	} 
 

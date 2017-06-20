@@ -123,23 +123,6 @@ int HAL_SPI_transfer(const unsigned char *wdata, uint16_t wsize,unsigned char *r
 	if(rdata==NULL) return HAL_STATUS_OK;
     for(n=0;n<rsize;n++)
 	{
-        // w/a for avoiding UART communication data lost
-        if (irq_ua0_checkIRQ()) {
-            irq_ua0_dis();
-            irq_ua0_clearIRQ();
-            uart_rx_isr();
-            irq_ua0_ena();
-        } else if (irq_ua1_checkIRQ()) {
-            irq_ua1_dis();
-            irq_ua1_clearIRQ();
-            uart_tx_isr();
-            irq_ua1_ena();
-        } else if (irq_uaf0_checkIRQ()) {
-            irq_uaf0_dis();
-            irq_uaf0_clearIRQ();
-            uartf_isr();
-            irq_uaf0_ena();
-        }
         *(rdata + n) = SPI0.transfer(0);
     }
 
@@ -250,3 +233,33 @@ void HAL_EX_enableInterrupt(void)
 }
 #endif
 
+volatile void HAL_delayMicroseconds(unsigned long us)
+{
+	if(us >= 2)
+	{
+		us -= 1;
+		while(us > 0)
+		{
+			// w/a for avoiding UART communication data lost
+			if (irq_ua0_checkIRQ()) {
+				irq_ua0_dis();
+				irq_ua0_clearIRQ();
+				uart_rx_isr();
+				irq_ua0_ena();
+			} else if (irq_uaf0_checkIRQ()) {
+				irq_uaf0_dis();
+				irq_uaf0_clearIRQ();
+				uartf_isr();
+				irq_uaf0_ena();
+			}
+			__asm("nop\n");
+			__asm("nop\n");
+			__asm("nop\n");
+			__asm("nop\n");
+			__asm("nop\n");
+			us--;
+		}
+	}
+	
+	return;
+}
