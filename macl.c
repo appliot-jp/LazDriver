@@ -132,11 +132,11 @@ static void macl_rxdone_handler(void)
     status = phy_rxdone(&macl.phy->in);
 	if(status == STATUS_OK) {
     	status = macl_rx_irq(&macl.phy->in,&macl.ack);
-		HAL_delayMicroseconds(1000);
 	}
 
 	if ((status == STATUS_OK) && !macl.promiscuousMode && (macl_total_transmission_time(macl.phy->out.len) == STATUS_OK) && macl.ack.data){
 			phy_sint_handler(macl_ack_txdone_handler);
+			HAL_delayMicroseconds(1000);
 			phy_txStart(&macl.ack,2);
 	} else {
 		phy_sint_handler(macl_rxdone_handler);
