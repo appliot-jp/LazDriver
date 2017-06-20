@@ -129,14 +129,12 @@ int HAL_SPI_transfer(const unsigned char *wdata, uint16_t wsize,unsigned char *r
             irq_ua0_clearIRQ();
             uart_rx_isr();
             irq_ua0_ena();
-        }
-        if (irq_ua1_checkIRQ()) {
+        } else if (irq_ua1_checkIRQ()) {
             irq_ua1_dis();
             irq_ua1_clearIRQ();
             uart_tx_isr();
             irq_ua1_ena();
-        }
-        if (irq_uaf0_checkIRQ()) {
+        } else if (irq_uaf0_checkIRQ()) {
             irq_uaf0_dis();
             irq_uaf0_clearIRQ();
             uartf_isr();
