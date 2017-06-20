@@ -458,12 +458,9 @@ int	macl_stop(void)
 	// @issue : provisional for REG LOCK
 //	if(macl.condition == SUBGHZ_ST_RX_DONE){
 	if((macl.condition == SUBGHZ_ST_NONE) && (macl.condition == SUBGHZ_ST_RX_START)){
-		printk(KERN_INFO"stop wait st macl.condition=%d\n",macl.condition);
 		//phy_wait_mac_event();
 		phy_stop();
-		printk(KERN_INFO"stop wait end macl.condition=%d\n",macl.condition);
 	}
-	printk(KERN_INFO"phy stop macl.condition=%d\n",macl.condition);
 	return status;
 }
 
