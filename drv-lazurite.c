@@ -781,7 +781,8 @@ static void __exit drv_param_exit(void) {
 	unregister_chrdev(chrdev.major, chrdev.name);
 
 	// mac remove
-	HAL_GPIO_setValue(GPIO_RESETN,0);
+	SubGHz.rxDisable();
+	SubGHz.close();
 	SubGHz.remove();
 	
 	while (!list_empty(&head.list)) {

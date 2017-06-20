@@ -127,8 +127,8 @@ static void macl_rxdone_handler(void)
 {
     int status;
 
-	phy_timer_di();
     macl.condition=SUBGHZ_ST_RX_DONE;
+	phy_timer_di();
     status = phy_rxdone(&macl.phy->in);
 	if(status == STATUS_OK) {
     	status = macl_rx_irq(&macl.phy->in,&macl.ack);
@@ -141,9 +141,15 @@ static void macl_rxdone_handler(void)
 	} else {
 		phy_sint_handler(macl_rxdone_handler);
 		if(status == STATUS_OK)	macl_rx_irq(NULL,NULL);
-		phy_rxStart();
-		// @issue : the following my not need
-		phy_wait_phy_event();
+		if(macl.rxOnEnable){
+			phy_rxStart();
+			// @issue : the following my not need
+			phy_wait_phy_event();
+    		macl.condition=SUBGHZ_ST_RX_START;
+		}else{
+			phy_stop();
+    		macl.condition=SUBGHZ_ST_NONE;
+		}
 		// @issue : provisional for REG LOCK
 		phy_wakeup_mac_event();
 	}
@@ -176,14 +182,19 @@ static void macl_ack_txdone_handler(void)
 	macl.ack.len = 0;
 	macl_rx_irq(NULL,NULL);
 	phy_sint_handler(macl_rxdone_handler);
-	phy_rxStart();
+	if(macl.rxOnEnable){
+		phy_rxStart();
 	// @issue : the following my not need
-	phy_wait_phy_event();
+		phy_wait_phy_event();
+    	macl.condition=SUBGHZ_ST_RX_START;
+	}else{
+		phy_stop();
+    	macl.condition=SUBGHZ_ST_NONE;
+	}
 	// @issue : provisional for REG LOCK
-	phy_wakeup_mac_event();
+	//phy_wakeup_mac_event();
 	phy_timer_ei();
 }
-
 
 static void macl_fifodone_handler(void)
 {
@@ -226,6 +237,7 @@ static void macl_ccadone_handler(void)
 		macl.condition=SUBGHZ_ST_CCA_FAILURE;
 		phy_ccaCtrl(cca_state);
 		if(macl.rxOnEnable){
+			macl.condition=SUBGHZ_ST_RX_START;
 			phy_sint_handler(macl_rxdone_handler);
 			phy_rxStart();
 			// @issue : the following my not need
@@ -233,6 +245,7 @@ static void macl_ccadone_handler(void)
 			// @issue : provisional for REG LOCK
 			phy_wakeup_mac_event();
 		}else{
+			macl.condition=SUBGHZ_ST_NONE;
 			phy_stop();
 		}
 		macl.status = -EBUSY;
@@ -258,6 +271,7 @@ static void macl_cca_abort_handler(void)
 	phy_timer_stop();
 	phy_ccaCtrl(CCA_FAILURE);
 	if(macl.rxOnEnable){
+		macl.condition=SUBGHZ_ST_RX_START;
 		phy_sint_handler(macl_rxdone_handler);
 		phy_rxStart();
 		// @issue : the following my not need
@@ -265,6 +279,7 @@ static void macl_cca_abort_handler(void)
 		// @issue : provisional for REG LOCK
 		phy_wakeup_mac_event();
 	}else{
+		macl.condition=SUBGHZ_ST_NONE;
 		phy_stop();
 	}
 	//  phy_wakeup_phy_event();
@@ -272,7 +287,6 @@ static void macl_cca_abort_handler(void)
 	phy_wakeup_mac_event();
 	phy_sint_ei();
 }
-
 
 static void macl_txdone_handler(void)
 {
@@ -294,10 +308,12 @@ static void macl_txdone_handler(void)
 		if(macl.rxOnEnable){
 			phy_sint_handler(macl_rxdone_handler);
 			phy_rxStart();
+			macl.condition=SUBGHZ_ST_RX_START;
 			// @issue : the following my not need
 			phy_wait_phy_event();
 		}else{
 			phy_stop();
+			macl.condition=SUBGHZ_ST_NONE;
 		}
 		phy_wakeup_mac_event();
 	}
@@ -321,11 +337,13 @@ static void macl_ack_rxdone_handler(void)
 	if(status == STATUS_OK && ((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_ACK) && (macl.phy->in.data[2] == macl.sequnceNum)){
 		phy_timer_stop();
 		if(macl.rxOnEnable){
+			macl.condition=SUBGHZ_ST_RX_START;
 			phy_sint_handler(macl_rxdone_handler);
 			phy_rxStart();
 			// @issue : the following my not need
 			phy_wait_phy_event();
 		}else{
+			macl.condition=SUBGHZ_ST_NONE;
 			phy_stop();
 		}
 		macl_rx_irq(&macl.phy->in,NULL);
@@ -370,6 +388,7 @@ static void macl_ack_timeout_handler(void)
 		phy_wait_phy_event();
 	}else{
 		if(macl.rxOnEnable){
+			macl.condition=SUBGHZ_ST_RX_START;
 			phy_sint_handler(macl_rxdone_handler);
 			phy_rxStart();
 			// @issue : the following my not need
@@ -432,16 +451,19 @@ int	macl_start(void)
 int	macl_stop(void)
 {
 	int status=STATUS_OK;
+	macl.rxOnEnable = 0;
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 	// @issue : provisional for REG LOCK
-	if(macl.condition == SUBGHZ_ST_RX_DONE){
-		phy_wait_mac_event();
+//	if(macl.condition == SUBGHZ_ST_RX_DONE){
+	if((macl.condition == SUBGHZ_ST_NONE) && (macl.condition == SUBGHZ_ST_RX_START)){
+		printk(KERN_INFO"stop wait st macl.condition=%d\n",macl.condition);
+		//phy_wait_mac_event();
+		phy_stop();
+		printk(KERN_INFO"stop wait end macl.condition=%d\n",macl.condition);
 	}
-
-	macl.rxOnEnable = 0;
-	phy_stop();
+	printk(KERN_INFO"phy stop macl.condition=%d\n",macl.condition);
 	return status;
 }
 

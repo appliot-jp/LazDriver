@@ -42,7 +42,7 @@ typedef enum {
     SUBGHZ_ST_RX_START,             // 10
     SUBGHZ_ST_RX_DONE,              // 11
     SUBGHZ_ST_RX_ACK_DONE,          // 12
-    SUBGHZ_ST_DUMMY                 // --
+    SUBGHZ_ST_NONE                  // --
 } SUBGHZ_MAC_STATE;
 
 
