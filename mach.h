@@ -32,8 +32,6 @@
 #include "macl.h"
 #include "endian.h"
 
-// @issue check parameter. interval may not be needed.
-
 struct fc_addr {
 	struct {
 		bool enb;

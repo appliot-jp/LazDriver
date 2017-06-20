@@ -35,7 +35,6 @@
 #include "mach.h"
 #include "subghz_api.h"
 #include "errno.h"
-// @issue why application layer access to hardware if
 #include "hwif/hal.h"
 #include "aes/aes.h"
 
@@ -218,7 +217,6 @@ static SUBGHZ_MSG subghz_tx64le(uint8_t *addr_le, uint8_t *data, uint16_t len, v
 	mach_set_dst_ieee_addr(0xffff,addr_le);
 	mach_set_src_addr(IEEE802154_FC_ADDR_IEEE);
 	subghz_param.sending = true;
-	// @issue check rssi
 	addr_type = subghz_param.addr_type;
 
 	result = mach_tx(fc,addr_type,&subghz_param.tx);
@@ -230,7 +228,6 @@ static SUBGHZ_MSG subghz_tx64le(uint8_t *addr_le, uint8_t *data, uint16_t len, v
 	//subghz_txdone(rssi,result);
 	subghz_param.sending = false;
 
-	// @@ issue check error code
 	if(result >= 0){
 		msg = SUBGHZ_OK;
 		subghz_param.tx_stat.rssi = result;
@@ -292,7 +289,6 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 	//subghz_txdone(rssi,result);
 	subghz_param.sending = false;
 
-	// @@ issue check error code
 	if(result >= 0){
 		msg = SUBGHZ_OK;
 		subghz_param.tx_stat.rssi = result;
@@ -331,7 +327,6 @@ int mach_rx_irq(struct mac_header *rx)
 			PAYLOADDUMP(rx->raw.data, rx->raw.len);
 		}
 #endif
-        // @@ issue AES
         if (rx->fc.fc_bit.sec_enb && AES128_getStatus()){
             uint8_t mhr_len;
             uint8_t pad;
@@ -556,7 +551,6 @@ static SUBGHZ_MSG subghz_setSendMode(SUBGHZ_PARAM *param)
 	{
 		return SUBGHZ_ERR_ADDRTYPE;
 	}
-	// @issue check parameter. interval may not be needed.
 	// interval is calcurated from max_be.
 	subghz_param.addr_type = param->addrType;
 	subghz_param.rf.cca_max_be= param->senseTime;

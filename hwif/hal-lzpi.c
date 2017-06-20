@@ -169,7 +169,6 @@ int rf_main_thread(void *p)
 				//printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,m.trigger);
 			//	ext_timer_func();
 			//	ext_timer_func = NULL;
-                // @issue : provisional for REG LOCK
 			    que_th2ex=1;
 			    wake_up_interruptible(&tx_done);
 				act_irq_func = ext_timer_func;
@@ -350,7 +349,6 @@ int HAL_wait_event(uint8_t event)
 	int status=1;
 
     if (event == HAL_PHY_EVENT) {
-// @issue : provisional for REG LOCK
 #ifdef	LAZURITE_IDE
 	    que_th2ex = 0;
 	    status = wait_event_interruptible_timeout(tx_done, que_th2ex,HZ);
@@ -550,14 +548,6 @@ int EXT_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16
 		wake_up_interruptible(&rf_irq_q);
 		que_th2ex = 0;
 		status = wait_event_interruptible_timeout(ext_q,que_th2ex,2);
-        // @issue : provisional for REG LOCK
-        /*
-        if(status == 0){
-            phy_stop();
-            phy_wakeup_mac_event();
-		    printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
-        }
-        */
 	} else {
 		return -EBUSY;
 	}

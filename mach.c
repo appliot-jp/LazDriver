@@ -62,7 +62,6 @@ const uint8_t addr_len[] = {0x00,0x01,0x02,0x08};
   @param[in] *macaddr	pointer of 64bit mac address
   @return    STATUS_OK	ok
   @exception	EIO hardware error
-  @issue implement later
  ******************************************************************************/
 int	get_mac_addr(uint8_t *macaddr)
 {
@@ -322,7 +321,6 @@ static int mach_make_header(struct mac_header *header) {
 	if(header->raw.size >= (offset + header->payload.len)) {
 		if(header->payload.len != 0) {
 
-            // @@ issue AES
 			if (AES128_getStatus()){
 				header->fc.fc_bit.sec_enb = 1;
 				if (mach.rx.fc.fc_bit.seq_comp){
@@ -474,7 +472,6 @@ bool mach_match_seq_num(void)
   @param[in] *rx mac header of receiving data
   @return    STATUS_OK
   @exception EINVAL		can not return ack
-  @issue need to check ack condition
   rx.dst.addr | rx.src.addr | my.pancoord | coord.pancoord | rx    | ack
   -----------------------------------------------------------------------
   ieee      |     none    |  don't care |  don't care    | yes   |  no
@@ -629,7 +626,6 @@ int mach_setup(struct rf_param *rf) {
 		goto error;
 	}
 
-	// @issue txPower
 	if((status = macl_set_txpower(rf->tx_power)) != STATUS_OK) goto error;
 
 	// set setting CCA
@@ -840,12 +836,6 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 	if((status = mach_make_header(&mach.tx))!=STATUS_OK) {
 		goto error;
 	}
-	// @issue arib should be implemented later.
-	/*
-	   if((arib_tx_check(mach.rf->pages,mach.rf->ch,mach.tx.raw.len))==false) {
-	   goto error;
-	   }
-	 */
 
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
@@ -859,12 +849,6 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 	if(status == STATUS_OK) {
 		status = mach.tx.rssi;
 	}
-
-	// @issue arib should be implemented later.
-	/*
-	   if(status == STATUS_OK)
-	   arib_tx_end(mach.rf->pages,mach.rf->ch,mach.tx.raw.len);
-	 */
 
 error:
 	return status;

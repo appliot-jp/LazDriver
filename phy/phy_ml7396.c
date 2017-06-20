@@ -530,7 +530,6 @@ static void phy_set_trx_state(PHY_TRX_STATE state) {
     uint8_t set_data,get_data,i;
     
     set_data = state;
-    // @issue : provisional for REG LOCK
     for(i=0;i < 3;i++){
         reg_wr(REG_ADR_RF_STATUS, &set_data, 1);
         HAL_delayMicroseconds(200);
@@ -556,7 +555,6 @@ static void vco_cal(void) {
     uint8_t reg_data[4];
 
     reg_rd(REG_ADR_PACKET_MODE_SET, reg_data,1);
-//  @issue : Address Filter
 //  reg_data[0] |=  0x1a;
     reg_data[0] |=  0x3a;
     reg_wr(REG_ADR_PACKET_MODE_SET, reg_data,1);
@@ -1279,7 +1277,6 @@ int phy_rxdone(BUFFER *buff)
         status=-EBADE;
     }else{
         // front packet which is not my address is throw.
-        // @issue : Address Filter
 #if 1        
         if(rx_done&0x20){
             reg_rd(REG_ADR_RD_RX_FIFO, reg_data, 2);

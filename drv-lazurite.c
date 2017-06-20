@@ -162,7 +162,6 @@ error:
 	return errcode;
 }
 void rx_callback(const uint8_t *data, uint8_t rssi, int status) {
-	//@issue temporary delete LED flash
 	EXT_rx_led_flash(1);
 #ifdef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) {
@@ -640,13 +639,6 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 	uint8_t payload[DATA_SIZE];
 
 	mutex_lock( &chrdev.lock );
-
-	/*
-	// @issue : provisional for REG LOCK
-	if(macl_getCondition() == SUBGHZ_ST_RX_DONE){
-	phy_wait_mac_event();
-	}
-	 */
 
 	if(count<DATA_SIZE)
 	{

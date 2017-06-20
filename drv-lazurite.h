@@ -81,7 +81,6 @@
 #define	IOCTL_EEPROM			0x3000
 #define	IOCTL_LED				0x4000
 */
-// @issue : provisional for REG LOCK
 #define	IOCTL_RF				0x0200
 #define	IOCTL_EEPROM			0x0300
 #define	IOCTL_LED				0x0400
