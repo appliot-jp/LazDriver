@@ -1263,16 +1263,32 @@ int phy_rxdone(BUFFER *buff)
     uint8_t reg_data[2];
     uint8_t crc_err;
     uint8_t rx_done;
+	union {
+		uint32_t d32;
+		uint8_t d8[4];
+	} intsrc;
 
     phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
 
     // Notice: A following must not change.
+    reg_rd(REG_ADR_INT_SOURCE_GRP1, reg_data, 1);
+	intsrc.d8[0] = reg_data[0];
+    reg_rd(REG_ADR_INT_SOURCE_GRP2, reg_data, 1);
+	intsrc.d8[1] = reg_data[0];
+    reg_rd(REG_ADR_INT_SOURCE_GRP4, reg_data, 1);
+	intsrc.d8[3] = reg_data[0];
     reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
+	intsrc.d8[2] = reg_data[0];
 
+	/*
     crc_err = reg_data[0]&0x30;
     rx_done = (reg_data[0]&0x0C) << 2;
+	*/
+	rx_done = ((reg_data[0]&0x3C)==0x04) ? true : false;
 
-    if (crc_err & rx_done){
+    if (!rx_done) {
+    //if (crc_err & rx_done){
+		printk(KERN_INFO"%s %s %d %08lx\n",__FILE__,__func__,__LINE__,intsrc.d32);
         phy_rst();
         status=-EBADE;
     }else{
