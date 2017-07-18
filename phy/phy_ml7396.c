@@ -1288,12 +1288,12 @@ int phy_rxdone(BUFFER *buff)
 
     if (!rx_done) {
     //if (crc_err & rx_done){
-		printk(KERN_INFO"%s %s %d %08lx\n",__FILE__,__func__,__LINE__,intsrc.d32);
+		//printk(KERN_INFO"%s %s %d %08lx\n",__FILE__,__func__,__LINE__,intsrc.d32);
         phy_rst();
         status=-EBADE;
     }else{
         // front packet which is not my address is throw.
-#if 1        
+#if 0        
         if(rx_done&0x20){
             reg_rd(REG_ADR_RD_RX_FIFO, reg_data, 2);
             data_size = (((unsigned int)reg_data[0] << 8) | reg_data[1]) & 0x07ff; 
