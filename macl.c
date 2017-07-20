@@ -340,7 +340,7 @@ static void macl_ack_rxdone_handler(void)
 		phy_wakeup_mac_event();
 	}else{
 		phy_rxStart();
-		phy_wait_phy_event();
+		//phy_wait_phy_event();
 	}
 	phy_timer_ei();
 }
