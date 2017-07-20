@@ -1201,12 +1201,12 @@ void phy_ccaCtrl(CCA_STATE state) {
         } else
         if (state == IDLE_DETECT) {
             reg_cca_cntl = 0x18;
-            reg_idl_wait = 0x64;
+            reg_idl_wait = 200;
         } else
         if (state == CCA_RETRY) {
             phy_backoffTimer();
             reg_cca_cntl = 0x10;
-            reg_idl_wait = 0x64;
+            reg_idl_wait = 200;
         }
         phy_inten(HW_EVENT_CCA_DONE);
         reg_wr(REG_ADR_IDLE_WAIT_L, &reg_idl_wait, 1);
@@ -1261,7 +1261,6 @@ int phy_rxdone(BUFFER *buff)
     int status=STATUS_OK;
     uint16_t data_size=0;
     uint8_t reg_data[2];
-    uint8_t crc_err;
     uint8_t rx_done;
 	union {
 		uint32_t d32;

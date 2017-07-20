@@ -630,6 +630,11 @@ int mach_setup(struct rf_param *rf) {
 
 	// set setting CCA
 	if((status = macl_set_frame_retries(rf->tx_retry,rf->ack_timeout)) != STATUS_OK) goto error;
+
+	// set CSMA PARAM
+	//if((status = macl_cca_ed_level(rf->cca_level)) != STATUS_OK) goto error;
+	// set CSMA PARAM
+	if((status = macl_set_csma_params(rf->cca_min_be,rf->cca_max_be, rf->cca_retry)) != STATUS_OK) goto error;
 error:
 	return status;
 }
