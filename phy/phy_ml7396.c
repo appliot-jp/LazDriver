@@ -1201,12 +1201,12 @@ void phy_ccaCtrl(CCA_STATE state) {
         } else
         if (state == IDLE_DETECT) {
             reg_cca_cntl = 0x18;
-            reg_idl_wait = 200;
+            reg_idl_wait = 250;
         } else
         if (state == CCA_RETRY) {
             phy_backoffTimer();
             reg_cca_cntl = 0x10;
-            reg_idl_wait = 200;
+            reg_idl_wait = 250;
         }
         phy_inten(HW_EVENT_CCA_DONE);
         reg_wr(REG_ADR_IDLE_WAIT_L, &reg_idl_wait, 1);
