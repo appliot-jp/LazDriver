@@ -235,6 +235,7 @@ void HAL_EX_enableInterrupt(void)
 
 volatile void HAL_delayMicroseconds(unsigned long us)
 {
+	us /= 2;
 	if(us >= 2)
 	{
 		us -= 1;
@@ -257,9 +258,12 @@ volatile void HAL_delayMicroseconds(unsigned long us)
 			__asm("nop\n");
 			__asm("nop\n");
 			__asm("nop\n");
+			__asm("nop\n");
+			__asm("nop\n");
+			__asm("nop\n");
 			us--;
 		}
 	}
-	
+
 	return;
 }
