@@ -27,6 +27,8 @@
 #include <driver_irq.h>
 #include <driver_gpio.h>
 #include <driver_uart.h>
+#include <lp_manage.h>
+#include <wdt.h>
 #include "hal.h"
 #include "hal_lazurite.h"
 #include "spi0.h"
@@ -40,8 +42,7 @@ void (*hal_gpio_func)(void);
 static unsigned long hal_previous_time;
 // 2015.12.14 Eiichi Saito: for preference of SubGHz
 //static unsigned char hal_setbit_exi;
-unsigned char event_flag;
-
+static unsigned char hal_event_flag;
 
 //*****************************************************
 // temporary
@@ -50,18 +51,51 @@ unsigned char event_flag;
 //*****************************************************
 // Function
 //*****************************************************
+void HAL_wait_timeout_isr(void)
+{
+    timer_16bit_stop(6);
+    hal_event_flag = true;
+}
+
+bool HAL_wait_timeout_subghz(uint32_t time)
+{	
+	int result = true;
+	timer_16bit_set(6,0xE8,(unsigned long)time,HAL_wait_timeout_isr);
+	timer_16bit_start(6);
+	return result;
+}
+
+void HAL_wait_event_subghz(void)
+{	
+	while(hal_event_flag == false)
+	{
+		if (irq_ua0_checkIRQ()) {
+			irq_ua0_dis();
+			irq_ua0_clearIRQ();
+			uart_rx_isr();
+			irq_ua0_ena();
+		} else if (irq_uaf0_checkIRQ()) {
+			irq_uaf0_dis();
+			irq_uaf0_clearIRQ();
+			uartf_isr();
+			irq_uaf0_ena();
+		}
+		lp_setHaltMode();
+		wdt_clear();
+	}
+	hal_event_flag = false;
+}
+
 int HAL_wait_event(uint8_t event)
 {
 	int status=0;
-    bool *flag;
 
     if (event == HAL_PHY_EVENT){
-        wait_timeout(2000);
+        HAL_wait_timeout_subghz(2000);
     }else
     if (event == HAL_MAC_EVENT){
-        event_flag=0;
-        flag = &event_flag;
-        wait_event(flag);
+        hal_event_flag=0;
+        HAL_wait_event_subghz();
     }
 	return status;
 }
@@ -74,7 +108,7 @@ int HAL_wakeup_event(uint8_t event)
 	    timer_16bit_stop(6);
     }else
     if (event == HAL_MAC_EVENT) {
-        event_flag=1;
+        hal_event_flag=1;
     }
 	return status;
 }
