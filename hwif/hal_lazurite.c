@@ -42,7 +42,7 @@ void (*hal_gpio_func)(void);
 static unsigned long hal_previous_time;
 // 2015.12.14 Eiichi Saito: for preference of SubGHz
 //static unsigned char hal_setbit_exi;
-static unsigned char hal_event_flag;
+volatile unsigned char hal_event_flag;
 
 //*****************************************************
 // temporary
