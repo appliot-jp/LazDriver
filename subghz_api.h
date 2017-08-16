@@ -115,6 +115,9 @@ typedef struct
 	SUBGHZ_MSG (*getSendMode)(SUBGHZ_PARAM *param);
 	void (*decMac)(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len);
     SUBGHZ_MSG (*setKey)(uint8_t *key);
+	bool (*setEnhanceAck)(uint8_t *data, int size);
+	void (*getEnhanceAck)(uint8_t **data, int *size);
+	void (*setAckTxInterval)(uint16_t interval);
 } SubGHz_CTRL;
 
 extern const SubGHz_CTRL SubGHz;

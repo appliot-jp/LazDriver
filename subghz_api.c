@@ -630,6 +630,19 @@ static SUBGHZ_MSG subghz_setBroadcastEnb(bool on) {
 #endif
 	return SUBGHZ_OK;
 }
+
+static bool subghz_set_enhance_ack(uint8_t *data, int size){
+	return mach_set_enhance_ack(data,size);
+}
+
+static void subghz_get_enhance_ack(uint8_t **data,int *size){
+	mach_get_enhance_ack(data,size);
+	return;
+}
+static void subghz_set_ack_tx_interval(uint16_t interval){
+	mach_set_ack_tx_interval(interval);
+}
+
 // setting of function
 const SubGHz_CTRL SubGHz = {
 	subghz_init,
@@ -654,4 +667,7 @@ const SubGHz_CTRL SubGHz = {
 	subghz_getSendMode,
 	subghz_decMac,
 	subghz_setKey,
+	subghz_set_enhance_ack,
+	subghz_get_enhance_ack,
+	subghz_set_ack_tx_interval
 };

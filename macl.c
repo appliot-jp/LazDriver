@@ -136,7 +136,7 @@ static void macl_rxdone_handler(void)
 
 	if ((status == STATUS_OK) && !macl.promiscuousMode && (macl_total_transmission_time(macl.phy->out.len) == STATUS_OK) && macl.ack.data){
 			phy_sint_handler(macl_ack_txdone_handler);
-			HAL_delayMicroseconds(1000);
+			HAL_delayMicroseconds(macl.tx_ack_interval);
 			phy_txStart(&macl.ack,2);
 	} else {
 		phy_sint_handler(macl_rxdone_handler);
@@ -408,6 +408,8 @@ MACL_PARAM* macl_init(void)
 	phy_sint_handler(macl_dummy_handler);
 	phy_sint_ei(); phy_timer_ei();
 
+	macl.tx_ack_interval = 1000;
+
 	//HAL_set_timer0_function(macl_system_monitor);
 	return &macl;
 }
@@ -595,3 +597,8 @@ uint8_t	macl_getCondition(void)
 {
 	return macl.condition;
 }
+
+void macl_set_ack_tx_interval(uint16_t interval) {
+	macl.tx_ack_interval = interval;
+}
+

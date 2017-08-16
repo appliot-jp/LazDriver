@@ -99,7 +99,7 @@ static struct {
 };
 
 static const char chr_to_hex[] = {0x00,0x10,0x20,0x30,0x40,0x50,0x60,0x70,0x80,0x90,0x00,0xa0,0xb0,0xc0,0xd0,0xe0,0xf0};
-
+static BUFFER eack_tx = { NULL, 0, 0 };
 // *****************************************************************
 //			transfer process (input from chrdev)
 // *****************************************************************
@@ -503,6 +503,68 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					else SubGHz.setBroadcastEnb(true);
 					ret = 0;
 					break;
+				case IOCTL_SET_EACK_DATA:
+					if((arg == 0) || (eack_tx.len <= 0) || (eack_tx.data==NULL)){
+						ret = -EFAULT;
+					} else {
+						if(copy_from_user(eack_tx.data,(const char  __user *)arg,eack_tx.len)) {
+							ret = -EFAULT;
+						} else {
+							ret = eack_tx.len;
+						}
+					}
+					break;
+				case IOCTL_SET_EACK_LEN:
+					if(arg < 0) ret = -1;
+					else {
+						if(eack_tx.data){
+							kfree(eack_tx.data);
+							eack_tx.data = NULL;
+						}
+						eack_tx.len = arg;
+						eack_tx.size = arg;
+						if(arg > 0) {
+							eack_tx.data = kmalloc(arg,GFP_KERNEL);
+						};
+						ret = arg;
+					}
+					break;
+				case IOCTL_SET_EACK_ENB:
+					if(arg == 0) {
+						SubGHz.setEnhanceAck(NULL,0);
+						ret = 0;
+					} else if ((arg > 0) && (eack_tx.len >= 0) && (eack_tx.len <= eack_tx.size)) {
+						SubGHz.setEnhanceAck(eack_tx.data,eack_tx.len);
+						ret = eack_tx.len;
+					} else {
+						ret = -1;
+					}
+					break;
+				case IOCTL_GET_EACK:
+					{
+						uint8_t *data;
+						int size;
+						if(arg == 0) {
+							SubGHz.getEnhanceAck(&data,&size);
+							ret = size;
+						} else {
+							SubGHz.getEnhanceAck(&data,&size);
+							if(copy_to_user((void *)arg,data,size)){
+								ret = -EFAULT;
+							} else {
+								ret = size;
+							}
+						}
+					}
+					break;
+				case IOCTL_SET_ACK_INTERVAL:
+					if(arg>0) {
+						SubGHz.setAckTxInterval(arg);
+						ret = arg;
+					} else {
+						ret = -EFAULT;
+					}
+					break;
 				default:
 					ret = -ENOTTY;
 					break;
@@ -706,6 +768,9 @@ static int __init drv_param_init(void) {
 	int status = 0;
 	int err;
 	struct device *dev;
+	eack_tx.data = NULL;
+	eack_tx.size = 0;
+	eack_tx.len = 0;
 	// create char device
 	if((chrdev.major = register_chrdev(0, DRV_NAME, &chardev_fops)) < 0)
 	{
@@ -768,6 +833,7 @@ error:
 // *****************************************************************
 static void __exit drv_param_exit(void) {
 	// char dev destroy
+	if(eack_tx.data) kfree(eack_tx.data);
 	device_destroy(chrdev.dev_class, MKDEV(chrdev.major, 0));
 	class_destroy(chrdev.dev_class);
 	unregister_chrdev(chrdev.major, chrdev.name);

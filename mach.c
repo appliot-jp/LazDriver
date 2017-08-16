@@ -43,8 +43,10 @@ static struct mach_param mach;
 /*! @uint8_t ackbuf[32]
   @brief  data buffer to make ack data
  */
-static uint8_t ackbuf[8];
-
+static uint8_t tx_ackbuf[32];
+static uint8_t rx_enhance_ack_buffer[16];
+static BUFFER tx_enhance_ack;
+static BUFFER rx_enhance_ack;
 /******************************************************************************/
 /*! @brief enb_dst_panid
   enb/dis of dst_panid/src_panid at each addrType
@@ -441,6 +443,7 @@ int mach_parse_data(struct mac_header *header) {
 
 	header->raw.len = header->input.len; // last byte is rss
 	header->payload.data = (uint8_t *)(header->raw.data+offset);
+	header->payload_offset = offset;
 	header->payload.len = header->input.len - offset -1; // -1 means rssi attathed on raw
 
 	status = STATUS_OK;
@@ -502,18 +505,17 @@ bool mach_make_ack_header(void) {
 	}
 #endif
 	if( ((mach.rx.addr_type == 6) || (mach.rx.addr_type == 7)) &&
-			(mach.rx.fc.fc_bit.ack_req) &&
-			(	((mach.rx.dst.addr_type == IEEE802154_FC_ADDR_SHORT) && (mach.rx.dst.addr.short_addr != 0xFFFF)) ||
-				((mach.rx.dst.addr_type == IEEE802154_FC_ADDR_IEEE) && (
-					(mach.rx.dst.addr.ieee_addr[0] != 0xFF) ||
-					(mach.rx.dst.addr.ieee_addr[1] != 0xFF) ||
-					(mach.rx.dst.addr.ieee_addr[2] != 0xFF) ||
-					(mach.rx.dst.addr.ieee_addr[3] != 0xFF) ||
-					(mach.rx.dst.addr.ieee_addr[4] != 0xFF) ||
-					(mach.rx.dst.addr.ieee_addr[5] != 0xFF) ||
-					(mach.rx.dst.addr.ieee_addr[6] != 0xFF) ||
-					(mach.rx.dst.addr.ieee_addr[7] != 0xFF))
-				))) {
+	(mach.rx.fc.fc_bit.ack_req) &&
+	(((mach.rx.dst.addr_type == IEEE802154_FC_ADDR_SHORT) && (mach.rx.dst.addr.short_addr != 0xFFFF)) ||
+	((mach.rx.dst.addr_type == IEEE802154_FC_ADDR_IEEE) &&
+	((mach.rx.dst.addr.ieee_addr[0] != 0xFF) ||(mach.rx.dst.addr.ieee_addr[1] != 0xFF) ||
+	(mach.rx.dst.addr.ieee_addr[2] != 0xFF) ||
+	(mach.rx.dst.addr.ieee_addr[3] != 0xFF) ||
+	(mach.rx.dst.addr.ieee_addr[4] != 0xFF) ||
+	(mach.rx.dst.addr.ieee_addr[5] != 0xFF) ||
+	(mach.rx.dst.addr.ieee_addr[6] != 0xFF) ||
+	(mach.rx.dst.addr.ieee_addr[7] != 0xFF))
+	))) {
 		// genenrate ack data
 		mach.ack.fc.fc16 = 0;
 		mach.ack.fc.fc_bit.frame_type = IEEE802154_FC_TYPE_ACK;
@@ -530,6 +532,23 @@ bool mach_make_ack_header(void) {
 		if(!mach.ack.fc.fc_bit.seq_comp) {
 			mach.ack.seq = mach.rx.seq;
 			mach.ack.raw.data[offset] = mach.ack.seq,offset++;
+		}
+		if(tx_enhance_ack.len>0) {
+			int16_t enhance_ack_rx_num = *((int16_t *)(tx_enhance_ack.data+0));
+			int16_t enhance_ack_size = *((int16_t *)(tx_enhance_ack.data+2));
+			uint16_t src_target;
+			int16_t enhance_ack_offset = 4;
+			do {
+				src_target = *((uint16_t *)(tx_enhance_ack.data+enhance_ack_offset));
+				if ((src_target == 0xffff ) || (src_target == mach.rx.src.addr.short_addr)) {
+					memcpy(&mach.ack.raw.data[offset],&tx_enhance_ack.data[enhance_ack_offset+2],enhance_ack_size);
+					offset += enhance_ack_size;
+					break;
+				} else {
+					enhance_ack_offset += (enhance_ack_size+2);
+				}
+				enhance_ack_rx_num--;
+			} while(enhance_ack_rx_num>0);
 		}
 		mach.ack.raw.len = offset;
 #ifndef LAZURITE_IDE
@@ -562,9 +581,15 @@ struct mach_param *mach_init(void)
 	if(mach.macl == NULL) return NULL;
 
 	// set data buffer for ack
-	mach.ack.raw.data = ackbuf;
-	mach.ack.raw.size = sizeof(ackbuf);
+	mach.ack.raw.data = tx_ackbuf;
+	mach.ack.raw.size = sizeof(tx_ackbuf);
 	mach.ack.raw.len = 0;
+	tx_enhance_ack.data = NULL;
+	tx_enhance_ack.size = 0;
+	tx_enhance_ack.len = 0;
+	rx_enhance_ack.data = rx_enhance_ack_buffer;
+	rx_enhance_ack.size = sizeof(rx_enhance_ack_buffer);
+	rx_enhance_ack.len = 0;
 	macl_sleep(true);
 	get_mac_addr(mach.my_addr.ieee_addr);
 
@@ -764,6 +789,7 @@ int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr)
 		memcpy(filt.ieee_addr,mach.my_addr.ieee_addr,8);
 		macl_set_hw_addr_filt(&filt,0x0f);			// update all of addr filter
 #ifndef LAZURITE_IDE
+		/*
 		printk(KERN_INFO"Lazurite: My Addr= %02x%02x%02x%02x%02x%02x%02x%02x %d 0x%04x 0x%04x\n",
 			mach.my_addr.ieee_addr[7],
 			mach.my_addr.ieee_addr[6],
@@ -776,6 +802,7 @@ int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr)
 			mach.my_addr.pan_coord,
 			mach.my_addr.pan_id,
 			mach.my_addr.short_addr);
+		*/
 #endif
 	}
 	return status;
@@ -946,6 +973,8 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 				if((mach.sending)&&(mach.rx.seq == mach.tx.seq)) {
 					status = 1;				// check ack
 					mach.tx.rssi = mach.rx.input.data[mach.rx.input.len-1];
+					rx_enhance_ack.len = (rx_enhance_ack.size < mach.rx.payload.len) ? rx_enhance_ack.size : mach.rx.payload.len;
+					memcpy(rx_enhance_ack.data,&mach.rx.input.data[mach.rx.payload_offset],rx_enhance_ack.len);
 #ifndef LAZURITE_IDE
 					if(module_test & MODE_MACH_DEBUG) {
 						printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,__LINE__);
@@ -1003,3 +1032,28 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 	return STATUS_OK;
 }
 
+void mach_get_enhance_ack(uint8_t **data,int *size){
+	*data = rx_enhance_ack.data;
+	*size = rx_enhance_ack.len;
+	return;
+}
+bool  mach_set_enhance_ack(uint8_t* data, int size) {
+	bool result;
+	if((data == NULL) || (size == 0)) {
+		tx_enhance_ack.data = NULL;
+		tx_enhance_ack.len = 0;
+		tx_enhance_ack.len = 0;
+	}
+	else if(size >= 0) {
+		result = true;
+		tx_enhance_ack.data=data;
+		tx_enhance_ack.len = size;
+		tx_enhance_ack.size = size;
+	} else {
+		result = false;
+	}
+	return result;
+}
+void mach_set_ack_tx_interval(uint16_t interval){
+	macl_set_ack_tx_interval(interval);
+}

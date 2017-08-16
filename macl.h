@@ -67,6 +67,7 @@ typedef struct {
 	unsigned long last_send_time;
 	PHY_PARAM *phy;
 	BUFFER ack;
+	uint16_t tx_ack_interval;
 } MACL_PARAM;
 
 struct ieee802154_my_addr {
@@ -93,6 +94,7 @@ extern int	macl_rx_irq_notification(void);
 
 extern int	macl_sleep(bool on);
 extern uint8_t	macl_getCondition(void);
+extern void	macl_set_ack_tx_interval(uint16_t interval);
 
 #endif
 

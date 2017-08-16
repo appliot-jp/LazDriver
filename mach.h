@@ -91,10 +91,11 @@ struct mac_header{
 	struct fc_addr dst;
 	struct fc_addr src;
 	uint8_t addr_type;      // address type
+	uint8_t rssi;		// source address
 	BUFFER payload;		// source address
 	BUFFER raw;		// source address
 	BUFFER input;		// source address
-	uint8_t rssi;		// source address
+	int payload_offset;
 };
 
 struct rf_param {
@@ -145,6 +146,9 @@ extern int mach_parse_data(struct mac_header *header);
 extern int mach_ed(uint8_t *ed);
 extern int mach_rx_irq(struct mac_header *rx);
 extern int mach_set_promiscuous(bool on);
+extern void mach_get_enhance_ack(uint8_t **data, int *size);
+extern bool mach_set_enhance_ack(uint8_t *data, int size);
+extern void mach_set_ack_tx_interval(uint16_t interval);
 
 #endif
 
