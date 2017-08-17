@@ -505,7 +505,7 @@ int HAL_TIMER_start(unsigned short msec, void (*func)(void))
 	uint32_t tmp = HZ;
 	uint32_t add_time;
 	add_time = (tmp*msec)/1000; 
-	if(!add_time) add_time = 1;
+	if(add_time<2) add_time = 2;
 	init_timer(&g_timer);
 	g_timer.data = 0;
 	g_timer.expires = jiffies + add_time;

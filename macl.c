@@ -42,6 +42,7 @@ MACL_PARAM macl;
 static void macl_dummy_handler(void);
 static void macl_rxdone_handler(void);
 static void macl_ack_txdone_handler(void);
+static void macl_tx_ack_abort_handler(void);
 static void macl_fifodone_handler(void);
 static void macl_ccadone_handler(void);
 static void macl_cca_abort_handler(void);
@@ -138,6 +139,8 @@ static void macl_rxdone_handler(void)
 			phy_sint_handler(macl_ack_txdone_handler);
 			HAL_delayMicroseconds(macl.tx_ack_interval);
 			phy_txStart(&macl.ack,2);
+			phy_timer_handler(macl_tx_ack_abort_handler);
+			phy_timer_start(20);
 	} else {
 		phy_sint_handler(macl_rxdone_handler);
 		if(status == STATUS_OK)	macl_rx_irq(NULL,NULL);
@@ -175,6 +178,7 @@ static void macl_ack_txdone_handler(void)
 			__FILE__,__func__,macl.ack_timeout,(unsigned long)macl.ack.data);
 #endif
 	phy_timer_di();
+	phy_timer_stop();
 	macl.condition=SUBGHZ_ST_RX_ACK_DONE;
 	macl.ack.data = NULL;
 	macl.ack.len = 0;
@@ -190,6 +194,31 @@ static void macl_ack_txdone_handler(void)
 	}
 	phy_wakeup_mac_event();
 	phy_timer_ei();
+}
+
+static void macl_tx_ack_abort_handler(void)
+{
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%lx,Retry:%d\n",
+			__FILE__,__func__,(unsigned long)macl.phy->out.data,macl.txRetry);
+#endif
+	phy_sint_di();
+	phy_timer_stop();
+	macl.condition=SUBGHZ_ST_RX_ACK_DONE;
+	macl.ack.data = NULL;
+	macl.ack.len = 0;
+	macl_rx_irq(NULL,NULL);
+	phy_sint_handler(macl_rxdone_handler);
+	if(macl.rxOnEnable){
+		phy_rxStart();
+		phy_wait_phy_event();
+    	macl.condition=SUBGHZ_ST_RX_START;
+	}else{
+		phy_stop();
+    	macl.condition=SUBGHZ_ST_NONE;
+	}
+	phy_wakeup_mac_event();
+	phy_sint_ei();
 }
 
 static void macl_fifodone_handler(void)
