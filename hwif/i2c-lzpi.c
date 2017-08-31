@@ -57,9 +57,10 @@ static int lzpi_i2c_probe(struct i2c_client *client,
 }
 
 static int lzpi_i2c_remove(struct i2c_client *client) {
-	if (!client->adapter)
+	if (!client->adapter){
 		printk(KERN_INFO "[I2C] client is not attached\n");
 		return -ENODEV;	/* our client isn't attached */
+	}
 	return 0;
 }
 static struct i2c_driver lzpi_i2c_driver = {
