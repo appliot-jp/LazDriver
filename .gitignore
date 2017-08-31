@@ -9,3 +9,4 @@ modules.order
 DRV_802154.*
 lazdriver.mod.c
 tags
+tags.lock
