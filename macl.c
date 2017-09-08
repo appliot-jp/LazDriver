@@ -494,7 +494,7 @@ int	macl_xmit_sync(BUFFER buff)
 	if (macl_total_transmission_time(macl.phy->out.len) == STATUS_OK){
 
 #ifdef LAZURITE_IDE
-//		dis_interrupts(DI_SUBGHZ);
+		dis_interrupts(DI_SUBGHZ);
 #endif
 		if (macl.txMode == 0) {
 			phy_txStart(&macl.phy->out,macl.txMode);
@@ -511,7 +511,7 @@ int	macl_xmit_sync(BUFFER buff)
 					phy_txStart(&macl.phy->out,macl.txMode);
 				}
 #ifdef LAZURITE_IDE
-//		enb_interrupts(DI_SUBGHZ);
+		enb_interrupts(DI_SUBGHZ);
 #endif
 		phy_wait_phy_event();
 		phy_wait_mac_event();

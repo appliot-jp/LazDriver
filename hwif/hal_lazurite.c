@@ -119,8 +119,6 @@ int HAL_SPI_transfer(const unsigned char *wdata, uint16_t wsize,unsigned char *r
 {
 	unsigned char n;
 	
-	dis_interrupts(DI_SUBGHZ);	
-	
 	drv_digitalWrite(HAL_GPIO_CSB, HIGH);
 	drv_digitalWrite(HAL_GPIO_CSB, LOW);
 
@@ -136,8 +134,6 @@ int HAL_SPI_transfer(const unsigned char *wdata, uint16_t wsize,unsigned char *r
     }
 
 	drv_digitalWrite(HAL_GPIO_CSB, HIGH);
-	
-	enb_interrupts(DI_SUBGHZ);	
 	
 	return HAL_STATUS_OK;
 }
@@ -221,13 +217,10 @@ void HAL_set_timer0_function(void (*func)(uint32_t sys_timer_count)) {
 	set_timer0_function(func);
 }
 
-// 7.4us is minimum delay
 volatile void HAL_delayMicroseconds(unsigned long us)
 {
-	dis_interrupts(DI_SUBGHZ);	
-
- 	if (us > 7) {
-		us = us / 2 - 4;
+  	if (us > 2) {
+		us /= 2;
 		while (us > 0) {
 			// w/a for avoiding UART communication data lost
 			uart_check_irq();
@@ -236,7 +229,5 @@ volatile void HAL_delayMicroseconds(unsigned long us)
  			us--;
 		}
 	}
-	enb_interrupts(DI_SUBGHZ);	
-
 	return;
 }
