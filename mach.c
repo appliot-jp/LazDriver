@@ -26,12 +26,15 @@
 #include "common-lzpi.h"
 #endif
 
+#ifdef LAZURITE_IDE
+#include "driver_uart.h"
+#endif
+
 #include "mach.h"
 #include "arib_lazurite.h"
 #include "hwif/hal.h"
 #include "errno.h"
 #include "endian.h"
-
 #include "aes/aes.h"
 
 //#define DEBUG_AES

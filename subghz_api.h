@@ -30,6 +30,13 @@
 //#include "common_lazurite.h"
 #include "mach.h"
 
+// subghz api_status
+#define SUBGHZ_API_SEND			( 0x01 )
+#define SUBGHZ_API_SEND64LE		( 0x02 )
+#define SUBGHZ_API_SEND64BE		( 0x04 )
+#define SUBGHZ_API_RXENABLE		( 0x08 )
+extern uint8_t subghz_api_status;
+
 typedef enum {
 	SUBGHZ_OK = 0,
 	SUBGHZ_RESET_FAIL,			// 1

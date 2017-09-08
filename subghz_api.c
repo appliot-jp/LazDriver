@@ -45,6 +45,7 @@
 
 // this proto-type is for linux
 static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len);
+uint8_t subghz_api_status = 0;
 
 // local parameters
 static struct {
@@ -193,6 +194,7 @@ static SUBGHZ_MSG subghz_close(void)
 	msg = SUBGHZ_OK;
 error:
 	subghz_param.tx_stat.status = result;
+	subghz_api_status = 0;
 	return msg;
 }
 
@@ -201,6 +203,8 @@ static SUBGHZ_MSG subghz_tx64le(uint8_t *addr_le, uint8_t *data, uint16_t len, v
 	int result;
 	uint8_t addr_type;
 	struct mac_fc_alignment fc;
+
+	subghz_api_status |= SUBGHZ_API_SEND64LE;
 
 	// initializing buffer
 	subghz_param.tx.data = data;
@@ -242,12 +246,16 @@ static SUBGHZ_MSG subghz_tx64le(uint8_t *addr_le, uint8_t *data, uint16_t len, v
 			msg,subghz_param.tx_stat.rssi);
 	}
 #endif
+	subghz_api_status &= ~SUBGHZ_API_SEND64LE;
 
 	return msg;
 }
 
 static SUBGHZ_MSG subghz_tx64be(uint8_t *addr_be, uint8_t *data, uint16_t len, void (*callback)(uint8_t rssi, int status)) {
 	uint8_t addr_le[8];
+	SUBGHZ_MSG msg;
+
+	subghz_api_status |= SUBGHZ_API_SEND64BE;
 	addr_le[7] = addr_be[0];
 	addr_le[6] = addr_be[1];
 	addr_le[5] = addr_be[2];
@@ -256,7 +264,10 @@ static SUBGHZ_MSG subghz_tx64be(uint8_t *addr_be, uint8_t *data, uint16_t len, v
 	addr_le[2] = addr_be[5];
 	addr_le[1] = addr_be[6];
 	addr_le[0] = addr_be[7];
-	return subghz_tx64le(addr_le,data,len,callback);
+	msg = subghz_tx64le(addr_le,data,len,callback);
+	subghz_api_status &= ~SUBGHZ_API_SEND64BE;
+
+	return msg;
 }
 
 static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uint16_t len, void (*callback)(uint8_t rssi, int status))
@@ -264,6 +275,8 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 	SUBGHZ_MSG msg;
 	int result;
 	struct mac_fc_alignment fc;
+
+	subghz_api_status |= SUBGHZ_API_SEND;
 
 	// initializing buffer
 	subghz_param.tx.data = data;
@@ -303,6 +316,7 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 			msg,subghz_param.tx_stat.rssi);
 	}
 #endif
+	subghz_api_status &= ~SUBGHZ_API_SEND;
 
 	return msg;
 }
@@ -399,6 +413,8 @@ static SUBGHZ_MSG subghz_rxEnable(void (*callback)(const uint8_t *data, uint8_t 
 	subghz_param.read = true;
 
 error:
+	subghz_api_status |= SUBGHZ_API_RXENABLE;
+
 	return msg;
 }
 
@@ -417,6 +433,8 @@ static SUBGHZ_MSG subghz_rxDisable(void)
 	msg = SUBGHZ_OK;
 error:
 	subghz_param.rx_stat.status = result;
+	subghz_api_status &= ~SUBGHZ_API_RXENABLE;
+
 	return msg;
 }
 

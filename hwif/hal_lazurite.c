@@ -42,7 +42,7 @@ void (*hal_gpio_func)(void);
 static unsigned long hal_previous_time;
 // 2015.12.14 Eiichi Saito: for preference of SubGHz
 //static unsigned char hal_setbit_exi;
-volatile unsigned char hal_event_flag;
+volatile unsigned char hal_event_flag = 0;
 
 //*****************************************************
 // temporary
@@ -51,67 +51,38 @@ volatile unsigned char hal_event_flag;
 //*****************************************************
 // Function
 //*****************************************************
-void HAL_wait_timeout_isr(void)
+
+static void HAL_abort_timer_func(void)
 {
-    timer_16bit_stop(6);
-    hal_event_flag = true;
-}
-
-bool HAL_wait_timeout_subghz(uint32_t time)
-{	
-	int result = true;
-	timer_16bit_set(6,0xE8,(unsigned long)time,HAL_wait_timeout_isr);
-	timer_16bit_start(6);
-	return result;
-}
-
-void HAL_wait_event_subghz(void)
-{	
-	while(hal_event_flag == false)
-	{
-		if (irq_ua0_checkIRQ()) {
-			irq_ua0_dis();
-			irq_ua0_clearIRQ();
-			uart_rx_isr();
-			irq_ua0_ena();
-		} else if (irq_uaf0_checkIRQ()) {
-			irq_uaf0_dis();
-			irq_uaf0_clearIRQ();
-			uartf_isr();
-			irq_uaf0_ena();
-		}
-		lp_setHaltMode();
-		wdt_clear();
-	}
-	hal_event_flag = false;
+	hal_event_flag = 1;
+	HAL_TIMER_stop();
 }
 
 int HAL_wait_event(uint8_t event)
 {
-	int status=0;
-
-    if (event == HAL_PHY_EVENT){
-        HAL_wait_timeout_subghz(2000);
-    }else
-    if (event == HAL_MAC_EVENT){
-        hal_event_flag=0;
-        HAL_wait_event_subghz();
+	int status = 0;
+    if (event == HAL_PHY_EVENT) {
+		HAL_TIMER_stop();
+		HAL_TIMER_start(1000, HAL_abort_timer_func);
+    } else if (event == HAL_MAC_EVENT) {
+		hal_event_flag = 0;
+		wait_event(&hal_event_flag);
     }
 	return status;
 }
-
 
 int HAL_wakeup_event(uint8_t event)
 {
-	int status=0;
+    int status = 0;
+    HAL_TIMER_stop();
     if (event == HAL_PHY_EVENT) {
-	    timer_16bit_stop(6);
-    }else
-    if (event == HAL_MAC_EVENT) {
-        hal_event_flag=1;
+		// do nothing
+    } else if (event == HAL_MAC_EVENT) {
+		hal_event_flag = 1;
     }
-	return status;
+    return status;
 }
+
 
 // api_debug add 4
 int HAL_init(void){
@@ -138,6 +109,7 @@ int HAL_init(void){
 
     // I2C init
 	Wire0.begin();
+	return 0;
 }
 
 int HAL_remove(void){
@@ -146,6 +118,9 @@ int HAL_remove(void){
 int HAL_SPI_transfer(const unsigned char *wdata, uint16_t wsize,unsigned char *rdata, uint16_t rsize)
 {
 	unsigned char n;
+	
+	dis_interrupts(DI_SUBGHZ);	
+	
 	drv_digitalWrite(HAL_GPIO_CSB, HIGH);
 	drv_digitalWrite(HAL_GPIO_CSB, LOW);
 
@@ -161,6 +136,9 @@ int HAL_SPI_transfer(const unsigned char *wdata, uint16_t wsize,unsigned char *r
     }
 
 	drv_digitalWrite(HAL_GPIO_CSB, HIGH);
+	
+	enb_interrupts(DI_SUBGHZ);	
+	
 	return HAL_STATUS_OK;
 }
 
@@ -243,61 +221,22 @@ void HAL_set_timer0_function(void (*func)(uint32_t sys_timer_count)) {
 	set_timer0_function(func);
 }
 
-#if 0
-// 2015.12.14 Eiichi Saito: for preference of SubGHz
-void HAL_EX_disableInterrupt(void)
-{
-    irq_ua0_dis();
-    irq_tm0_dis();
-    irq_tm1_dis();
-
-    hal_setbit_exi=IE1;
-    hal_setbit_exi &= ~0x08;    // EEXI3 (SINTN) clear
-    IE1 &= ~hal_setbit_exi;
-}
-
-
-// 2015.12.14 Eiichi Saito: for preference of SubGHz
-void HAL_EX_enableInterrupt(void)
-{
-    irq_ua0_ena();
-    irq_tm0_ena();
-    irq_tm1_ena();
-    IE1 |= hal_setbit_exi;
-}
-#endif
-
+// 7.4us is minimum delay
 volatile void HAL_delayMicroseconds(unsigned long us)
 {
-	us /= 2;
-	if(us >= 2)
-	{
-		us -= 1;
-		while(us > 0)
-		{
+	dis_interrupts(DI_SUBGHZ);	
+
+ 	if (us > 7) {
+		us = us / 2 - 4;
+		while (us > 0) {
 			// w/a for avoiding UART communication data lost
-			if (irq_ua0_checkIRQ()) {
-				irq_ua0_dis();
-				irq_ua0_clearIRQ();
-				uart_rx_isr();
-				irq_ua0_ena();
-			} else if (irq_uaf0_checkIRQ()) {
-				irq_uaf0_dis();
-				irq_uaf0_clearIRQ();
-				uartf_isr();
-				irq_uaf0_ena();
-			}
-			__asm("nop\n");
-			__asm("nop\n");
-			__asm("nop\n");
-			__asm("nop\n");
-			__asm("nop\n");
-			__asm("nop\n");
-			__asm("nop\n");
-			__asm("nop\n");
-			us--;
+			uart_check_irq();
+             __asm("nop\n");
+             __asm("nop\n");
+ 			us--;
 		}
 	}
+	enb_interrupts(DI_SUBGHZ);	
 
 	return;
 }
