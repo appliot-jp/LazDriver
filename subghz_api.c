@@ -411,9 +411,9 @@ static SUBGHZ_MSG subghz_rxEnable(void (*callback)(const uint8_t *data, uint8_t 
 		}
 	}
 	subghz_param.read = true;
+	subghz_api_status |= SUBGHZ_API_RXENABLE;
 
 error:
-	subghz_api_status |= SUBGHZ_API_RXENABLE;
 
 	return msg;
 }
@@ -431,9 +431,10 @@ static SUBGHZ_MSG subghz_rxDisable(void)
 	}
 	subghz_param.read = false;
 	msg = SUBGHZ_OK;
+	subghz_api_status &= ~SUBGHZ_API_RXENABLE;
+
 error:
 	subghz_param.rx_stat.status = result;
-	subghz_api_status &= ~SUBGHZ_API_RXENABLE;
 
 	return msg;
 }
