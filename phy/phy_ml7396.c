@@ -71,6 +71,8 @@ I acquire integer region of the fixed-point numerical value
 /* headware interrupt */
 #define HW_EVENT_ALL_MASK     0x00000000  /* Interrupt all mask */
 #define HW_EVENT_VCO_CAL_DONE 0x00000004  /* VCO CAL DONE */
+// 2017.10.3
+#define HW_EVENT_ADD_FIL_DONE 0x00000008  /* Address Filter done */
 #define HW_EVENT_FIFO_CLEAR   0x000000C0  /* FIFO_EMPTY */
 #define HW_EVENT_FIFO_EMPTY   0x00000010  /* FIFO_EMPTY */
 #define HW_EVENT_FIFO_FULL    0x00000020  /* FIFO_FULL */
@@ -1106,7 +1108,9 @@ void phy_rxStart(void)
 {
     phy_intclr(~(HW_EVENT_ALL_MASK | HW_EVENT_FIFO_CLEAR));
 //  phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
-    phy_inten(HW_EVENT_RX_DONE);
+// 2017.10.3
+//  phy_inten(HW_EVENT_RX_DONE);
+    phy_inten(HW_EVENT_RX_DONE | HW_EVENT_ADD_FIL_DONE);
     phy_rst();
     phy_set_trx_state(PHY_ST_RXON);
 #ifndef LAZURITE_IDE
@@ -1267,7 +1271,10 @@ int phy_rxdone(BUFFER *buff)
 		uint8_t d8[4];
 	} intsrc;
 
-    phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+// 2017.10.3
+//  phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+    reg_data[0] = 0x03;
+    reg_wr(REG_ADR_RF_STATUS, reg_data, 1);
 
     // Notice: A following must not change.
     reg_rd(REG_ADR_INT_SOURCE_GRP1, reg_data, 1);
@@ -1283,7 +1290,17 @@ int phy_rxdone(BUFFER *buff)
     crc_err = reg_data[0]&0x30;
     rx_done = (reg_data[0]&0x0C) << 2;
 	*/
-	rx_done = ((reg_data[0]&0x3C)==0x04) ? true : false;
+    // 2017.10.3
+//	rx_done = ((reg_data[0]&0x3C)==0x04) ? true : false;
+	if(intsrc.d8[2] == 0x08){
+	    rx_done = false;
+	}else{
+	    if(intsrc.d8[2] == 0x04) {
+            rx_done = true;
+        }else{
+            rx_done = false;
+        }
+	}
 
     if (!rx_done) {
     //if (crc_err & rx_done){
@@ -1310,7 +1327,9 @@ int phy_rxdone(BUFFER *buff)
         phy_rst();
     }
 
-    phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
+    // 2017.10.3
+//  phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS);
+    phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS | HW_EVENT_ADD_FIL_DONE);
 //  phy_intclr(~(HW_EVENT_ALL_MASK | HW_EVENT_FIFO_CLEAR));
 
 #ifndef LAZURITE_IDE
