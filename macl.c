@@ -247,7 +247,7 @@ static void macl_ccadone_handler(void)
 		macl.condition=SUBGHZ_ST_CCA_IDLE_DETECT;
 		macl.ccaCount++;
 		phy_timer_handler(macl_cca_abort_handler);
-		phy_timer_start(500);
+		phy_timer_start(50);
 		phy_sint_handler(macl_ccadone_handler);
 		phy_ccaCtrl(cca_state);
 		// phy_wait_phy_event();
