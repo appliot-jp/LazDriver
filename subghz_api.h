@@ -22,11 +22,6 @@
 #ifndef	_SUBGHZ_API_H_
 #define _SUBGHZ_API_H_
 
-#ifdef LAZURITE_IDE
-//#include "common.h"
-#include <lazurite.h>
-#endif
-
 //#include "common_lazurite.h"
 #include "mach.h"
 
