@@ -13,6 +13,13 @@
  * published by the Free Software Foundation.
  */
 
+#ifdef SUBGHZ_OTA
+	#pragma SEGCODE "OTA_SEGCODE"
+	#pragma SEGINIT "OTA_SEGINIT"
+	#pragma SEGNOINIT "OTA_SEGNOINIT"
+	#pragma SEGCONST "OTA_SEGCONST"
+#endif
+
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/wait.h>

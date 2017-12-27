@@ -18,6 +18,12 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#ifdef SUBGHZ_OTA
+	#pragma SEGCODE "OTA_SEGCODE"
+	#pragma SEGINIT "OTA_SEGINIT"
+	#pragma SEGNOINIT "OTA_SEGNOINIT"
+	#pragma SEGCONST "OTA_SEGCONST"
+#endif
 
 #ifdef LAZURITE_IDE
 	#include <common.h>
@@ -537,15 +543,19 @@ static const char* subghz_msg[] = {
 static void subghz_msgOut(SUBGHZ_MSG msg)
 {
 #ifdef LAZURITE_IDE
+	static char str_msg1[] = "\t";
+	static char str_msg2[] = "RSSI=";
+	static char str_msg3[] = "\tSTATUS=";
+
 	if((msg>=SUBGHZ_OK)&&(msg<=SUBGHZ_TTL_SEND_OVR)){
 		Serial.print(subghz_msg[msg]);
-		Serial.print("\t");
+		Serial.print(str_msg1);
 	}
 
 no_error:
-	Serial.print("RSSI=");
+	Serial.print(str_msg2);
 	Serial.print_long((long)subghz_param.tx_stat.rssi,DEC);
-	Serial.print("\tSTATUS=");
+	Serial.print(str_msg3);
 	Serial.println_long((long)subghz_param.tx_stat.status,DEC);
 	return;
 #endif
