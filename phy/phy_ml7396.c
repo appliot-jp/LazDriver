@@ -18,12 +18,6 @@
  * <http://www.gnu.org/licenses/>
  */
 
-#ifdef SUBGHZ_OTA
-	#pragma SEGCODE "OTA_SEGCODE"
-	#pragma SEGINIT "OTA_SEGINIT"
-	#pragma SEGNOINIT "OTA_SEGNOINIT"
-	#pragma SEGCONST "OTA_SEGCONST"
-#endif
 
 #ifdef LAZURITE_IDE
 	#include <common.h>
@@ -36,7 +30,7 @@
 
 #include "../phy.h"
 #include "phy_ml7396.h"
-#include "random.h"
+#include "../hwif/random.h"
 #include "../hwif/hal.h"
 #include "../errno.h"
 #include "../endian.h"

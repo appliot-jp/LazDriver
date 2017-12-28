@@ -22,13 +22,6 @@
   @brief  local parameter for mac high layer
  */
 
-#ifdef SUBGHZ_OTA
-	#pragma SEGCODE "OTA_SEGCODE"
-	#pragma SEGINIT "OTA_SEGINIT"
-	#pragma SEGNOINIT "OTA_SEGNOINIT"
-	#pragma SEGCONST "OTA_SEGCONST"
-#endif
-
 #ifndef LAZURITE_IDE
 #include "common-lzpi.h"
 #endif
@@ -43,7 +36,7 @@
 #include "errno.h"
 #include "endian.h"
 #include "aes/aes.h"
-#include "Serial.h"
+
 //#define DEBUG_AES
 #ifdef DEBUG_AES
 #include "Serial.h"
@@ -455,8 +448,7 @@ int mach_parse_data(struct mac_header *header) {
 	header->payload.data = (uint8_t *)(header->raw.data+offset);
 	header->payload_offset = offset;
 	header->payload.len = header->input.len - offset -1; // -1 means rssi attathed on raw
-//Serial.println_long((long)header->input.len,DEC);
-//Serial.println_long((long)offset,DEC);
+
 	status = STATUS_OK;
 
 	return status;

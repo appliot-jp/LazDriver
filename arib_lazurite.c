@@ -18,13 +18,6 @@
  * <http://www.gnu.org/licenses/>
  */
 
-#ifdef SUBGHZ_OTA
-	#pragma SEGCODE "OTA_SEGCODE"
-	#pragma SEGINIT "OTA_SEGINIT"
-	#pragma SEGNOINIT "OTA_SEGNOINIT"
-	#pragma SEGCONST "OTA_SEGCONST"
-#endif
-
 #include "arib_lazurite.h"
 #include "hwif/hal.h"
 
