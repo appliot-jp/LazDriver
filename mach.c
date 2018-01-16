@@ -447,7 +447,7 @@ int mach_parse_data(struct mac_header *header) {
 	header->raw.len = header->input.len; // last byte is rss
 	header->payload.data = (uint8_t *)(header->raw.data+offset);
 	header->payload_offset = offset;
-	header->payload.len = header->input.len - offset -1; // -1 means rssi attathed on raw
+	header->payload.len = header->input.len - offset;
 
 	status = STATUS_OK;
 
@@ -928,8 +928,9 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 
 		// set rx buffer
 		mach.rx.input.data = rx->data;
-		mach.rx.input.len = rx->len;
+		mach.rx.input.len = rx->len-1;
 		mach.rx.input.size = rx->size;
+		mach.rx.rssi = rx->data[rx->len-1];
 
 #ifndef LAZURITE_IDE
 		if(module_test & MODE_MACH_DEBUG) {
@@ -1011,10 +1012,6 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 				 (mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_CMD)))) {
 			// rx data is copy to previous
 			memcpy(&mach.rx_prev,&mach.rx,sizeof(mach.rx));
-			// get rssi
-			mach.rx.rssi = mach.rx.raw.data[mach.rx.raw.len-1];
-			// decriment raw length not to include rssi in raw data.
-			if(mach.rx.raw.len != 0) mach.rx.raw.len -= 1;
 
 #ifndef LAZURITE_IDE
 			if(module_test & MODE_MACH_DEBUG) {
