@@ -931,7 +931,7 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 		mach.rx.input.len = rx->len-1;
 		mach.rx.input.size = rx->size;
 		mach.rx.rssi = rx->data[rx->len-1];
-
+		
 #ifndef LAZURITE_IDE
 		if(module_test & MODE_MACH_DEBUG) {
 			printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,__LINE__,mach.rx.input.len);
@@ -974,19 +974,16 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 			}
 			// ack process
 			else if (mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_ACK) {
-				if((mach.sending)&&(mach.rx.seq == mach.tx.seq)) {
-					status = 1;				// check ack
-					mach.tx.rssi = mach.rx.input.data[mach.rx.input.len-1];
-					rx_enhance_ack.len = (rx_enhance_ack.size < mach.rx.payload.len) ? rx_enhance_ack.size : mach.rx.payload.len;
-					memcpy(rx_enhance_ack.data,&mach.rx.input.data[mach.rx.payload_offset],rx_enhance_ack.len);
+				mach.tx.rssi = mach.rx.rssi;
+				rx_enhance_ack.len = (rx_enhance_ack.size < mach.rx.payload.len) ? rx_enhance_ack.size : mach.rx.payload.len;
+				memcpy(rx_enhance_ack.data,&mach.rx.input.data[mach.rx.payload_offset],rx_enhance_ack.len);
 #ifndef LAZURITE_IDE
-					if(module_test & MODE_MACH_DEBUG) {
-						printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,__LINE__);
-						PAYLOADDUMP(mach.rx.input.data, mach.rx.input.len);
-					}
-#endif
+				if(module_test & MODE_MACH_DEBUG) {
+					printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,__LINE__);
+					PAYLOADDUMP(mach.rx.input.data, mach.rx.input.len);
 				}
-				return 1;
+#endif
+				return STATUS_OK;
 			} else {									// other data type
 			}
 		}

@@ -86,10 +86,10 @@ union mac_frame_control {
 };
 
 struct mac_header{
-	int16_t seq;        	// sequence number
 	union mac_frame_control fc;		// frame control
 	struct fc_addr dst;
 	struct fc_addr src;
+	uint8_t seq;        	// sequence number
 	uint8_t addr_type;      // address type
 	uint8_t rssi;		// source address
 	BUFFER payload;		// source address
