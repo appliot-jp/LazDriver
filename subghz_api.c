@@ -556,7 +556,7 @@ static SUBGHZ_MSG subghz_getSendMode(SUBGHZ_PARAM *param)
 	param->addrType = subghz_param.addr_type;
 	param->senseTime = subghz_param.rf.cca_max_be;
 	param->txRetry = subghz_param.rf.tx_retry;
-	param->txInterval = subghz_param.rf.tx_max_be;
+	param->txInterval = subghz_param.rf.ack_timeout;
 	//	param->ccaWait = subghz_param.rf.cca_duration;
 	param->myAddress = subghz_param.mach->my_addr.short_addr; 
 
