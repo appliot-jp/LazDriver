@@ -686,7 +686,7 @@ static void tx_callback(uint8_t rssi,int status) {
 	}
 #endif
 	p.tx_rssi = rssi;
-	p.tx_status = status;
+	//p.tx_status = status;
 
 	if(que_th2ex == 0) {
 		que_th2ex = 1;

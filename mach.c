@@ -883,6 +883,8 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 	mach.sending = false;
 	if(status == STATUS_OK) {
 		status = mach.tx.rssi;
+	} else {
+		mach.tx.rssi = 0;
 	}
 
 error:
