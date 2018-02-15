@@ -18,6 +18,10 @@
  * <http://www.gnu.org/licenses/>
  */
 
+#pragma SEGCODE "OTA_SEGCODE2"
+#pragma SEGINIT "OTA_SEGINIT"
+#pragma SEGNOINIT "OTA_SEGNOINIT"
+#pragma SEGCONST "OTA_SEGCONST"
 
 #ifdef LAZURITE_IDE
 	#include <common.h>

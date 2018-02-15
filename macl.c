@@ -18,6 +18,11 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#pragma SEGCODE "OTA_SEGCODE2"
+#pragma SEGINIT "OTA_SEGINIT"
+#pragma SEGNOINIT "OTA_SEGNOINIT"
+#pragma SEGCONST "OTA_SEGCONST"
+
 #ifndef LAZURITE_IDE
 	#include <linux/module.h>
 	#include "common-lzpi.h"
@@ -57,7 +62,7 @@ static void	macl_system_monitor(uint32_t data)
 #ifndef LAZURITE_IDE
 	printk(KERN_INFO"lazurite syslog: %d, sending retry counter: %d\n", macl.condition,macl.resendingNum);
 #else
-	Serial.print("lazyrite syslog: ");
+	Serial.print("lazurite syslog: ");
 	Serial.println_long(macl.condition,DEC);
 #endif
 	return;
