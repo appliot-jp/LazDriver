@@ -18,10 +18,11 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#pragma SEGCODE "OTA_SEGCODE2"
-#pragma SEGINIT "OTA_SEGINIT"
-#pragma SEGNOINIT "OTA_SEGNOINIT"
-
+#ifdef SUBGHZ_OTA
+	#pragma SEGCODE "OTA_SEGCODE2"
+	#pragma SEGINIT "OTA_SEGINIT"
+	#pragma SEGNOINIT "OTA_SEGNOINIT"
+#endif
 #include <common.h>
 #include <lazurite_system.h>
 #include <driver_timer.h>
