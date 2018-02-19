@@ -547,11 +547,11 @@ static const char* subghz_msg[] = {
 #endif
 static void subghz_msgOut(SUBGHZ_MSG msg)
 {
+#ifdef LAZURITE_IDE
 	static uint8_t s1[] = "\t";
 	static uint8_t s2[] = "RSSI=";
 	static uint8_t s3[] = "\tSTATUS=";
 
-#ifdef LAZURITE_IDE
 	if((msg>=SUBGHZ_OK)&&(msg<=SUBGHZ_TTL_SEND_OVR)){
 		Serial.print(subghz_msg[msg]);
 		Serial.print(s1);
