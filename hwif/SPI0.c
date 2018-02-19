@@ -19,7 +19,7 @@
  */
 
 #ifdef SUBGHZ_OTA
-	#pragma SEGCODE "OTA_SEGCODE2"
+	#pragma SEGCODE "OTA_SEGCODE"
 	#pragma SEGINIT "OTA_SEGINIT"
 	#pragma SEGCONST "OTA_SEGCONST"
 #endif
@@ -104,10 +104,8 @@ static volatile unsigned char _spi0_transfer(UCHAR _data)
 	// wait end of transfer
 	while(get_bit(S0EN)==1)
 	{
-#if !defined(SUBGHZ_OTA) || defined(SUBGHZ_OTA_DEBUG)
 		// w/a for avoiding UART communication data lost
 		uart_check_irq();
-#endif
 		continue;
 	} 
 

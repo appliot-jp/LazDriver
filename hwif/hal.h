@@ -73,11 +73,7 @@ extern void HAL_EX_enableInterrupt(void);
 extern void HAL_EX_disableInterrupt(void);
 
 #ifdef LAZURITE_IDE
-	#if !defined(SUBGHZ_OTA) || defined(SUBGHZ_OTA_DEBUG)
-		extern volatile void HAL_delayMicroseconds(unsigned long us);
-	#else
-		#define HAL_delayMicroseconds(x) delay_microseconds((unsigned long)x)
-	#endif
+	extern volatile void HAL_delayMicroseconds(unsigned long us);
 	#define HAL_millis() millis()
 	#define HAL_sleep(v) sleep(v)
 #else

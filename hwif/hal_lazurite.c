@@ -19,7 +19,7 @@
  */
 
 #ifdef SUBGHZ_OTA
-	#pragma SEGCODE "OTA_SEGCODE2"
+	#pragma SEGCODE "OTA_SEGCODE"
 	#pragma SEGINIT "OTA_SEGINIT"
 	#pragma SEGNOINIT "OTA_SEGNOINIT"
 #endif
@@ -220,7 +220,6 @@ void HAL_set_timer0_function(void (*func)(uint32_t sys_timer_count)) {
 	set_timer0_function(func);
 }
 
-#if !defined(SUBGHZ_OTA) || defined(SUBGHZ_OTA_DEBUG)
 volatile void HAL_delayMicroseconds(unsigned long us)
 {
   	if (us > 2) {
@@ -235,4 +234,3 @@ volatile void HAL_delayMicroseconds(unsigned long us)
 	}
 	return;
 }
-#endif

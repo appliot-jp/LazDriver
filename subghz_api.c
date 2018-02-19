@@ -19,7 +19,7 @@
  */
 
 #ifdef SUBGHZ_OTA
-	#pragma SEGCODE "OTA_SEGCODE2"
+	#pragma SEGCODE "OTA_SEGCODE"
 	#pragma SEGINIT "OTA_SEGINIT"
 	#pragma SEGNOINIT "OTA_SEGNOINIT"
 	#pragma SEGCONST "OTA_SEGCONST"
@@ -547,16 +547,20 @@ static const char* subghz_msg[] = {
 #endif
 static void subghz_msgOut(SUBGHZ_MSG msg)
 {
-#if defined(LAZURITE_IDE) && !defined(SUBGHZ_OTA)
+	static uint8_t s1[] = "\t";
+	static uint8_t s2[] = "RSSI=";
+	static uint8_t s3[] = "\tSTATUS=";
+
+#ifdef LAZURITE_IDE
 	if((msg>=SUBGHZ_OK)&&(msg<=SUBGHZ_TTL_SEND_OVR)){
 		Serial.print(subghz_msg[msg]);
-		Serial.print("\t");
+		Serial.print(s1);
 	}
 
 no_error:
-	Serial.print("RSSI=");
+	Serial.print(s2);
 	Serial.print_long((long)subghz_param.tx_stat.rssi,DEC);
-	Serial.print("\tSTATUS=");
+	Serial.print(s3);
 	Serial.println_long((long)subghz_param.tx_stat.status,DEC);
 	return;
 #endif
