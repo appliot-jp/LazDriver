@@ -297,11 +297,20 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 	fc.frame_type = IEEE802154_FC_TYPE_DATA;
 	fc.frame_ver = IEEE802154_FC_VER_4E;
 	fc.ack_req = subghz_param.ack_req;
-
-	mach_set_dst_short_addr(panid,dstAddr);
-	mach_set_src_addr(IEEE802154_FC_ADDR_SHORT);
-	subghz_param.sending = true;
-	result = mach_tx(fc,subghz_param.addr_type,&subghz_param.tx);
+	if(panid < 0xFFFE) {
+		mach_set_dst_short_addr(panid,dstAddr);
+		mach_set_src_addr(IEEE802154_FC_ADDR_SHORT);
+		subghz_param.sending = true;
+		result = mach_tx(fc,subghz_param.addr_type,&subghz_param.tx);
+	} else {
+		uint8_t broadcast_addr[8] = {
+			0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
+		};
+		mach_set_dst_ieee_addr(0xffff,broadcast_addr);
+		mach_set_src_addr(IEEE802154_FC_ADDR_IEEE);
+		subghz_param.sending = true;
+		result = mach_tx(fc,subghz_param.addr_type,&subghz_param.tx);
+	}
 
 	//mach_ed(&rssi);
 	//subghz_txdone(rssi,result);
@@ -320,7 +329,7 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) {
 		printk(KERN_INFO"%s,%s,%d,%d.%d\n",__FILE__,__func__,__LINE__,
-			msg,subghz_param.tx_stat.rssi);
+				msg,subghz_param.tx_stat.rssi);
 	}
 #endif
 	if(callback) {
@@ -352,23 +361,23 @@ int mach_rx_irq(struct mac_header *rx)
 			PAYLOADDUMP(rx->raw.data, rx->raw.len);
 		}
 #endif
-        if (rx->fc.fc_bit.sec_enb && AES128_getStatus()){
-            uint8_t mhr_len;
-            uint8_t pad;
-            uint8_t outbuf[256];
-            if (rx->fc.fc_bit.seq_comp){
-                rx->seq=0;
-            }
-            mhr_len = rx->raw.len - rx->payload.len;
-            memcpy(outbuf, rx->raw.data,mhr_len);
-            pad = AES128_CBC_decrypt(outbuf+mhr_len, rx->payload.data, rx->payload.len, rx->seq);
-            rx->raw.len -= pad;
-            memcpy(rx->raw.data, outbuf, rx->raw.len);
+		if (rx->fc.fc_bit.sec_enb && AES128_getStatus()){
+			uint8_t mhr_len;
+			uint8_t pad;
+			uint8_t outbuf[256];
+			if (rx->fc.fc_bit.seq_comp){
+				rx->seq=0;
+			}
+			mhr_len = rx->raw.len - rx->payload.len;
+			memcpy(outbuf, rx->raw.data,mhr_len);
+			pad = AES128_CBC_decrypt(outbuf+mhr_len, rx->payload.data, rx->payload.len, rx->seq);
+			rx->raw.len -= pad;
+			memcpy(rx->raw.data, outbuf, rx->raw.len);
 #ifdef DEBUG_AES
-            Serial.print("AES ON: pad num: ");
-            Serial.println_long(pad,DEC);
+			Serial.print("AES ON: pad num: ");
+			Serial.println_long(pad,DEC);
 #endif
-        }
+		}
 
 		if(subghz_param.rx_callback != NULL) {
 			subghz_param.rx_callback(rx->raw.data, rx->rssi,rx->raw.len);
@@ -451,22 +460,22 @@ error:
 }
 
 /*static SUBGHZ_MSG subghz_setPANID(uint16_t panid)
-  {
-  SUBGHZ_MSG msg;
-  int result;
+	{
+	SUBGHZ_MSG msg;
+	int result;
 
-  result = BP3596_setMyPANID(panid);
-  if(result != BP3596_STATUS_OK)
-  {
-  msg = SUBGHZ_PANID;
-  goto error;
-  }
-  msg = SUBGHZ_OK;
+	result = BP3596_setMyPANID(panid);
+	if(result != BP3596_STATUS_OK)
+	{
+	msg = SUBGHZ_PANID;
+	goto error;
+	}
+	msg = SUBGHZ_OK;
 error:
 subghz_param.tx_stat.status = result;
 return msg;
 }
- */
+*/
 static void subghz_getStatus(SUBGHZ_STATUS *tx, SUBGHZ_STATUS *rx)
 {
 	if (tx != NULL)

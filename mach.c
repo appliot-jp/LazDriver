@@ -141,7 +141,6 @@ static int mach_make_header(struct mac_header *header) {
 		if((!header->dst.panid.enb) || (header->dst.panid.data == 0xFFFE))
 		{
 #ifndef LAZURITE_IDE
-			printk(KERN_ERR"dst panid is invalid in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 			status = -EINVAL;
 			goto error;
@@ -336,10 +335,10 @@ static int mach_make_header(struct mac_header *header) {
 				header->fc.fc_bit.sec_enb = 1;
 				if (mach.rx.fc.fc_bit.seq_comp){
 					pad = AES128_CBC_encrypt(&header->raw.data[offset], header->payload.data, header->payload.len,0) ;
-				//  pad = AES128_CBC_encrypt(&mach.tx.payload, (uint8_t *)data, size, 0); 
+					//  pad = AES128_CBC_encrypt(&mach.tx.payload, (uint8_t *)data, size, 0); 
 				}else{
 					pad = AES128_CBC_encrypt(&header->raw.data[offset], header->payload.data, header->payload.len,header->seq) ;
-				//  pad = AES128_CBC_encrypt(&mach.tx.payload, (uint8_t *)data, size, header.seq);
+					//  pad = AES128_CBC_encrypt(&mach.tx.payload, (uint8_t *)data, size, header.seq);
 				}
 				// api.tx.buffer.size += pad;
 				offset += pad;
@@ -352,30 +351,30 @@ static int mach_make_header(struct mac_header *header) {
 		header->raw.len = offset;
 
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) {
-        printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
-		PAYLOADDUMP(header->payload.data, header->payload.len);
-		PAYLOADDUMP(header->raw.data, header->raw.len);
-    }
+		if(module_test & MODE_MACH_DEBUG) {
+			printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
+			PAYLOADDUMP(header->payload.data, header->payload.len);
+			PAYLOADDUMP(header->raw.data, header->raw.len);
+		}
 
 #elif defined(DEBUG_AES)
-	{
-		uint8_t i;
-		Serial.print(header->raw.data);
-		Serial.print("\r\n");
-		for(i=0;i<header->raw.len-1;i++)
 		{
-			Serial.print_long((long)*((uint8_t *)header->raw.data+i),HEX);
+			uint8_t i;
+			Serial.print(header->raw.data);
+			Serial.print("\r\n");
+			for(i=0;i<header->raw.len-1;i++)
+			{
+				Serial.print_long((long)*((uint8_t *)header->raw.data+i),HEX);
+			}
+			Serial.print("\r\n");
+			Serial.print("len,pad,seq: ");
+			Serial.print_long( header->raw.len, DEC);
+			Serial.print(" ");
+			Serial.print_long( pad, DEC);
+			Serial.print(" ");
+			Serial.print_long( header->seq, DEC);
+			Serial.print("\r\n");
 		}
-		Serial.print("\r\n");
-		Serial.print("len,pad,seq: ");
-		Serial.print_long( header->raw.len, DEC);
-		Serial.print(" ");
-		Serial.print_long( pad, DEC);
-		Serial.print(" ");
-		Serial.print_long( header->seq, DEC);
-		Serial.print("\r\n");
-	}
 #endif
 	} else {
 		status = -ENOMEM;
@@ -393,13 +392,13 @@ error:
 
 /******************************************************************************/
 /*! @brief prawarse mac header
-  @param[in] header pointer of mac header<br>
-  input = input buffer<br>
-  raw   = output buffer<br>
-  payload = pointer/length of payload<br>
-  @return    STATUS_OK, error num
-  @exception ENOMEM = data size error
-  in case of rx disable, this error is occured, when any data is received,
+	@param[in] header pointer of mac header<br>
+	input = input buffer<br>
+	raw   = output buffer<br>
+	payload = pointer/length of payload<br>
+	@return    STATUS_OK, error num
+	@exception ENOMEM = data size error
+	in case of rx disable, this error is occured, when any data is received,
  ******************************************************************************/
 int mach_parse_data(struct mac_header *header) {
 
@@ -462,9 +461,9 @@ int mach_parse_data(struct mac_header *header) {
 
 /******************************************************************************/
 /*! @brief compare sequence number and address<br>
-  when seqnence number and address of current rx is as same as the previous, rx data is sent as retry.
+	when seqnence number and address of current rx is as same as the previous, rx data is sent as retry.
 
-  @return    true=match false=unmatch
+	@return    true=match false=unmatch
  ******************************************************************************/
 bool mach_match_seq_num(void)
 {
@@ -480,27 +479,27 @@ bool mach_match_seq_num(void)
 
 /******************************************************************************/
 /*! @brief make ack header
-  @param[in] *ack mac header of ack
-  @param[in] *rx mac header of receiving data
-  @return    STATUS_OK
-  @exception EINVAL		can not return ack
-  rx.dst.addr | rx.src.addr | my.pancoord | coord.pancoord | rx    | ack
-  -----------------------------------------------------------------------
-  ieee      |     none    |  don't care |  don't care    | yes   |  no
-  short/omit  |     none    |   true      |  don't care    | yes   |  no
-  short/omit  |     none    |  false      |  don't care    | No    |  no
+	@param[in] *ack mac header of ack
+	@param[in] *rx mac header of receiving data
+	@return    STATUS_OK
+	@exception EINVAL		can not return ack
+	rx.dst.addr | rx.src.addr | my.pancoord | coord.pancoord | rx    | ack
+	-----------------------------------------------------------------------
+	ieee      |     none    |  don't care |  don't care    | yes   |  no
+	short/omit  |     none    |   true      |  don't care    | yes   |  no
+	short/omit  |     none    |  false      |  don't care    | No    |  no
 
-  ieee      |     ieee    |  don't care |  don't care    | yes   |  yes
-  short/omit  |     ieee    |   true      |  don't care    | yes   |  yes
-  short/omit  |     ieee    |  false      |  don't care    | No    |   no
+	ieee      |     ieee    |  don't care |  don't care    | yes   |  yes
+	short/omit  |     ieee    |   true      |  don't care    | yes   |  yes
+	short/omit  |     ieee    |  false      |  don't care    | No    |   no
 
-  ieee      |  short/omit |  don't care |    true        | yes   |  yes
-  short/omit  |  short/omit |   true      |    true        | yes   |  yes
-  short/omit  |  short/omit |  false      |    true        | No    |   no
+	ieee      |  short/omit |  don't care |    true        | yes   |  yes
+	short/omit  |  short/omit |   true      |    true        | yes   |  yes
+	short/omit  |  short/omit |  false      |    true        | No    |   no
 
-  ieee      |  short/omit |  don't care |    false        | yes  |  no
-  short/omit  |  short/omit |   true      |    false        | yes  |  no
-  short/omit  |  short/omit |  false      |    false        | No   |  no
+	ieee      |  short/omit |  don't care |    false        | yes  |  no
+	short/omit  |  short/omit |   true      |    false        | yes  |  no
+	short/omit  |  short/omit |  false      |    false        | No   |  no
  ******************************************************************************/
 #define ACK_ENB	0x06
 bool mach_make_ack_header(void) {
@@ -514,17 +513,17 @@ bool mach_make_ack_header(void) {
 	}
 #endif
 	if( ((mach.rx.addr_type == 6) || (mach.rx.addr_type == 7)) &&
-	(mach.rx.fc.fc_bit.ack_req) &&
-	(((mach.rx.dst.addr_type == IEEE802154_FC_ADDR_SHORT) && (mach.rx.dst.addr.short_addr != 0xFFFF)) ||
-	((mach.rx.dst.addr_type == IEEE802154_FC_ADDR_IEEE) &&
-	((mach.rx.dst.addr.ieee_addr[0] != 0xFF) ||(mach.rx.dst.addr.ieee_addr[1] != 0xFF) ||
-	(mach.rx.dst.addr.ieee_addr[2] != 0xFF) ||
-	(mach.rx.dst.addr.ieee_addr[3] != 0xFF) ||
-	(mach.rx.dst.addr.ieee_addr[4] != 0xFF) ||
-	(mach.rx.dst.addr.ieee_addr[5] != 0xFF) ||
-	(mach.rx.dst.addr.ieee_addr[6] != 0xFF) ||
-	(mach.rx.dst.addr.ieee_addr[7] != 0xFF))
-	))) {
+			(mach.rx.fc.fc_bit.ack_req) &&
+			(((mach.rx.dst.addr_type == IEEE802154_FC_ADDR_SHORT) && (mach.rx.dst.addr.short_addr != 0xFFFF)) ||
+			 ((mach.rx.dst.addr_type == IEEE802154_FC_ADDR_IEEE) &&
+				((mach.rx.dst.addr.ieee_addr[0] != 0xFF) ||(mach.rx.dst.addr.ieee_addr[1] != 0xFF) ||
+				 (mach.rx.dst.addr.ieee_addr[2] != 0xFF) ||
+				 (mach.rx.dst.addr.ieee_addr[3] != 0xFF) ||
+				 (mach.rx.dst.addr.ieee_addr[4] != 0xFF) ||
+				 (mach.rx.dst.addr.ieee_addr[5] != 0xFF) ||
+				 (mach.rx.dst.addr.ieee_addr[6] != 0xFF) ||
+				 (mach.rx.dst.addr.ieee_addr[7] != 0xFF))
+			 ))) {
 		// genenrate ack data
 		mach.ack.fc.fc16 = 0;
 		mach.ack.fc.fc_bit.frame_type = IEEE802154_FC_TYPE_ACK;
@@ -579,9 +578,9 @@ int mach_update_rx_data(void)
 }
 /*********************************************************************/
 /*! @brief mach init 
-  mac high layer initialization
-  @return    pointer of MACH_PARAM
-  @exception  return NULL
+	mac high layer initialization
+	@return    pointer of MACH_PARAM
+	@exception  return NULL
  *********************************************************************/
 struct mach_param *mach_init(void)
 {
@@ -607,9 +606,9 @@ struct mach_param *mach_init(void)
 
 /********************************************************************/
 /*! @brief mach start 
-  mac high layer rx on
-  @return     STATUS_OK
-  @exception  depends on macl_start
+	mac high layer rx on
+	@return     STATUS_OK
+	@exception  depends on macl_start
  ********************************************************************/
 int mach_start(BUFFER *rxbuf) {
 	int status = STATUS_OK;
@@ -636,9 +635,9 @@ int mach_start(BUFFER *rxbuf) {
 
 /********************************************************************/
 /*! @brief mach stop 
-  mac high layer rx off
-  @return    STATUS_OK
-  @exception  depends on macl_stop
+	mac high layer rx off
+	@return    STATUS_OK
+	@exception  depends on macl_stop
  ********************************************************************/
 int mach_stop(void) {
 	return macl_stop();
@@ -646,8 +645,8 @@ int mach_stop(void) {
 
 /********************************************************************/
 /*! @brief setup rx parameters
-  @return    STATUS_OK
-  @exception  depends on macl_stop
+	@return    STATUS_OK
+	@exception  depends on macl_stop
  ********************************************************************/
 int mach_setup(struct rf_param *rf) {
 	int status;
@@ -675,10 +674,10 @@ error:
 
 /********************************************************************/
 /*! @brief set 64bit address for distination
-  @param[in]	panid	panid
-  @param[in]	*addr	64bit distination address
-  @return    STATUS_OK
-  @exception none
+	@param[in]	panid	panid
+	@param[in]	*addr	64bit distination address
+	@return    STATUS_OK
+	@exception none
  ********************************************************************/
 int mach_set_dst_ieee_addr(uint16_t panid,uint8_t *addr)
 {
@@ -699,7 +698,7 @@ int mach_set_dst_ieee_addr(uint16_t panid,uint8_t *addr)
 				mach.tx.dst.addr.ieee_addr[2],
 				mach.tx.dst.addr.ieee_addr[1],
 				mach.tx.dst.addr.ieee_addr[0]
-			  );
+				);
 	}
 #endif
 	return STATUS_OK;
@@ -707,8 +706,8 @@ int mach_set_dst_ieee_addr(uint16_t panid,uint8_t *addr)
 
 /********************************************************************/
 /*! @brief set src address according to addr_type
-  @param[in]	addr_type	address type(0: omit, 1:8bit ldd, 2: 16bit, 3: 64bit
-  @return    STATUS_OK
+	@param[in]	addr_type	address type(0: omit, 1:8bit ldd, 2: 16bit, 3: 64bit
+	@return    STATUS_OK
  ********************************************************************/
 int mach_set_src_addr(uint8_t addr_type)
 {
@@ -747,8 +746,8 @@ int mach_set_src_addr(uint8_t addr_type)
 
 /********************************************************************/
 /*! @brief set dst short address
-  @param[in]	addr_type	address type(0: omit, 1:8bit ldd, 2: 16bit, 3: 64bit
-  @return    STATUS_OK
+	@param[in]	addr_type	address type(0: omit, 1:8bit ldd, 2: 16bit, 3: 64bit
+	@return    STATUS_OK
  ********************************************************************/
 int mach_set_dst_short_addr(uint16_t panid,uint16_t addr)
 {
@@ -762,19 +761,19 @@ int mach_set_dst_short_addr(uint16_t panid,uint16_t addr)
 
 /********************************************************************/
 /*! @brief set my short address
-  panid == 0xffff, 0xfffe	--> pan_coord is false
-  panid == others			--> pan_coord is true
-  @param[in]	panid	64bit distination address
-  @param[in]	addr	start pointer of payload
-  @return		status = STATUS_OK
-  @exception	EINVAL: panid/short_addr == 0xffff,0xfffe
-  my.panid | my.short_addr | pan_coord
-  ---    |     ---       | false (init)
-  0xffff   |     ---       | false
-  0xfffe   |     ---       | false
-  ---    |     0xffff    | false
-  ---    |     0xfffe    | false
-  other  |     other     | true
+	panid == 0xffff, 0xfffe	--> pan_coord is false
+	panid == others			--> pan_coord is true
+	@param[in]	panid	64bit distination address
+	@param[in]	addr	start pointer of payload
+	@return		status = STATUS_OK
+	@exception	EINVAL: panid/short_addr == 0xffff,0xfffe
+	my.panid | my.short_addr | pan_coord
+	---    |     ---       | false (init)
+	0xffff   |     ---       | false
+	0xfffe   |     ---       | false
+	---    |     0xffff    | false
+	---    |     0xfffe    | false
+	other  |     other     | true
  ********************************************************************/
 int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr)
 {
@@ -784,7 +783,7 @@ int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr)
 	if((panid == 0xffff) || (panid == 0xfffe) || (short_addr == 0xffff))
 	{
 		mach.my_addr.pan_coord = false;
-		status = -EINVAL;
+		//status = -EINVAL;
 	} else {
 		mach.my_addr.pan_coord = true;
 	}
@@ -799,37 +798,37 @@ int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr)
 		macl_set_hw_addr_filt(&filt,0x0f);			// update all of addr filter
 #ifndef LAZURITE_IDE
 		/*
-		printk(KERN_INFO"Lazurite: My Addr= %02x%02x%02x%02x%02x%02x%02x%02x %d 0x%04x 0x%04x\n",
-			mach.my_addr.ieee_addr[7],
-			mach.my_addr.ieee_addr[6],
-			mach.my_addr.ieee_addr[5],
-			mach.my_addr.ieee_addr[4],
-			mach.my_addr.ieee_addr[3],
-			mach.my_addr.ieee_addr[2],
-			mach.my_addr.ieee_addr[1],
-			mach.my_addr.ieee_addr[0],
-			mach.my_addr.pan_coord,
-			mach.my_addr.pan_id,
-			mach.my_addr.short_addr);
-		*/
+			 printk(KERN_INFO"Lazurite: My Addr= %02x%02x%02x%02x%02x%02x%02x%02x %d 0x%04x 0x%04x\n",
+			 mach.my_addr.ieee_addr[7],
+			 mach.my_addr.ieee_addr[6],
+			 mach.my_addr.ieee_addr[5],
+			 mach.my_addr.ieee_addr[4],
+			 mach.my_addr.ieee_addr[3],
+			 mach.my_addr.ieee_addr[2],
+			 mach.my_addr.ieee_addr[1],
+			 mach.my_addr.ieee_addr[0],
+			 mach.my_addr.pan_coord,
+			 mach.my_addr.pan_id,
+			 mach.my_addr.short_addr);
+			 */
 #endif
 	}
 	return status;
 }
 /********************************************************************/
 /*! @brief set coord short address
-  @param[in]	panid	panid of coordinator
-  @param[in]	addr	address of coordinator
-  @param[in]	ieee_addr	64bit address
-  @return		status = STATUS_OK
-  @exception	EINVAL: panid/short_addr == 0xffff,0xfffe
-  coord.panid | coord.short_addr | pan_coord
-  ---    |     ---       | false (init)
-  0xffff   |     ---       | false
-  0xfffe   |     ---       | false
-  ---    |     0xffff    | false
-  ---    |     0xfffe    | false
-  other  |     other     | true
+	@param[in]	panid	panid of coordinator
+	@param[in]	addr	address of coordinator
+	@param[in]	ieee_addr	64bit address
+	@return		status = STATUS_OK
+	@exception	EINVAL: panid/short_addr == 0xffff,0xfffe
+	coord.panid | coord.short_addr | pan_coord
+	---    |     ---       | false (init)
+	0xffff   |     ---       | false
+	0xfffe   |     ---       | false
+	---    |     0xffff    | false
+	---    |     0xfffe    | false
+	other  |     other     | true
  ********************************************************************/
 int mach_set_coord_addr(uint16_t panid,uint16_t short_addr,uint8_t *ieee_addr)
 {
@@ -909,13 +908,13 @@ int mach_sleep(bool on)
 
 /********************************************************************/
 /*! @brief set coord short address
-  @param[in]	rx  pointer of rx buffer<br>
-  when rx==NULL, end of sending ack
-  @param[out]	ack pointer when ack is return<br>
-  when ack is not needed, ack is set to NULL
-  @return		STATUS_OK<br>
-  1= data is ack
-  @exception	
+	@param[in]	rx  pointer of rx buffer<br>
+	when rx==NULL, end of sending ack
+	@param[out]	ack pointer when ack is return<br>
+	when ack is not needed, ack is set to NULL
+	@return		STATUS_OK<br>
+	1= data is ack
+	@exception	
  ********************************************************************/
 int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 {
@@ -939,7 +938,7 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 		mach.rx.input.len = rx->len-1;
 		mach.rx.input.size = rx->size;
 		mach.rx.rssi = rx->data[rx->len-1];
-		
+
 #ifndef LAZURITE_IDE
 		if(module_test & MODE_MACH_DEBUG) {
 			printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,__LINE__,mach.rx.input.len);
@@ -950,8 +949,8 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 		} else {
 			// parse raw data
 			if((status = mach_parse_data(&mach.rx)!= STATUS_OK) ||
-				((mach.rx.dst.addr_type == 3) &&
-				(memcmp(mach.rx.dst.addr.ieee_addr,mach.my_addr.ieee_addr,8)!=0))) {
+					((mach.rx.dst.addr_type == 3) &&
+					 (memcmp(mach.rx.dst.addr.ieee_addr,mach.my_addr.ieee_addr,8)!=0))) {
 #ifndef LAZURITE_IDE
 				if(module_test & MODE_MACH_DEBUG) {
 					printk(KERN_INFO"%s,%s,%d,mach_parse_data error\n",__FILE__,__func__,__LINE__);
@@ -1013,8 +1012,8 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 		}
 		if((mach.macl->promiscuousMode)||
 				((mach_match_seq_num()==false) && 
-				((mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_DATA) ||
-				 (mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_CMD)))) {
+				 ((mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_DATA) ||
+					(mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_CMD)))) {
 			// rx data is copy to previous
 			memcpy(&mach.rx_prev,&mach.rx,sizeof(mach.rx));
 

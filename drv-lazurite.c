@@ -323,7 +323,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 						p.my_panid = arg;
 						ret = p.my_panid;
 					} else {
-						printk(KERN_ERR"bps = %lx error!! must be 50 or 100\n",arg);
+						printk(KERN_ERR"bps = %lx SRC PANID ERROR\n",arg);
 						ret = -EINVAL;
 					}
 					break;
@@ -335,7 +335,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 						p.dst_panid = arg;
 						ret = p.dst_panid;
 					} else {
-						printk(KERN_ERR"bps = %lx error!! must be 50 or 100\n",arg);
+						printk(KERN_ERR"DST PANID ERROR = %lx error!!\n",arg);
 						ret = -EINVAL;
 					}
 					break;

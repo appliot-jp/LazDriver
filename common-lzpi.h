@@ -30,20 +30,41 @@ extern int module_test;
 //#endif
 
 #ifndef PAYLOADDUMP
-#define PAYLOADDUMP( data, size ) {                                                   \
-	int d;                                                                            \
-	if (size > 0){                                                                    \
-		printk( " [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F\r\n");   \
-		printk( "-----------------------------------------------------------\r\n");   \
-		printk( "00000000   " );                                                      \
-		for (d = 0; d < size; d++){                                                   \
-			printk( "%02X %s", data[d], !((d + 1) % 8)?" ":"" );                      \
-			if (!((d + 1) % 16)) {                                                    \
-				printk( "\r\n%08X   ", d + 1);                                        \
-			}                                                                         \
-		}                                                                             \
-		printk( "\r\n" );                                                             \
-	}                                                                                 \
+#define PAYLOADDUMP( data, size ) {\
+	int d;\
+	int p;\
+	uint8_t tmp;\
+	char str[64] ;	\
+	if (size > 0){\
+		printk(KERN_INFO" [PAYLOAD] 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F\r\n");\
+		printk(KERN_INFO"-----------------------------------------------------------\r\n");\
+		memset(str,0,sizeof(str));\
+		for (d = 0,p=0; d < size; d++){\
+			tmp = data[d]  >> 4;\
+			if(tmp >= 10) {\
+				tmp -= 10;\
+				str[p] = 'A'+tmp;p++;\
+			} else {\
+				str[p] = '0'+tmp;p++;\
+			}\
+			tmp = data[d] & 0x0F;\
+			if(tmp >= 10) {\
+				tmp -= 10;\
+				str[p] = 'A'+tmp;p++;\
+			} else {\
+				str[p] = '0'+tmp;p++;\
+			}\
+			str[p] = ' ';p++;\
+			if((d+1)%16 == 0) {\
+				printk(KERN_INFO"%08X %s", d/16, str);\
+				memset(str,0,sizeof(str));\
+				p = 0; \
+			} else if( (d+1) % 8 == 0 ) {\
+				str[p] = ' ';p++;\
+			}\
+		}\
+		printk(KERN_INFO"%08X %s", d/16, str);\
+	}\
 }
 #endif
 
