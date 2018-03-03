@@ -66,6 +66,7 @@ static BUFFER rx_enhance_ack;
 const uint8_t enb_dst_panid = 0x52;
 const uint8_t enb_src_panid = 0x04;
 const uint8_t addr_len[] = {0x00,0x01,0x02,0x08};
+static const uint8_t broadcast_addr[8] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
 
 
 /******************************************************************************/
@@ -949,14 +950,15 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 		} else {
 			// parse raw data
 			if((status = mach_parse_data(&mach.rx)!= STATUS_OK) ||
-					((mach.rx.dst.addr_type == 3) &&
-					 (memcmp(mach.rx.dst.addr.ieee_addr,mach.my_addr.ieee_addr,8)!=0))) {
+					((mach.rx.dst.addr_type == 3) && 
+					 (memcmp(mach.rx.dst.addr.ieee_addr,mach.my_addr.ieee_addr,8)!=0) &&
+					 (memcmp(mach.rx.dst.addr.ieee_addr,broadcast_addr,8) !=0))) {
 #ifndef LAZURITE_IDE
-				if(module_test & MODE_MACH_DEBUG) {
-					printk(KERN_INFO"%s,%s,%d,mach_parse_data error\n",__FILE__,__func__,__LINE__);
-				}
+					if(module_test & MODE_MACH_DEBUG) {
+						printk(KERN_INFO"%s,%s,%d,mach_parse_data error\n",__FILE__,__func__,__LINE__);
+					}
 #endif
-				return -1;
+					return -1;
 			}
 			// data frame and cmd frame
 			if ((mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_DATA) ||
