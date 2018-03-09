@@ -1048,7 +1048,7 @@ bool  mach_set_enhance_ack(uint8_t* data, int size) {
 	if((data == NULL) || (size == 0)) {
 		tx_enhance_ack.data = NULL;
 		tx_enhance_ack.len = 0;
-		tx_enhance_ack.len = 0;
+		tx_enhance_ack.size = 0;
 	}
 	else if(size >= 0) {
 		result = true;

@@ -504,7 +504,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					ret = 0;
 					break;
 				case IOCTL_SET_EACK_DATA:
-					if((arg == 0) || (eack_tx.len <= 0) || (eack_tx.data==NULL)){
+					if((arg == 0) || (eack_tx.len < 0)){
 						ret = -EFAULT;
 					} else {
 						if(copy_from_user(eack_tx.data,(const char  __user *)arg,eack_tx.len)) {
