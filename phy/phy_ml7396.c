@@ -30,12 +30,12 @@
 //	#include <stdint.h>
 #else
 	#include <linux/stddef.h>
+	#include "../hwif/random-lzpi.h"
 	#include "../common-lzpi.h"
 #endif
 
 #include "../phy.h"
 #include "phy_ml7396.h"
-#include "../hwif/random.h"
 #include "../hwif/hal.h"
 #include "../errno.h"
 #include "../endian.h"
