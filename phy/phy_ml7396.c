@@ -30,12 +30,12 @@
 //	#include <stdint.h>
 #else
 	#include <linux/stddef.h>
+	#include "../hwif/random-lzpi.h"
 	#include "../common-lzpi.h"
 #endif
 
 #include "../phy.h"
 #include "phy_ml7396.h"
-#include "../hwif/random.h"
 #include "../hwif/hal.h"
 #include "../errno.h"
 #include "../endian.h"
@@ -470,7 +470,7 @@ static void fifo_rd(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size)
 //	__EI();
 }
 
-
+/*
 static void phy_mesg(void)
 {
     uint8_t reg_data[4];
@@ -498,7 +498,7 @@ static void phy_mesg(void)
     reg_rd(REG_ADR_RF_STATUS, reg_data, 1);
 #endif
 }
-
+*/
 
 /******************************************************************************/
 /*! @brief Enable interrupt / Diseable interrupt
@@ -524,7 +524,7 @@ static void phy_inten(uint32_t inten)
 static void phy_intclr(uint32_t intclr)
 {
     uint8_t reg_data[4];
-    phy_mesg();
+    // phy_mesg(); 
     reg_data[0] = ~(uint8_t)((intclr) >>  0);
     reg_data[1] = ~(uint8_t)((intclr) >>  8);
     reg_data[2] = ~(uint8_t)((intclr) >> 16);
@@ -1135,10 +1135,10 @@ void phy_txStart(BUFFER *buff,uint8_t mode)
     uint16_t length = buff->len;
     uint8_t *payload = buff->data;
 
-    if (mode != 2) {
-        phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
-        phy_rst();
-    }
+//  if (mode != 2) {
+//        phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+//        phy_rst();
+//  }
 
     reg_data[0] = PHY_REG_SET_TX_DONE_OFF;
     reg_wr(REG_ADR_ACK_TIMER_EN, reg_data, 1);
@@ -1170,7 +1170,7 @@ void phy_txStart(BUFFER *buff,uint8_t mode)
     if(mode == 2) phy_set_trx_state(PHY_ST_TXON);
 #ifndef LAZURITE_IDE
     if(module_test & MODE_PHY_DEBUG){
-        printk(KERN_INFO"%s,%s,%lx,%d,SequnceNumber:%d\n",__FILE__,__func__,(unsigned long)payload,length,payload[2]);
+        printk(KERN_INFO"%s,%s,%lx,%d,SequnceNumber:%d,Mode:%d\n",__FILE__,__func__,(unsigned long)payload,length,payload[2],mode);
      // PAYLOADDUMP(payload,length);
     }
 #endif
@@ -1183,7 +1183,11 @@ void phy_ccaCtrl(CCA_STATE state) {
     uint8_t reg_idl_wait;
     uint8_t reg_data;
 
-    phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+     if (state == CCA_FAILURE) {
+     // phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+        reg_data = PHY_ST_TRXOFF;
+        reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
+     }
 
     if (state == CCA_FAILURE || state == CCA_IDLE){
         reg_data = 0x64;

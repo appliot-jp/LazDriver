@@ -686,6 +686,10 @@ static void subghz_set_ack_tx_interval(uint16_t interval){
 	mach_set_ack_tx_interval(interval);
 }
 
+static void subghz_get_ed_value(uint8_t *rssi){
+    mach_ed(rssi);
+}
+
 // setting of function
 const SubGHz_CTRL SubGHz = {
 	subghz_init,
@@ -712,5 +716,6 @@ const SubGHz_CTRL SubGHz = {
 	subghz_setKey,
 	subghz_set_enhance_ack,
 	subghz_get_enhance_ack,
-	subghz_set_ack_tx_interval
+	subghz_set_ack_tx_interval,
+	subghz_get_ed_value
 };

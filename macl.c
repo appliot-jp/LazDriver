@@ -497,6 +497,11 @@ int	macl_xmit_sync(BUFFER buff)
 		phy_wait_mac_event();
 	}
 
+    phy_stop();
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+
 	if (macl_total_transmission_time(macl.phy->out.len) == STATUS_OK){
 
 #ifdef LAZURITE_IDE
