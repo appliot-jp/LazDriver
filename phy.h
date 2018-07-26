@@ -73,7 +73,7 @@ extern void phy_wakeup_phy_event(void);
 extern void phy_wakeup_mac_event(void);
 
 extern PHY_PARAM *phy_init(void);
-extern int phy_setup(uint8_t page,uint8_t ch);
+extern int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower);
 
 // extern void phy_promiscuous(void);
 extern void phy_rxStart(void);
