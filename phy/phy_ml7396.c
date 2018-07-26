@@ -30,12 +30,12 @@
 //	#include <stdint.h>
 #else
 	#include <linux/stddef.h>
+	#include "../hwif/random-lzpi.h"
 	#include "../common-lzpi.h"
 #endif
 
 #include "../phy.h"
 #include "phy_ml7396.h"
-#include "../hwif/random.h"
 #include "../hwif/hal.h"
 #include "../errno.h"
 #include "../endian.h"
@@ -470,7 +470,7 @@ static void fifo_rd(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size)
 //	__EI();
 }
 
-
+/*
 static void phy_mesg(void)
 {
     uint8_t reg_data[4];
@@ -498,7 +498,7 @@ static void phy_mesg(void)
     reg_rd(REG_ADR_RF_STATUS, reg_data, 1);
 #endif
 }
-
+*/
 
 /******************************************************************************/
 /*! @brief Enable interrupt / Diseable interrupt
