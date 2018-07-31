@@ -655,12 +655,10 @@ int mach_setup(struct rf_param *rf) {
 	// link parameter
 	mach.rf = rf;
 
-	// set channel
-	if((status = macl_set_channel(rf->pages,rf->ch)) != STATUS_OK){
+	// set channel & txpow
+	if((status = macl_set_channel(rf->pages,rf->ch,rf->tx_power)) != STATUS_OK){
 		goto error;
 	}
-
-	if((status = macl_set_txpower(rf->tx_power)) != STATUS_OK) goto error;
 
 	// set setting CCA
 	if((status = macl_set_frame_retries(rf->tx_retry,rf->ack_timeout)) != STATUS_OK) goto error;

@@ -820,10 +820,8 @@ void phy_wakeup_mac_event(void)
    Setting peculiar to other devices
    awaiting first clock stability and the last calibration practice are unnecessary
  ******************************************************************************/
-int phy_setup(uint8_t page,uint8_t ch)
+int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower)
 {
-
-    uint8_t txPower = 20;
     uint8_t device_id;
     uint16_t address;
 
