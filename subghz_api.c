@@ -111,6 +111,7 @@ static SUBGHZ_MSG subghz_init(void)
 	// data to myaddress and grobal address in specified PANID can be received.
 	subghz_param.short_addr = (uint16_t)subghz_param.mach->my_addr.ieee_addr[0] | 
 		((uint16_t)subghz_param.mach->my_addr.ieee_addr[1]<<8);
+	srand((uint16_t)subghz_param.short_addr);
 	msg =  SUBGHZ_OK;
 
 error:
