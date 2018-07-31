@@ -34,6 +34,7 @@
 	#include <linux/sched.h>
 	#include <linux/wait.h>
 	#include "common-lzpi.h"
+	#include "hwif/random-lzpi.h"
 #endif
 
 #include "common_subghz.h"
