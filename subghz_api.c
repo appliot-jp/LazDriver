@@ -92,7 +92,7 @@ static SUBGHZ_MSG subghz_init(void)
 	subghz_param.rf.tx_max_be = 7;
 	subghz_param.rf.tx_retry = 3;
 	subghz_param.rf.tx_power = DBM_TO_MBM(13);
-	subghz_param.rf.ack_timeout = 500;
+	subghz_param.rf.ack_timeout = 0;
 	subghz_param.rf.tx_retry = 3;
     AES128_setKey(NULL);
 

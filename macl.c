@@ -27,6 +27,7 @@
 #ifndef LAZURITE_IDE
 	#include <linux/module.h>
 	#include "common-lzpi.h"
+	#include "hwif/random-lzpi.h"
 #else
     #include <driver_irq.h>
 	#include "serial.h"
@@ -318,6 +319,7 @@ static void macl_cca_abort_handler(void)
 static void macl_txdone_handler(void)
 {
 	uint8_t ack_req;
+	uint16_t timeout;
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d,%lx,%d\n",
 			__FILE__,__func__,macl.ack_timeout,(unsigned long)macl.ack.data,macl.phy->out.data[0]);
@@ -328,7 +330,12 @@ static void macl_txdone_handler(void)
 	ack_req = macl.phy->out.data[0]&0x20;
 	if(ack_req){
 		phy_timer_handler(macl_ack_timeout_handler);
-		phy_timer_start(macl.ack_timeout);
+		if(macl.ack_timeout == 0) {
+			timeout = 50 + rand() % 450;
+		} else {
+			timeout = macl.ack_timeout;
+		}
+		phy_timer_start(timeout);
 		phy_sint_handler(macl_ack_rxdone_handler);
 		phy_rxStart();
 	}else{
@@ -452,9 +459,9 @@ MACL_PARAM* macl_init(void)
 
 /********************************************************************/
 /*! @brief macl start 
-  mac low layer rx on
-  @return     0=STATUS_OK, other = error
-  @exception  return NULL
+	mac low layer rx on
+	@return     0=STATUS_OK, other = error
+	@exception  return NULL
  ********************************************************************/
 int	macl_start(void)
 {
@@ -497,7 +504,7 @@ int	macl_xmit_sync(BUFFER buff)
 		phy_wait_mac_event();
 	}
 
-    phy_stop();
+	phy_stop();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
@@ -551,12 +558,12 @@ int	macl_set_channel(uint8_t page,uint8_t ch, uint32_t mbm)
 	macl.pages = page;
 	macl.ch = ch;
 
-    if (mbm == 100){ 
-        macl.txPower = 1;
-    }else {
-        macl.txPower = 20;
-    }
-    
+	if (mbm == 100){ 
+		macl.txPower = 1;
+	}else {
+		macl.txPower = 20;
+	}
+
 	phy_setup(page,ch,macl.txPower);
 	return status;
 }
@@ -579,7 +586,7 @@ int	macl_set_hw_addr_filt(struct ieee802154_my_addr *filt,unsigned long changed)
 				filt->pan_id,
 				filt->short_addr,
 				filt->pan_coord
-			  );
+				);
 	}
 #endif
 	phy_addrFilt(filt->pan_id, filt->ieee_addr, filt->short_addr,0xffff);
