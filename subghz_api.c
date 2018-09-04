@@ -85,7 +85,7 @@ static SUBGHZ_MSG subghz_init(void)
 	subghz_param.ack_req = true;
 	subghz_param.broadcast_enb = true;
 	subghz_param.rf.cca_min_be = 0;
-	subghz_param.rf.cca_max_be = 7;
+	subghz_param.rf.cca_max_be = 5;
 	subghz_param.rf.cca_retry = 20;
 	subghz_param.rf.cca_level = DBM_TO_MBM(-80);
 	subghz_param.rf.tx_min_be = 0;
