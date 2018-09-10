@@ -331,7 +331,7 @@ static void macl_txdone_handler(void)
 	if(ack_req){
 		phy_timer_handler(macl_ack_timeout_handler);
 		if(macl.ack_timeout == 0) {
-			timeout = 50 + rand() % 450;
+			timeout = 5 + rand() % 15;
 		} else {
 			timeout = macl.ack_timeout;
 		}
