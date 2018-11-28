@@ -100,7 +100,7 @@ I acquire integer region of the fixed-point numerical value
 #define PHY_REG_SET_TX_DONE_RX   0x20
 #define PHY_REG_SET_TX_DONE_OFF  0x10
 
-#define UNIT_BAKOFF_PERIOD  300
+#define UNIT_BAKOFF_PERIOD  320
 #define DEFAUL_BAKOF        1000
 /*
  ---------------------------------------------------------------
@@ -587,9 +587,8 @@ static void phy_backoffTimer(void){
 
 	uint16_t cca_wait;
 
-	cca_wait = (rand()&phy_cca_be) * UNIT_BAKOFF_PERIOD;
-	if (!cca_wait) cca_wait = DEFAUL_BAKOF;
-	HAL_delayMicroseconds(cca_wait);
+	cca_wait = ((1 << (rand()%phy_cca_be)) -1)* UNIT_BAKOFF_PERIOD;
+	if (cca_wait) HAL_delayMicroseconds(cca_wait);
 }
 
 
