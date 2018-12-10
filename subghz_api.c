@@ -19,22 +19,22 @@
  */
 
 #ifdef SUBGHZ_OTA
-	#pragma SEGCODE "OTA_SEGCODE"
-	#pragma SEGINIT "OTA_SEGINIT"
-	#pragma SEGNOINIT "OTA_SEGNOINIT"
-	#pragma SEGCONST "OTA_SEGCONST"
+#pragma SEGCODE "OTA_SEGCODE"
+#pragma SEGINIT "OTA_SEGINIT"
+#pragma SEGNOINIT "OTA_SEGNOINIT"
+#pragma SEGCONST "OTA_SEGCONST"
 #endif
 #ifdef LAZURITE_IDE
-	#include <common.h>
-	#include <string.h>
-	#include <lp_manage.h>
-	#include <driver_irq.h>
+#include <common.h>
+#include <string.h>
+#include <lp_manage.h>
+#include <driver_irq.h>
 #else
-	#include <linux/string.h>
-	#include <linux/sched.h>
-	#include <linux/wait.h>
-	#include "common-lzpi.h"
-	#include "hwif/random-lzpi.h"
+#include <linux/string.h>
+#include <linux/sched.h>
+#include <linux/wait.h>
+#include "common-lzpi.h"
+#include "hwif/random-lzpi.h"
 #endif
 
 #include "common_subghz.h"
@@ -45,8 +45,8 @@
 #include "aes/aes.h"
 
 #ifndef LAZURITE_IDE
-	extern wait_queue_head_t tx_done;
-	extern int que_th2ex;
+extern wait_queue_head_t tx_done;
+extern int que_th2ex;
 #endif
 
 // this proto-type is for linux
@@ -94,7 +94,7 @@ static SUBGHZ_MSG subghz_init(void)
 	subghz_param.rf.tx_power = DBM_TO_MBM(13);
 	subghz_param.rf.ack_timeout = 0;
 	subghz_param.rf.tx_retry = 3;
-    AES128_setKey(NULL);
+	AES128_setKey(NULL);
 
 	// reset
 	if((subghz_param.mach = mach_init())==NULL)
@@ -156,7 +156,7 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 		msg = SUBGHZ_SETUP_FAIL;
 		goto error;
 	}
-	
+
 	subghz_param.panid = panid;
 	if((result = mach_set_my_short_addr(subghz_param.panid,subghz_param.short_addr)) != STATUS_OK) {
 		msg = SUBGHZ_MYADDR_FAIL;
@@ -173,7 +173,7 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 		msg = SUBGHZ_SETUP_FAIL;
 		goto error;
 	}
-	
+
 	msg = SUBGHZ_OK;
 
 error:
@@ -249,7 +249,7 @@ static SUBGHZ_MSG subghz_tx64le(uint8_t *addr_le, uint8_t *data, uint16_t len, v
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) {
 		printk(KERN_INFO"%s,%s,%d,%d.%d\n",__FILE__,__func__,__LINE__,
-			msg,subghz_param.tx_stat.rssi);
+				msg,subghz_param.tx_stat.rssi);
 	}
 #endif
 	if(callback) {
@@ -704,7 +704,7 @@ static void subghz_set_ack_tx_interval(uint16_t interval){
 }
 
 static void subghz_get_ed_value(uint8_t *rssi){
-    mach_ed(rssi);
+	mach_ed(rssi);
 }
 
 // setting of function
