@@ -846,6 +846,11 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower)
     reg_data[0] = 0x04, reg_wr(REG_ADR_2DIV_CNTRL,          reg_data, 1);
 #ifdef LAZURITE_MINI
     reg_data[0] = 0x02, reg_wr(REG_ADR_2DIV_CNTRL,          reg_data, 1);
+    HAL_I2C_read(0x24, reg_data, 1);
+    // 05:MJ2001, 04:lazurite920j
+    if (reg_data[0] == 0x05) {
+        reg_data[0] = 0x06, reg_wr(REG_ADR_2DIV_CNTRL,      reg_data, 1);
+    }
 #else
     if (device_id == DEIVE_ID_LAPIS)
         reg_data[0] = 0x0A, reg_wr(REG_ADR_2DIV_CNTRL,          reg_data, 1);
