@@ -348,8 +348,29 @@ int mach_rx_irq(struct mac_header *rx)
 
 	subghz_param.rx_stat.rssi = rx->rssi;
 	subghz_param.rx_stat.status = rx->raw.len;
-	if((!subghz_param.mach->macl->promiscuousMode) && (!subghz_param.broadcast_enb) && (rx->dst.panid.enb) && (rx->dst.panid.data == 0xFFFF) &&
-			(rx->dst.addr_type == 0x02) && (rx->dst.addr.short_addr = 0xFFFF)) {
+	printk(KERN_INFO"%04x,%04x,%04x,%04x\n",
+	rx->dst.panid.enb,
+	rx->dst.panid.data,
+	rx->dst.addr_type,
+	rx->dst.addr.short_addr
+	);
+
+	if((!subghz_param.mach->macl->promiscuousMode) &&
+			(!subghz_param.broadcast_enb) &&
+			(rx->dst.panid.enb) &&
+			(rx->dst.panid.data == 0xFFFF) &&
+			(
+			 ((rx->dst.addr_type == 0x02) && (rx->dst.addr.short_addr = 0xFFFF)) ||
+			 ((rx->dst.addr_type == 0x03) &&
+				(rx->dst.addr.ieee_addr[0]==0xFF)&&
+				(rx->dst.addr.ieee_addr[1]==0xFF)&&
+				(rx->dst.addr.ieee_addr[2]==0xFF)&&
+				(rx->dst.addr.ieee_addr[3]==0xFF)&&
+				(rx->dst.addr.ieee_addr[4]==0xFF)&&
+				(rx->dst.addr.ieee_addr[5]==0xFF)&&
+				(rx->dst.addr.ieee_addr[6]==0xFF)&&
+				(rx->dst.addr.ieee_addr[7]==0xFF))
+			)) {
 #ifndef LAZURITE_IDE
 		if(module_test & MODE_MACH_DEBUG) {
 			printk(KERN_INFO"Lazurite:: Ignore Broadcast\n");
