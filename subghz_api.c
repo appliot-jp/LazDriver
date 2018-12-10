@@ -348,12 +348,6 @@ int mach_rx_irq(struct mac_header *rx)
 
 	subghz_param.rx_stat.rssi = rx->rssi;
 	subghz_param.rx_stat.status = rx->raw.len;
-	printk(KERN_INFO"%04x,%04x,%04x,%04x\n",
-	rx->dst.panid.enb,
-	rx->dst.panid.data,
-	rx->dst.addr_type,
-	rx->dst.addr.short_addr
-	);
 
 	if((!subghz_param.mach->macl->promiscuousMode) &&
 			(!subghz_param.broadcast_enb) &&
