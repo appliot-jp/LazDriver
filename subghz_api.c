@@ -94,6 +94,7 @@ static SUBGHZ_MSG subghz_init(void)
 	subghz_param.rf.tx_power = DBM_TO_MBM(13);
 	subghz_param.rf.ack_timeout = 0;
 	subghz_param.rf.tx_retry = 3;
+	subghz_param.rf.ant_sw = 0;
 	AES128_setKey(NULL);
 
 	// reset
@@ -707,6 +708,10 @@ static void subghz_get_ed_value(uint8_t *rssi){
 	mach_ed(rssi);
 }
 
+static void subghz_set_ant_sw(uint8_t ant_sw){
+	subghz_param.rf.ant_sw = ant_sw;
+}
+
 // setting of function
 const SubGHz_CTRL SubGHz = {
 	subghz_init,
@@ -734,5 +739,6 @@ const SubGHz_CTRL SubGHz = {
 	subghz_set_enhance_ack,
 	subghz_get_enhance_ack,
 	subghz_set_ack_tx_interval,
-	subghz_get_ed_value
+	subghz_get_ed_value,
+	subghz_set_ant_sw
 };

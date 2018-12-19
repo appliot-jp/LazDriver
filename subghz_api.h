@@ -121,6 +121,7 @@ typedef struct
 	void (*getEnhanceAck)(uint8_t **data, int *size);
 	void (*setAckTxInterval)(uint16_t interval);
 	void (*getEdValue)(uint8_t *rssi);
+	void (*antSwitch)(uint8_t ant_sw);
 } SubGHz_CTRL;
 
 extern const SubGHz_CTRL SubGHz;
