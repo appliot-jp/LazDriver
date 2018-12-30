@@ -88,7 +88,7 @@ int HAL_wakeup_event(uint8_t event)
 
 
 // api_debug add 4
-int HAL_init(void){
+int HAL_init(uint8_t i2c_addr, uint8_t addr_bits){
 
     uint32_t wait_t, t;
 
@@ -179,7 +179,7 @@ int HAL_I2C_read(unsigned short addr, unsigned char *data, unsigned char size)
 	for(n=0;n<size;n++)
 	{
 		dtmp = Wire0.read();
-		if(dtmp < 0) return HAL_STATUS_ERROR_TIMEOUT;
+		if(dtmp < 0) return HAL_ERROR_TIMEOUT;
 		*(data + n) = (uint8_t)dtmp;
 	}
 	

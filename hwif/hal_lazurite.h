@@ -23,11 +23,6 @@
 #define _HAL_LAZURITE_H_
 
 
-#define HAL_STATUS_OK             0
-#define HAL_STATUS_ERROR_PARAM   -1
-#define HAL_STATUS_ERROR_STATE   -2
-#define HAL_STATUS_ERROR_TIMEOUT -3
-
 #define HAL_GPIO_CSB    6
 #define HAL_GPIO_RESETN 7
 #define HAL_GPIO_DMON   5
