@@ -355,7 +355,7 @@ int mach_rx_irq(struct mac_header *rx)
 			(rx->dst.panid.enb) &&
 			(rx->dst.panid.data == 0xFFFF) &&
 			(
-			 ((rx->dst.addr_type == 0x02) && (rx->dst.addr.short_addr = 0xFFFF)) ||
+			 ((rx->dst.addr_type == 0x02) && (rx->dst.addr.short_addr == 0xFFFF)) ||
 			 ((rx->dst.addr_type == 0x03) &&
 				(rx->dst.addr.ieee_addr[0]==0xFF)&&
 				(rx->dst.addr.ieee_addr[1]==0xFF)&&
