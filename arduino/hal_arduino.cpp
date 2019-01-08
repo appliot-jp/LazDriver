@@ -18,32 +18,29 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifdef SUBGHZ_OTA
-	#pragma SEGCODE "OTA_SEGCODE"
-	#pragma SEGINIT "OTA_SEGINIT"
-	#pragma SEGNOINIT "OTA_SEGNOINIT"
-#endif
-#include <common.h>
-#include <lazurite_system.h>
-#include <driver_timer.h>
-#include <driver_extirq.h>
-#include <driver_irq.h>
-#include <driver_gpio.h>
-#include <driver_uart.h>
-#include <lp_manage.h>
-#include <wdt.h>
+#include <arduino.h>
+#include <spi.h>
+#include <wire.h>
+#include <mstimer2.h>
 #include "hal.h"
-#include "hal_lazurite.h"
-#include "spi0.h"
-#include "wire0.h"
+#include "hal_arduino.h"
+
 
 //*****************************************************
 // Local definition
 //*****************************************************
+static SPISettings mySPISettings = SPISettings(8000000, MSBFIRST, SPI_MODE0);
 static struct I2C_CONFIG  {
 	uint8_t i2c_addr;
 	uint8_t addr_bits;
 } i2c_config;
+
+void wait_event(volatile uint8_t *flag)
+{	
+	while(*flag == false) { }
+	*flag = false;
+}
+
 void (*hal_gpio_func)(void);
 static uint32_t hal_previous_time;
 // 2015.12.14 Eiichi Saito: for preference of SubGHz
@@ -91,33 +88,32 @@ int HAL_wakeup_event(uint8_t event)
 
 
 // api_debug add 4
-int HAL_init(uint8_t i2c_addr, uint8_t addr_bits) {
+int HAL_init(uint8_t i2c_addr,uint8_t addr_bits){
 
-	uint32_t wait_t, t;
+	//uint32_t wait_t, t;
 
 	// SPI init
-	SPI0.setDataMode(SPI_MODE0);
-	SPI0.setClockDivider(SPI_CLOCK_DIV8);
-	SPI0.begin();
+	//SPI.setDataMode(SPI_MODE0);
+	//SPI.setClockDivider(SPI_CLOCK_DIV8);
+	SPI.begin();
 
 	// GPIO init
-	drv_digitalWrite(HAL_GPIO_RESETN,HIGH);
-	drv_digitalWrite(HAL_GPIO_CSB,HIGH);
-	drv_pinMode(HAL_GPIO_SINTN,INPUT);
-	drv_pinMode(HAL_GPIO_RESETN,OUTPUT);
-	drv_pinMode(HAL_GPIO_CSB,OUTPUT);
+	digitalWrite(HAL_GPIO_RESETN,HIGH);
+	digitalWrite(HAL_GPIO_CSB,HIGH);
+	pinMode(HAL_GPIO_SINTN,INPUT);
+	pinMode(HAL_GPIO_RESETN,OUTPUT);
+	pinMode(HAL_GPIO_CSB,OUTPUT);
 
-	drv_digitalWrite(HAL_GPIO_RESETN, 0);
+	digitalWrite(HAL_GPIO_RESETN, 0);
 	HAL_sleep(3);
 	//    idle();
-	drv_digitalWrite(HAL_GPIO_RESETN, 1);
+	digitalWrite(HAL_GPIO_RESETN, 1);
 	HAL_sleep(3);
 
 	// I2C init
 	i2c_config.i2c_addr = i2c_addr;
 	i2c_config.addr_bits = addr_bits;
-	Wire0.begin();
-
+	Wire.begin();
 	return 0;
 }
 
@@ -129,21 +125,22 @@ int HAL_SPI_transfer(const unsigned char *wdata, uint16_t wsize,unsigned char *r
 {
 	unsigned char n;
 
-	drv_digitalWrite(HAL_GPIO_CSB, HIGH);
-	drv_digitalWrite(HAL_GPIO_CSB, LOW);
+	SPI.beginTransaction(mySPISettings);
+	digitalWrite(HAL_GPIO_CSB, HIGH);
+	digitalWrite(HAL_GPIO_CSB, LOW);
 
 	//  api_debug mod
 	for(n=0;n<wsize;n++)
 	{
-		SPI0.transfer(*(wdata + n));
+		SPI.transfer(*(wdata + n));
 	}
 	if(rdata==NULL) return HAL_STATUS_OK;
 	for(n=0;n<rsize;n++)
 	{
-		*(rdata + n) = SPI0.transfer(0);
+		*(rdata + n) = SPI.transfer(0);
 	}
 
-	drv_digitalWrite(HAL_GPIO_CSB, HIGH);
+	digitalWrite(HAL_GPIO_CSB, HIGH);
 
 	return HAL_STATUS_OK;
 }
@@ -151,20 +148,22 @@ int HAL_SPI_transfer(const unsigned char *wdata, uint16_t wsize,unsigned char *r
 int HAL_GPIO_setInterrupt(void (*func)(void))
 {
 	hal_gpio_func = func;
-	drv_attachInterrupt(HAL_GPIO_SINTN,BP3596A_SINTN_IRQNUM,hal_gpio_func,LOW,false,false);
+	//attachInterrupt(HAL_GPIO_SINTN,BP3596A_SINTN_IRQNUM,hal_gpio_func,LOW,false,false);
+	attachInterrupt(BP3596A_SINTN_IRQNUM,hal_gpio_func,LOW);
 	return HAL_STATUS_OK;
 }
 
 int HAL_GPIO_enableInterrupt(void)
 {
 	//	void drv_attachInterrupt(unsigned char pin,unsigned char irqnum, void (*func)(void), int mode,bool sampling, bool filter)
-	drv_attachInterrupt(HAL_GPIO_SINTN,BP3596A_SINTN_IRQNUM,hal_gpio_func,LOW,false,false);
+	attachInterrupt(BP3596A_SINTN_IRQNUM,hal_gpio_func,LOW);
+	//attachInterrupt(HAL_GPIO_SINTN,BP3596A_SINTN_IRQNUM,hal_gpio_func,LOW,false,false);
 	return HAL_STATUS_OK;
 }
 
 int HAL_GPIO_disableInterrupt(void)
 {
-	drv_detachInterrupt(BP3596A_SINTN_IRQNUM);
+	detachInterrupt(BP3596A_SINTN_IRQNUM);
 	return HAL_STATUS_OK;
 }
 
@@ -174,19 +173,18 @@ int HAL_I2C_read(unsigned short addr, unsigned char *data, unsigned char size)
 	int dtmp;
 
 	//  api_debug mod
-	Wire0.beginTransmission(i2c_config.i2c_addr);
-	if(i2c_config.addr_bits > 8) {
-		Wire0.write_byte(0);
+	Wire.beginTransmission(i2c_config.i2c_addr);
+	if(i2c_config.i2c_addr> 8) {
+		Wire.write(0);
 	}
-	Wire0.write_byte(addr);
-	Wire0.endTransmission(false);
-
+	Wire.write(addr);
+	Wire.endTransmission(false);
 	//  api_debug mod
-	Wire0.requestFrom(i2c_config.i2c_addr,size,true);
+	Wire.requestFrom((uint8_t)i2c_config.i2c_addr,(uint8_t)size,(uint8_t)true);
 
 	for(n=0;n<size;n++)
 	{
-		dtmp = Wire0.read();
+		dtmp = Wire.read();
 		if(dtmp < 0) return HAL_ERROR_TIMEOUT;
 		*(data + n) = (uint8_t)dtmp;
 	}
@@ -212,33 +210,37 @@ int HAL_TIMER_setup(void)
 
 int HAL_TIMER_start(unsigned short msec, void (*func)(void))
 {
-	timer_16bit_set(6,0xE8,(unsigned long)msec,func);
-	timer_16bit_start(6);
+	/*
+		 timer_16bit_set(6,0xE8,(unsigned long)msec,func);
+		 timer_16bit_start(6);
+		 */
+	MsTimer2::set(msec,func);
+	MsTimer2::start();
 	return HAL_STATUS_OK;
 }
 
 int HAL_TIMER_stop(void)
 {
-	timer_16bit_stop(6);
+	MsTimer2::stop();
+	//timer_16bit_stop(6);
 	return HAL_STATUS_OK;
 }
 
 
-void HAL_set_timer0_function(void (*func)(uint32_t sys_timer_count)) {
-	set_timer0_function(func);
+/*
+	 volatile void HAL_delayMicroseconds(unsigned long us)
+	 {
+	 if (us > 2) {
+	 us /= 2;
+	 while (us > 0) {
+// w/a for avoiding UART communication data lost
+uart_check_irq();
+__asm("nop\n");
+__asm("nop\n");
+us--;
 }
+}
+return;
+}
+*/
 
-volatile void HAL_delayMicroseconds(unsigned long us)
-{
-	if (us > 2) {
-		us /= 2;
-		while (us > 0) {
-			// w/a for avoiding UART communication data lost
-			uart_check_irq();
-			__asm("nop\n");
-			__asm("nop\n");
-			us--;
-		}
-	}
-	return;
-}
