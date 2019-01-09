@@ -53,7 +53,7 @@
 
 extern int HAL_wait_event(uint8_t event);
 extern int HAL_wakeup_event(uint8_t event);
-extern int HAL_init(uint8_t i2c_addr, uint8_t addr_bits);
+extern int HAL_init();
 extern int HAL_remove(void);
 extern int HAL_GPIO_setValue(uint8_t pin, uint8_t value);
 extern int HAL_GPIO_getValue(uint8_t pin, uint8_t *value);

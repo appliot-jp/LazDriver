@@ -67,7 +67,6 @@ static wait_queue_head_t ext_q;
 static struct task_struct *rf_main_task;
 static struct task_struct *tx_led_task;
 static struct task_struct *rx_led_task;
-int i2c_addr_bits;
 bool flag_irq_enable;
 
 
@@ -377,12 +376,12 @@ int HAL_wakeup_event(uint8_t event)
 }
 
 
-int HAL_init(uint8_t i2c_addr, uint8_t addr_bits){
+int HAL_init(){
 	int status;
     // printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 	// spi initialization
-	m.i2c.i2c_addr = i2c_addr;
-	m.i2c.addr_bits = addr_bits;
+	m.i2c.i2c_addr = 0x50;
+	m.i2c.addr_bits = 8;
 	status = lzpi_spi_init(spi_probe);
 	if(status != 0){
 		status = HAL_ERROR_SPI;

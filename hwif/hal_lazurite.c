@@ -91,7 +91,7 @@ int HAL_wakeup_event(uint8_t event)
 
 
 // api_debug add 4
-int HAL_init(uint8_t i2c_addr, uint8_t addr_bits) {
+int HAL_init() {
 
 	uint32_t wait_t, t;
 
@@ -114,8 +114,12 @@ int HAL_init(uint8_t i2c_addr, uint8_t addr_bits) {
 	HAL_sleep(3);
 
 	// I2C init
-	i2c_config.i2c_addr = i2c_addr;
-	i2c_config.addr_bits = addr_bits;
+	i2c_config.i2c_addr = 0x50;
+	#ifdef LAZURITE_MINI
+	i2c_config.addr_bits = 16;
+	#else
+	i2c_config.addr_bits = 8;
+	#endif
 	Wire0.begin();
 
 	return 0;
