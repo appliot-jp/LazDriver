@@ -433,7 +433,7 @@ int mach_parse_data(struct mac_header *header) {
 		header->dst.panid.data = 0xFFFF;
 	}
 	// dst addr
-	if(header->fc.fc_bit.dst_addr_type == 0) {
+	if(header->fc.fc_bit.dst_addr_type != 0) {
 		memset(header->dst.addr.ieee_addr,0,8);
 		for(i=0;i< addr_len[header->fc.fc_bit.dst_addr_type];i++)
 		{
@@ -450,7 +450,7 @@ int mach_parse_data(struct mac_header *header) {
 		header->src.panid.data = 0xFFFF;
 	}
 	// src addr
-	if(header->fc.fc_bit.src_addr_type == 0) {
+	if(header->fc.fc_bit.src_addr_type != 0) {
 		memset(header->src.addr.ieee_addr,0,8);
 		for(i=0;i< addr_len[header->fc.fc_bit.src_addr_type];i++)
 		{
