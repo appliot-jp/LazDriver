@@ -1064,7 +1064,7 @@ PHY_PARAM *phy_init(void)
     hwif.timer.active = Disable;
     hwif.timer.call_count = 0;
 #endif  /* #ifdef ML7396_HWIF_NOTHAVE_TIMER_DI */
-    status = HAL_init(0x50,8);
+    status = HAL_init();
     if(status == 0){
     //  HAL_SPI_setup();
     //  HAL_GPIO_setup();

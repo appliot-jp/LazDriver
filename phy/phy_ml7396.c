@@ -822,7 +822,9 @@ void phy_wakeup_mac_event(void)
 int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 {
     uint8_t device_id;
+#ifdef LAZURITE_MINI
     uint8_t eui64_extend_type;
+#endif
     uint16_t address;
 
     int status = -1;

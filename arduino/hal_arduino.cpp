@@ -88,7 +88,7 @@ int HAL_wakeup_event(uint8_t event)
 
 
 // api_debug add 4
-int HAL_init(uint8_t i2c_addr,uint8_t addr_bits){
+int HAL_init(void){
 
 	//uint32_t wait_t, t;
 

@@ -376,7 +376,7 @@ int HAL_wakeup_event(uint8_t event)
 }
 
 
-int HAL_init(){
+int HAL_init(void){
 	int status;
     // printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 	// spi initialization
