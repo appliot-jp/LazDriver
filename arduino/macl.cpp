@@ -565,7 +565,7 @@ int	macl_set_channel(uint8_t page,uint8_t ch, uint32_t mbm)
 		macl.txPower = 20;
 	}
 
-	phy_setup(page,ch,macl.txPower);
+	phy_setup(page,ch,macl.txPower,0);
 	return status;
 }
 int	macl_set_hw_addr_filt(struct ieee802154_my_addr *filt,unsigned long changed)

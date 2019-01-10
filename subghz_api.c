@@ -19,22 +19,24 @@
  */
 
 #ifdef SUBGHZ_OTA
-#pragma SEGCODE "OTA_SEGCODE"
-#pragma SEGINIT "OTA_SEGINIT"
-#pragma SEGNOINIT "OTA_SEGNOINIT"
-#pragma SEGCONST "OTA_SEGCONST"
+	#pragma SEGCODE "OTA_SEGCODE"
+	#pragma SEGINIT "OTA_SEGINIT"
+	#pragma SEGNOINIT "OTA_SEGNOINIT"
+	#pragma SEGCONST "OTA_SEGCONST"
 #endif
 #ifdef LAZURITE_IDE
-#include <common.h>
-#include <string.h>
-#include <lp_manage.h>
-#include <driver_irq.h>
+	#include <common.h>
+	#include <string.h>
+	#include <lp_manage.h>
+	#include <driver_irq.h>
+#elif ARDUINO
+	#include <string.h>
 #else
-#include <linux/string.h>
-#include <linux/sched.h>
-#include <linux/wait.h>
-#include "common-lzpi.h"
-#include "hwif/random-lzpi.h"
+	#include <linux/string.h>
+	#include <linux/sched.h>
+	#include <linux/wait.h>
+	#include "common-lzpi.h"
+	#include "hwif/random-lzpi.h"
 #endif
 
 #include "common_subghz.h"
@@ -44,9 +46,9 @@
 #include "hwif/hal.h"
 #include "aes/aes.h"
 
-#ifndef LAZURITE_IDE
-extern wait_queue_head_t tx_done;
-extern int que_th2ex;
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
+	extern wait_queue_head_t tx_done;
+	extern int que_th2ex;
 #endif
 
 // this proto-type is for linux
@@ -123,9 +125,9 @@ error:
 
 static SUBGHZ_MSG subghz_remove(void)
 {
-	SUBGHZ_MSG msg=0;
+	SUBGHZ_MSG msg;
 
-	msg = HAL_remove();
+	msg = (SUBGHZ_MSG)HAL_remove();
 
 	return msg;
 }
@@ -179,7 +181,7 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 
 error:
 	subghz_param.tx_stat.status = result;
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACH_DEBUG) {
 		printk(KERN_INFO"%s %s %d %d %d \n",__FILE__,__func__,__LINE__,msg,result);
 	}
@@ -247,7 +249,7 @@ static SUBGHZ_MSG subghz_tx64le(uint8_t *addr_le, uint8_t *data, uint16_t len, v
 		else if(result == -ETIMEDOUT) msg = SUBGHZ_TX_ACK_FAIL;
 		else msg = SUBGHZ_TX_FAIL;
 	}
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACH_DEBUG) {
 		printk(KERN_INFO"%s,%s,%d,%d.%d\n",__FILE__,__func__,__LINE__,
 				msg,subghz_param.tx_stat.rssi);
@@ -329,7 +331,7 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 		else if(result == -ETIMEDOUT) msg = SUBGHZ_TX_ACK_FAIL;
 		else msg = SUBGHZ_TX_FAIL;
 	}
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACH_DEBUG) {
 		printk(KERN_INFO"%s,%s,%d,%d.%d\n",__FILE__,__func__,__LINE__,
 				msg,subghz_param.tx_stat.rssi);
@@ -349,11 +351,9 @@ int mach_rx_irq(struct mac_header *rx)
 
 	subghz_param.rx_stat.rssi = rx->rssi;
 	subghz_param.rx_stat.status = rx->raw.len;
-
 	if((!subghz_param.mach->macl->promiscuousMode) &&
 			(!subghz_param.broadcast_enb) &&
-			(rx->dst.panid.enb) &&
-			(rx->dst.panid.data == 0xFFFF) &&
+			(rx->dst.panid.enb) && (rx->dst.panid.data == 0xFFFF) &&
 			(
 			 ((rx->dst.addr_type == 0x02) && (rx->dst.addr.short_addr == 0xFFFF)) ||
 			 ((rx->dst.addr_type == 0x03) &&
@@ -366,14 +366,14 @@ int mach_rx_irq(struct mac_header *rx)
 				(rx->dst.addr.ieee_addr[6]==0xFF)&&
 				(rx->dst.addr.ieee_addr[7]==0xFF))
 			)) {
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 		if(module_test & MODE_MACH_DEBUG) {
 			printk(KERN_INFO"Lazurite:: Ignore Broadcast\n");
 			PAYLOADDUMP(rx->raw.data, rx->raw.len);
 		}
 #endif
 	} else {
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 		if(module_test & MODE_MACH_DEBUG) {
 			printk(KERN_INFO"[rx]%s,%s,%d\n",__FILE__,__func__,__LINE__);
 			PAYLOADDUMP(rx->raw.data, rx->raw.len);
@@ -675,7 +675,7 @@ static SUBGHZ_MSG subghz_setPromiscuous(bool on) {
 }
 static SUBGHZ_MSG subghz_setAckReq(bool on) {
 	subghz_param.ack_req = on;
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACH_DEBUG) {
 		printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,__LINE__,subghz_param.ack_req);
 	}
@@ -684,7 +684,7 @@ static SUBGHZ_MSG subghz_setAckReq(bool on) {
 }
 static SUBGHZ_MSG subghz_setBroadcastEnb(bool on) {
 	subghz_param.broadcast_enb = on;
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACH_DEBUG) {
 		printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,__LINE__,subghz_param.broadcast_enb);
 	}

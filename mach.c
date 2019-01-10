@@ -28,8 +28,9 @@
 	#pragma SEGNOINIT "OTA_SEGNOINIT"
 	#pragma SEGCONST "OTA_SEGCONST"
 #endif
-#ifndef LAZURITE_IDE
-#include "common-lzpi.h"
+
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
+	#include "common-lzpi.h"
 #endif
 
 #ifdef LAZURITE_IDE
@@ -38,7 +39,11 @@
 
 #include "mach.h"
 #include "arib_lazurite.h"
-#include "hwif/hal.h"
+#ifndef ARDUINO
+	#include "hal.h"
+#else
+	#include "hwif/hal.h"
+#endif
 #include "errno.h"
 #include "endian.h"
 #include "aes/aes.h"
@@ -81,7 +86,7 @@ int	get_mac_addr(uint8_t *macaddr)
 	int i;
 	uint8_t rdata[8];
 
-	HAL_I2C_read(0x20,rdata,8);
+	HAL_I2C_read((uint8_t)0x20,(uint8_t*)rdata,(uint8_t)8);
 
 	for (i=0;i<8;i++)
 	{
@@ -141,15 +146,13 @@ static int mach_make_header(struct mac_header *header) {
 	{
 		if((!header->dst.panid.enb) || (header->dst.panid.data == 0xFFFE))
 		{
-#ifndef LAZURITE_IDE
-#endif
 			status = -EINVAL;
 			goto error;
 		} else {
 			if(header->raw.size >= (offset + 2)){
 				H2LBS(header->raw.data[offset],header->dst.panid.data), offset+=2;
 			} else {
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 				printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 				status = -ENOMEM;
@@ -166,7 +169,7 @@ static int mach_make_header(struct mac_header *header) {
 		switch(header->dst.addr_type)
 		{
 			case 0:
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 				printk(KERN_ERR"dst address is not set in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 				status = -EINVAL;
@@ -177,7 +180,7 @@ static int mach_make_header(struct mac_header *header) {
 						(header->dst.panid.data == 0xfffe)||
 						(header->dst.panid.enb == false))
 				{
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 					printk(KERN_ERR"invalid panid for short address.%s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -EINVAL;
@@ -188,7 +191,7 @@ static int mach_make_header(struct mac_header *header) {
 					header->raw.data[offset] = header->dst.addr.lddn_addr,offset++;
 					if(header->dst.addr.lddn_addr != 0xff) dst_ffff = false;
 				} else {
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -ENOMEM;
@@ -200,7 +203,7 @@ static int mach_make_header(struct mac_header *header) {
 						(header->dst.panid.data == 0xfffe) ||
 						(header->dst.panid.enb == false))
 				{
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 					printk(KERN_ERR"invalid panid for short address.%s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -EINVAL;
@@ -210,7 +213,7 @@ static int mach_make_header(struct mac_header *header) {
 					header->fc.fc_bit.dst_addr_type = IEEE802154_FC_ADDR_SHORT;
 					H2LBS(header->raw.data[offset],header->dst.addr.short_addr), offset+=2;
 				} else {
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -ENOMEM;
@@ -227,7 +230,7 @@ static int mach_make_header(struct mac_header *header) {
 					}
 					header->fc.fc_bit.dst_addr_type = IEEE802154_FC_ADDR_IEEE;
 				} else {
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -ENOMEM;
@@ -244,16 +247,16 @@ static int mach_make_header(struct mac_header *header) {
 	{
 		if(header->src.panid.enb == 0)
 		{
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 			printk(KERN_ERR"src panid is invalid in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 			status = -EINVAL;
 			goto error;
 		} else {
-			if(header->raw.size >= (offset + sizeof(uint16_t))){
+			if(header->raw.size >= (int)(offset + sizeof(uint16_t))){
 				H2LBS(header->raw.data[offset],header->src.panid.data), offset+=2;
 			} else {
-#ifndef	LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 				printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 				status = -ENOMEM;
@@ -272,14 +275,14 @@ static int mach_make_header(struct mac_header *header) {
 				break;
 			case 1:
 				if(header->raw.size < (offset + addr_len[1])){
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -ENOMEM;
 					goto error;
 				}
 				if(header->src.addr.lddn_addr==0xff){
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 					printk(KERN_ERR"invalid src LDD address. %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -EINVAL;
@@ -290,7 +293,7 @@ static int mach_make_header(struct mac_header *header) {
 				break;
 			case 2:
 				if(header->raw.size < (offset + addr_len[2])){
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -ENOMEM;
@@ -298,7 +301,7 @@ static int mach_make_header(struct mac_header *header) {
 				}
 				if(header->src.addr.short_addr==0xffff)
 				{
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 					printk(KERN_ERR"invalid src short address. %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -EINVAL;
@@ -309,7 +312,7 @@ static int mach_make_header(struct mac_header *header) {
 				break;
 			case 3:
 				if(header->raw.size < (offset + addr_len[3])){
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -ENOMEM;
@@ -351,7 +354,7 @@ static int mach_make_header(struct mac_header *header) {
 		offset+=header->payload.len;
 		header->raw.len = offset;
 
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 		if(module_test & MODE_MACH_DEBUG) {
 			printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 			PAYLOADDUMP(header->payload.data, header->payload.len);
@@ -518,7 +521,7 @@ bool mach_make_ack_header(void) {
 	bool ack_condition=false;
 	uint16_t offset = 0;
 
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACH_DEBUG) {
 		printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 	}
@@ -570,7 +573,7 @@ bool mach_make_ack_header(void) {
 			} while(enhance_ack_rx_num>0);
 		}
 		mach.ack.raw.len = offset;
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 		if(module_test & MODE_MACH_DEBUG) {
 			printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 			PAYLOADDUMP(mach.ack.raw.data, mach.ack.raw.len);
@@ -632,7 +635,7 @@ int mach_start(BUFFER *rxbuf) {
 	mach.rx.payload.size = rxbuf->size;
 	mach.rx.payload.len = 0;
 
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACH_DEBUG) {
 		printk(KERN_INFO"%s,%s,%d,%lx,%d\n",__FILE__,__func__,__LINE__,(unsigned long)mach.rx.raw.data,mach.rx.raw.len);
 		PAYLOADDUMP(mach.rx.raw.data, mach.rx.raw.len);
@@ -694,7 +697,7 @@ int mach_set_dst_ieee_addr(uint16_t panid,uint8_t *addr)
 	mach.tx.dst.panid.data = panid;
 	mach.tx.dst.addr_type = IEEE802154_FC_ADDR_IEEE;
 	memcpy(mach.tx.dst.addr.ieee_addr,addr,8);
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACH_DEBUG) {
 		printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 		printk(KERN_INFO"dst: %04x %02x%02x%02x%02x%02x%02x%02x%02x\n",
@@ -805,22 +808,6 @@ int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr)
 		filt.short_addr = mach.my_addr.short_addr;
 		memcpy(filt.ieee_addr,mach.my_addr.ieee_addr,8);
 		macl_set_hw_addr_filt(&filt,0x0f);			// update all of addr filter
-#ifndef LAZURITE_IDE
-		/*
-			 printk(KERN_INFO"Lazurite: My Addr= %02x%02x%02x%02x%02x%02x%02x%02x %d 0x%04x 0x%04x\n",
-			 mach.my_addr.ieee_addr[7],
-			 mach.my_addr.ieee_addr[6],
-			 mach.my_addr.ieee_addr[5],
-			 mach.my_addr.ieee_addr[4],
-			 mach.my_addr.ieee_addr[3],
-			 mach.my_addr.ieee_addr[2],
-			 mach.my_addr.ieee_addr[1],
-			 mach.my_addr.ieee_addr[0],
-			 mach.my_addr.pan_coord,
-			 mach.my_addr.pan_id,
-			 mach.my_addr.short_addr);
-			 */
-#endif
 	}
 	return status;
 }
@@ -865,7 +852,7 @@ int mach_set_promiscuous(bool on)
 	} else {
 		status = -EIO;
 	}
-	return STATUS_OK;
+	return status;
 }
 
 int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
@@ -886,7 +873,7 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 		goto error;
 	}
 
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 #endif
 	//printk(KERN_INFO"PAYLOAD\n");
@@ -948,7 +935,7 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 		mach.rx.input.size = rx->size;
 		mach.rx.rssi = rx->data[rx->len-1];
 
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 		if(module_test & MODE_MACH_DEBUG) {
 			printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,__LINE__,mach.rx.input.len);
 			//PAYLOADDUMP(mach.rx.input.data, mach.rx.input.len);
@@ -961,7 +948,7 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 					((mach.rx.dst.addr_type == 3) && 
 					 (memcmp(mach.rx.dst.addr.ieee_addr,mach.my_addr.ieee_addr,8)!=0) &&
 					 (memcmp(mach.rx.dst.addr.ieee_addr,broadcast_addr,8) !=0))) {
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 				if(module_test & MODE_MACH_DEBUG) {
 					printk(KERN_INFO"%s,%s,%d,mach_parse_data error\n",__FILE__,__func__,__LINE__);
 				}
@@ -979,7 +966,7 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 						ack->data = mach.ack.raw.data;
 						ack->len = mach.ack.raw.len;
 						ack->size = mach.ack.raw.size;
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 						if(module_test & MODE_MACH_DEBUG) {
 							printk(KERN_INFO"%s,%s,%d,%lx,%d\n",__FILE__,__func__,__LINE__,
 									(unsigned long)mach.rx.raw.data,mach.rx.raw.len);
@@ -994,7 +981,7 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 				mach.tx.rssi = mach.rx.rssi;
 				rx_enhance_ack.len = (rx_enhance_ack.size < mach.rx.payload.len) ? rx_enhance_ack.size : mach.rx.payload.len;
 				memcpy(rx_enhance_ack.data,&mach.rx.input.data[mach.rx.payload_offset],rx_enhance_ack.len);
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 				if(module_test & MODE_MACH_DEBUG) {
 					printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,__LINE__);
 					PAYLOADDUMP(mach.rx.input.data, mach.rx.input.len);
@@ -1012,7 +999,7 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 			mach.rx.raw.len = mach.rx.input.len;
 		} else {
 			// buffer error
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 			if(module_test & MODE_MACH_DEBUG) {
 				printk(KERN_INFO"%s,%s,%d,%lx,%d\n",__FILE__,__func__,__LINE__,
 						(unsigned long)mach.rx.raw.size,mach.rx.raw.len);
@@ -1027,7 +1014,7 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 			// rx data is copy to previous
 			memcpy(&mach.rx_prev,&mach.rx,sizeof(mach.rx));
 
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 			if(module_test & MODE_MACH_DEBUG) {
 				printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,__LINE__);
 				PAYLOADDUMP(mach.rx.raw.data, mach.rx.raw.len);
@@ -1035,7 +1022,7 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 #endif
 			mach_rx_irq(&mach.rx);				// report data to upper layer
 		} else {								// match sequence number
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 			if(module_test & MODE_MACH_DEBUG) {
 				printk(KERN_INFO"Same sequence number!! %s,%s,%d\n",__FILE__,__func__,__LINE__);
 			}

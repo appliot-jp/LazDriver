@@ -23,13 +23,15 @@
  #define _PHY_H_
 
 
- #ifdef LAZURITE_IDE
- 	#include <common.h>
- #else
- 	#include <linux/string.h>
- 	#include <linux/sched.h>
- 	#include <linux/wait.h>
- #endif
+#ifdef LAZURITE_IDE
+	#include <common.h>
+#elif ARDUINO
+#include "arduino.h"
+#else
+	#include <linux/string.h>
+	#include <linux/sched.h>
+	#include <linux/wait.h>
+#endif
 
 #include "common_subghz.h"
 

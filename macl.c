@@ -24,20 +24,26 @@
 	#pragma SEGNOINIT "OTA_SEGNOINIT"
 	#pragma SEGCONST "OTA_SEGCONST"
 #endif
-#ifndef LAZURITE_IDE
+#ifdef LAZURITE_IDE
+	#include <driver_irq.h>
+	#include "serial.h"
+#elif ARDUINO
+	#include "arduino.h"
+#else
 	#include <linux/module.h>
 	#include "common-lzpi.h"
 	#include "hwif/random-lzpi.h"
-#else
-    #include <driver_irq.h>
-	#include "serial.h"
 #endif
 
 #include "mach.h"
 #include "macl.h"
 #include "errno.h"
 #include "endian.h"
-#include "hwif/hal.h"
+#ifndef ARDUINO
+	#include "hwif/hal.h"
+#else
+	#include "hal.h"
+#endif
 
 MACL_PARAM macl;
 
@@ -79,7 +85,7 @@ static int macl_total_transmission_time(uint8_t len)
 
 	int status=STATUS_OK;
 
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 
@@ -161,7 +167,7 @@ static void macl_rxdone_handler(void)
 		}
 		phy_wakeup_mac_event();
 	}
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG){
 		if(!macl.promiscuousMode && status == STATUS_OK && macl.ack.data) {
 			printk(KERN_INFO"%s,%s,%d,%08lx,%d\n",__FILE__,__func__,__LINE__,
@@ -180,7 +186,7 @@ static void macl_rxdone_handler(void)
 
 static void macl_ack_txdone_handler(void)
 {
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d,%lx\n",
 			__FILE__,__func__,macl.ack_timeout,(unsigned long)macl.ack.data);
 #endif
@@ -205,7 +211,7 @@ static void macl_ack_txdone_handler(void)
 
 static void macl_tx_ack_abort_handler(void)
 {
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%lx,Retry:%d\n",
 			__FILE__,__func__,(unsigned long)macl.phy->out.data,macl.txRetry);
 #endif
@@ -230,7 +236,7 @@ static void macl_tx_ack_abort_handler(void)
 
 static void macl_fifodone_handler(void)
 {
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 	phy_timer_di();
@@ -247,7 +253,7 @@ static void macl_ccadone_handler(void)
 
 	phy_timer_di();
 	cca_state = phy_ccadone(macl.ccaBe,macl.ccaCount,macl.ccaRetry);
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s CCA STATE:%d\n",__FILE__,__func__,cca_state);
 #endif
 	if(cca_state == IDLE_DETECT){
@@ -293,7 +299,7 @@ static void macl_ccadone_handler(void)
 
 static void macl_cca_abort_handler(void)
 {
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 	phy_sint_di();
@@ -320,7 +326,7 @@ static void macl_txdone_handler(void)
 {
 	uint8_t ack_req;
 	uint16_t timeout;
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d,%lx,%d\n",
 			__FILE__,__func__,macl.ack_timeout,(unsigned long)macl.ack.data,macl.phy->out.data[0]);
 #endif
@@ -361,7 +367,7 @@ static void macl_ack_rxdone_handler(void)
 	phy_timer_di();
 	macl.condition=SUBGHZ_ST_TX_ACK_DONE;
 	status = phy_rxdone(&macl.phy->in);
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG){
 		printk(KERN_INFO"%s,%s,%d,%d,%d\n",__FILE__,__func__,macl.phy->in.data[2],macl.sequnceNum,macl.phy->in.len);
 		PAYLOADDUMP(macl.phy->in.data,macl.phy->in.len);
@@ -390,7 +396,7 @@ static void macl_ack_rxdone_handler(void)
 
 static void macl_ack_timeout_handler(void)
 {
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%lx,Retry:%d\n",
 			__FILE__,__func__,(unsigned long)macl.phy->out.data,macl.txRetry);
 #endif
@@ -443,7 +449,7 @@ MACL_PARAM* macl_init(void)
 	macl.phy = phy_init();
 	// 0:normal, 1:wait at fifodone, 2:no cca
 	macl.txMode = 0;
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,in.data:%lx,out.data:%lx\n",
 			__FILE__,__func__,(unsigned long)macl.phy->in.data,(unsigned long)macl.phy->out.data);
 #endif
@@ -452,7 +458,6 @@ MACL_PARAM* macl_init(void)
 
 	macl.tx_ack_interval = 1000;
 
-	//HAL_set_timer0_function(macl_system_monitor);
 	return &macl;
 }
 
@@ -481,7 +486,7 @@ int	macl_stop(void)
 {
 	int status=STATUS_OK;
 	macl.rxOnEnable = 0;
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 	if((macl.condition == SUBGHZ_ST_NONE) && (macl.condition == SUBGHZ_ST_RX_START)){
@@ -505,13 +510,13 @@ int	macl_xmit_sync(BUFFER buff)
 	}
 
 	phy_stop();
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 
 	if (macl_total_transmission_time(macl.phy->out.len) == STATUS_OK){
 
-#ifdef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 		dis_interrupts(DI_SUBGHZ);
 #endif
 		if (macl.txMode == 0) {
@@ -528,13 +533,13 @@ int	macl_xmit_sync(BUFFER buff)
 					phy_sint_handler(macl_txdone_handler);
 					phy_txStart(&macl.phy->out,macl.txMode);
 				}
-#ifdef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 		enb_interrupts(DI_SUBGHZ);
 #endif
 		phy_wait_phy_event();
 		phy_wait_mac_event();
 	}
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG) {
 		printk(KERN_INFO"%s,%s,%lx,%d\n",__FILE__,__func__,(unsigned long)macl.phy->out.data,macl.status);
 		PAYLOADDUMP(macl.phy->out.data,macl.phy->out.len);
@@ -552,7 +557,7 @@ int	macl_ed(uint8_t *level)
 int	macl_set_channel(uint8_t page,uint8_t ch, uint32_t mbm, uint8_t antsw)
 {
 	int status=STATUS_OK;
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,page,ch);
 #endif
 	macl.pages = page;
@@ -570,7 +575,7 @@ int	macl_set_channel(uint8_t page,uint8_t ch, uint32_t mbm, uint8_t antsw)
 int	macl_set_hw_addr_filt(struct ieee802154_my_addr *filt,unsigned long changed)
 {
 	int status=STATUS_OK;
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG) {
 		printk(KERN_INFO"%s,%s, %02x%02x%02x%02x%02x%02x%02x%02x,%04x,%04x,%d\n",
 				__FILE__,
@@ -598,7 +603,7 @@ int	macl_set_csma_params(uint8_t min_be, uint8_t max_be, uint8_t retries)
 	int status=STATUS_OK;
 	macl.ccaRetry = retries;
 	macl.ccaBe = max_be;
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,min_be,max_be);
 #endif
 	return status;
@@ -608,7 +613,7 @@ int	macl_set_frame_retries(uint8_t retries,uint16_t timeout)
 	int status=STATUS_OK;
 	macl.txRetry = retries;
 	macl.ack_timeout = timeout;
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,retries);
 #endif
 	return status;
@@ -631,7 +636,7 @@ int	macl_set_promiscuous_mode(bool on)
 int	macl_sleep(bool on)
 {
 	int status=STATUS_OK;
-#ifndef LAZURITE_IDE
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,on);
 #endif
 	phy_sleep();
@@ -647,3 +652,4 @@ uint8_t	macl_getCondition(void)
 void macl_set_ack_tx_interval(uint16_t interval) {
 	macl.tx_ack_interval = interval;
 }
+

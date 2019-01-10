@@ -25,6 +25,7 @@
 
 #ifdef	LAZURITE_IDE
 	#include <lazurite_system.h>
+#elif ARDUINO
 #else	// LAZURITE_IDE
 #include <linux/delay.h>
 #endif	// LAZURITE_IDE
@@ -76,6 +77,10 @@ extern void HAL_EX_disableInterrupt(void);
 	extern volatile void HAL_delayMicroseconds(unsigned long us);
 	#define HAL_millis() millis()
 	#define HAL_sleep(v) sleep(v)
+#elif ARDUINO
+	#define HAL_delayMicroseconds(us) delayMicroseconds(us)
+	#define HAL_millis() millis()
+	#define HAL_sleep(v) delay(v)
 #else
 	#define HAL_delayMicroseconds(us) udelay((unsigned long)us)
 	extern uint32_t HAL_millis(void);
@@ -90,6 +95,6 @@ extern void EXT_set_tx_led(int value);
 extern void EXT_set_rx_led(int value);
 
 // debug monitor function
-extern void HAL_set_timer0_function(void (*func)(uint32_t sys_timer_count));
+//extern void HAL_set_timer0_function(void (*func)(uint32_t sys_timer_count));
 
 #endif  /* #ifndef _INCLUDE_HAL_H */

@@ -22,11 +22,13 @@
 #define _MACH_H_
 
 #ifdef LAZURITE_IDE
-	#include <common.h>
+#include <common.h>
+#elif	ARDUINO
+#include <arduino.h>
 #else
-	#include <linux/string.h>
-	#include <linux/sched.h>
-	#include <linux/wait.h>
+#include <linux/string.h>
+#include <linux/sched.h>
+#include <linux/wait.h>
 #endif
 
 #include "macl.h"
@@ -59,24 +61,24 @@ struct fc_addr {
 #define IEEE802154_FC_ADDR_IEEE		3
 
 /*! @struct mac_fc_alignment
-  @brief  abstruct
-  internal use only
-  bit alightment of mac header
-  */
+	@brief  abstruct
+	internal use only
+	bit alightment of mac header
+	*/
 #ifdef LITTLE_ENDIAN
-	struct mac_fc_alignment{
-		uint8_t frame_type:3;
-		uint8_t sec_enb:1;
-		uint8_t pending:1;
-		uint8_t ack_req:1;
-		uint8_t panid_comp:1;
-		uint8_t nop:1;
-		uint8_t seq_comp:1;
-		uint8_t ielist:1;
-		uint8_t dst_addr_type:2;
-		uint8_t frame_ver:2;
-		uint8_t src_addr_type:2;
-	};
+struct mac_fc_alignment{
+	uint8_t frame_type:3;
+	uint8_t sec_enb:1;
+	uint8_t pending:1;
+	uint8_t ack_req:1;
+	uint8_t panid_comp:1;
+	uint8_t nop:1;
+	uint8_t seq_comp:1;
+	uint8_t ielist:1;
+	uint8_t dst_addr_type:2;
+	uint8_t frame_ver:2;
+	uint8_t src_addr_type:2;
+};
 #endif
 
 union mac_frame_control {

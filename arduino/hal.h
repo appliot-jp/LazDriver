@@ -69,7 +69,7 @@ extern int HAL_TIMER_disableInterrupt(void);
 #endif  /* #ifndef ML7396_HWIF_NOTHAVE_TIMER_DI */
 extern int HAL_TIMER_getTick(uint32_t *tick);
 extern int HAL_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize);
-extern int HAL_I2C_read(uint16_t  addr, uint8_t *data, uint8_t size);
+extern int HAL_I2C_read(uint16_t addr, uint8_t *data, uint8_t size);
 extern void HAL_EX_enableInterrupt(void);
 extern void HAL_EX_disableInterrupt(void);
 

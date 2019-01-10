@@ -26,6 +26,7 @@
 #ifdef LAZURITE_IDE
 	#include <common.h>
 #elif ARDUINO
+#include "arduino.h"
 #else
 	#include <linux/string.h>
 	#include <linux/sched.h>
@@ -74,7 +75,7 @@ extern void phy_wakeup_phy_event(void);
 extern void phy_wakeup_mac_event(void);
 
 extern PHY_PARAM *phy_init(void);
-extern int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower);
+extern int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw);
 
 // extern void phy_promiscuous(void);
 extern void phy_rxStart(void);
