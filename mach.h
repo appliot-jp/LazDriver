@@ -21,14 +21,14 @@
 #ifndef _MACH_H_
 #define _MACH_H_
 
-#ifdef LAZURITE_IDE
-#include <common.h>
-#elif	ARDUINO
-#include <arduino.h>
+#if defined LAZURITE_IDE
+	#include <common.h>
+#elif	defined ARDUINO
+	#include <arduino.h>
 #else
-#include <linux/string.h>
-#include <linux/sched.h>
-#include <linux/wait.h>
+	#include <linux/string.h>
+	#include <linux/sched.h>
+	#include <linux/wait.h>
 #endif
 
 #include "macl.h"

@@ -24,27 +24,35 @@
 	#pragma SEGNOINIT "OTA_SEGNOINIT"
 	#pragma SEGCONST "OTA_SEGCONST"
 #endif
-#ifdef LAZURITE_IDE
-	#include <common.h>
-	#include <string.h>
-	#include <lp_manage.h>
-	#include <driver_irq.h>
-#elif ARDUINO
-	#include <string.h>
+#if defined ARDUINO
+	#include "arduino.h"
+	#include "common_subghz.h"
+	#include "mach.h"
+	#include "subghz_api.h"
+	#include "errno.h"
+	#include "hal.h"
+	#include "aes.h"
 #else
-	#include <linux/string.h>
-	#include <linux/sched.h>
-	#include <linux/wait.h>
-	#include "common-lzpi.h"
-	#include "hwif/random-lzpi.h"
+	#ifdef LAZURITE_IDE
+		#include <common.h>
+		#include <string.h>
+		#include <lp_manage.h>
+		#include <driver_irq.h>
+		#include <string.h>
+	#else
+		#include <linux/string.h>
+		#include <linux/sched.h>
+		#include <linux/wait.h>
+		#include "common-lzpi.h"
+		#include "hwif/random-lzpi.h"
+	#endif
+	#include "common_subghz.h"
+	#include "mach.h"
+	#include "subghz_api.h"
+	#include "errno.h"
+	#include "hwif/hal.h"
+	#include "aes/aes.h"
 #endif
-
-#include "common_subghz.h"
-#include "mach.h"
-#include "subghz_api.h"
-#include "errno.h"
-#include "hal.h"
-#include "aes.h"
 
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	extern wait_queue_head_t tx_done;
@@ -96,7 +104,8 @@ static SUBGHZ_MSG subghz_init(void)
 	subghz_param.rf.tx_power = DBM_TO_MBM(13);
 	subghz_param.rf.ack_timeout = 0;
 	subghz_param.rf.tx_retry = 3;
-    AES128_setKey(NULL);
+	subghz_param.rf.ant_sw = 0;
+	AES128_setKey(NULL);
 
 	// reset
 	if((subghz_param.mach = mach_init())==NULL)
@@ -158,7 +167,7 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 		msg = SUBGHZ_SETUP_FAIL;
 		goto error;
 	}
-	
+
 	subghz_param.panid = panid;
 	if((result = mach_set_my_short_addr(subghz_param.panid,subghz_param.short_addr)) != STATUS_OK) {
 		msg = SUBGHZ_MYADDR_FAIL;
@@ -175,7 +184,7 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 		msg = SUBGHZ_SETUP_FAIL;
 		goto error;
 	}
-	
+
 	msg = SUBGHZ_OK;
 
 error:
@@ -251,7 +260,7 @@ static SUBGHZ_MSG subghz_tx64le(uint8_t *addr_le, uint8_t *data, uint16_t len, v
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACH_DEBUG) {
 		printk(KERN_INFO"%s,%s,%d,%d.%d\n",__FILE__,__func__,__LINE__,
-			msg,subghz_param.tx_stat.rssi);
+				msg,subghz_param.tx_stat.rssi);
 	}
 #endif
 	if(callback) {
@@ -350,8 +359,21 @@ int mach_rx_irq(struct mac_header *rx)
 
 	subghz_param.rx_stat.rssi = rx->rssi;
 	subghz_param.rx_stat.status = rx->raw.len;
-	if((!subghz_param.mach->macl->promiscuousMode) && (!subghz_param.broadcast_enb) && (rx->dst.panid.enb) && (rx->dst.panid.data == 0xFFFF) &&
-			(rx->dst.addr_type == 0x02) && (rx->dst.addr.short_addr = 0xFFFF)) {
+	if((!subghz_param.mach->macl->promiscuousMode) &&
+			(!subghz_param.broadcast_enb) &&
+			(rx->dst.panid.enb) && (rx->dst.panid.data == 0xFFFF) &&
+			(
+			 ((rx->dst.addr_type == 0x02) && (rx->dst.addr.short_addr == 0xFFFF)) ||
+			 ((rx->dst.addr_type == 0x03) &&
+				(rx->dst.addr.ieee_addr[0]==0xFF)&&
+				(rx->dst.addr.ieee_addr[1]==0xFF)&&
+				(rx->dst.addr.ieee_addr[2]==0xFF)&&
+				(rx->dst.addr.ieee_addr[3]==0xFF)&&
+				(rx->dst.addr.ieee_addr[4]==0xFF)&&
+				(rx->dst.addr.ieee_addr[5]==0xFF)&&
+				(rx->dst.addr.ieee_addr[6]==0xFF)&&
+				(rx->dst.addr.ieee_addr[7]==0xFF))
+			)) {
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 		if(module_test & MODE_MACH_DEBUG) {
 			printk(KERN_INFO"Lazurite:: Ignore Broadcast\n");
@@ -691,7 +713,11 @@ static void subghz_set_ack_tx_interval(uint16_t interval){
 }
 
 static void subghz_get_ed_value(uint8_t *rssi){
-    mach_ed(rssi);
+	mach_ed(rssi);
+}
+
+static void subghz_set_ant_sw(uint8_t ant_sw){
+	subghz_param.rf.ant_sw = ant_sw;
 }
 
 // setting of function
@@ -721,5 +747,6 @@ const SubGHz_CTRL SubGHz = {
 	subghz_set_enhance_ack,
 	subghz_get_enhance_ack,
 	subghz_set_ack_tx_interval,
-	subghz_get_ed_value
+	subghz_get_ed_value,
+	subghz_set_ant_sw
 };

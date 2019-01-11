@@ -24,27 +24,35 @@
 	#pragma SEGNOINIT "OTA_SEGNOINIT"
 	#pragma SEGCONST "OTA_SEGCONST"
 #endif
-#ifdef LAZURITE_IDE
-	#include <common.h>
-	#include <string.h>
-	#include <lp_manage.h>
-	#include <driver_irq.h>
-#elif ARDUINO
-	#include <string.h>
+#if defined ARDUINO
+	#include "arduino.h"
+	#include "common_subghz.h"
+	#include "mach.h"
+	#include "subghz_api.h"
+	#include "errno.h"
+	#include "hal.h"
+	#include "aes.h"
 #else
-	#include <linux/string.h>
-	#include <linux/sched.h>
-	#include <linux/wait.h>
-	#include "common-lzpi.h"
-	#include "hwif/random-lzpi.h"
+	#ifdef LAZURITE_IDE
+		#include <common.h>
+		#include <string.h>
+		#include <lp_manage.h>
+		#include <driver_irq.h>
+		#include <string.h>
+	#else
+		#include <linux/string.h>
+		#include <linux/sched.h>
+		#include <linux/wait.h>
+		#include "common-lzpi.h"
+		#include "hwif/random-lzpi.h"
+	#endif
+	#include "common_subghz.h"
+	#include "mach.h"
+	#include "subghz_api.h"
+	#include "errno.h"
+	#include "hwif/hal.h"
+	#include "aes/aes.h"
 #endif
-
-#include "common_subghz.h"
-#include "mach.h"
-#include "subghz_api.h"
-#include "errno.h"
-#include "hwif/hal.h"
-#include "aes/aes.h"
 
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	extern wait_queue_head_t tx_done;

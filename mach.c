@@ -39,14 +39,15 @@
 
 #include "mach.h"
 #include "arib_lazurite.h"
-#ifndef ARDUINO
+#ifdef ARDUINO
 	#include "hal.h"
+	#include "aes.h"
 #else
 	#include "hwif/hal.h"
+	#include "aes/aes.h"
 #endif
 #include "errno.h"
 #include "endian.h"
-#include "aes/aes.h"
 
 //#define DEBUG_AES
 #ifdef DEBUG_AES
@@ -944,6 +945,7 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 		if(mach.macl->promiscuousMode) {
 		} else {
 			// parse raw data
+			// short address filter is implemented in ML7396D
 			if((status = mach_parse_data(&mach.rx)!= STATUS_OK) ||
 					((mach.rx.dst.addr_type == 3) && 
 					 (memcmp(mach.rx.dst.addr.ieee_addr,mach.my_addr.ieee_addr,8)!=0) &&

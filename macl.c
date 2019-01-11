@@ -24,10 +24,10 @@
 	#pragma SEGNOINIT "OTA_SEGNOINIT"
 	#pragma SEGCONST "OTA_SEGCONST"
 #endif
-#ifdef LAZURITE_IDE
+#if defined LAZURITE_IDE
 	#include <driver_irq.h>
 	#include "serial.h"
-#elif ARDUINO
+#elif defined ARDUINO
 	#include "arduino.h"
 #else
 	#include <linux/module.h>
@@ -516,8 +516,11 @@ int	macl_xmit_sync(BUFFER buff)
 
 	if (macl_total_transmission_time(macl.phy->out.len) == STATUS_OK){
 
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
+#ifdef LAZURITE_IDE
 		dis_interrupts(DI_SUBGHZ);
+#endif
+#ifdef ARDUINO
+		noInterrupts();
 #endif
 		if (macl.txMode == 0) {
 			phy_txStart(&macl.phy->out,macl.txMode);
@@ -533,8 +536,11 @@ int	macl_xmit_sync(BUFFER buff)
 					phy_sint_handler(macl_txdone_handler);
 					phy_txStart(&macl.phy->out,macl.txMode);
 				}
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
+#ifdef LAZURITE_IDE
 		enb_interrupts(DI_SUBGHZ);
+#endif
+#ifdef ARDUINO
+		interrupts();
 #endif
 		phy_wait_phy_event();
 		phy_wait_mac_event();

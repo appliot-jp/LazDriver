@@ -39,10 +39,15 @@
 
 #include "mach.h"
 #include "arib_lazurite.h"
-#include "hal.h"
+#ifdef ARDUINO
+	#include "hal.h"
+	#include "aes.h"
+#else
+	#include "hwif/hal.h"
+	#include "aes/aes.h"
+#endif
 #include "errno.h"
 #include "endian.h"
-#include "aes.h"
 
 //#define DEBUG_AES
 #ifdef DEBUG_AES
@@ -253,7 +258,7 @@ static int mach_make_header(struct mac_header *header) {
 				H2LBS(header->raw.data[offset],header->src.panid.data), offset+=2;
 			} else {
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+				printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 				status = -ENOMEM;
 				goto error;
@@ -428,26 +433,36 @@ int mach_parse_data(struct mac_header *header) {
 	if(header->dst.panid.enb)
 	{
 		LB2HS(header->dst.panid.data,header->input.data[offset]),offset+=2;
+	} else {
+		header->dst.panid.data = 0xFFFF;
 	}
 	// dst addr
-	memset(header->dst.addr.ieee_addr,0,8);
-	for(i=0;i< addr_len[header->fc.fc_bit.dst_addr_type];i++)
-	{
-		header->dst.addr.ieee_addr[i] = header->input.data[offset],offset++;
+	if(header->fc.fc_bit.dst_addr_type != 0) {
+		memset(header->dst.addr.ieee_addr,0,8);
+		for(i=0;i< addr_len[header->fc.fc_bit.dst_addr_type];i++)
+		{
+			header->dst.addr.ieee_addr[i] = header->input.data[offset],offset++;
+		}
+	} else {
+		memset(header->dst.addr.ieee_addr,0xff,8);
 	}
 	// src panid
 	if(header->src.panid.enb)
 	{
 		LB2HS(header->src.panid.data,header->input.data[offset]),offset+=2;
+	} else {
+		header->src.panid.data = 0xFFFF;
 	}
 	// src addr
-	memset(header->src.addr.ieee_addr,0,8);
-
-	for(i=0;i< addr_len[header->fc.fc_bit.src_addr_type];i++)
-	{
-		header->src.addr.ieee_addr[i] = header->input.data[offset],offset++;
+	if(header->fc.fc_bit.src_addr_type != 0) {
+		memset(header->src.addr.ieee_addr,0,8);
+		for(i=0;i< addr_len[header->fc.fc_bit.src_addr_type];i++)
+		{
+			header->src.addr.ieee_addr[i] = header->input.data[offset],offset++;
+		}
+	} else {
+		memset(header->src.addr.ieee_addr,0xff,8);
 	}
-
 
 	header->raw.len = header->input.len; // last byte is rss
 	header->payload.data = (uint8_t *)(header->raw.data+offset);
@@ -655,7 +670,7 @@ int mach_setup(struct rf_param *rf) {
 	mach.rf = rf;
 
 	// set channel & txpow
-	if((status = macl_set_channel(rf->pages,rf->ch,rf->tx_power)) != STATUS_OK){
+	if((status = macl_set_channel(rf->pages,rf->ch,rf->tx_power,rf->ant_sw)) != STATUS_OK){
 		goto error;
 	}
 
@@ -930,16 +945,17 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 		if(mach.macl->promiscuousMode) {
 		} else {
 			// parse raw data
+			// short address filter is implemented in ML7396D
 			if((status = mach_parse_data(&mach.rx)!= STATUS_OK) ||
 					((mach.rx.dst.addr_type == 3) && 
 					 (memcmp(mach.rx.dst.addr.ieee_addr,mach.my_addr.ieee_addr,8)!=0) &&
 					 (memcmp(mach.rx.dst.addr.ieee_addr,broadcast_addr,8) !=0))) {
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-					if(module_test & MODE_MACH_DEBUG) {
-						printk(KERN_INFO"%s,%s,%d,mach_parse_data error\n",__FILE__,__func__,__LINE__);
-					}
+				if(module_test & MODE_MACH_DEBUG) {
+					printk(KERN_INFO"%s,%s,%d,mach_parse_data error\n",__FILE__,__func__,__LINE__);
+				}
 #endif
-					return -1;
+				return -1;
 			}
 			// data frame and cmd frame
 			if ((mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_DATA) ||

@@ -26,27 +26,28 @@
 #pragma SEGCONST "OTA_SEGCONST"
 #endif
 #ifdef ARDUINO
-#include "arduino.h"
-#include "phy.h"
-#include "hal.h"
-#include "phy_ml7396.h"
-#include "errno.h"
-#include "endian.h"
-#include "common_subghz.h"
+	#include "arduino.h"
+	#include "phy.h"
+	#include "hal.h"
+	#include "phy_ml7396.h"
+	#include "errno.h"
+	#include "endian.h"
+	#include "common_subghz.h"
 #else
-#ifdef LAZURITE_IDE
-#include <common.h>
-#else
-#include <linux/stddef.h>
-#include "../hwif/random-lzpi.h"
-#include "../common-lzpi.h"
-#endif
-#include "../phy.h"
-#include "phy_ml7396.h"
-#include "hal.h"
-#include "errno.h"
-#include "endian.h"
-#include "ommon_subghz.h"
+	#ifdef LAZURITE_IDE
+		#include <common.h>
+	#else
+		#include <linux/stddef.h>
+		#include "../hwif/random-lzpi.h"
+		#include "../common-lzpi.h"
+	#endif
+	// COMMON HEADER for LAZURITE
+	#include "../phy.h"
+	#include "phy_ml7396.h"
+	#include "../hwif/hal.h"
+	#include "../errno.h"
+	#include "../endian.h"
+	#include "../common_subghz.h"
 #endif
 
 #ifndef LAZURITE_IDE

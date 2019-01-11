@@ -23,9 +23,9 @@
  #define _PHY_H_
 
 
-#ifdef LAZURITE_IDE
+#if defined LAZURITE_IDE
 	#include <common.h>
-#elif ARDUINO
+#elif defined ARDUINO
 #include "arduino.h"
 #else
 	#include <linux/string.h>
