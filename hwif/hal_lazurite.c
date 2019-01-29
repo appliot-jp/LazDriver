@@ -129,12 +129,15 @@ int HAL_init(void) {
 
 	// GPIO init
 #ifdef LAZURITE_IDE
+	drv_digitalWrite(HAL_GPIO_REGPDIN,HIGH);
 	drv_digitalWrite(HAL_GPIO_RESETN,HIGH);
 	drv_digitalWrite(HAL_GPIO_CSB,HIGH);
 	drv_pinMode(HAL_GPIO_SINTN,INPUT);
+	drv_pinMode(HAL_GPIO_REGPDIN,OUTPUT);
 	drv_pinMode(HAL_GPIO_RESETN,OUTPUT);
 	drv_pinMode(HAL_GPIO_CSB,OUTPUT);
 
+    drv_digitalWrite(HAL_GPIO_REGPDIN, LOW);
 	drv_digitalWrite(HAL_GPIO_RESETN, LOW);
 #endif
 #ifdef ARDUINO
