@@ -98,12 +98,15 @@ int HAL_init(void){
 	SPI0.begin();
 
     // GPIO init
+	drv_digitalWrite(HAL_GPIO_REGPDIN,HIGH);
 	drv_digitalWrite(HAL_GPIO_RESETN,HIGH);
 	drv_digitalWrite(HAL_GPIO_CSB,HIGH);
 	drv_pinMode(HAL_GPIO_SINTN,INPUT);
+	drv_pinMode(HAL_GPIO_REGPDIN,OUTPUT);
 	drv_pinMode(HAL_GPIO_RESETN,OUTPUT);
 	drv_pinMode(HAL_GPIO_CSB,OUTPUT);
 
+    drv_digitalWrite(HAL_GPIO_REGPDIN, 0);
     drv_digitalWrite(HAL_GPIO_RESETN, 0);
 	HAL_sleep(3);
     //    idle();

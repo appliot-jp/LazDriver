@@ -549,7 +549,7 @@ int	macl_ed(uint8_t *level)
 	phy_ed(level, macl.rxOnEnable | macl.promiscuousMode);
 	return status;
 }
-int	macl_set_channel(uint8_t page,uint8_t ch, uint32_t mbm)
+int	macl_set_channel(uint8_t page,uint8_t ch, uint32_t mbm, uint8_t antsw)
 {
 	int status=STATUS_OK;
 #ifndef LAZURITE_IDE
@@ -564,7 +564,7 @@ int	macl_set_channel(uint8_t page,uint8_t ch, uint32_t mbm)
 		macl.txPower = 20;
 	}
 
-	phy_setup(page,ch,macl.txPower);
+	phy_setup(page,ch,macl.txPower,antsw);
 	return status;
 }
 int	macl_set_hw_addr_filt(struct ieee802154_my_addr *filt,unsigned long changed)
@@ -647,4 +647,3 @@ uint8_t	macl_getCondition(void)
 void macl_set_ack_tx_interval(uint16_t interval) {
 	macl.tx_ack_interval = interval;
 }
-

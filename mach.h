@@ -107,6 +107,7 @@ struct rf_param {
 	uint8_t tx_min_be;
 	uint8_t tx_max_be;
 	uint8_t tx_retry;
+	uint8_t ant_sw;
 	uint32_t ack_timeout;
 	int32_t cca_level;		//mbm
 	int32_t tx_power;
