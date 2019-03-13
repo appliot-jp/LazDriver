@@ -658,4 +658,3 @@ uint8_t	macl_getCondition(void)
 void macl_set_ack_tx_interval(uint16_t interval) {
 	macl.tx_ack_interval = interval;
 }
-
