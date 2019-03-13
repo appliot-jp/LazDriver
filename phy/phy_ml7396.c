@@ -862,7 +862,7 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 	 *  inside(defualt): 0x02  0x06
 	 *  ooutside       : 0x02  0x02
 	 */
-	HAL_I2C_read(0x24, &eui64_extend_type, 1);
+    HAL_I2C_read(0xA0, &eui64_extend_type, 1);
 	if (eui64_extend_type == 0x05 && antsw == 0x00) {
 		reg_data[0] = 0x06, reg_wr(REG_ADR_2DIV_CNTRL,      reg_data, 1);
 	}else{
