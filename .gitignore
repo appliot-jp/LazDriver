@@ -10,5 +10,4 @@ DRV_802154.*
 lazdriver.mod.c
 tags
 tags.lock
-ota.c
-ota.h
+
