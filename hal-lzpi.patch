@@ -1,6 +1,6 @@
---- hwif/hal-lzpi.c	2019-05-29 17:37:37.544784253 +0900
-+++ hwif/hal-lzpi.c_20190529	2019-05-29 17:31:00.687258847 +0900
-@@ -129,7 +129,7 @@ uint32_t HAL_millis(void)
+--- hwif/hal-lzpi.c	2019-05-30 08:48:04.405982179 +0900
++++ hwif/hal-lzpi.c_20190529	2019-05-30 08:48:04.405982179 +0900
+@@ -129,7 +129,7 @@
  void HAL_set_timer0_function(void (*func)(uint32_t sys_timer_count)) {
  	syslog_timer_ext_func = func;
  }
@@ -9,7 +9,7 @@
  	if(syslog_timer_ext_func) syslog_timer_ext_func(jiffies);
  	syslog_timer.expires = jiffies + HZ*2;
  	add_timer(&syslog_timer);
-@@ -138,8 +138,9 @@ int rf_main_thread(void *p)
+@@ -138,8 +138,9 @@
  {
  	// system logging start
  	syslog_timer_ext_func = NULL;
@@ -20,7 +20,7 @@
  	add_timer(&syslog_timer);
  
  	m.trigger=0;
-@@ -484,7 +485,7 @@ int HAL_TIMER_setup(void)
+@@ -484,7 +485,7 @@
  }
  
  static bool timer_flag=false;
@@ -29,7 +29,7 @@
  {
  	//printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
  	if(ext_timer_func){
-@@ -504,9 +505,12 @@ int HAL_TIMER_start(unsigned short msec,
+@@ -504,9 +505,11 @@
  	uint32_t add_time;
  	add_time = (tmp*msec)/1000; 
  	if(add_time<2) add_time = 2;
@@ -39,7 +39,6 @@
  	g_timer.expires = jiffies + add_time;
  	//	printk(KERN_INFO"%s %s %d   addtime=%d\n",__FILE__,__func__,__LINE__,add_time);
 +	g_timer.function = timer_function;
-+	ext_timer_func = func;
+ 	ext_timer_func = func;
  	add_timer(&g_timer);
  	timer_flag = true;
- 	return HAL_STATUS_OK;
