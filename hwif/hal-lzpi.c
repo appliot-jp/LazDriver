@@ -507,6 +507,7 @@ int HAL_TIMER_start(unsigned short msec, void (*func)(void))
 	timer_setup(&g_timer,timer_function,0);
 	g_timer.expires = jiffies + add_time;
 	//	printk(KERN_INFO"%s %s %d   addtime=%d\n",__FILE__,__func__,__LINE__,add_time);
+	ext_timer_func = func;
 	add_timer(&g_timer);
 	timer_flag = true;
 	return HAL_STATUS_OK;
