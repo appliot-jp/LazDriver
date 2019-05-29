@@ -129,7 +129,7 @@ uint32_t HAL_millis(void)
 void HAL_set_timer0_function(void (*func)(uint32_t sys_timer_count)) {
 	syslog_timer_ext_func = func;
 }
-static void syslog_timer_isr(struct timer_list *t) {
+static void syslog_timer_isr(unsigned long data) {
 	if(syslog_timer_ext_func) syslog_timer_ext_func(jiffies);
 	syslog_timer.expires = jiffies + HZ*2;
 	add_timer(&syslog_timer);
@@ -138,8 +138,9 @@ int rf_main_thread(void *p)
 {
 	// system logging start
 	syslog_timer_ext_func = NULL;
-	timer_setup(&syslog_timer,syslog_timer_isr,0);
+	init_timer(&syslog_timer);
 	syslog_timer.expires = jiffies + HZ*2;
+	syslog_timer.function = syslog_timer_isr;
 	add_timer(&syslog_timer);
 
 	m.trigger=0;
@@ -484,7 +485,7 @@ int HAL_TIMER_setup(void)
 }
 
 static bool timer_flag=false;
-void timer_function(struct timer_list *t)
+void timer_function(unsigned long data)
 {
 	//printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 	if(ext_timer_func){
@@ -504,9 +505,12 @@ int HAL_TIMER_start(unsigned short msec, void (*func)(void))
 	uint32_t add_time;
 	add_time = (tmp*msec)/1000; 
 	if(add_time<2) add_time = 2;
-	timer_setup(&g_timer,timer_function,0);
+	init_timer(&g_timer);
+	g_timer.data = 0;
 	g_timer.expires = jiffies + add_time;
 	//	printk(KERN_INFO"%s %s %d   addtime=%d\n",__FILE__,__func__,__LINE__,add_time);
+	g_timer.function = timer_function;
+	ext_timer_func = func;
 	add_timer(&g_timer);
 	timer_flag = true;
 	return HAL_STATUS_OK;
