@@ -141,7 +141,7 @@ static uint8_t _wire0_endTransmission(uint8_t sendStop)
 	i2c_start(0,true,sendStop);
 	
 	// wait end of communication
-	HALT_Until_Event(HALT_I2C0_END,0);
+  	HALT_Until_Event(HALT_I2C0_END,100);
 	
 	wire0.tx.index = 0;
 	wire0.tx.length = 0;
@@ -171,7 +171,7 @@ static size_t _wire0_requestFrom(UCHAR address,UCHAR quantity, UCHAR sendStop)
 	i2c_start(0,false,sendStop);						// ch, write, cont
 	
 	// wait end of communication
-	HALT_Until_Event(HALT_I2C0_END,0);
+  	HALT_Until_Event(HALT_I2C0_END,100);
 
 	return i2c_read_amount(0);
 }

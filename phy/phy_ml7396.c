@@ -852,6 +852,7 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 
 	HAL_I2C_read(0x23, reg_data, 1), device_id = reg_data[0];
 	reg_data[0] = 0x0f, reg_wr(REG_ADR_CLK_SET,             reg_data, 1);
+    delay(2);
 	reg_data[0] = 0x22, reg_wr(REG_ADR_RX_PR_LEN_SFD_LEN,   reg_data, 1);
 	reg_data[0] = 0x00, reg_wr(REG_ADR_SYNC_CONDITION,      reg_data, 1);
 	reg_data[0] = 0x04, reg_wr(REG_ADR_2DIV_CNTRL,          reg_data, 1);
