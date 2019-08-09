@@ -60,6 +60,7 @@ static void macl_fifodone_handler(void);
 static void macl_ccadone_handler(void);
 static void macl_cca_abort_handler(void);
 static void macl_txdone_handler(void);
+static void macl_tx_data_abort_handler(void);
 static void macl_ack_rxdone_handler(void);
 static void macl_ack_timeout_handler(void);
 
@@ -291,6 +292,8 @@ static void macl_ccadone_handler(void)
 		phy_timer_stop();
 		phy_sint_handler(macl_txdone_handler);
 		phy_ccaCtrl(cca_state);
+	    phy_timer_handler(macl_tx_data_abort_handler);
+		phy_timer_start(160);
 		//      phy_wait_phy_event();
 	}
 	phy_timer_ei();
@@ -322,6 +325,28 @@ static void macl_cca_abort_handler(void)
 	phy_sint_ei();
 }
 
+static void macl_tx_data_abort_handler(void)
+{
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+	phy_sint_di();
+	phy_timer_stop();
+	phy_txdone();
+    if(macl.rxOnEnable){
+        phy_sint_handler(macl_rxdone_handler);
+        phy_rxStart();
+        macl.condition=SUBGHZ_ST_RX_START;
+        phy_wait_phy_event();
+    }else{
+        phy_stop();
+        macl.condition=SUBGHZ_ST_NONE;
+    }
+	macl.status = -EFBIG;
+    phy_wakeup_mac_event();
+	phy_sint_ei();
+}
+
 static void macl_txdone_handler(void)
 {
 	uint8_t ack_req;
@@ -331,6 +356,7 @@ static void macl_txdone_handler(void)
 			__FILE__,__func__,macl.ack_timeout,(unsigned long)macl.ack.data,macl.phy->out.data[0]);
 #endif
 	phy_timer_di();
+	phy_timer_stop();
 	macl.condition=SUBGHZ_ST_TX_DONE;
 	phy_txdone();
 	ack_req = macl.phy->out.data[0]&0x20;
