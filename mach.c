@@ -64,7 +64,7 @@ static BUFFER tx_enhance_ack;
 static BUFFER rx_enhance_ack;
 /******************************************************************************/
 /*! @brief enb_dst_panid
-  enb/dis of dst_panid/src_panid at each addrType
+	enb/dis of dst_panid/src_panid at each addrType
 0bit : addrType=0
 1bit : addrType=1
 ...
@@ -1040,7 +1040,7 @@ void mach_get_enhance_ack(uint8_t **data,int *size){
 	*size = rx_enhance_ack.len;
 	return;
 }
-bool  mach_set_enhance_ack(uint8_t* data, int size) {
+bool mach_set_enhance_ack(uint8_t* data, int size) {
 	bool result=false;
 	if((data == NULL) || (size == 0)) {
 		tx_enhance_ack.data = NULL;
@@ -1059,4 +1059,8 @@ bool  mach_set_enhance_ack(uint8_t* data, int size) {
 }
 void mach_set_ack_tx_interval(uint16_t interval){
 	macl_set_ack_tx_interval(interval);
+}
+
+void mach_phy_cleanup(void){
+	macl_phy_cleanup();
 }

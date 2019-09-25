@@ -39,8 +39,12 @@
 #define DATA_SIZE		256+16
 #define DRV_NAME		"lzgw"
 
-wait_queue_head_t tx_done;
+wait_queue_head_t ext_q;
 extern int que_th2ex;
+
+extern wait_queue_head_t mac_done;
+extern int que_macl;
+int wait_event_macl = 1;
 
 int module_test=0;
 module_param(module_test,int,S_IRUGO | S_IWUSR);
@@ -103,8 +107,11 @@ static BUFFER eack_tx = { NULL, 0, 0 };
 // *****************************************************************
 //			transfer process (input from chrdev)
 // *****************************************************************
+struct list_data rdata[8];
+static uint8_t rindex;
 int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 	int offset = 0;
+	void *msg;
 	struct list_data *new_data;
 	struct timespec rx_time;
 	const uint8_t *in;
@@ -113,8 +120,11 @@ int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 
 	mutex_lock( &chrdev.lock );
 
-	new_data = kmalloc(sizeof(struct list_data), GFP_KERNEL);
-	if (new_data == NULL) {
+		rindex++;
+		rindex = rindex&0x07;
+	msg = memset(&(rdata[rindex]),0,sizeof(rdata[rindex]));
+		new_data = &(rdata[rindex]);
+	if (msg == NULL) {
 		printk(KERN_ERR "[DRV-Lazurite] kmalloc (list_data) GFP_KERNEL no memory\n");
 		errcode = -ENOMEM;
 		goto error;
@@ -144,7 +154,6 @@ int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 			data = list_entry(head.list.next, struct list_data, list);
 			list_del(head.list.next);
 			listed_packet--;
-			kfree(data);
 		}
 		// poll wait cancell 
 		wake_up_interruptible(&chrdev.read_q);	
@@ -152,7 +161,6 @@ int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 	else
 	{
 		printk(KERN_ERR "[DRV-802154E] add_list PHY Size error\n");
-		kfree(new_data);
 		errcode = -1;
 		goto error;
 		// return -1;
@@ -182,6 +190,11 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 	unsigned int command = cmd & 0xF000;
 	unsigned int param = cmd & 0x0FFF;
 	long ret=-EFAULT;
+
+		if (!wait_event_macl || !que_macl) {
+				goto event_deplicatte;
+		}
+
 	mutex_lock( &chrdev.lock );
 
 	switch(command) {
@@ -609,6 +622,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 			break;
 	}
 	mutex_unlock( &chrdev.lock );
+event_deplicatte:
 	return ret;
 }
 
@@ -671,8 +685,6 @@ static ssize_t chardev_read (struct file * file, char __user * buf, size_t count
 		list_del(head.list.next);
 		listed_packet--;
 
-
-		kfree(ptr);
 	}
 end:
 	mutex_unlock( &chrdev.lock );
@@ -690,7 +702,7 @@ static void tx_callback(uint8_t rssi,int status) {
 
 	if(que_th2ex == 0) {
 		que_th2ex = 1;
-		wake_up_interruptible(&tx_done);
+		wake_up_interruptible(&ext_q);
 	}
 	return;
 }
@@ -699,6 +711,24 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 		size_t count, loff_t * ppos) {
 	int status = 0;
 	uint8_t payload[DATA_SIZE];
+
+		if (!wait_event_macl) {
+		status = -EFAULT;
+				goto event_deplicatte;
+		}
+
+		if(!que_macl){
+				wait_event_macl = 0;
+			status = wait_event_interruptible_timeout(mac_done, que_macl,HZ*2);
+				if (!status) {
+				status = -EFAULT;
+						que_macl = 1;
+						wait_event_macl = 1;
+					wake_up_interruptible(&mac_done);
+						// printk(KERN_INFO"return_wait_event:%s,%s,%d\n",__FILE__,__func__,__LINE__);
+						goto event_deplicatte;
+				}
+		}
 
 	mutex_lock( &chrdev.lock );
 
@@ -738,6 +768,7 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 error:
 	EXT_set_tx_led(1);
 	mutex_unlock( &chrdev.lock );
+event_deplicatte:
 	return status;
 }
 
@@ -797,7 +828,6 @@ static int __init drv_param_init(void) {
 
 	// initializing wait queue
 	init_waitqueue_head( &chrdev.read_q );
-	init_waitqueue_head( &tx_done );
 
 	status = SubGHz.init();
 	if(status != SUBGHZ_OK) goto error_device_create;
@@ -812,7 +842,7 @@ static int __init drv_param_init(void) {
 			p.my_addr[5],
 			p.my_addr[6],
 			p.my_addr[7]
-		  );
+			);
 
 	printk(KERN_INFO "[drv-lazurite] End of init\n");
 	mutex_init( &chrdev.lock );

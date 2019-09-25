@@ -61,7 +61,7 @@ struct fc_addr {
 #define IEEE802154_FC_ADDR_IEEE		3
 
 /*! @struct mac_fc_alignment
-	@brief  abstruct
+	@brief	abstruct
 	internal use only
 	bit alightment of mac header
 	*/
@@ -91,8 +91,8 @@ struct mac_header{
 	union mac_frame_control fc;		// frame control
 	struct fc_addr dst;
 	struct fc_addr src;
-	uint8_t seq;        	// sequence number
-	uint8_t addr_type;      // address type
+	uint8_t seq;					// sequence number
+	uint8_t addr_type;			// address type
 	uint8_t rssi;		// source address
 	BUFFER payload;		// source address
 	BUFFER raw;		// source address
@@ -152,6 +152,7 @@ extern int mach_set_promiscuous(bool on);
 extern void mach_get_enhance_ack(uint8_t **data, int *size);
 extern bool mach_set_enhance_ack(uint8_t *data, int size);
 extern void mach_set_ack_tx_interval(uint16_t interval);
+extern void mach_phy_cleanup(void);
 
 #endif
 

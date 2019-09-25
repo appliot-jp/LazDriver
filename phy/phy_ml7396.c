@@ -541,21 +541,43 @@ static void phy_intclr(uint32_t intclr)
 }
 
 
-static void phy_set_trx_state(PHY_TRX_STATE state) {
-	uint8_t set_data,get_data,i;
+static int phy_set_trx_state(PHY_TRX_STATE state)
+{
+	uint8_t set_data,get_data,cmp_data,i;
+	int status = -EBUSY;
+
+	if (state == PHY_ST_FORCE_TRXOFF){
+			cmp_data = PHY_ST_TRXOFF << 4;
+	}else{
+			cmp_data = state << 4;
+	}
 
 	set_data = state;
 	for(i=0;i < 3;i++){
 		reg_wr(REG_ADR_RF_STATUS, &set_data, 1);
 		HAL_delayMicroseconds(200);
 		reg_rd(REG_ADR_RF_STATUS, &get_data, 1);
-		if(set_data == (get_data&0x0F)) break;
+		if(cmp_data == (get_data&0xF0)) {
+			status = STATUS_OK;
+			break;
+		}
 	}
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
+		return status;
 }
 
+
+static void phy_trx_state(PHY_TRX_STATE state) {
+
+	uint8_t set_data;
+		set_data = state;
+	reg_wr(REG_ADR_RF_STATUS, &set_data, 1);
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+}
 
 static void phy_rst(void)
 {
@@ -790,12 +812,14 @@ void phy_wait_phy_event(void)
 }
 
 
-void phy_wait_mac_event(void)
+int phy_wait_mac_event(void)
 {
+    int status;
+	status = HAL_wait_event(HAL_MAC_EVENT);
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
-	HAL_wait_event(HAL_MAC_EVENT);
+    return status;
 }
 
 
@@ -1137,7 +1161,7 @@ void phy_rxStart(void)
 	//  phy_inten(HW_EVENT_RX_DONE);
 	phy_inten(HW_EVENT_RX_DONE | HW_EVENT_ADD_FIL_DONE);
 	phy_rst();
-	phy_set_trx_state(PHY_ST_RXON);
+	phy_trx_state(PHY_ST_RXON);
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
@@ -1154,11 +1178,6 @@ void phy_txStart(BUFFER *buff,uint8_t mode)
 	uint8_t reg_data[2];
 	uint16_t length = buff->len;
 	uint8_t *payload = buff->data;
-
-	//  if (mode != 2) {
-	//        phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
-	//        phy_rst();
-	//  }
 
 	reg_data[0] = PHY_REG_SET_TX_DONE_OFF;
 	reg_wr(REG_ADR_ACK_TIMER_EN, reg_data, 1);
@@ -1187,7 +1206,6 @@ void phy_txStart(BUFFER *buff,uint8_t mode)
 
 	// make payload
 	fifo_wr(REG_ADR_WR_TX_FIFO, payload, length);
-	if(mode == 2) phy_set_trx_state(PHY_ST_TXON);
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_PHY_DEBUG){
 		printk(KERN_INFO"%s,%s,%lx,%d,SequnceNumber:%d,Mode:%d\n",__FILE__,__func__,(unsigned long)payload,length,payload[2],mode);
@@ -1197,19 +1215,23 @@ void phy_txStart(BUFFER *buff,uint8_t mode)
 }
 
 
-void phy_ccaCtrl(CCA_STATE state) {
+int phy_ccaCtrl(CCA_STATE state) {
 
 	uint8_t reg_cca_cntl;
 	uint8_t reg_idl_wait;
 	uint8_t reg_data;
+	int status = STATUS_OK;
 
-	if (state == CCA_FAILURE) {
-		// phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
-		reg_data = PHY_ST_TRXOFF;
-		reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
-	}
 
 	if (state == CCA_FAILURE || state == CCA_IDLE){
+
+		if(state == CCA_IDLE){
+			phy_inten(HW_EVENT_TX_DONE);
+			status = phy_set_trx_state(PHY_ST_TXON);
+		}else{
+            phy_trx_state(PHY_ST_TRXOFF);
+        }
+
 		reg_data = 0x64;
 		reg_wr(REG_ADR_DEMSET3, &reg_data, 1);
 		reg_data = 0x27;
@@ -1219,10 +1241,6 @@ void phy_ccaCtrl(CCA_STATE state) {
 		reg_wr(REG_ADR_IDLE_WAIT_L, &reg_idl_wait, 1);
 		reg_wr(REG_ADR_CCA_CNTRL, &reg_cca_cntl, 1);
 
-		if(state == CCA_IDLE){
-			phy_inten(HW_EVENT_TX_DONE);
-			phy_set_trx_state(PHY_ST_TXON);
-		}
 	}else{
 		if (state == CCA_FAST) {
 			reg_data = 0x00;
@@ -1244,10 +1262,10 @@ void phy_ccaCtrl(CCA_STATE state) {
 		phy_inten(HW_EVENT_CCA_DONE);
 		reg_wr(REG_ADR_IDLE_WAIT_L, &reg_idl_wait, 1);
 		reg_wr(REG_ADR_CCA_CNTRL, &reg_cca_cntl, 1);
-		//      phy_set_trx_state(PHY_ST_RXON);
-		reg_data = 0x06;
-		reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
+		phy_trx_state(PHY_ST_RXON);
 	}
+
+    return status;
 }
 
 
@@ -1285,6 +1303,7 @@ CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry)
 
 void phy_txdone(void)
 {
+	phy_trx_state(PHY_ST_TRXOFF);
 	phy_intclr(HW_EVENT_TX_DONE | HW_EVENT_TX_FIFO_DONE | HW_EVENT_RF_STATUS);
 }
 
@@ -1300,10 +1319,7 @@ int phy_rxdone(BUFFER *buff)
 		uint8_t d8[4];
 	} intsrc;
 
-	// 2017.10.3
-	//  phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
-	reg_data[0] = 0x03;
-	reg_wr(REG_ADR_RF_STATUS, reg_data, 1);
+	phy_trx_state(PHY_ST_FORCE_TRXOFF);
 
 	// Notice: A following must not change.
 	reg_rd(REG_ADR_INT_SOURCE_GRP1, reg_data, 1);
@@ -1368,134 +1384,149 @@ int phy_rxdone(BUFFER *buff)
 	}
 #endif
 	return status;
-	}
+}
 
 
-	void phy_stop(void)
-	{
-		phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
-		phy_intclr(~(HW_EVENT_ALL_MASK | HW_EVENT_FIFO_CLEAR));
-		phy_inten(HW_EVENT_ALL_MASK);
-		phy_rst();
+void phy_stop(void)
+{
+	phy_trx_state(PHY_ST_TRXOFF);
+	phy_intclr(~(HW_EVENT_ALL_MASK | HW_EVENT_FIFO_CLEAR));
+	phy_inten(HW_EVENT_ALL_MASK);
+	phy_rst();
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-		if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
-	}
+}
 
 
-	void phy_clrAddrFilt(void)
-	{
-		uint8_t reg_data;
-		reg_data = 0x00;
-		reg_wr(REG_ADR_ADDFIL_CNTRL, &reg_data, 1);
-	}
+void phy_clrAddrFilt(void)
+{
+	uint8_t reg_data;
+	reg_data = 0x00;
+	reg_wr(REG_ADR_ADDFIL_CNTRL, &reg_data, 1);
+}
 
 
-	void phy_addrFilt(uint16_t panid, uint8_t *ieee_addr, uint16_t uc_addr, uint16_t bc_addr)
-	{
-		uint8_t reg_data[8];
+void phy_addrFilt(uint16_t panid, uint8_t *ieee_addr, uint16_t uc_addr, uint16_t bc_addr)
+{
+	uint8_t reg_data[8];
 
-		reg_data[0] = 0x1E;
-		reg_wr(REG_ADR_ADDFIL_CNTRL, reg_data, 1);
+	reg_data[0] = 0x1E;
+	reg_wr(REG_ADR_ADDFIL_CNTRL, reg_data, 1);
 
-		reg_data[0] = panid>>0&0xff;
-		reg_data[1] = panid>>8&0xff;
-		reg_wr(REG_ADR_PANID_L, reg_data, 2);
+	reg_data[0] = panid>>0&0xff;
+	reg_data[1] = panid>>8&0xff;
+	reg_wr(REG_ADR_PANID_L, reg_data, 2);
 
-		/*
-			 reg_data[0] = ieee_addr[0];
-			 reg_data[1] = ieee_addr[1];
-			 reg_data[2] = ieee_addr[2];
-			 reg_data[3] = ieee_addr[3];
-			 reg_data[4] = ieee_addr[4];
-			 reg_data[5] = ieee_addr[5];
-			 reg_data[6] = ieee_addr[6];
-			 reg_data[7] = ieee_addr[7];
-			 reg_wr(REG_ADR_64ADDR1, reg_data, 8);
-			 */
-		reg_wr(REG_ADR_64ADDR1, ieee_addr, 8);
+	/*
+	 reg_data[0] = ieee_addr[0];
+	 reg_data[1] = ieee_addr[1];
+	 reg_data[2] = ieee_addr[2];
+	 reg_data[3] = ieee_addr[3];
+	 reg_data[4] = ieee_addr[4];
+	 reg_data[5] = ieee_addr[5];
+	 reg_data[6] = ieee_addr[6];
+	 reg_data[7] = ieee_addr[7];
+	 reg_wr(REG_ADR_64ADDR1, reg_data, 8);
+	 */
+	reg_wr(REG_ADR_64ADDR1, ieee_addr, 8);
 
-		reg_data[0] = uc_addr>>0&0xff;
-		reg_data[1] = uc_addr>>8&0xff;
-		reg_wr(REG_ADR_SHT_ADDR0_L, reg_data, 2);
+	reg_data[0] = uc_addr>>0&0xff;
+	reg_data[1] = uc_addr>>8&0xff;
+	reg_wr(REG_ADR_SHT_ADDR0_L, reg_data, 2);
 
-		reg_data[0] = bc_addr>>0&0xff;
-		reg_data[1] = bc_addr>>8&0xff;
-		reg_wr(REG_ADR_SHT_ADDR1_L, reg_data, 2);
+	reg_data[0] = bc_addr>>0&0xff;
+	reg_data[1] = bc_addr>>8&0xff;
+	reg_wr(REG_ADR_SHT_ADDR1_L, reg_data, 2);
 
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-		if(module_test & MODE_PHY_DEBUG){
+	if(module_test & MODE_PHY_DEBUG){
 
-			printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 
-			reg_rd(REG_ADR_ADDFIL_CNTRL, reg_data, 1);
-			printk(KERN_INFO"ADDFIL_CNTRL: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
+		reg_rd(REG_ADR_ADDFIL_CNTRL, reg_data, 1);
+		printk(KERN_INFO"ADDFIL_CNTRL: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
 
-			reg_rd(REG_ADR_PANID_L, reg_data, 2);
-			printk(KERN_INFO"PANID_L_L: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
-			printk(KERN_INFO"PANID_L_H: %s,%s,%x\n",__FILE__,__func__,reg_data[1]);
+		reg_rd(REG_ADR_PANID_L, reg_data, 2);
+		printk(KERN_INFO"PANID_L_L: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
+		printk(KERN_INFO"PANID_L_H: %s,%s,%x\n",__FILE__,__func__,reg_data[1]);
 
-			reg_rd(REG_ADR_SHT_ADDR0_L, reg_data, 2);
-			printk(KERN_INFO"ADDR0_L: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
-			printk(KERN_INFO"ADDR0_H: %s,%s,%x\n",__FILE__,__func__,reg_data[1]);
+		reg_rd(REG_ADR_SHT_ADDR0_L, reg_data, 2);
+		printk(KERN_INFO"ADDR0_L: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
+		printk(KERN_INFO"ADDR0_H: %s,%s,%x\n",__FILE__,__func__,reg_data[1]);
 
-			reg_rd(REG_ADR_SHT_ADDR1_L, reg_data, 2);
-			printk(KERN_INFO"ADDR1_L: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
-			printk(KERN_INFO"ADDR1_H: %s,%s,%x\n",__FILE__,__func__,reg_data[1]);
-		}
-#endif
+		reg_rd(REG_ADR_SHT_ADDR1_L, reg_data, 2);
+		printk(KERN_INFO"ADDR1_L: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
+		printk(KERN_INFO"ADDR1_H: %s,%s,%x\n",__FILE__,__func__,reg_data[1]);
 	}
+#endif
+}
 
 
-	void phy_ed(uint8_t *level, uint8_t rfMode)
-	{
-		if(!rfMode)phy_set_trx_state(PHY_ST_RXON);
-		reg_rd(REG_ADR_ED_RSLT, level, 1);
-		if(!rfMode)phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+void phy_ed(uint8_t *level, uint8_t rfMode)
+{
+	if(!rfMode)phy_set_trx_state(PHY_ST_RXON);
+	reg_rd(REG_ADR_ED_RSLT, level, 1);
+	if(!rfMode)phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-		if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s,ED_value:%x\n",__FILE__,__func__,*level);
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s,ED_value:%x\n",__FILE__,__func__,*level);
 #endif
-	}
+}
 
 
-	void phy_sleep(void)
-	{
-		uint8_t reg_data;
+void phy_sleep(void)
+{
+	uint8_t reg_data;
 
-		phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
-		reg_rd(REG_ADR_CLK_SET, &reg_data, 1);
-		reg_data |=  0x20;
-		reg_wr(REG_ADR_CLK_SET, &reg_data, 1);
-		reg_data = 0x00;
-		reg_wr(REG_ADR_2DIV_CNTRL, &reg_data, 1);
+	phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+	reg_rd(REG_ADR_CLK_SET, &reg_data, 1);
+	reg_data |=  0x20;
+	reg_wr(REG_ADR_CLK_SET, &reg_data, 1);
+	reg_data = 0x00;
+	reg_wr(REG_ADR_2DIV_CNTRL, &reg_data, 1);
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-		if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
-	}
+}
 
 
-	void phy_monitor(void){
+void phy_cleanup(void)
+{
+	uint8_t reg_data;
+
+	phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+	phy_rst();
+    reg_data = 0x00;
+    reg_wr(REG_ADR_INT_SOURCE_GRP2, &reg_data, 1);
+    reg_wr(REG_ADR_INT_SOURCE_GRP3, &reg_data, 1);
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-		uint8_t rdata[4];
-		reg_rd(0, 0x24, rdata, 4);
-		printk(KERN_INFO"INT SOURCE:: %x,%x,%x,%x\n", rdata[0],rdata[1],rdata[2],rdata[3]);
-		reg_rd(0, 0x2A, rdata, 4);
-		printk(KERN_INFO"INT ENABLE:: %x,%x,%x,%x\n", rdata[0],rdata[1],rdata[2],rdata[3]);
-		reg_rd(0, 0x6c, rdata, 1);
-		printk(KERN_INFO"RF STATUS:: %x\n", rdata[0]);
-		reg_rd(0, 0x15, rdata, 1);
-		printk(KERN_INFO"RF CCA CNTL:: %x\n", rdata[0]);
+	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
-	}
+}
 
 
-	// following function is for debug. and test.bin use it.
+void phy_monitor(void){
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
+	uint8_t rdata[4];
+	reg_rd(0, 0x24, rdata, 4);
+	printk(KERN_INFO"INT SOURCE:: %x,%x,%x,%x\n", rdata[0],rdata[1],rdata[2],rdata[3]);
+	reg_rd(0, 0x2A, rdata, 4);
+	printk(KERN_INFO"INT ENABLE:: %x,%x,%x,%x\n", rdata[0],rdata[1],rdata[2],rdata[3]);
+	reg_rd(0, 0x6c, rdata, 1);
+	printk(KERN_INFO"RF STATUS:: %x\n", rdata[0]);
+	reg_rd(0, 0x15, rdata, 1);
+	printk(KERN_INFO"RF CCA CNTL:: %x\n", rdata[0]);
+#endif
+}
 
-	void phy_regread(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
-		reg_rd(bank, addr, data, size);
-	}
+
+// following function is for debug. and test.bin use it.
+
+void phy_regread(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
+	reg_rd(bank, addr, data, size);
+}
 
 
-	void phy_regwrite(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
-		reg_wr(bank, addr, data, size);
-	}
+void phy_regwrite(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
+	reg_wr(bank, addr, data, size);
+}

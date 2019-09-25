@@ -29,20 +29,20 @@
 #include "phy.h"
 
 typedef enum {
-    SUBGHZ_ST_TX_START = 0,
-    SUBGHZ_ST_CCA_FAST,             // 1
-    SUBGHZ_ST_CCA_IDLE_DETECT,      // 2
-    SUBGHZ_ST_CCA_ABORT,            // 3
-    SUBGHZ_ST_CCA_RETRY,            // 4
-    SUBGHZ_ST_CCA_FAILURE,          // 5
-    SUBGHZ_ST_CCA_DONE,             // 6
-    SUBGHZ_ST_TX_DONE,              // 7
-    SUBGHZ_ST_TX_ACK_TIMEOUT,       // 8
-    SUBGHZ_ST_TX_ACK_DONE,          // 9
-    SUBGHZ_ST_RX_START,             // 10
-    SUBGHZ_ST_RX_DONE,              // 11
-    SUBGHZ_ST_RX_ACK_DONE,          // 12
-    SUBGHZ_ST_NONE                  // --
+		SUBGHZ_ST_TX_START = 0,
+		SUBGHZ_ST_CCA_FAST,							// 1
+		SUBGHZ_ST_CCA_IDLE_DETECT,			// 2
+		SUBGHZ_ST_CCA_ABORT,						// 3
+		SUBGHZ_ST_CCA_RETRY,						// 4
+		SUBGHZ_ST_CCA_FAILURE,					// 5
+		SUBGHZ_ST_CCA_DONE,							// 6
+		SUBGHZ_ST_TX_DONE,							// 7
+		SUBGHZ_ST_TX_ACK_TIMEOUT,				// 8
+		SUBGHZ_ST_TX_ACK_DONE,					// 9
+		SUBGHZ_ST_RX_START,							// 10
+		SUBGHZ_ST_RX_DONE,							// 11
+		SUBGHZ_ST_RX_ACK_DONE,					// 12
+		SUBGHZ_ST_NONE									// --
 } SUBGHZ_MAC_STATE;
 
 
@@ -52,17 +52,17 @@ typedef struct {
 	uint8_t ch;
 	uint8_t ccaRetry;
 	uint8_t ccaBe;
-    uint8_t ccaCount;
+	uint8_t ccaCount;
 	uint8_t txPower;
 	uint8_t txRetry;
 	uint8_t txMode;
-    uint8_t sequnceNum;
+	uint8_t sequnceNum;
 	uint8_t resendingNum;
 	uint8_t rxOnEnable;
 	bool promiscuousMode;
 	uint16_t ack_timeout;
 	int status;
-    unsigned long total_send_bytes;
+	unsigned long total_send_bytes;
 	unsigned long start_send_time;
 	unsigned long last_send_time;
 	PHY_PARAM *phy;
@@ -94,6 +94,7 @@ extern int	macl_rx_irq_notification(void);
 extern int	macl_sleep(bool on);
 extern uint8_t	macl_getCondition(void);
 extern void	macl_set_ack_tx_interval(uint16_t interval);
+extern void macl_phy_cleanup(void);
 
 #endif
 

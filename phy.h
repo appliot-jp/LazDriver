@@ -70,7 +70,7 @@ extern int phy_timer_tick(uint32_t *msec);
  -------------------------------------------------------------
  */
 extern void phy_wait_phy_event(void);
-extern void phy_wait_mac_event(void);
+extern int phy_wait_mac_event(void);
 extern void phy_wakeup_phy_event(void);
 extern void phy_wakeup_mac_event(void);
 
@@ -80,7 +80,7 @@ extern int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw);
 // extern void phy_promiscuous(void);
 extern void phy_rxStart(void);
 extern void phy_txStart(BUFFER *buff,uint8_t mode);
-extern void phy_ccaCtrl(CCA_STATE state);
+extern int phy_ccaCtrl(CCA_STATE state);
 extern CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry);
 extern void phy_txdone(void);
 extern int phy_rxdone(BUFFER *buff);
@@ -89,6 +89,7 @@ extern void phy_clrAddrFilt(void);
 extern void phy_addrFilt(uint16_t panid, uint8_t *ieee_addr, uint16_t uc_addr, uint16_t bc_addr);
 extern void phy_ed(uint8_t *level, uint8_t rfMode);
 extern void phy_sleep(void);
+extern void phy_cleanup(void);
 extern void phy_monitor(void);
 // following function is for debug. and test.bin use it.
 extern void phy_regread(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size);

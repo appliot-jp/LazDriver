@@ -305,6 +305,8 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 	subghz_param.tx.len = len;
 	subghz_param.tx_callback = callback;
 
+	mach_phy_cleanup();
+
 	// initializing frame control
 	memset(&fc,0,sizeof(fc));
 	fc.frame_type = IEEE802154_FC_TYPE_DATA;
