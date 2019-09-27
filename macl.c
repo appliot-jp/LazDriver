@@ -79,7 +79,7 @@ static void	macl_system_monitor(uint32_t data)
 #endif
 
 
-//unsigned long printk_time=0;
+//unsigned long limit_time=0;
 static int macl_total_transmission_time(uint8_t len)
 {
 	unsigned long current_time;
@@ -140,14 +140,14 @@ static int macl_total_transmission_time(uint8_t len)
 	}
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 		if(module_test & MODE_MACL_DEBUG) {
-//	if(current_time > printk_time) {
+//		if(current_time > limit_time) {
 				if(duration > 3600000L) printk(KERN_INFO"send over\n");
 				if (status == -EAGAIN) {
 						printk(KERN_INFO"%s,%s,duration:%ld,LEN:%d,status:%d\n",__FILE__,__func__,duration,len,status);
 				}else{
-						printk(KERN_INFO"start:%lx,last:%lx,duration:%ld,total_byte:%ld,delay:%d\n",macl.start_send_time,macl.last_send_time,duration,macl.total_send_bytes,mdelay);
+						printk(KERN_INFO"start:%lx,last:%lx,duration:%ld,total_byte:%ld,delay:%d,LEN:%d\n",macl.start_send_time,macl.last_send_time,duration,macl.total_send_bytes,mdelay,len);
 				}
-//			limit_time = current_time + 60000;
+//			limit_time = current_time + 6000;
 		}
 #endif
 	return status;
@@ -552,7 +552,7 @@ int	macl_stop(void)
 
 int	macl_xmit_sync(BUFFER buff)
 {
-		int status=100;
+	int status=STATUS_OK;
 	macl.condition=SUBGHZ_ST_TX_START;
 	macl.status=STATUS_OK;
 	macl.phy->out = buff;
@@ -607,7 +607,7 @@ int	macl_xmit_sync(BUFFER buff)
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 /*
 		#include "phy/phy_ml7396.h"
-		if(!status) {
+		if(status != STATUS_OK) {
 				uint8_t reg_data[4];
 				phy_regread(REG_ADR_RF_STATUS,&(reg_data[0]),1);
 				phy_regread(REG_ADR_INT_SOURCE_GRP2, &(reg_data[1]), 1);
@@ -623,7 +623,7 @@ int	macl_xmit_sync(BUFFER buff)
 		PAYLOADDUMP(macl.phy->out.data,macl.phy->out.len);
 	}
 #endif
-		if(!status) {
+		if(status != STATUS_OK) {
 				phy_stop();
 				if(macl.rxOnEnable){
 						macl.condition=SUBGHZ_ST_RX_START;
@@ -633,7 +633,7 @@ int	macl_xmit_sync(BUFFER buff)
 				}else{
 						macl.condition=SUBGHZ_ST_NONE;
 				}
-				macl.status = -EFBIG;
+				macl.status = status;
 				phy_wakeup_mac_event();
 		}
 	return macl.status;

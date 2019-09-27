@@ -342,6 +342,12 @@ error:
 }
 
 
+/******************************************************************************
+ Returns:
+ 	wait_event_interruptible_timeout - sleep until a condition gets true or a timeout elapses
+ 	0: timeout
+ 	n: remaining time
+ ******************************************************************************/
 int HAL_wait_event(uint8_t event)
 {
 	int status=1;
@@ -352,6 +358,11 @@ int HAL_wait_event(uint8_t event)
 				que_macl = 0;
 //			printk(KERN_INFO"%s %s %d jiffies:%lx HZ:%x\n",__FILE__,__func__,__LINE__,jiffies,HZ);
 				status = wait_event_interruptible_timeout(mac_done, que_macl,HZ*2);
+		}
+		if (!status) {
+			status = -EFBIG;
+		}else{
+			status = HAL_STATUS_OK;
 		}
 	return status;
 }
