@@ -163,9 +163,9 @@ static void macl_rxdone_handler(void)
 {
 		int status;
 
-		macl.condition=SUBGHZ_ST_RX_DONE;
 	phy_timer_di();
-		status = phy_rxdone(&macl.phy->in);
+	macl.condition=SUBGHZ_ST_RX_DONE;
+	status = phy_rxdone(&macl.phy->in);
 	if(status == STATUS_OK) {
 			status = macl_rx_irq(&macl.phy->in,&macl.ack);
 	}
@@ -239,7 +239,7 @@ static void macl_tx_ack_abort_handler(void)
 #endif
 	phy_sint_di();
 	phy_timer_stop();
-	macl.condition=SUBGHZ_ST_RX_ACK_DONE;
+	macl.condition=SUBGHZ_ST_RX_ACK_ABORT;
 	macl.ack.data = NULL;
 	macl.ack.len = 0;
 	macl_rx_irq(NULL,NULL);

@@ -869,8 +869,16 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 	mach.tx.addr_type = addr_type;
 	memcpy(&mach.tx.fc.fc_bit,&fc,sizeof(fc)) ;
 
+/*
+	if(macl_getCondition() == SUBGHZ_ST_RX_DONE){
+			phy_wait_mac_event();
+	}
+*/
+
 	// This here will copy to raw.data(PHY) from layload.data(user)
-	if((status = mach_make_header(&mach.tx))!=STATUS_OK) {
+	//if((status = mach_make_header(&mach.tx))!=STATUS_OK) {
+	status = mach_make_header(&mach.tx);
+	if(status != STATUS_OK) {
 		goto error;
 	}
 

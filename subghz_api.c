@@ -52,12 +52,9 @@
 	#include "errno.h"
 	#include "hwif/hal.h"
 	#include "aes/aes.h"
+	#include "macl.h"
 #endif
 
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-	extern wait_queue_head_t tx_done;
-	extern int que_th2ex;
-#endif
 
 // this proto-type is for linux
 static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len);
@@ -230,6 +227,8 @@ static SUBGHZ_MSG subghz_tx64le(uint8_t *addr_le, uint8_t *data, uint16_t len, v
 	subghz_param.tx.len = len;
 	subghz_param.tx_callback = callback;
 
+	mach_phy_cleanup();
+
 	// initializing frame control
 	memset(&fc,0,sizeof(fc));
 	fc.frame_type = IEEE802154_FC_TYPE_DATA;
@@ -389,7 +388,8 @@ int mach_rx_irq(struct mac_header *rx)
 			PAYLOADDUMP(rx->raw.data, rx->raw.len);
 		}
 #endif
-		if (rx->fc.fc_bit.sec_enb && AES128_getStatus()){
+		if (rx->fc.fc_bit.sec_enb && AES128_getStatus() &&
+				(macl_getCondition() == SUBGHZ_ST_RX_ACK_DONE)){
 			uint8_t mhr_len;
 			uint8_t pad;
 			uint8_t outbuf[256];

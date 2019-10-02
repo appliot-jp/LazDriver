@@ -39,12 +39,11 @@
 #define DATA_SIZE		256+16
 #define DRV_NAME		"lzgw"
 
-wait_queue_head_t ext_q;
 extern int que_th2ex;
-
-extern wait_queue_head_t mac_done;
 extern int que_macl;
-int wait_event_macl = 1;
+volatile int wait_event_macl = 1;
+extern wait_queue_head_t ext_q;
+extern wait_queue_head_t mac_done;
 
 int module_test=0;
 module_param(module_test,int,S_IRUGO | S_IWUSR);
@@ -719,14 +718,14 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 
 		if(!que_macl){
 				wait_event_macl = 0;
-			status = wait_event_interruptible_timeout(mac_done, que_macl,HZ*2);
+				status = wait_event_interruptible_timeout(mac_done, que_macl,HZ*2);
 				if (!status) {
-				status = -EFAULT;
-						que_macl = 1;
-						wait_event_macl = 1;
+					status = -EFAULT;
+					que_macl = 1;
+					wait_event_macl = 1;
 					wake_up_interruptible(&mac_done);
-						// printk(KERN_INFO"return_wait_event:%s,%s,%d\n",__FILE__,__func__,__LINE__);
-						goto event_deplicatte;
+//					printk(KERN_INFO"return_wait_event:%s,%s,%d\n",__FILE__,__func__,__LINE__);
+					goto event_deplicatte;
 				}
 		}
 

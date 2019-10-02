@@ -52,18 +52,17 @@ static void (*act_irq_func)(void);
 static void (*syslog_timer_ext_func)(uint32_t data);
 static bool ext_irq_enb;
 
-volatile int que_th2ex = 0;
-volatile int que_macl = 1;
 extern int wait_event_macl;
-wait_queue_head_t mac_done;
-
 volatile int que_irq= 0;
 volatile int que_tx_led= 1;
 volatile int que_rx_led= 1;
+volatile int que_th2ex = 0;
+volatile int que_macl = 1;
 static wait_queue_head_t rf_irq_q;
 static wait_queue_head_t tx_led_q;
 static wait_queue_head_t rx_led_q;
-static wait_queue_head_t ext_q;
+wait_queue_head_t ext_q;
+wait_queue_head_t mac_done;
 static struct task_struct *rf_main_task;
 static struct task_struct *tx_led_task;
 static struct task_struct *rx_led_task;
