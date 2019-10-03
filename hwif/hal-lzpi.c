@@ -355,8 +355,9 @@ int HAL_wait_event(uint8_t event)
 		}else
 		if (event == HAL_MAC_EVENT) {
 				que_macl = 0;
-//			printk(KERN_INFO"%s %s %d jiffies:%lx HZ:%x\n",__FILE__,__func__,__LINE__,jiffies,HZ);
+				//printk(KERN_INFO"%s %s %d jiffies:%lx HZ:%x\n",__FILE__,__func__,__LINE__,jiffies,HZ);
 				status = wait_event_interruptible_timeout(mac_done, que_macl,HZ*2);
+				//printk(KERN_INFO"%s %s %d status:%d HZ:%x\n",__FILE__,__func__,__LINE__,status,HZ);
 		}
 		if (!status) {
 			status = -EFBIG;
@@ -377,7 +378,8 @@ int HAL_wakeup_event(uint8_t event)
 		if (event == HAL_MAC_EVENT) {
 				que_macl = 1;
 				wait_event_macl = 1;
-			wake_up_interruptible(&mac_done);
+				//printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
+				wake_up_interruptible(&mac_done);
 		}
 	return status;
 }
