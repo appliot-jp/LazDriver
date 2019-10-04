@@ -81,14 +81,14 @@
 #define	IOCTL_GET_EACK			0x40
 #define	IOCTL_SET_ACK_INTERVAL	0x43
 
-/*
 #define	IOCTL_RF				0x2000
 #define	IOCTL_EEPROM			0x3000
 #define	IOCTL_LED				0x4000
-*/
+/*
 #define	IOCTL_RF				0x0200
 #define	IOCTL_EEPROM			0x0300
 #define	IOCTL_LED				0x0400
+*/
 
 #endif // _DRV_802154E_H_
 
