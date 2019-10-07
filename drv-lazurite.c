@@ -609,7 +609,8 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 				break;
 			}
 		case IOCTL_LED:
-			if(param == 0x000) {
+//		printk(KERN_INFO"%s,%s,%d,command:%x,param:%x\n", __FILE__,__func__,__LINE__,command,param);
+			if(param == 0x800) {
 				EXT_rx_led_flash(arg);
 			} else {
 				EXT_tx_led_flash(arg);

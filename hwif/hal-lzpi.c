@@ -582,7 +582,7 @@ void EXT_tx_led_flash(uint32_t time)
 {
 	if(que_tx_led == 0)
 		que_tx_led = 1;
-		wake_up_interruptible(&rx_led_q);
+		wake_up_interruptible(&tx_led_q);
 }
 void EXT_rx_led_flash(uint32_t time)
 {
