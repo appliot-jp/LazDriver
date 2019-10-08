@@ -388,8 +388,7 @@ int mach_rx_irq(struct mac_header *rx)
 			PAYLOADDUMP(rx->raw.data, rx->raw.len);
 		}
 #endif
-		if (rx->fc.fc_bit.sec_enb && AES128_getStatus() &&
-				(macl_getCondition() == SUBGHZ_ST_RX_ACK_DONE)){
+		if (rx->fc.fc_bit.sec_enb && AES128_getStatus()) {
 			uint8_t mhr_len;
 			uint8_t pad;
 			uint8_t outbuf[256];
