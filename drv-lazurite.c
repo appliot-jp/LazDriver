@@ -577,6 +577,21 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 						ret = -EFAULT;
 					}
 					break;
+				case IOCTL_GET_ED_VALUE:
+					{
+						uint8_t edval;
+						SubGHz.getEdValue(&edval);
+						ret = edval;
+					}
+					break;
+				case IOCTL_ANT_SWITCH:
+					if(arg>0) {
+						SubGHz.antSwitch(arg);
+						ret = arg;
+					} else {
+						ret = -EFAULT;
+					}
+					break;
 				default:
 					ret = -ENOTTY;
 					break;
