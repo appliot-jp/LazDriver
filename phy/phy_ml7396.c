@@ -1466,6 +1466,7 @@ void phy_addrFilt(uint16_t panid, uint8_t *ieee_addr, uint16_t uc_addr, uint16_t
 void phy_ed(uint8_t *level, uint8_t rfMode)
 {
 	if(!rfMode)phy_set_trx_state(PHY_ST_RXON);
+	HAL_delayMicroseconds(300);
 	reg_rd(REG_ADR_ED_RSLT, level, 1);
 	if(!rfMode)phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
