@@ -1087,6 +1087,71 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 
 	vco_cal();
 
+#ifdef FCC
+    {
+	    uint8_t bpf;
+        uint16_t bpf_adj;
+
+		reg_rd(REG_ADR_BPF_ADJ_OFFSET, reg_data, 1), bpf = reg_data[0];
+        bpf_adj = ((bpf&0x7f)*0.36) + 0xD2;
+   //   bpf_adj = 0x00DF; //((bpf&0x7f)*0.36) + 0xD2;
+        reg_data[0]=0x03, reg_wr(REG_ADR_RATE_SET2,				    reg_data,1);
+        reg_data[0]=0x24, reg_wr(REG_ADR_GAIN_MtoL,				    reg_data,1);
+        reg_data[0]=0x08, reg_wr(REG_ADR_GAIN_LtoM,				    reg_data,1);
+        reg_data[0]=0xA4, reg_wr(REG_ADR_GAIN_HtoM,				    reg_data,1);
+        reg_data[0]=0x08, reg_wr(REG_ADR_GAIN_MtoH,				    reg_data,1);
+        reg_data[0]=0x12, reg_wr(REG_ADR_RSSI_STABLE_TIME,          reg_data,1);
+        reg_data[0]=0x1C, reg_wr(REG_ADR_IF_FREQ_AFC_H,		        reg_data,1);
+        reg_data[0]=0x71, reg_wr(REG_ADR_IF_FREQ_AFC_L,		        reg_data,1);
+        reg_data[0]=bpf_adj>>8, reg_wr(REG_ADR_BPF_AFC_ADJ_H,		reg_data,1);
+        reg_data[0]=bpf_adj&0xff,reg_wr(REG_ADR_BPF_AFC_ADJ_L,		reg_data,1);
+        reg_data[0]=0x00, reg_wr(REG_ADR_AFC_CNTRL,				    reg_data,1);
+        reg_data[0]=0x04, reg_wr(REG_ADR_TX_PR_LEN,				    reg_data,1);
+        reg_data[0]=0x13, reg_wr(REG_ADR_DATA_SET,				    reg_data,1);
+        reg_data[0]=0xC7, reg_wr(REG_ADR_CH_SPACE_L,			    reg_data,1);
+        reg_data[0]=0x71, reg_wr(REG_ADR_CH_SPACE_H,			    reg_data,1);
+        reg_data[0]=0x74, reg_wr(REG_ADR_F_DEV_L,					reg_data,1);
+        reg_data[0]=0x13, reg_wr(REG_ADR_F_DEV_H,					reg_data,1);
+        reg_data[0]=0x00, reg_wr(REG_ADR_GFIL01_FSK_FDEV2,          reg_data,1);
+        reg_data[0]=0x00, reg_wr(REG_ADR_GFIL02_FSK_FDEV3,          reg_data,1);
+        reg_data[0]=0x00, reg_wr(REG_ADR_GFIL03_FSK_FDEV4,          reg_data,1);
+        reg_data[0]=0x00, reg_wr(REG_ADR_GFIL04,					reg_data,1);
+        reg_data[0]=0x00, reg_wr(REG_ADR_GFIL05,					reg_data,1);
+        reg_data[0]=0x00, reg_wr(REG_ADR_GFIL06,					reg_data,1);
+        reg_data[0]=0x03, reg_wr(REG_ADR_GFIL07,					reg_data,1);
+        reg_data[0]=0x0B, reg_wr(REG_ADR_GFIL08,					reg_data,1);
+        reg_data[0]=0x1D, reg_wr(REG_ADR_GFIL09,					reg_data,1);
+        reg_data[0]=0x35, reg_wr(REG_ADR_GFIL10,					reg_data,1);
+        reg_data[0]=0x40, reg_wr(REG_ADR_GFIL11,					reg_data,1);
+        reg_data[0]=0x16, reg_wr(REG_ADR_2DIV_SEARCH,			    reg_data,1);
+
+        reg_data[0]=0x02, reg_wr(REG_ADR_DEMOD_SET,				    reg_data,1);
+        reg_data[0]=0x37, reg_wr(REG_ADR_PA_ADJ3,					reg_data,1);
+        reg_data[0]=0x1C, reg_wr(REG_ADR_IF_FREQ_H,                 reg_data,1);
+        reg_data[0]=0x71, reg_wr(REG_ADR_IF_FREQ_L,				    reg_data,1);
+        reg_data[0]=0x1C, reg_wr(REG_ADR_IF_FREQ_CCA_H,		        reg_data,1);
+        reg_data[0]=0x71, reg_wr(REG_ADR_IF_FREQ_CCA_L,		        reg_data,1);
+        reg_data[0]=bpf_adj>>8, reg_wr(REG_ADR_BPF_ADJ_H,		    reg_data,1);
+        reg_data[0]=bpf_adj&0xff,reg_wr(REG_ADR_BPF_ADJ_L,		    reg_data,1);
+        reg_data[0]=bpf_adj>>8, reg_wr(REG_ADR_BPF_CCA_ADJ_H,		reg_data,1);
+        reg_data[0]=bpf_adj&0xff,reg_wr(REG_ADR_BPF_CCA_ADJ_L,		reg_data,1);
+        reg_data[0]=0x10, reg_wr(REG_ADR_RSSI_LPF_ADJ,		        reg_data,1);
+        reg_data[0]=0x70, reg_wr(REG_ADR_BPF_GAIN_ADJ,		        reg_data,1);
+
+        reg_data[0]=0xE0; reg_wr(REG_ADR_DEMSET2,					reg_data,1);
+        reg_data[0]=0xE0; reg_wr(REG_ADR_DEMSET3,					reg_data,1);
+        reg_data[0]=0x36; reg_wr(REG_ADR_DEMSET4,					reg_data,1);
+        reg_data[0]=0x36; reg_wr(REG_ADR_DEMSET5,					reg_data,1);
+        reg_data[0]=0x14; reg_wr(REG_ADR_DEMSET6,					reg_data,1);
+        reg_data[0]=0x64; reg_wr(REG_ADR_DEMSET7,					reg_data,1);
+        reg_data[0]=0x78; reg_wr(REG_ADR_DEMSET14,				    reg_data,1);
+        reg_data[0]=0x70; reg_wr(REG_ADR_RATE_ADJ1,					reg_data,1);
+        reg_data[0]=0x12; reg_wr(REG_ADR_RATE_ADJ2,					reg_data,1);
+    }
+
+//    phy_regdump();
+#endif
+
 	status = 0;
 error:
 	return status;
@@ -1531,3 +1596,45 @@ void phy_regread(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
 void phy_regwrite(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
 	reg_wr(bank, addr, data, size);
 }
+
+#if 0
+void phy_regdump(void)
+{
+	uint8_t dump_cnt,dat_dump,reg_data[4];
+
+
+    Serial.println("-----------------/ bank0 /---------------");
+    for(dump_cnt=0; dump_cnt <= 0x7F; dump_cnt++) {
+        reg_rd(8, dump_cnt, reg_data, 1); dat_dump = reg_data[0];
+        if (dump_cnt == 0) Serial.print(""); 
+        else if (dump_cnt%16 == 0) Serial.println("");
+        else Serial.print(" ");
+        if(dat_dump < 16) Serial.print("0");
+        Serial.print_long((long)dat_dump,HEX);
+	}
+	Serial.println("");
+
+    Serial.println("-----------------/ bank1 /---------------");
+    for(dump_cnt=0; dump_cnt <= 0x7F; dump_cnt++) {
+        reg_rd(9, dump_cnt, reg_data, 1); dat_dump = reg_data[0];
+        if (dump_cnt == 0) Serial.print(""); 
+        else if (dump_cnt%16 == 0) Serial.println("");
+        else Serial.print(" ");
+        if(dat_dump < 16) Serial.print("0");
+        Serial.print_long((long)dat_dump,HEX);
+    }
+	Serial.println("");
+
+    Serial.println("-----------------/ bank2 /---------------");
+    for(dump_cnt=0; dump_cnt <= 0x7F; dump_cnt++) {
+        reg_rd(10, dump_cnt, reg_data, 1); dat_dump = reg_data[0];
+        if (dump_cnt == 0) Serial.print(""); 
+        else if (dump_cnt%16 == 0) Serial.println("");
+        else Serial.print(" ");
+        if(dat_dump < 16) Serial.print("0");
+        Serial.print_long((long)dat_dump,HEX);
+    }
+	Serial.println("");
+
+}
+#endif
