@@ -170,7 +170,7 @@ int HAL_init(void) {
 
 	// I2C init
 	i2c_config.i2c_addr = 0x50;
-	#ifdef LAZURITE_MINI
+    #if defined(LAZURITE_MINI) || defined(MK74040)
 	i2c_config.addr_bits = 16;
 	#else
 	i2c_config.addr_bits = 8;
