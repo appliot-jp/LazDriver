@@ -55,6 +55,10 @@ typedef enum {
 
 // rate parameters
 typedef enum {
+#ifdef MK74040
+	SUBGHZ_200KBPS = 200,
+	SUBGHZ_80KBPS  = 80,
+#endif
 	SUBGHZ_100KBPS = 100,
 	SUBGHZ_50KBPS  = 50
 } SUBGHZ_RATE;
@@ -122,6 +126,11 @@ typedef struct
 	void (*setAckTxInterval)(uint16_t interval);
 	void (*getEdValue)(uint8_t *rssi);
 	void (*antSwitch)(uint8_t ant_sw);
+#ifdef MK74040
+    void (*setModulation)(uint8_t mode);
+	void (*setDsssSize)(uint8_t size, uint8_t addr_mode);
+	void (*setDsssSpreadFactor)(uint8_t sf);
+#endif
 } SubGHz_CTRL;
 
 extern const SubGHz_CTRL SubGHz;

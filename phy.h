@@ -50,6 +50,35 @@ typedef enum {
 	CCA_FAILURE                /* CCA failure */
 } CCA_STATE;
 
+#ifdef MK74040
+typedef enum {
+	FIFO_NORMAL,                /* Normal access */
+	FIFO_DONE,                  /* INT FIFO DONE */
+	FIFO_AUTO_TX                /* AUTO TX */
+} FIFO_ACCESS;
+
+
+#define PHY_MODULATION_FSK		( 0x00 )
+#define PHY_MODULATION_DSSS		( 0x10 )
+#define PHY_MODULATION_SIGFOX	( 0x20 )
+
+#define PHY_CHSPACE_12_5K		( 0x00 )
+#define PHY_CHSPACE_25K			( 0x01 )
+#define PHY_CHSPACE_100K		( 0x02 )
+#define PHY_CHSPACE_150K		( 0x03 )
+#define PHY_CHSPACE_200K		( 0x04 )
+#define PHY_CHSPACE_400K		( 0x05 )
+#define PHY_CHSPACE_5K		    ( 0x06 )
+
+#define PHY_PA_MODE_NORMAL      ( 0x00 )
+#define PHY_PA_MODE_EXTERNAL    ( 0x01 )
+
+
+#define PHY_DATARATE_50K		( 0x01 )
+#define PHY_DATARATE_100K		( 0x02 )
+#define PHY_DATARATE_80K		( 0x04 )
+#define PHY_DATARATE_200K		( 0x08 )
+#endif
 /*
  -------------------------------------------------------------
                     Public interrupt section
@@ -79,8 +108,17 @@ extern int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw);
 
 // extern void phy_promiscuous(void);
 extern void phy_rxStart(void);
+#ifdef MK74040
+//extern int phy_setup(uint8_t page,uint8_t ch);
+extern void phy_config(uint8_t mod, uint8_t sf, uint16_t size);
+extern bool phy_txfifo(BUFFER *buff);
+extern void phy_regdump(void);
+extern bool phy_txStart(BUFFER *buff,uint8_t mode);
+extern void phy_ccaCtrl(CCA_STATE state);
+#else
 extern void phy_txStart(BUFFER *buff,uint8_t mode);
 extern int phy_ccaCtrl(CCA_STATE state);
+#endif
 extern CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry);
 extern void phy_txdone(void);
 extern int phy_rxdone(BUFFER *buff);

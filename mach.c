@@ -669,6 +669,11 @@ int mach_setup(struct rf_param *rf) {
 	// link parameter
 	mach.rf = rf;
 
+#ifdef MK74040
+	// set modulation
+	if((status = macl_set_modulation(rf->modulation,rf->dsssSF,rf->dsssSize)) != STATUS_OK) goto error;
+#endif
+
 	// set channel & txpow
 	if((status = macl_set_channel(rf->pages,rf->ch,rf->tx_power,rf->ant_sw)) != STATUS_OK){
 		goto error;

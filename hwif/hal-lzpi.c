@@ -390,7 +390,11 @@ int HAL_init(void){
 		// printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 	// spi initialization
 	m.i2c.i2c_addr = 0x50;
+#ifdef MK74040
+	m.i2c.addr_bits = 16;
+#else
 	m.i2c.addr_bits = 8;
+#endif
 	status = lzpi_spi_init(spi_probe);
 	if(status != 0){
 		status = HAL_ERROR_SPI;

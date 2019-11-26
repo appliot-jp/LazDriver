@@ -592,6 +592,30 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 						ret = -EFAULT;
 					}
 					break;
+#ifdef MK74040
+				case IOCTL_SET_DSSS_MODE:
+				//if(arg == 0) SubGHz.setModulation(false);
+				//	else SubGHz.setModulation(arg);
+					SubGHz.setModulation(arg);
+					ret = 0;
+					break;
+				case IOCTL_SET_DSSS_SF:
+					SubGHz.setDsssSpreadFactor(arg);
+					ret = 0;
+					break;
+				case IOCTL_SET_DSSS_SIZE:
+
+//				    SubGHz.setDsssSize(arg,p.tx64);
+//				    ret = 0;
+                    {
+                        uint8_t size = (uint8_t)(arg >> 8);
+                        uint8_t amode = (uint8_t)(arg);
+//                      printk( KERN_INFO "DSSS SIZE: arg:0x%lx, size:0x%x, amode:0x%x\n", arg,size,amode);
+					    SubGHz.setDsssSize(size,amode);
+					    ret = 0;
+				    }
+					break;
+#endif
 				default:
 					ret = -ENOTTY;
 					break;

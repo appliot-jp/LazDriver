@@ -60,6 +60,9 @@ typedef struct {
 	uint8_t sequnceNum;
 	uint8_t resendingNum;
 	uint8_t rxOnEnable;
+#ifdef MK74040
+    uint8_t modulation;
+#endif
 	bool promiscuousMode;
 	uint16_t ack_timeout;
 	int status;
@@ -97,5 +100,9 @@ extern uint8_t	macl_getCondition(void);
 extern void	macl_set_ack_tx_interval(uint16_t interval);
 extern void macl_phy_cleanup(void);
 
+#ifdef MK74040
+extern int	macl_set_modulation(uint8_t mod, uint8_t sf, uint8_t size);
+extern uint8_t	macl_get_modulation(void);
+#endif
 #endif
 

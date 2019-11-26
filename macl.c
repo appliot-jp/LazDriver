@@ -57,6 +57,9 @@ static void macl_rxdone_handler(void);
 static void macl_ack_txdone_handler(void);
 static void macl_tx_ack_abort_handler(void);
 static void macl_fifodone_handler(void);
+#ifdef MK74040
+static void macl_txfifodone_handler(void);
+#endif
 static void macl_ccadone_handler(void);
 static void macl_cca_abort_handler(void);
 static void macl_txdone_handler(void);
@@ -132,6 +135,14 @@ static int macl_total_transmission_time(uint8_t len)
 			case 2:  /* 100kbps */
 					if(macl.total_send_bytes+len>4500000L) status = -EAGAIN;
 					break;
+#ifdef MK74040
+			case 4:  /* 80kbps */
+					if(macl.total_send_bytes+len>3600000L) status = -EAGAIN;
+					break;
+			case 8:  /* 200kbps */
+					if(macl.total_send_bytes+len>9000000L) status = -EAGAIN;
+					break;
+#endif
 			default:
 					status = -EAGAIN;
 					break;
@@ -166,6 +177,12 @@ static void macl_rxdone_handler(void)
 	phy_timer_di();
 	macl.condition=SUBGHZ_ST_RX_DONE;
 	status = phy_rxdone(&macl.phy->in);
+#ifdef MK74040
+	if(status) {
+		phy_timer_ei();
+		return;
+	}else
+#endif
 	if(status == STATUS_OK) {
 			status = macl_rx_irq(&macl.phy->in,&macl.ack);
 	}
@@ -205,6 +222,21 @@ static void macl_rxdone_handler(void)
 	phy_timer_ei();
 }
 
+#ifdef MK74040
+static void macl_txfifodone_handler(void)
+{
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+#endif
+	phy_timer_di();
+    if(phy_txfifo(&macl.phy->out)){
+	    phy_sint_handler(macl_txfifodone_handler);
+    }else{
+	    phy_sint_handler(macl_txdone_handler);
+    }
+	phy_timer_ei();
+}
+#endif
 
 static void macl_ack_txdone_handler(void)
 {
@@ -312,10 +344,19 @@ static void macl_ccadone_handler(void)
 		phy_wakeup_mac_event();
 	}else if(cca_state == CCA_IDLE){
 		macl.condition=SUBGHZ_ST_CCA_DONE;
-				phy_timer_handler(macl_tx_data_abort_handler);
-				phy_timer_start(160);
-				phy_sint_handler(macl_txdone_handler);
+		phy_timer_handler(macl_tx_data_abort_handler);
+		phy_timer_start(160);
+#ifdef MK74040
 		state = phy_ccaCtrl(cca_state);
+		if (phy_txStart(&macl.phy->out,FIFO_AUTO_TX)){
+			phy_sint_handler(macl_txfifodone_handler);
+		}else{
+			phy_sint_handler(macl_txdone_handler);
+		}
+#else
+		phy_sint_handler(macl_txdone_handler);
+		state = phy_ccaCtrl(cca_state);
+#endif
 	}
 	phy_timer_ei();
 }
@@ -645,6 +686,25 @@ int	macl_ed(uint8_t *level)
 	phy_ed(level, macl.rxOnEnable | macl.promiscuousMode);
 	return status;
 }
+#ifdef MK74040
+int	macl_set_modulation(uint8_t mod, uint8_t sf, uint8_t size)
+{
+	int status=STATUS_OK;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,mod);
+#endif
+	macl.modulation = mod;
+	phy_config(mod, sf, size);
+	return status;
+}
+uint8_t	macl_get_modulation(void)
+{
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,macl.modulation);
+#endif
+	return macl.modulation;
+}
+#endif
 int	macl_set_channel(uint8_t page,uint8_t ch, uint32_t mbm, uint8_t antsw)
 {
 	int status=STATUS_OK;

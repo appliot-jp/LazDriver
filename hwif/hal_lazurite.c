@@ -150,6 +150,15 @@ int HAL_init(void) {
 	digitalWrite(HAL_GPIO_RESETN, LOW);
 #endif
 	HAL_sleep(3);
+
+#ifdef MK74040
+	drv_pinMode(HAL_GPIO_REGPDIN,OUTPUT);
+	digitalWrite(HAL_GPIO_REGPDIN,HIGH);	
+	delay(1);
+	digitalWrite(HAL_GPIO_REGPDIN,LOW);
+	delay(1);
+#endif
+
 	//    idle();
 #ifdef LAZURITE_IDE
 	drv_digitalWrite(HAL_GPIO_RESETN, HIGH);

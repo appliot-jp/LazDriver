@@ -1597,7 +1597,7 @@ void phy_regwrite(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
 	reg_wr(bank, addr, data, size);
 }
 
-#if 0
+#ifdef LAZURITE_IDE
 void phy_regdump(void)
 {
 	uint8_t dump_cnt,dat_dump,reg_data[4];

@@ -189,18 +189,24 @@
 #define REG_ADR_MIX_GAIN_ADJ_H    1+8, 0x4d  /* Mixer gain adjustment during high gain operation */
 #define REG_ADR_MIX_GAIN_ADJ_M    1+8, 0x4e  /* Mixer gain adjustment during middle gain operation */
 #define REG_ADR_MIX_GAIN_ADJ_L    1+8, 0x4f  /* Mixer gain adjustment during low gain operation */
+#define REG_ADR_BPF_GAIN_ADJ      1+8, 0x54  /* private: BPF gain adjustmet */
 #define REG_ADR_TX_OFF_ADJ1       1+8, 0x55  /* TX_OFF ramping down adjustment */
 #define REG_ADR_RSSI_SLOPE_ADJ    1+8, 0x5a  /* RSSI slope adjustment */
 
+#define REG_ADR_DEMSET2           2+8, 0x02  /* AFC Point of inflection detection MAX threshold 2 */
 #define REG_ADR_DEMSET3           2+8, 0x03  /* AFC Point of inflection detection MAX threshold 2 */
+#define REG_ADR_DEMSET4           2+8, 0x04  /* AFC Point of inflection detection MAX threshold 2 */
+#define REG_ADR_DEMSET5           2+8, 0x05  /* AFC Point of inflection detection MAX threshold 2 */
+#define REG_ADR_DEMSET6           2+8, 0x06  /* AFC Point of inflection detection MAX threshold 2 */
+#define REG_ADR_DEMSET7           2+8, 0x07  /* AFC Point of inflection detection MAX threshold 2 */
 #define REG_ADR_DEMSET14          2+8, 0x0E  /* The noise amplitude detection threshold */
 #define REG_ADR_SYNC_MODE         2+8, 0x12  /* Bit synchronization mode setting */
 #define REG_ADR_PA_ON_ADJ         2+8, 0x1e  /* PA_ON timing adjustment */
 #define REG_ADR_DATA_IN_ADJ       2+8, 0x1f  /* DATA enable timing adjustment */
 #define REG_ADR_RX_ON_ADJ         2+8, 0x22  /* RX_ON timing adjustment */
 #define REG_ADR_RXD_ADJ           2+8, 0x24  /* RXD timing adjustment */
-#define REG_ADR_RATE_ADJ1         2, 0x2a    /* Demodulator adjustment for optional data rate (low byte) */
-#define REG_ADR_RATE_ADJ2         2, 0x2b    /* Demodulator adjustment for optional data rate (high 2 bits) */
+#define REG_ADR_RATE_ADJ1         2+8, 0x2a    /* Demodulator adjustment for optional data rate (low byte) */
+#define REG_ADR_RATE_ADJ2         2+8, 0x2b    /* Demodulator adjustment for optional data rate (high 2 bits) */
 #define REG_ADR_RAMP_CNTRL        2+8, 0x2c  /* Ramp control enable setting */
 #define REG_ADR_PRIVATE_BPF_CAP1  2+8, 0x2d  /* BPF capacity setting 1 */
 #define REG_ADR_PRIVATE_BPF_CAP2  2+8, 0x2e  /* BPF capacity setting 2 */

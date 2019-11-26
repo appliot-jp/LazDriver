@@ -24,6 +24,7 @@
 
 
 #define GPIO_RESETN 27  // 
+#define GPIO_REGPDIN 17  // 
 #define GPIO_SINTN  18  //
 #define GPIO_TX_LED  6 //
 #define GPIO_RX_LED  13  //

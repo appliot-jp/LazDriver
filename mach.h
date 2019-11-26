@@ -110,6 +110,11 @@ struct rf_param {
 	uint8_t tx_max_be;
 	uint8_t tx_retry;
 	uint8_t ant_sw;
+#ifdef MK74040
+	uint8_t modulation;
+	uint8_t dsssSF;
+	uint8_t dsssSize;
+#endif
 	uint32_t ack_timeout;
 	int32_t cca_level;		//mbm
 	int32_t tx_power;

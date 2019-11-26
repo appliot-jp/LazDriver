@@ -55,6 +55,9 @@
 	#include "macl.h"
 #endif
 
+#ifdef MK74040
+static const uint8_t mac_overhead_len[8] = {3,5,7,5,7,5,9,7};
+#endif
 
 // this proto-type is for linux
 static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len);
@@ -98,6 +101,11 @@ static SUBGHZ_MSG subghz_init(void)
 	subghz_param.rf.tx_min_be = 0;
 	subghz_param.rf.tx_max_be = 7;
 	subghz_param.rf.tx_retry = 3;
+#ifdef MK74040
+	subghz_param.rf.modulation = 0;
+	subghz_param.rf.dsssSize = 0;
+	subghz_param.rf.dsssSF = 64;
+#endif
 	subghz_param.rf.tx_power = DBM_TO_MBM(13);
 	subghz_param.rf.ack_timeout = 0;
 	subghz_param.rf.tx_retry = 3;
@@ -160,6 +168,12 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 		subghz_param.rf.pages = 1;
 	} else if (rate == 100) {
 		subghz_param.rf.pages = 2;
+#ifdef MK74040
+	} else if (rate == SUBGHZ_80KBPS) {
+		subghz_param.rf.pages = PHY_DATARATE_80K;
+	} else if (rate == SUBGHZ_200KBPS) {
+		subghz_param.rf.pages = PHY_DATARATE_200K;
+#endif
 	} else {
 		msg = SUBGHZ_SETUP_FAIL;
 		goto error;
@@ -721,6 +735,57 @@ static void subghz_set_ant_sw(uint8_t ant_sw){
 	subghz_param.rf.ant_sw = ant_sw;
 }
 
+#ifdef MK74040
+static void subghz_setModulation(uint8_t mode) {
+	subghz_param.rf.modulation = mode;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,__LINE__,subghz_param.rf.modulation);
+	}
+#endif
+}
+static void subghz_setDsssSpreadFactor(uint8_t sf) {
+	subghz_param.rf.dsssSF = sf;
+#ifndef LAZURITE_IDE
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,__LINE__,subghz_param.broadcast_enb);
+	}
+#endif
+}
+static void subghz_setDsssSize(uint8_t size, uint8_t addr_mode){
+
+	subghz_param.rf.dsssSize = size + mac_overhead_len[subghz_param.addr_type];
+
+    if (addr_mode) {
+        switch (subghz_param.addr_type){
+        case 0:
+        case 1:
+            break;
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+            subghz_param.rf.dsssSize += 6;
+            break;
+        case 6:
+        case 7:
+            subghz_param.rf.dsssSize += 12;
+            break;
+        default:
+            break;
+        }
+    }
+#ifdef LAZURITE_IDE
+    Serial.print("DSSS SIZE: ");
+    Serial.println_long(subghz_param.rf.dsssSize,DEC);
+#else
+	if(module_test & MODE_MACH_DEBUG) {
+		printk(KERN_INFO"%s,%s,%d,SIZE:%d, ADDR_MODE:%d\n",__FILE__,__func__,__LINE__,subghz_param.rf.dsssSize,addr_mode);
+	}
+#endif
+}
+#endif // MK74040
+
 // setting of function
 const SubGHz_CTRL SubGHz = {
 	subghz_init,
@@ -749,5 +814,10 @@ const SubGHz_CTRL SubGHz = {
 	subghz_get_enhance_ack,
 	subghz_set_ack_tx_interval,
 	subghz_get_ed_value,
-	subghz_set_ant_sw
+	subghz_set_ant_sw,
+#ifdef MK74040
+	subghz_setModulation,
+	subghz_setDsssSize,
+  subghz_setDsssSpreadFactor,
+#endif
 };
