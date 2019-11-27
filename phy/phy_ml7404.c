@@ -1570,6 +1570,13 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 #else
 			if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s RF MODE: FSK 100kbps \n",__FILE__,__func__);
 #endif
+
+#ifndef ABROAD
+            if (ch == 32) {
+		        status = -1;
+                goto error;
+            }
+#endif
 				 // Telec: 0x10
 					reg_data[0] = 0x30, reg_wr(REG_ADR_CCA_LEVEL,						reg_data, 1);
 
@@ -1649,6 +1656,7 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 		vco_cal();
 
 		status = 0;
+error:
 		return status;
 }
 

@@ -996,8 +996,10 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 
 		if (ch < 24 || ch > 61)
 			goto error;
+#ifndef ABROAD
 		if (page == 2 && ch == 32)
 			goto error;
+#endif
 		/* CCA IDLE WAIT time setting */
 		if (ch <= 32) {
 			reg_data[0] = 0x01, reg_wr(REG_ADR_IDLE_WAIT_H, reg_data, 1);
