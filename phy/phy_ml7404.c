@@ -2216,11 +2216,11 @@ void phy_addrFilt(uint16_t panid, uint8_t *ieee_addr, uint16_t uc_addr, uint16_t
 		// address filter
 		if (dsss_param.modulation == PHY_MODULATION_FSK){
 /*
+*/
 			reg_data[0] = 0x80;
 			reg_data[1] = 0x00;
 			reg_data[2] = 0x0F;
 		}else{
-*/
 			reg_data[0] = 0x00;
 			reg_data[1] = 0x00;
 			reg_data[2] = 0x00;
