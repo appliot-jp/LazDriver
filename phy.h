@@ -114,11 +114,10 @@ extern void phy_config(uint8_t mod, uint8_t sf, uint16_t size);
 extern bool phy_txfifo(BUFFER *buff);
 extern void phy_regdump(void);
 extern bool phy_txStart(BUFFER *buff,uint8_t mode);
-extern void phy_ccaCtrl(CCA_STATE state);
 #else
 extern void phy_txStart(BUFFER *buff,uint8_t mode);
-extern int phy_ccaCtrl(CCA_STATE state);
 #endif
+extern int phy_ccaCtrl(CCA_STATE state);
 extern CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry);
 extern void phy_txdone(void);
 extern int phy_rxdone(BUFFER *buff);

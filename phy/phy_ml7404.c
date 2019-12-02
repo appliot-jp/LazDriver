@@ -1907,11 +1907,12 @@ bool phy_txfifo(BUFFER *buff){
 }
 
 
-void phy_ccaCtrl(CCA_STATE state) {
+int phy_ccaCtrl(CCA_STATE state) {
 
 		uint8_t reg_cca_cntl;
 		uint8_t reg_idl_wait;
 		uint8_t reg_data;
+		int status = STATUS_OK;
 
 		phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
 
@@ -1998,6 +1999,7 @@ void phy_ccaCtrl(CCA_STATE state) {
 				reg_data = PHY_ST_RXON;
 				reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
 		}
+		return status;
 }
 
 

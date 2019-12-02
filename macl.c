@@ -456,6 +456,12 @@ static void macl_ack_rxdone_handler(void)
 	phy_timer_di();
 	macl.condition=SUBGHZ_ST_TX_ACK_DONE;
 	status = phy_rxdone(&macl.phy->in);
+#ifdef MK74040
+	if(status) {
+		phy_timer_ei();
+		return;
+	}else
+#endif
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG){
 		printk(KERN_INFO"%s,%s,%d,%d,%d\n",__FILE__,__func__,macl.phy->in.data[2],macl.sequnceNum,macl.phy->in.len);
