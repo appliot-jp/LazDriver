@@ -960,6 +960,10 @@ int macl_rx_irq(BUFFER *rx,BUFFER *ack)
 			// parse raw data
 			// short address filter is implemented in ML7396D
 			if((status = mach_parse_data(&mach.rx)!= STATUS_OK) ||
+#ifdef MK74040
+					((mach.rx.dst.addr_type == 2) && 
+					 (memcmp(&mach.rx.dst.addr.short_addr,&mach.my_addr.short_addr,2)!=0)) ||
+#endif
 					((mach.rx.dst.addr_type == 3) && 
 					 (memcmp(mach.rx.dst.addr.ieee_addr,mach.my_addr.ieee_addr,8)!=0) &&
 					 (memcmp(mach.rx.dst.addr.ieee_addr,broadcast_addr,8) !=0))) {

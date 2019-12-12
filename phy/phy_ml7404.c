@@ -2213,14 +2213,14 @@ void phy_addrFilt(uint16_t panid, uint8_t *ieee_addr, uint16_t uc_addr, uint16_t
 {
 		uint8_t reg_data[4];
 
+/*
+#if 0 // unicast recive
 		// address filter
 		if (dsss_param.modulation == PHY_MODULATION_FSK){
-/*
-*/
 			reg_data[0] = 0x80;
 			reg_data[1] = 0x00;
 			reg_data[2] = 0x0F;
-		}else{
+		}else {
 			reg_data[0] = 0x00;
 			reg_data[1] = 0x00;
 			reg_data[2] = 0x00;
@@ -2232,7 +2232,19 @@ void phy_addrFilt(uint16_t panid, uint8_t *ieee_addr, uint16_t uc_addr, uint16_t
 		reg_data[2] = uc_addr>>0&0xff;
 		reg_data[3] = uc_addr>>8&0xff;
 		reg_wr(REG_ADR_A_FIELD_CODE1, reg_data, 4);
+#else // broadcast recive
+		reg_data[0] = 0x80;
+		reg_data[1] = 0x00;
+		reg_data[2] = 0x0F;
+		reg_wr(REG_ADR_C_CHECK_CTRL, reg_data, 3);
 
+		reg_data[0] = 0xff;
+		reg_data[1] = 0xff;
+		reg_data[2] = 0xff;
+		reg_data[3] = 0xff;
+		reg_wr(REG_ADR_A_FIELD_CODE1, reg_data, 4);
+#endif
+*/
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG){
 
