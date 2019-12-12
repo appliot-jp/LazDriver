@@ -2127,7 +2127,7 @@ int phy_rxdone(BUFFER *buff)
 							phy_inten(HW_EVENT_RX_DONE);
 					}
 					phy_intclr(HW_EVENT_FIFO_FULL | HW_EVENT_FIFO_EMPTY);
-					status=2;
+					status=1;
 					goto nextState;
 			}
 		}

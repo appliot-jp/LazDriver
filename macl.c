@@ -178,7 +178,7 @@ static void macl_rxdone_handler(void)
 	macl.condition=SUBGHZ_ST_RX_DONE;
 	status = phy_rxdone(&macl.phy->in);
 #ifdef MK74040
-	if(status) {
+	if(status == 1) {
 		phy_timer_ei();
 		return;
 	}else
@@ -463,7 +463,7 @@ static void macl_ack_rxdone_handler(void)
 	}
 #endif
 #ifdef MK74040
-	if(status) {
+	if(status == 1) {
 		phy_sint_handler(macl_ack_rxdone_handler);
 		phy_timer_ei();
 		return;
