@@ -115,8 +115,8 @@ I acquire integer region of the fixed-point numerical value
 #define SW_EVENT_SLEEP	 5	/* Sleep */
 #define SW_EVENT_WAKEUP  6	/* Wakeup */
 
-#define PHY_REG_SET_TX_DONE_RX	 0x20
-#define PHY_REG_SET_TX_DONE_OFF  0x03
+#define PHY_REG_RXDONE_MODE  0x0C
+#define PHY_REG_TXDONE_MODE  0x03
 
 #define UNIT_BAKOFF_PERIOD	300
 #define DEFAUL_BAKOF				1000
@@ -524,15 +524,19 @@ static void phy_rst(void)
 }
 
 
-static void vco_cal(void) {
+static bool vco_cal(void) {
 
-		uint8_t reg_data;
-		reg_data=0x01;
-		reg_wr(REG_ADR_VCO_CAL_START, &reg_data,1);
-	do {
-				HAL_delayMicroseconds(500);
-		} while (phy_int_detection(HW_EVENT_VCO_CAL_DONE) == false);
-		phy_intclr(HW_EVENT_VCO_CAL_DONE);
+	uint8_t reg_data;
+	uint8_t i;
+	uint8_t status=false;
+	reg_data=0x01;
+	reg_wr(REG_ADR_VCO_CAL_START, &reg_data,1);
+	for(i=0;i < 100;i++) {
+		HAL_delayMicroseconds(500);
+		status = phy_int_detection(HW_EVENT_VCO_CAL_DONE);
+		if (status==true) break;
+	}
+	phy_intclr(HW_EVENT_VCO_CAL_DONE);
 
 #ifdef LAZURITE_IDE
 #if 0
@@ -549,8 +553,7 @@ static void vco_cal(void) {
 	Serial.println_long((long)reg_data, HEX);	
 #endif
 #endif
-
-
+	return status;
 }
 
 
@@ -1653,7 +1656,9 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 		/* own apparatus address acquisition */
 		HAL_I2C_read(0x26, reg_data, 2), address = H2LS(*reg_data);
 
-		vco_cal();
+		if (vco_cal() == false) {
+			goto error;
+		}
 
 		status = 0;
 error:
@@ -1663,31 +1668,34 @@ error:
 
 PHY_PARAM *phy_init(void)
 {
-		uint8_t reg_data;
-		uint32_t wait_t;
-		int status = -1;
+	uint8_t reg_data;
+	uint8_t i;
+	uint32_t wait_t;
+	int status = -1;
 
-		hwif.timer.handler = NULL;
+	hwif.timer.handler = NULL;
 #ifdef PHY_HWIF_NOTHAVE_TIMER_DI
-		hwif.timer.active = Disable;
-		hwif.timer.call_count = 0;
+	hwif.timer.active = Disable;
+	hwif.timer.call_count = 0;
 #endif	/* #ifdef PHY_HWIF_NOTHAVE_TIMER_DI */
-		status = HAL_init();
-		if(status == 0){
-		//	HAL_SPI_setup();
-		//	HAL_GPIO_setup();
-				HAL_TIMER_setup();
-		//	HAL_I2C_setup();
-				phy_timer_tick(&wait_t);
-				regbank(0xff);
-				reg_data=0x00; reg_wr(REG_ADR_SPI_EXT_PA_CTRL, &reg_data, 1);
+	status = HAL_init();
+	if(status == 0){
+	//	HAL_SPI_setup();
+	//	HAL_GPIO_setup();
+			HAL_TIMER_setup();
+	//	HAL_I2C_setup();
+			phy_timer_tick(&wait_t);
+			regbank(0xff);
+			reg_data=0x00; reg_wr(REG_ADR_SPI_EXT_PA_CTRL, &reg_data, 1);
 //			reg_data=0xC3; reg_wr(REG_ADR_CLK_SET2,				 &reg_data, 1);		// TCXO:0xC3, XTAL:0x93
-				do {
-						HAL_delayMicroseconds(100);
-			} while (phy_int_detection(HW_EVENT_CLK_DONE) == false);
-
-				reg_data = 0x00; reg_wr(REG_ADR_INT_SOURCE_GRP1, &reg_data, 1);
-		}
+			for(i=0;i<100;i++){
+				HAL_delayMicroseconds(100);
+				if (phy_int_detection(HW_EVENT_CLK_DONE) == true) {
+					break;
+				}
+			}
+			reg_data = 0x00; reg_wr(REG_ADR_INT_SOURCE_GRP1, &reg_data, 1);
+	}
 
 	memset(reg.rdata,0,sizeof(reg.rdata));
 	memset(reg.wdata,0,sizeof(reg.wdata));
@@ -1700,7 +1708,7 @@ PHY_PARAM *phy_init(void)
 	phy.out.len = 0;
 	phy.out.data = reg.wfifo+1;
 
-		reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
+	reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
 
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,rfifo:%lx,wfifo:%lx\n",__FILE__,__func__,
@@ -1740,6 +1748,11 @@ void phy_rxStart(void)
 		}
 		*/
 		
+		// ----- RF STATUS CTRL & INT STATUS
+		reg_rd(REG_ADR_RF_STATUS_CTRL, reg_data, 1);
+		reg_data[0] &= ~PHY_REG_RXDONE_MODE;
+		reg_wr(REG_ADR_RF_STATUS_CTRL, reg_data, 1);
+
 		fifo_param.fifo_temp_len = 0;
 		fifo_param.fifo_temp_buf = 0;
 
@@ -1786,7 +1799,7 @@ bool phy_txStart(BUFFER *buff,uint8_t mode)
 
 		// ----- RF STATUS CTRL & INT STATUS
 		reg_rd(REG_ADR_RF_STATUS_CTRL, reg_data, 1);
-		reg_data[0] &= ~PHY_REG_SET_TX_DONE_OFF;
+		reg_data[0] &= ~PHY_REG_TXDONE_MODE;
 		if(mode == FIFO_AUTO_TX) {
 				if (length > PHY_FIFO_DATA_TRG){
 						reg_data[0] |= 0x30;		// FAST_TX
@@ -1861,7 +1874,6 @@ bool phy_txfifo(BUFFER *buff){
 		uint8_t reg_data[2];
 		uint8_t ret;
 
-        // ssdebug
         /*
 		reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
         if (reg_data[0] & 0x10) {
@@ -2132,13 +2144,11 @@ int phy_rxdone(BUFFER *buff)
 			}
 		}
 
-		phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
 		buff->len -= 2; // crc data
 		buff->len += 1; // add ed result
 		reg_rd(REG_ADR_ED_RSLT,reg_data,1); buff->data[buff->len] = reg_data[0];
 
 error:
-		phy_rst();
 		phy_intclr(~(HW_EVENT_ALL_MASK));
 
 nextState:

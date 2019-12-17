@@ -175,10 +175,15 @@ static void macl_rxdone_handler(void)
 		int status;
 
 	phy_timer_di();
+#ifdef MK74040
+	phy_timer_stop();
+#endif
 	macl.condition=SUBGHZ_ST_RX_DONE;
 	status = phy_rxdone(&macl.phy->in);
 #ifdef MK74040
 	if(status == 1) {
+		phy_timer_handler(macl_tx_ack_abort_handler);
+		phy_timer_start(100);
 		phy_timer_ei();
 		return;
 	}else
@@ -464,7 +469,6 @@ static void macl_ack_rxdone_handler(void)
 #endif
 #ifdef MK74040
 	if(status == 1) {
-		phy_sint_handler(macl_ack_rxdone_handler);
 		phy_timer_ei();
 		return;
 	}else
@@ -591,7 +595,7 @@ int	macl_stop(void)
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
-	if((macl.condition == SUBGHZ_ST_NONE) && (macl.condition == SUBGHZ_ST_RX_START)){
+	if((macl.condition == SUBGHZ_ST_NONE) || (macl.condition == SUBGHZ_ST_RX_START)){
 		phy_stop();
 	}
 	return status;
