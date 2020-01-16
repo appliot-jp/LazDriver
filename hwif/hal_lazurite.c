@@ -37,34 +37,16 @@
 	#include "hal_lazurite.h"
 	#include "spi0.h"
 	#include "wire0.h"
-#endif
-#ifdef ARDUINO
-	#include <arduino.h>
-	#include <spi.h>
-	#include <wire.h>
-	#include <mstimer2.h>
-	#include "hal.h"
-	#include "hal_arduino.h"
+	#include "mcu.h"
 #endif
 
 //*****************************************************
 // Local definition
 //*****************************************************
-#ifdef ARDUINO
-static SPISettings mySPISettings = SPISettings(8000000, MSBFIRST, SPI_MODE0);
-#endif
 static struct I2C_CONFIG  {
 	uint8_t i2c_addr;
 	uint8_t addr_bits;
 } i2c_config;
-
-#ifdef ARDUINO
-void wait_event(volatile uint8_t *flag)
-{	
-	while(*flag == false) { }
-	*flag = false;
-}
-#endif
 
 void (*hal_gpio_func)(void);
 static uint32_t hal_previous_time;
@@ -80,37 +62,31 @@ volatile uint8_t hal_event_flag = 0;
 // Function
 //*****************************************************
 
-static void HAL_abort_timer_func(void)
-{
-	hal_event_flag = 1;
-	HAL_TIMER_stop();
+int HAL_init_waitqueue_head(wait_queue_head_t *q) {
+	return 0;
 }
+extern unsigned short di_flag;
+uint32_t HAL_wait_event_interruptible_timeout(wait_queue_head_t *q,volatile int *condition,uint32_t ms){
+	volatile uint32_t st_time = millis();
+	volatile uint32_t status;
+	do {
+		status = st_time+ms-millis();
+		if(status > ms) {
+			status = 0;
+		}
+	} while((*condition == false) && (status > 0));
 
-int HAL_wait_event(uint8_t event)
-{
-	int status = 0;
-	if (event == HAL_PHY_EVENT) {
-		HAL_TIMER_stop();
-		HAL_TIMER_start(1000, HAL_abort_timer_func);
-	} else if (event == HAL_MAC_EVENT) {
-		hal_event_flag = 0;
-		wait_event(&hal_event_flag);
-	}
 	return status;
 }
 
-int HAL_wakeup_event(uint8_t event)
+int HAL_wake_up_interruptible(wait_queue_head_t *q)
 {
-	int status = 0;
-	HAL_TIMER_stop();
-	if (event == HAL_PHY_EVENT) {
-		// do nothing
-	} else if (event == HAL_MAC_EVENT) {
-		hal_event_flag = 1;
-	}
-	return status;
+	return 0;
 }
 
+
+void HAL_write_lock(bool on) {
+}
 
 // api_debug add 4
 int HAL_init(void) {
@@ -118,17 +94,11 @@ int HAL_init(void) {
 	//uint32_t wait_t, t;
 
 	// SPI init
-#ifdef LAZURITE_IDE
 	SPI0.setDataMode(SPI_MODE0);
 	SPI0.setClockDivider(SPI_CLOCK_DIV8);
 	SPI0.begin();
-#endif
-#ifdef ARDUINO
-	SPI.begin();
-#endif
 
 	// GPIO init
-#ifdef LAZURITE_IDE
 	drv_digitalWrite(HAL_GPIO_REGPDIN,HIGH);
 	drv_digitalWrite(HAL_GPIO_RESETN,HIGH);
 	drv_digitalWrite(HAL_GPIO_CSB,HIGH);
@@ -137,19 +107,10 @@ int HAL_init(void) {
 	drv_pinMode(HAL_GPIO_RESETN,OUTPUT);
 	drv_pinMode(HAL_GPIO_CSB,OUTPUT);
 
-    drv_digitalWrite(HAL_GPIO_REGPDIN, LOW);
+	drv_digitalWrite(HAL_GPIO_REGPDIN, LOW);
 	drv_digitalWrite(HAL_GPIO_RESETN, LOW);
-#endif
-#ifdef ARDUINO
-	digitalWrite(HAL_GPIO_RESETN,HIGH);
-	digitalWrite(HAL_GPIO_CSB,HIGH);
-	pinMode(HAL_GPIO_SINTN,INPUT);
-	pinMode(HAL_GPIO_RESETN,OUTPUT);
-	pinMode(HAL_GPIO_CSB,OUTPUT);
 
-	digitalWrite(HAL_GPIO_RESETN, LOW);
-#endif
-	HAL_sleep(3);
+	HAL_sleep(3L);
 
 #ifdef MK74040
 	drv_pinMode(HAL_GPIO_REGPDIN,OUTPUT);
@@ -160,22 +121,19 @@ int HAL_init(void) {
 #endif
 
 	//    idle();
-#ifdef LAZURITE_IDE
 	drv_digitalWrite(HAL_GPIO_RESETN, HIGH);
-#endif
-#ifdef ARDUINO
-	digitalWrite(HAL_GPIO_RESETN, HIGH);
-#endif
-	HAL_sleep(3);
+
+	HAL_sleep(3L);
 
 	// I2C init
 	i2c_config.i2c_addr = 0x50;
-    #if defined(LAZURITE_MINI) || defined(MK74040)
+#if defined(LAZURITE_MINI) || defined(MK74040)
 	i2c_config.addr_bits = 16;
-	#else
+#else
 	i2c_config.addr_bits = 8;
-	#endif
+#endif
 	Wire0.begin();
+	//HAL_GPIO_enableInterrupt();
 
 	return 0;
 }
@@ -184,98 +142,61 @@ int HAL_remove(void){
 	return 0;
 }
 
+#include "macl.h"
 int HAL_SPI_transfer(const unsigned char *wdata, uint16_t wsize,unsigned char *rdata, uint16_t rsize)
 {
-	unsigned char n;
+	uint16_t n;
 
-#ifdef LAZURITE_IDE
 	drv_digitalWrite(HAL_GPIO_CSB, HIGH);
 	drv_digitalWrite(HAL_GPIO_CSB, LOW);
-#endif
-#ifdef ARDUINO
-	SPI.beginTransaction(mySPISettings);
-	digitalWrite(HAL_GPIO_CSB, HIGH);
-	digitalWrite(HAL_GPIO_CSB, LOW);
-#endif
 
 	//  api_debug mod
 	for(n=0;n<wsize;n++)
 	{
-#ifdef LAZURITE_IDE
 		SPI0.transfer(*(wdata + n));
-#endif
-#ifdef ARDUINO
-		SPI.transfer(*(wdata + n));
-#endif
 	}
 	if(rdata==NULL) return HAL_STATUS_OK;
 	for(n=0;n<rsize;n++)
 	{
-#ifdef LAZURITE_IDE
 		*(rdata + n) = SPI0.transfer(0);
-#endif
-#ifdef ARDUINO
-		*(rdata + n) = SPI.transfer(0);
-#endif
 	}
 
-#ifdef LAZURITE_IDE
 	drv_digitalWrite(HAL_GPIO_CSB, HIGH);
-#endif
-#ifdef ARDUINO
-	digitalWrite(HAL_GPIO_CSB, HIGH);
-#endif
 
 	return HAL_STATUS_OK;
 }
 
-int HAL_GPIO_setInterrupt(void (*func)(void))
+int HAL_GPIO_setInterrupt(bool (*func)(void))
 {
 	hal_gpio_func = func;
-#ifdef LAZURITE_IDE
 	drv_attachInterrupt(HAL_GPIO_SINTN,BP3596A_SINTN_IRQNUM,hal_gpio_func,LOW,false,false);
-#endif
-#ifdef ARDUINO
-	attachInterrupt(BP3596A_SINTN_IRQNUM,hal_gpio_func,LOW);
-#endif
 	return HAL_STATUS_OK;
 }
 
 int HAL_GPIO_enableInterrupt(void)
 {
 	//	void drv_attachInterrupt(unsigned char pin,unsigned char irqnum, void (*func)(void), int mode,bool sampling, bool filter)
-#ifdef LAZURITE_IDE
 	drv_attachInterrupt(HAL_GPIO_SINTN,BP3596A_SINTN_IRQNUM,hal_gpio_func,LOW,false,false);
-#endif
-#ifdef ARDUINO
-	attachInterrupt(BP3596A_SINTN_IRQNUM,hal_gpio_func,LOW);
-#endif
 	return HAL_STATUS_OK;
 }
 
 int HAL_GPIO_disableInterrupt(void)
 {
-#ifdef LAZURITE_IDE
 	drv_detachInterrupt(BP3596A_SINTN_IRQNUM);
-#endif
-#ifdef ARDUINO
-	detachInterrupt(BP3596A_SINTN_IRQNUM);
-#endif
 	return HAL_STATUS_OK;
 }
 
-int HAL_I2C_read(unsigned short addr, unsigned char *data, unsigned char size)
+int HAL_I2C_read(uint16_t addr, uint8_t *data, uint8_t size)
 {
 	unsigned char n;
 	int dtmp;
 
 	//  api_debug mod
-#ifdef LAZURITE_IDE
 	Wire0.beginTransmission(i2c_config.i2c_addr);
 	if(i2c_config.addr_bits > 8) {
-		Wire0.write_byte(0);
+		Wire0.write_byte((uint8_t)((addr >> 8)&0xFF));
 	}
-	Wire0.write_byte(addr);
+	Wire0.write_byte((uint8_t)addr);
 	Wire0.endTransmission(false);
 
 	//  api_debug mod
@@ -287,27 +208,11 @@ int HAL_I2C_read(unsigned short addr, unsigned char *data, unsigned char size)
 		if(dtmp < 0) return HAL_ERROR_TIMEOUT;
 		*(data + n) = (uint8_t)dtmp;
 	}
-#endif
-#ifdef ARDUINO
-	Wire.beginTransmission(i2c_config.i2c_addr);
-	if(i2c_config.i2c_addr> 8) {
-		Wire.write(0);
-	}
-	Wire.write(addr);
-	Wire.endTransmission(false);
-	//  api_debug mod
-	Wire.requestFrom((uint8_t)i2c_config.i2c_addr,(uint8_t)size,(uint8_t)true);
 
-	for(n=0;n<size;n++)
-	{
-		dtmp = Wire.read();
-		if(dtmp < 0) return HAL_ERROR_TIMEOUT;
-		*(data + n) = (uint8_t)dtmp;
-	}
-#endif
 	return HAL_STATUS_OK;
 }
 
+/*
 int HAL_TIMER_getTick(unsigned long *tick)
 {
 	unsigned long hal_current_time;
@@ -317,6 +222,7 @@ int HAL_TIMER_getTick(unsigned long *tick)
 
 	return HAL_STATUS_OK;
 }
+*/
 
 int HAL_TIMER_setup(void)
 {
@@ -324,32 +230,23 @@ int HAL_TIMER_setup(void)
 	return HAL_STATUS_OK;
 }
 
-int HAL_TIMER_start(unsigned short msec, void (*func)(void))
+int HAL_TIMER_start(uint16_t msec, void (*func)(void))
 {
-#ifdef LAZURITE_IDE
-	timer_16bit_set(6,0xE8,(unsigned long)msec,func);
+
+	timer_16bit_set(6,0xE8,(uint16_t)msec,func);
 	timer_16bit_start(6);
-#endif
-#ifdef ARDUINO
-	MsTimer2::set(msec,func);
-	MsTimer2::start();
-#endif
+
 	return HAL_STATUS_OK;
 }
 
 int HAL_TIMER_stop(void)
 {
-#ifdef LAZURITE_IDE
 	timer_16bit_stop(6);
-#endif
-#ifdef ARDUINO
-	MsTimer2::stop();
-#endif
+
 	return HAL_STATUS_OK;
 }
 
-#ifdef LAZURITE_IDE
-volatile void HAL_delayMicroseconds(unsigned long us)
+void HAL_delayMicroseconds(uint32_t us)
 {
 	if (us > 2) {
 		us /= 2;
@@ -363,4 +260,131 @@ volatile void HAL_delayMicroseconds(unsigned long us)
 	}
 	return;
 }
-#endif
+uint32_t HAL_millis(void) {
+	return millis();
+}
+void HAL_sleep(uint32_t ms){
+	sleep(ms);
+}
+static unsigned long  current_time_h = 0;
+static unsigned long  target_time_h = 0;
+static unsigned short target_time_l = 0;
+static bool (*callback)(void) = NULL;
+
+void ms_timer4_init(void)
+{
+	current_time_h = 0;
+	TM45D = (target_time_h ? 0xFFFF : target_time_l);
+	return;
+}
+
+void ms_timer4_isr()
+{
+	unsigned short tm_count;
+	if(current_time_h >= target_time_h)
+	{
+		callback();
+		ms_timer4_init();
+	}
+	else
+	{
+		current_time_h++;
+		TM45D = ((current_time_h != target_time_h) ?0xFFFF : target_time_l);
+		QTM5 = 0;
+		tm_count = TM45C;
+		if(target_time_l < tm_count)
+		{
+			QTM4 = 1;
+		}
+	}
+}
+
+void ms_timer4_set(unsigned long ms, void (*f)())
+{
+	// calcurate count number of target time
+	//	double ms_float;
+	unsigned long tmp_target_time_l;
+	unsigned short tm_data;
+
+	if(ms == 0) return;
+
+	target_time_h = ms / 64000;
+	tmp_target_time_l = ((ms % 64000) <<8) / 250;
+	target_time_l = (unsigned short)tmp_target_time_l;
+	if(tmp_target_time_l==0)
+	{
+		target_time_l=0xFFFF;
+		target_time_h--;
+	}
+	else
+	{
+		target_time_l--;								// decrease 1 to set register
+	}
+
+	tm_data = target_time_h ? 0xFFFF:target_time_l;
+
+	ms_timer4_init();
+	callback = f;
+
+	// setting timer
+	timer_16bit_set(4,0x68, tm_data, ms_timer4_isr);
+
+	return;
+}
+
+void ms_timer4_start(void)
+{
+	timer_16bit_start(4);
+}
+
+void ms_timer4_stop(void)
+{
+	timer_16bit_stop(4);
+}
+
+extern char uart_tx_sending;
+extern char uartf_tx_sending;
+
+const MsTimer4 timer4 ={
+	ms_timer4_set,		// void (*set)(unsigned long ms, void (*f)());
+	ms_timer4_start,	// void (*start)(void);
+	ms_timer4_stop,		// void (*stop)(void);
+};
+void HAL_noInterrupts() {
+	dis_interrupts(DI_SUBGHZ);
+}
+
+void HAL_interrupts() {
+	enb_interrupts(DI_SUBGHZ);
+}
+
+extern void phy_monitor(void);
+extern void uart_check_irq(void);
+extern struct macl_param macl;
+void HAL_reset(){
+	int i;
+	dis_interrupts(DI_SUBGHZ);
+	alert("************** PHY MONITOR ***************");
+	Serial.print("macl.condition::");
+	Serial.println_long(macl.condition,DEC);
+	phy_monitor();
+
+	pinMode(25,OUTPUT);
+	pinMode(26,OUTPUT);
+	digitalWrite(25,LOW);
+	digitalWrite(26,LOW);
+
+	alert("********* HW RESET after 5sec  ***********");
+	for(i = 0; i < 10 ; i++) {
+		delay(500);
+		digitalWrite(25,!digitalRead(25));
+		digitalWrite(26,!digitalRead(26));
+	}
+	// Set ELEVEL 2
+	__asm("mov r0,psw\n or r0,#2\n mov psw,r0\n");
+	// Software Reset
+	__asm("brk");
+	// endless loop
+	while(1){}
+}
+

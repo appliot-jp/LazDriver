@@ -24,40 +24,29 @@
 	#pragma SEGNOINIT "OTA_SEGNOINIT"
 	#pragma SEGCONST "OTA_SEGCONST"
 #endif
-#if defined ARDUINO
-	#include "arduino.h"
-	#include "common_subghz.h"
-	#include "mach.h"
-	#include "subghz_api.h"
-	#include "errno.h"
-	#include "hal.h"
-	#include "aes.h"
+#ifdef LAZURITE_IDE
+	#include <common.h>
+	#include <string.h>
+	#include <lp_manage.h>
+	#include <driver_irq.h>
+	#include <string.h>
+	#include <stdlib.h>
+	#include "lazurite.h"
 #else
-	#ifdef LAZURITE_IDE
-		#include <common.h>
-		#include <string.h>
-		#include <lp_manage.h>
-		#include <driver_irq.h>
-		#include <string.h>
-	#else
-		#include <linux/string.h>
-		#include <linux/sched.h>
-		#include <linux/wait.h>
-		#include "common-lzpi.h"
-		#include "hwif/random-lzpi.h"
-	#endif
-	#include "common_subghz.h"
-	#include "mach.h"
-	#include "subghz_api.h"
-	#include "errno.h"
-	#include "hwif/hal.h"
-	#include "aes/aes.h"
-	#include "macl.h"
+	#include <linux/string.h>
+	#include <linux/sched.h>
+	#include <linux/wait.h>
+	#include "common-lzpi.h"
+	#include "hwif/random-lzpi.h"
 #endif
 
-#ifdef MK74040
+#include "common_subghz.h"
+#include "mach.h"
+#include "subghz_api.h"
+#include "errno.h"
+#include "aes/aes.h"
+
 static const uint8_t mac_overhead_len[8] = {3,5,7,5,7,5,9,7};
-#endif
 
 // this proto-type is for linux
 static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len);
@@ -71,7 +60,6 @@ static struct {
 	bool broadcast_enb;
 	SUBGHZ_STATUS tx_stat;
 	SUBGHZ_STATUS rx_stat;
-	volatile bool sending;
 	volatile bool open;
 	void (*rx_callback)(const uint8_t *data, uint8_t rssi, int status);		// change api
 	void (*tx_callback)(uint8_t rssi, int status);
@@ -94,18 +82,18 @@ static SUBGHZ_MSG subghz_init(void)
 	subghz_param.addr_type = 6;
 	subghz_param.ack_req = true;
 	subghz_param.broadcast_enb = true;
-	subghz_param.rf.cca_min_be = 0;
+	subghz_param.rf.cca_min_be = 3;
 	subghz_param.rf.cca_max_be = 5;
 	subghz_param.rf.cca_retry = 20;
 	subghz_param.rf.cca_level = DBM_TO_MBM(-80);
 	subghz_param.rf.tx_min_be = 0;
 	subghz_param.rf.tx_max_be = 7;
 	subghz_param.rf.tx_retry = 3;
-#ifdef MK74040
+
 	subghz_param.rf.modulation = 0;
 	subghz_param.rf.dsssSize = 0;
 	subghz_param.rf.dsssSF = 64;
-#endif
+
 	subghz_param.rf.tx_power = DBM_TO_MBM(13);
 	subghz_param.rf.ack_timeout = 0;
 	subghz_param.rf.tx_retry = 3;
@@ -113,7 +101,8 @@ static SUBGHZ_MSG subghz_init(void)
 	AES128_setKey(NULL);
 
 	// reset
-	if((subghz_param.mach = mach_init())==NULL)
+	subghz_param.mach = mach_init();
+	if(subghz_param.mach == NULL)
 	{
 		result = -EIO;
 		msg = SUBGHZ_RESET_FAIL;
@@ -121,7 +110,6 @@ static SUBGHZ_MSG subghz_init(void)
 	}
 
 	// initializing parameters
-	subghz_param.sending = false;
 	subghz_param.read = false;
 	subghz_param.open = false;
 
@@ -136,6 +124,48 @@ error:
 	return msg;
 }
 
+SUBGHZ_MSG subghz_genErrMsg(int status) {
+	SUBGHZ_MSG msg;
+	switch(status) {
+		case SUBGHZ_OK:				//5				hardware error
+			msg = SUBGHZ_OK;
+			break;
+		case -EIO:				//5				hardware error
+			msg = SUBGHZ_SETUP_FAIL;
+			break;
+		case -EAGAIN:		//11			over 10% duty
+			msg = SUBGHZ_TTL_SEND_OVR;
+			break;
+		case -ENOMEM:		//12			data size error
+			msg = SUBGHZ_TX_FAIL;
+			break;
+		case -EFAULT:		//14			bad pointer
+			msg = SUBGHZ_TX_FAIL;
+			break;
+		case -EBUSY:			//16			resource busy(CCA)
+			msg = SUBGHZ_TX_CCA_FAIL;
+			break;
+		case -EINVAL:		//22			invalid parameters
+			msg = SUBGHZ_TX_FAIL;
+			break;
+		case -EFBIG:			//27			File too large
+			msg = SUBGHZ_TX_FAIL;
+			break;
+		case -EDEADLK:		//35			Resource deadlock would occur */
+			msg = SUBGHZ_DEAD_LOCK;
+			break;
+		case -EBADE:			//52			 crc error
+			msg = SUBGHZ_TX_ACK_FAIL;
+			break;
+		case -ETIMEDOUT:	//110			 no ack
+			msg = SUBGHZ_TX_ACK_FAIL;
+			break;
+		default:
+			msg = SUBGHZ_DUMMY;
+			break;
+	}
+	return msg;
+}
 static SUBGHZ_MSG subghz_remove(void)
 {
 	SUBGHZ_MSG msg;
@@ -149,18 +179,16 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 	SUBGHZ_MSG msg = SUBGHZ_OK;
 	int result;
 
-	if(subghz_param.open == false)
-	{
+	if(subghz_param.open == false) {
 		// start clock of ml7386
-		if((result = mach_sleep(false))!=STATUS_OK)
-		{
+		result = mach_sleep();
+		if(result !=STATUS_OK) {
 			subghz_param.open = true;
 			msg = SUBGHZ_WAKEUP_FAIL;
 			goto error;
 		}
 	}
 	//initializing parameter
-	subghz_param.sending = false;
 	subghz_param.read = false;
 	// 
 	subghz_param.rf.ch = ch;
@@ -168,19 +196,18 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 		subghz_param.rf.pages = 1;
 	} else if (rate == 100) {
 		subghz_param.rf.pages = 2;
-#ifdef MK74040
 	} else if (rate == SUBGHZ_80KBPS) {
 		subghz_param.rf.pages = PHY_DATARATE_80K;
 	} else if (rate == SUBGHZ_200KBPS) {
 		subghz_param.rf.pages = PHY_DATARATE_200K;
-#endif
 	} else {
 		msg = SUBGHZ_SETUP_FAIL;
 		goto error;
 	}
 
 	subghz_param.panid = panid;
-	if((result = mach_set_my_short_addr(subghz_param.panid,subghz_param.short_addr)) != STATUS_OK) {
+	result = mach_set_my_short_addr(subghz_param.panid,subghz_param.short_addr);
+	if(result != STATUS_OK) {
 		msg = SUBGHZ_MYADDR_FAIL;
 		goto error;
 	}
@@ -191,7 +218,8 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 		subghz_param.rf.tx_power = DBM_TO_MBM(13);
 	else goto error;
 
-	if((result = mach_setup(&subghz_param.rf)) != STATUS_OK) {
+	result = mach_setup(&subghz_param.rf);
+	if(result != STATUS_OK) {
 		msg = SUBGHZ_SETUP_FAIL;
 		goto error;
 	}
@@ -200,11 +228,6 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 
 error:
 	subghz_param.tx_stat.status = result;
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s %s %d %d %d \n",__FILE__,__func__,__LINE__,msg,result);
-	}
-#endif
 	return msg;
 }
 
@@ -212,7 +235,7 @@ static SUBGHZ_MSG subghz_close(void)
 {
 	SUBGHZ_MSG msg;
 	int result;
-	result = mach_sleep(true);
+	result = mach_sleep();
 	if( result != STATUS_OK)
 	{
 		msg = SUBGHZ_SLEEP_FAIL;
@@ -227,87 +250,58 @@ error:
 	return msg;
 }
 
+extern unsigned short di_flag;
+static SUBGHZ_MSG subghz_tx_raw(struct mac_fc_alignment fc, void (*callback)(uint8_t rssi, int status)) {
+
+	int result;
+	uint32_t time;
+
+	subghz_param.mach->macl->done = false;
+	result = mach_tx(fc,subghz_param.addr_type,&subghz_param.tx,callback);
+	if(result != STATUS_OK) {
+		subghz_param.tx_stat.rssi = 0;
+		subghz_param.tx_stat.status = result;
+		if(callback) callback(0,subghz_param.tx_stat.status);
+		goto error;
+	}
+	time =  HAL_wait_event_interruptible_timeout(&subghz_param.mach->macl->que,&subghz_param.mach->macl->done,2000L);
+
+	if(time == 0) {
+		subghz_param.tx_stat.rssi = 0;
+		subghz_param.tx_stat.status = -EDEADLK;
+		alert("subghz_tx_raw error1");
+#ifdef	LAZURITE_IDE
+		dis_interrupts(DI_SUBGHZ);
+#endif
+		phy_monitor();
+#ifdef	LAZURITE_IDE
+		enb_interrupts(DI_SUBGHZ);
+#endif
+		HAL_GPIO_enableInterrupt();
+		if(callback) callback(0,subghz_param.tx_stat.status);
+		goto error;
+	}
+
+	subghz_param.tx_stat.status = subghz_param.mach->macl->status;
+	if ( subghz_param.tx_stat.status == SUBGHZ_OK) {
+		subghz_param.tx_stat.rssi = subghz_param.mach->tx.rssi;
+	}
+
+error:
+	if (subghz_param.mach->macl->rxOnEnable) {
+		if(mach_start(&subghz_param.rx)!=STATUS_OK) {
+			subghz_param.tx_stat.status = -EDEADLK;
+			alert("subghz_tx_raw error2");
+			HAL_reset();
+		}
+	} else {
+		mach_stop();
+	}
+	return subghz_genErrMsg(subghz_param.tx_stat.status);
+}
+
 static SUBGHZ_MSG subghz_tx64le(uint8_t *addr_le, uint8_t *data, uint16_t len, void (*callback)(uint8_t rssi, int status)) {
 	SUBGHZ_MSG msg;
-	int result;
-	uint8_t addr_type;
-	struct mac_fc_alignment fc;
-
-	subghz_api_status |= SUBGHZ_API_SEND64LE;
-
-	// initializing buffer
-	subghz_param.tx.data = data;
-	subghz_param.tx.size = len;
-	subghz_param.tx.len = len;
-	subghz_param.tx_callback = callback;
-
-	mach_phy_cleanup();
-
-	// initializing frame control
-	memset(&fc,0,sizeof(fc));
-	fc.frame_type = IEEE802154_FC_TYPE_DATA;
-	fc.frame_ver = IEEE802154_FC_VER_4E;
-	fc.ack_req = subghz_param.ack_req;
-
-	mach_set_dst_ieee_addr(0xffff,addr_le);
-	mach_set_src_addr(IEEE802154_FC_ADDR_IEEE);
-	subghz_param.sending = true;
-	addr_type = subghz_param.addr_type;
-
-	result = mach_tx(fc,addr_type,&subghz_param.tx);
-
-	//mach_ed(&rssi);
-	//subghz_txdone(rssi,result);
-	subghz_param.sending = false;
-
-	if(result >= 0){
-		msg = SUBGHZ_OK;
-		subghz_param.tx_stat.rssi = result;
-		subghz_param.tx_stat.status = 0;
-	} else {
-		subghz_param.tx_stat.rssi = 0;
-		if(result == -EBUSY) msg = SUBGHZ_TX_CCA_FAIL;
-		else if(result == -ETIMEDOUT) msg = SUBGHZ_TX_ACK_FAIL;
-		else msg = SUBGHZ_TX_FAIL;
-	}
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d,%d.%d\n",__FILE__,__func__,__LINE__,
-				msg,subghz_param.tx_stat.rssi);
-	}
-#endif
-	if(callback) {
-		callback(subghz_param.tx_stat.rssi,msg);
-	}
-
-	subghz_api_status &= ~SUBGHZ_API_SEND64LE;
-
-	return msg;
-}
-
-static SUBGHZ_MSG subghz_tx64be(uint8_t *addr_be, uint8_t *data, uint16_t len, void (*callback)(uint8_t rssi, int status)) {
-	uint8_t addr_le[8];
-	SUBGHZ_MSG msg;
-
-	subghz_api_status |= SUBGHZ_API_SEND64BE;
-	addr_le[7] = addr_be[0];
-	addr_le[6] = addr_be[1];
-	addr_le[5] = addr_be[2];
-	addr_le[4] = addr_be[3];
-	addr_le[3] = addr_be[4];
-	addr_le[2] = addr_be[5];
-	addr_le[1] = addr_be[6];
-	addr_le[0] = addr_be[7];
-	msg = subghz_tx64le(addr_le,data,len,callback);
-	subghz_api_status &= ~SUBGHZ_API_SEND64BE;
-
-	return msg;
-}
-
-static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uint16_t len, void (*callback)(uint8_t rssi, int status))
-{
-	SUBGHZ_MSG msg;
-	int result;
 	struct mac_fc_alignment fc;
 
 	subghz_api_status |= SUBGHZ_API_SEND;
@@ -318,62 +312,80 @@ static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uin
 	subghz_param.tx.len = len;
 	subghz_param.tx_callback = callback;
 
-	mach_phy_cleanup();
+	// initializing frame control
+	memset(&fc,0,sizeof(fc));
+	fc.frame_type = IEEE802154_FC_TYPE_DATA;
+	fc.frame_ver = IEEE802154_FC_VER_4E;
+	fc.ack_req = subghz_param.ack_req;
+
+	mach_set_dst_ieee_addr(0xffff,addr_le);
+	mach_set_src_addr(IEEE802154_FC_ADDR_IEEE);
+
+	msg =  subghz_tx_raw(fc,callback);
+
+	subghz_api_status &= ~SUBGHZ_API_SEND;
+
+	return msg;
+
+}
+
+static SUBGHZ_MSG subghz_tx64be(uint8_t *addr_be, uint8_t *data, uint16_t len, void (*callback)(uint8_t rssi, int status)) {
+	uint8_t addr_le[8];
+	SUBGHZ_MSG msg;
+
+	subghz_api_status |= SUBGHZ_API_SEND;
+	addr_le[7] = addr_be[0];
+	addr_le[6] = addr_be[1];
+	addr_le[5] = addr_be[2];
+	addr_le[4] = addr_be[3];
+	addr_le[3] = addr_be[4];
+	addr_le[2] = addr_be[5];
+	addr_le[1] = addr_be[6];
+	addr_le[0] = addr_be[7];
+	msg = subghz_tx64le(addr_le,data,len,callback);
+	subghz_api_status &= ~SUBGHZ_API_SEND;
+
+	return msg;
+}
+
+static SUBGHZ_MSG subghz_tx(uint16_t panid, uint16_t dstAddr, uint8_t *data, uint16_t len, void (*callback)(uint8_t rssi, int status))
+{
+	SUBGHZ_MSG msg;
+	struct mac_fc_alignment fc;
+
+	subghz_api_status |= SUBGHZ_API_SEND;
+
+	// initializing buffer
+	subghz_param.tx.data = data;
+	subghz_param.tx.size = len;
+	subghz_param.tx.len = len;
+	subghz_param.tx_callback = callback;
 
 	// initializing frame control
 	memset(&fc,0,sizeof(fc));
 	fc.frame_type = IEEE802154_FC_TYPE_DATA;
 	fc.frame_ver = IEEE802154_FC_VER_4E;
 	fc.ack_req = subghz_param.ack_req;
+	mach_set_dst_short_addr(panid,dstAddr);
 	if(panid < 0xFFFE) {
-		mach_set_dst_short_addr(panid,dstAddr);
 		mach_set_src_addr(IEEE802154_FC_ADDR_SHORT);
-		subghz_param.sending = true;
-		result = mach_tx(fc,subghz_param.addr_type,&subghz_param.tx);
 	} else {
-		uint8_t broadcast_addr[8] = {
-			0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
-		};
-		mach_set_dst_ieee_addr(0xffff,broadcast_addr);
 		mach_set_src_addr(IEEE802154_FC_ADDR_IEEE);
-		subghz_param.sending = true;
-		result = mach_tx(fc,subghz_param.addr_type,&subghz_param.tx);
 	}
 
-	//mach_ed(&rssi);
-	//subghz_txdone(rssi,result);
-	subghz_param.sending = false;
-
-	if(result >= 0){
-		msg = SUBGHZ_OK;
-		subghz_param.tx_stat.rssi = result;
-		subghz_param.tx_stat.status = 0;
-	} else {
-		subghz_param.tx_stat.rssi = 0;
-		if(result == -EBUSY) msg = SUBGHZ_TX_CCA_FAIL;
-		else if(result == -ETIMEDOUT) msg = SUBGHZ_TX_ACK_FAIL;
-		else msg = SUBGHZ_TX_FAIL;
-	}
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d,%d.%d\n",__FILE__,__func__,__LINE__,
-				msg,subghz_param.tx_stat.rssi);
-	}
-#endif
-	if(callback) {
-		callback(subghz_param.tx_stat.rssi,msg);
-	}
-
+	msg =  subghz_tx_raw(fc,callback);
 	subghz_api_status &= ~SUBGHZ_API_SEND;
 
 	return msg;
 }
 
-int mach_rx_irq(struct mac_header *rx)
+int mach_rx_irq(int status,struct mac_header *rx)
 {
-
-	subghz_param.rx_stat.rssi = rx->rssi;
-	subghz_param.rx_stat.status = rx->raw.len;
+	if(status == -EDEADLK) {
+		HAL_reset();
+		return STATUS_OK;
+	}
+	// ignore broadcast
 	if((!subghz_param.mach->macl->promiscuousMode) &&
 			(!subghz_param.broadcast_enb) &&
 			(rx->dst.panid.enb) && (rx->dst.panid.data == 0xFFFF) &&
@@ -389,42 +401,42 @@ int mach_rx_irq(struct mac_header *rx)
 				(rx->dst.addr.ieee_addr[6]==0xFF)&&
 				(rx->dst.addr.ieee_addr[7]==0xFF))
 			)) {
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-		if(module_test & MODE_MACH_DEBUG) {
-			printk(KERN_INFO"Lazurite:: Ignore Broadcast\n");
-			PAYLOADDUMP(rx->raw.data, rx->raw.len);
-		}
-#endif
-	} else {
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-		if(module_test & MODE_MACH_DEBUG) {
-			printk(KERN_INFO"[rx]%s,%s,%d\n",__FILE__,__func__,__LINE__);
-			PAYLOADDUMP(rx->raw.data, rx->raw.len);
-		}
-#endif
+		return STATUS_OK;
+	}
+	if ( status == STATUS_OK) {
+		subghz_param.rx_stat.rssi = rx->rssi;
+		subghz_param.rx_stat.status = rx->raw.len;
 		if (rx->fc.fc_bit.sec_enb && AES128_getStatus()) {
 			uint8_t mhr_len;
 			uint8_t pad;
-			uint8_t outbuf[256];
 			if (rx->fc.fc_bit.seq_comp){
 				rx->seq=0;
 			}
-			mhr_len = rx->raw.len - rx->payload.len;
-			memcpy(outbuf, rx->raw.data,mhr_len);
-			pad = AES128_CBC_decrypt(outbuf+mhr_len, rx->payload.data, rx->payload.len, rx->seq);
-			rx->raw.len -= pad;
-			memcpy(rx->raw.data, outbuf, rx->raw.len);
-#ifdef DEBUG_AES
-			Serial.print("AES ON: pad num: ");
-			Serial.println_long(pad,DEC);
-#endif
+			mhr_len = (uint8_t)(rx->raw.len - rx->payload.len);
+			memcpy(subghz_param.rx.data, rx->raw.data,mhr_len);
+			pad = AES128_CBC_decrypt(subghz_param.rx.data+mhr_len, rx->payload.data, (uint32_t)rx->payload.len, rx->seq);
+			subghz_param.rx.len = rx->raw.len - pad;
+		} else {
+			memcpy(subghz_param.rx.data,rx->raw.data,rx->raw.len);
+			subghz_param.rx.len = rx->raw.len;
 		}
-
 		if(subghz_param.rx_callback != NULL) {
-			subghz_param.rx_callback(rx->raw.data, rx->rssi,rx->raw.len);
-		} 
-		memcpy(subghz_param.rx.data,rx->raw.data,rx->raw.len);
-		subghz_param.rx.len = rx->raw.len;
+			subghz_param.rx_callback(subghz_param.rx.data, rx->rssi,subghz_param.rx.len);
+		}
+	} else {
+		subghz_param.rx_stat.rssi = 0;
+		subghz_param.rx_stat.status = status;
+		if(subghz_param.rx_callback != NULL) {
+			subghz_param.rx_callback(NULL, 0,status);
+		}
+	}
+#if !defined(LAZURITE_IDE) && defined(DEBUG)
+	printk(KERN_INFO"%s %s %d mach_start\n",__FILE__,__func__,__LINE__);
+#endif
+	if(!subghz_param.mach->macl->promiscuousMode){
+		if(mach_start(&subghz_param.rx)!=STATUS_OK) {
+			HAL_reset();
+		}
 	}
 	return STATUS_OK;
 }
@@ -433,8 +445,6 @@ static short subghz_readData(uint8_t *data, uint16_t max_size)
 {
 	short result = 0;
 #ifdef	LAZURITE_IDE
-	//  SUBGHZ_MAC_PARAM mac;
-	//	__DI();
 	dis_interrupts(DI_SUBGHZ);
 #endif
 	if(subghz_param.rx.len == 0)
@@ -466,7 +476,8 @@ static SUBGHZ_MSG subghz_rxEnable(void (*callback)(const uint8_t *data, uint8_t 
 	subghz_param.rx_callback = callback;
 	if(subghz_param.read == false)
 	{
-		if((result=mach_start(&subghz_param.rx))!=STATUS_OK) {
+		result=mach_start(&subghz_param.rx);
+		if(result != STATUS_OK) {
 			msg = SUBGHZ_RX_ENB_FAIL;
 			goto error;
 		}
@@ -488,7 +499,7 @@ static SUBGHZ_MSG subghz_rxDisable(void)
 	if(result != STATUS_OK)
 	{
 		msg = SUBGHZ_RX_DIS_FAIL;
-		goto error;						//2016.5.1 add 
+		goto error;
 	}
 	subghz_param.read = false;
 	msg = SUBGHZ_OK;
@@ -500,23 +511,6 @@ error:
 	return msg;
 }
 
-/*static SUBGHZ_MSG subghz_setPANID(uint16_t panid)
-	{
-	SUBGHZ_MSG msg;
-	int result;
-
-	result = BP3596_setMyPANID(panid);
-	if(result != BP3596_STATUS_OK)
-	{
-	msg = SUBGHZ_PANID;
-	goto error;
-	}
-	msg = SUBGHZ_OK;
-error:
-subghz_param.tx_stat.status = result;
-return msg;
-}
-*/
 static void subghz_getStatus(SUBGHZ_STATUS *tx, SUBGHZ_STATUS *rx)
 {
 	if (tx != NULL)
@@ -604,14 +598,13 @@ static void subghz_msgOut(SUBGHZ_MSG msg)
 
 	if((msg>=SUBGHZ_OK)&&(msg<=SUBGHZ_TTL_SEND_OVR)){
 		Serial.print(subghz_msg[msg]);
-		Serial.print(s1);
+		Serial.println(s1);
+	} else {
+		Serial.print(s2);
+		Serial.print_long((long)subghz_param.tx_stat.rssi,DEC);
+		Serial.print(s3);
+		Serial.println_long((long)subghz_param.tx_stat.status,DEC);
 	}
-
-no_error:
-	Serial.print(s2);
-	Serial.print_long((long)subghz_param.tx_stat.rssi,DEC);
-	Serial.print(s3);
-	Serial.println_long((long)subghz_param.tx_stat.status,DEC);
 	return;
 #endif
 }
@@ -621,7 +614,7 @@ static SUBGHZ_MSG subghz_getSendMode(SUBGHZ_PARAM *param)
 	param->addrType = subghz_param.addr_type;
 	param->senseTime = subghz_param.rf.cca_max_be;
 	param->txRetry = subghz_param.rf.tx_retry;
-	param->txInterval = subghz_param.rf.ack_timeout;
+	param->txInterval = (uint16_t)subghz_param.rf.ack_timeout;
 	//	param->ccaWait = subghz_param.rf.cca_duration;
 	param->myAddress = subghz_param.mach->my_addr.short_addr; 
 
@@ -698,20 +691,10 @@ static SUBGHZ_MSG subghz_setPromiscuous(bool on) {
 }
 static SUBGHZ_MSG subghz_setAckReq(bool on) {
 	subghz_param.ack_req = on;
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,__LINE__,subghz_param.ack_req);
-	}
-#endif
 	return SUBGHZ_OK;
 }
 static SUBGHZ_MSG subghz_setBroadcastEnb(bool on) {
 	subghz_param.broadcast_enb = on;
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,__LINE__,subghz_param.broadcast_enb);
-	}
-#endif
 	return SUBGHZ_OK;
 }
 
@@ -727,64 +710,41 @@ static void subghz_set_ack_tx_interval(uint16_t interval){
 	mach_set_ack_tx_interval(interval);
 }
 
-static void subghz_get_ed_value(uint8_t *rssi){
-	mach_ed(rssi);
-}
-
 static void subghz_set_ant_sw(uint8_t ant_sw){
 	subghz_param.rf.ant_sw = ant_sw;
 }
 
-#ifdef MK74040
-static void subghz_setModulation(uint8_t mode) {
+static void subghz_setModulation(int8_t mode) {
 	subghz_param.rf.modulation = mode;
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,__LINE__,subghz_param.rf.modulation);
-	}
-#endif
 }
-static void subghz_setDsssSpreadFactor(uint8_t sf) {
+
+static void subghz_setDsssSpreadFactor(int8_t sf) {
 	subghz_param.rf.dsssSF = sf;
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,__LINE__,subghz_param.broadcast_enb);
-	}
-#endif
 }
-static void subghz_setDsssSize(uint8_t size, uint8_t addr_mode){
+static void subghz_setDsssSize(int8_t size, uint8_t addr_mode){
 
-	subghz_param.rf.dsssSize = size + mac_overhead_len[subghz_param.addr_type];
+	subghz_param.rf.dsssSize = (int8_t)(size + mac_overhead_len[subghz_param.addr_type]);
 
-    if (addr_mode) {
-        switch (subghz_param.addr_type){
-        case 0:
-        case 1:
-            break;
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-            subghz_param.rf.dsssSize += 6;
-            break;
-        case 6:
-        case 7:
-            subghz_param.rf.dsssSize += 12;
-            break;
-        default:
-            break;
-        }
-    }
-#ifdef LAZURITE_IDE
-    Serial.print("DSSS SIZE: ");
-    Serial.println_long(subghz_param.rf.dsssSize,DEC);
-#else
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d,SIZE:%d, ADDR_MODE:%d\n",__FILE__,__func__,__LINE__,subghz_param.rf.dsssSize,addr_mode);
+	if (addr_mode) {
+		switch (subghz_param.addr_type){
+			case 0:
+			case 1:
+				break;
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+				subghz_param.rf.dsssSize += 6;
+				break;
+			case 6:
+			case 7:
+				subghz_param.rf.dsssSize += 12;
+				break;
+			default:
+				break;
+		}
 	}
-#endif
 }
-#endif // MK74040
 
 // setting of function
 const SubGHz_CTRL SubGHz = {
@@ -813,11 +773,8 @@ const SubGHz_CTRL SubGHz = {
 	subghz_set_enhance_ack,
 	subghz_get_enhance_ack,
 	subghz_set_ack_tx_interval,
-	subghz_get_ed_value,
 	subghz_set_ant_sw,
-#ifdef MK74040
 	subghz_setModulation,
 	subghz_setDsssSize,
-  subghz_setDsssSpreadFactor,
-#endif
+	subghz_setDsssSpreadFactor,
 };

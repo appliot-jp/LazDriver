@@ -43,57 +43,36 @@
 // Local definition
 //*****************************************************
 #define	LED_FLASH_TIME	1					// LED Flashing time
-static struct timespec start_time;			// memory of tick timer
+//static struct timespec start_time;			// memory of tick timer
 static struct timer_list g_timer;			// timer handler
-static struct timer_list syslog_timer;		// timer handler
+//static struct timer_list syslog_timer;		// timer handler
+static struct timer_list timer4_timer;		// timer4 handler
+
 static void (*ext_timer_func)(void);
 static void (*ext_irq_func)(void);
-static void (*act_irq_func)(void);
-static void (*syslog_timer_ext_func)(uint32_t data);
+//static void (*act_irq_func)(void);
+//static void (*syslog_timer_ext_func)(uint32_t data);
+static void (*timer4_irq_func)(void);
 static bool ext_irq_enb;
 
 extern int wait_event_macl;
 volatile int que_irq= 0;
 volatile int que_tx_led= 1;
 volatile int que_rx_led= 1;
-volatile int que_th2ex = 0;
-volatile int que_macl = 1;
+volatile int que_th2ex = false;
 static wait_queue_head_t rf_irq_q;
 static wait_queue_head_t tx_led_q;
 static wait_queue_head_t rx_led_q;
 wait_queue_head_t ext_q;
-wait_queue_head_t mac_done;
 static struct task_struct *rf_main_task;
 static struct task_struct *tx_led_task;
 static struct task_struct *rx_led_task;
 bool flag_irq_enable;
 
+extern struct s_CHAR_DEV chrdev;
 
 // main_thread_parameter
-static struct {
-	volatile uint16_t trigger;
-	struct {
-		const uint8_t* wdata;
-		uint16_t wsize;
-		uint8_t* rdata;
-		uint16_t rsize;
-		int ret;
-	} spi;
-	struct {
-		uint16_t addr;
-		uint8_t* data;
-		uint8_t size;
-		int ret;
-		uint8_t addr_bits;
-		uint8_t i2c_addr;
-	} i2c;
-	struct {
-		uint32_t time;
-	} led;
-} m = {0};
-
-
-
+struct thread_param m = {0};
 
 //*****************************************************
 // temporary
@@ -110,6 +89,9 @@ void millis_init(void)
 	getnstimeofday(&load_time);
 }
 
+void HAL_delayMicroseconds(uint32_t us) {
+	udelay((unsigned long)us);
+}
 uint32_t HAL_millis(void)
 {
 	unsigned long res;
@@ -125,64 +107,124 @@ uint32_t HAL_millis(void)
 	return res;
 }
 
-void HAL_set_timer0_function(void (*func)(uint32_t sys_timer_count)) {
-	syslog_timer_ext_func = func;
+//*  MsTimer4
+static uint32_t timer4_interval;
+static bool timer4_enb = false;
+void timer4_callback(struct timer_list *data) {
+	m.trigger |= 0x10;
+	mod_timer(&timer4_timer, timer4_timer.expires + timer4_interval);
+	//if (que_irq==0)
+	//{
+		que_irq=1;
+		wake_up_interruptible_sync(&rf_irq_q);
+		//return IRQ_WAKE_THREAD;
+	//}
 }
+void HAL_timer4_set(uint32_t ms, void (*func)(void)) {
+	if(timer4_enb != false) {
+		printk(KERN_INFO"timer4 is active\n");
+		goto error;
+	}
+	timer4_irq_func = func;
+	timer4_interval = ms*HZ/1000;
+error:
+	return;
+}
+void HAL_timer4_start(void) {
+	if(timer4_enb == true) {
+		printk(KERN_INFO"timer4 is active\n");
+		goto error;
+	}
+	if(timer4_interval <= 0) {
+		printk(KERN_INFO"timer4 interval =< 0\n");
+		goto error;
+	}
+	timer4_timer.expires = jiffies + timer4_interval;
+	//timer4_timer.data = 0;
+	timer4_timer.function = timer4_callback;
+	add_timer(&timer4_timer);
+	timer4_enb = true;
+error:
+	return;
+}
+
+void HAL_timer4_stop(void) {
+	printk(KERN_INFO"timer4.stop()\n");
+	if(timer4_enb == true)  del_timer(&timer4_timer);
+	timer4_enb = false;
+}
+
+const MsTimer4 timer4 = {
+	HAL_timer4_set,
+	HAL_timer4_start,
+	HAL_timer4_stop
+};
+
+/*
 static void syslog_timer_isr(struct timer_list *t) {
 	if(syslog_timer_ext_func) syslog_timer_ext_func(jiffies);
 	syslog_timer.expires = jiffies + HZ*2;
 	add_timer(&syslog_timer);
 }
+*/
+#include "../macl.h"
+extern struct macl_param macl;
 int rf_main_thread(void *p)
 {
 	// system logging start
-	syslog_timer_ext_func = NULL;
-	timer_setup(&syslog_timer,syslog_timer_isr,0);
-	syslog_timer.expires = jiffies + HZ*2;
-	add_timer(&syslog_timer);
+	//syslog_timer_ext_func = NULL;
+	//timer_setup(&syslog_timer,syslog_timer_isr,0);
+	//syslog_timer.expires = jiffies + HZ*2;
+	//add_timer(&syslog_timer);
 
 	m.trigger=0;
 	while(!kthread_should_stop()) {
 		// printk(KERN_INFO"%s %s %d %d %d %d\n",__FILE__,__func__,__LINE__,flag_irq_enable,gpio_get_value(GPIO_SINTN),m.trigger);
-		if(((flag_irq_enable!=true)||gpio_get_value(GPIO_SINTN)!=0)&&((m.trigger&0x0f)==0))
-		{
+		if((flag_irq_enable == true) && (gpio_get_value(GPIO_SINTN) == 0)) {
+			m.trigger |= 0x01;
+#if !defined(LAZURITE_IDE) && defined(DEBUG)
+			printk(KERN_INFO"%s %s %d macl.condition=%d\n",__FILE__,__func__,__LINE__,macl.condition);
+#endif
+		}
+		if(m.trigger == 0x00) {
 			que_irq=0;
 			wait_event_interruptible(rf_irq_q, que_irq);
 		}
 		if(kthread_should_stop()) break;
-		if(m.trigger&0x01){
-			m.trigger&=~0x01;
+		if(m.trigger&0x01){ 				// SINT INTERRUPT
 			if(ext_irq_func) {
-				// printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,m.trigger);
-				que_th2ex=1;
-				que_macl=0;
-				act_irq_func = ext_irq_func;
-				act_irq_func();
+				//que_th2ex=true;
+				ext_irq_func();
 			}
+			m.trigger&=~0x03;
 		}
-		if(m.trigger&0x02) {
-			m.trigger&=~0x02;
+		if(m.trigger&0x02) {				// ABORT INTERRUPT
 			if(ext_timer_func) {
 				//printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,m.trigger);
-			//	ext_timer_func();
-			//	ext_timer_func = NULL;
-				que_th2ex=1;
-				que_macl=0;
-				act_irq_func = ext_timer_func;
-				act_irq_func();
+				//	ext_timer_func();
+				//	ext_timer_func = NULL;
+				//que_th2ex=true;
+				ext_timer_func();
 			}
+			m.trigger&=~0x03;
 		}
-		if(m.trigger&0x04) {
+		if(m.trigger&0x04) {					// EXT SPI INTERRUPT
 			m.spi.ret=lzpi_spi_transfer(m.spi.wdata,m.spi.wsize,m.spi.rdata,m.spi.rsize);
 			m.trigger &= ~0x04;
-			que_th2ex=1;
+			que_th2ex=true;
 			wake_up_interruptible(&ext_q);
 		}
-		if(m.trigger&0x08) {
+		if(m.trigger&0x08) {					// EXT I2C INTERRUPT
 			m.i2c.ret=HAL_I2C_read(m.i2c.addr,m.i2c.data,m.i2c.size);
 			m.trigger &= ~0x08;
-			que_th2ex=1;
+			que_th2ex=true;
 			wake_up_interruptible(&ext_q);
+		}
+		if(m.trigger&0x10) {					// FREQ HOPPING INTERRUPT
+			if(timer4_irq_func) {					// freq hopping timer
+				timer4_irq_func();
+				m.trigger&=~0x10;
+			}
 		}
 	}
 	printk(KERN_INFO"[HAL] %s thread end\n",__func__);
@@ -226,17 +268,16 @@ int tx_led_thread(void *p)
 }
 // rf hardware interrupt handler
 static irqreturn_t rf_irq_handler(int irq,void *dev_id) {
-		// printk(KERN_INFO"%s %s %d %08lx,%d\n",__FILE__,__func__,__LINE__,(unsigned long)ext_irq_func,que_irq);
 	if(ext_irq_func)
 	{
 		m.trigger |= 0x01;
-		if (que_irq==0)
-		{
-//			printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,que_irq);
+		//if (que_irq==0)
+		//{
+			//			printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,que_irq);
 			que_irq=1;
 			wake_up_interruptible_sync(&rf_irq_q);
 			//return IRQ_WAKE_THREAD;
-		}
+		//}
 	}
 	return IRQ_HANDLED;
 }
@@ -262,6 +303,10 @@ int spi_probe(void){
 	ext_timer_func = NULL;
 	ext_irq_func = NULL;
 	ext_irq_enb = false;
+	timer4_irq_func = NULL;
+
+	//timer4.set(1000,NULL);
+	//timer4.start();
 
 	// IRQ Initializing
 	que_irq = 1;
@@ -271,7 +316,6 @@ int spi_probe(void){
 	init_waitqueue_head( &rx_led_q );
 	init_waitqueue_head( &tx_led_q );
 	init_waitqueue_head( &ext_q );
-	init_waitqueue_head( &mac_done );
 
 	// create GPIO irq
 	gpio_direction_input(GPIO_SINTN);
@@ -342,52 +386,61 @@ error:
 
 
 /******************************************************************************
- Returns:
- 	wait_event_interruptible_timeout - sleep until a condition gets true or a timeout elapses
- 	0: timeout
- 	n: remaining time
+Returns:
+wait_event_interruptible_timeout - sleep until a condition gets true or a timeout elapses
+0: timeout
+n: remaining time
  ******************************************************************************/
-int HAL_wait_event(uint8_t event)
-{
-	int status=1;
-
-		if (event == HAL_PHY_EVENT) {
-		}else
-		if (event == HAL_MAC_EVENT) {
-				que_macl = 0;
-				//printk(KERN_INFO"%s %s %d jiffies:%lx HZ:%x\n",__FILE__,__func__,__LINE__,jiffies,HZ);
-				status = wait_event_interruptible_timeout(mac_done, que_macl,HZ*2);
-				//printk(KERN_INFO"%s %s %d status:%d HZ:%x\n",__FILE__,__func__,__LINE__,status,HZ);
-		}
-		if (!status) {
-			status = -EFBIG;
-		}else{
-			status = HAL_STATUS_OK;
-		}
+int HAL_init_waitqueue_head(wait_queue_head_t *q) {
+	init_waitqueue_head(q);
+	return 0;
+}
+uint32_t HAL_wait_event_interruptible_timeout(wait_queue_head_t *q,volatile int *condition,uint32_t ms){
+	uint32_t status;
+	status = wait_event_interruptible_timeout(*q, *condition,ms*HZ/1000);
 	return status;
 }
 
-
-int HAL_wakeup_event(uint8_t event)
+#include "../macl.h"
+extern struct macl_param macl;
+int HAL_wake_up_interruptible(wait_queue_head_t *q)
 {
 	int status=0;
-		if (event == HAL_PHY_EVENT) {
-			que_th2ex = 1;
-			wake_up_interruptible(&ext_q);
-		}else
-		if (event == HAL_MAC_EVENT) {
-				que_macl = 1;
-				wait_event_macl = 1;
-				//printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
-				wake_up_interruptible(&mac_done);
-		}
+	wake_up_interruptible_sync(q);
+	/*
+		 if (event == HAL_PHY_EVENT) {
+		 que_th2ex = true;
+		 wake_up_interruptible(&ext_q);
+		 }else
+		 if (event == HAL_MAC_EVENT) {
+		 que_macl = 1;
+		 wait_event_macl = 1;
+	//printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
+	wake_up_interruptible(&mac_done);
+	}
+	*/
 	return status;
 }
+void HAL_write_lock(bool on) {
+	if(on) {
+		mutex_lock( &chrdev.lock );
+	} else {
+		mutex_unlock( &chrdev.lock );
+	}
+}
 
-
+uint8_t lastSequenceNum = 0;
+void timer4_func(void) {
+	printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,macl.condition);
+	if(macl.sequenceNum == lastSequenceNum) {
+		phy_monitor();
+		printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,mutex_is_locked(&chrdev.lock));
+	}
+	lastSequenceNum = macl.sequenceNum;
+}
 int HAL_init(void){
 	int status;
-		// printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
+	// printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 	// spi initialization
 	m.i2c.i2c_addr = 0x50;
 #ifdef MK74040
@@ -396,17 +449,23 @@ int HAL_init(void){
 	m.i2c.addr_bits = 8;
 #endif
 	status = lzpi_spi_init(spi_probe);
+	//HAL_GPIO_enableInterrupt();
 	if(status != 0){
 		status = HAL_ERROR_SPI;
 		lzpi_i2c_del_driver();
 	}
+	//getnstimeofday(&start_time);
+	/*
+		 timer4.set(10000,timer4_func);
+		 timer4.start();
+		 */
 	return status;
 }
 
 int HAL_remove(void)
 {
-	del_timer(&syslog_timer);
-	HAL_TIMER_stop();
+	//del_timer(&syslog_timer);
+	timer4.stop();
 	HAL_GPIO_disableInterrupt();
 	ext_irq_func = NULL;
 	free_irq(gpio_to_irq(GPIO_SINTN), NULL);
@@ -437,13 +496,15 @@ int HAL_SPI_transfer(const uint8_t *wdata, uint16_t wsize,unsigned char *rdata, 
 int HAL_GPIO_setInterrupt(void (*func)(void))
 {
 	ext_irq_func = func;
-		//printk(KERN_INFO"%s %s %d %08lx\n",__FILE__,__func__,__LINE__,(unsigned long)ext_irq_func);
+	//printk(KERN_INFO"%s %s %d %08lx\n",__FILE__,__func__,__LINE__,(unsigned long)ext_irq_func);
 	return HAL_STATUS_OK;
 }
 
 int HAL_GPIO_enableInterrupt(void)
 {
-		//printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
+	if(gpio_get_value(GPIO_SINTN) == 0) {
+		printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
+	}
 	if(!flag_irq_enable) enable_irq(gpio_to_irq(GPIO_SINTN));
 	flag_irq_enable = true;
 	return HAL_STATUS_OK;
@@ -452,7 +513,6 @@ int HAL_GPIO_enableInterrupt(void)
 int HAL_GPIO_disableInterrupt(void)
 {
 	if(flag_irq_enable) disable_irq(gpio_to_irq(GPIO_SINTN));
-		//printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 	flag_irq_enable = false;
 	m.trigger&=~0x01;
 	return HAL_STATUS_OK;
@@ -476,6 +536,7 @@ int HAL_I2C_read(unsigned short addr, unsigned char *data, unsigned char size)
 
 
 // timer function
+/*
 int HAL_TIMER_getTick(uint32_t *tick)
 {
 	struct timespec current_time;
@@ -490,12 +551,7 @@ int HAL_TIMER_getTick(uint32_t *tick)
 
 	return HAL_STATUS_OK;
 }
-
-int HAL_TIMER_setup(void)
-{
-	getnstimeofday(&start_time);
-	return HAL_STATUS_OK;
-}
+*/
 
 static bool timer_flag=false;
 void timer_function(struct timer_list *t)
@@ -503,24 +559,30 @@ void timer_function(struct timer_list *t)
 	//printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
 	if(ext_timer_func){
 		m.trigger|=0x02;
-		if(que_irq==0)
-		{
-			que_irq=1;
-			wake_up_interruptible(&rf_irq_q);
-		}
+		//if(que_irq==0)
+		//{
+		que_irq=1;
+		wake_up_interruptible_sync(&rf_irq_q);
+		//}
 	}
 	timer_flag=false;
 }
 
-int HAL_TIMER_start(unsigned short msec, void (*func)(void))
+int HAL_TIMER_start(uint16_t msec, void (*func)(void))
 {
-	uint32_t tmp = HZ;
-	uint32_t add_time;
-	add_time = (tmp*msec)/1000; 
-	if(add_time<2) add_time = 2;
-	timer_setup(&g_timer,timer_function,0);
-	g_timer.expires = jiffies + add_time;
-	//	printk(KERN_INFO"%s %s %d		addtime=%d\n",__FILE__,__func__,__LINE__,add_time);
+	uint32_t ms32 = msec;
+	//add_time = (tmp*msec)/1000; 
+	//if(add_time<2) add_time = 2;
+	//timer_setup(&g_timer,timer_function,0);
+
+	if(timer_flag == true) {
+		del_timer(&g_timer);
+		timer_flag = false;
+		printk(KERN_INFO"%s %s %d HAL_TIMER conflict\n",__FILE__,__func__,__LINE__);
+	}
+	ms32 = ms32*HZ/1000;
+	g_timer.expires = jiffies + ms32;
+	g_timer.function = timer_function;
 	ext_timer_func = func;
 	add_timer(&g_timer);
 	timer_flag = true;
@@ -534,7 +596,6 @@ int HAL_TIMER_stop(void)
 		del_timer(&g_timer);
 		ext_timer_func = NULL;
 	}
-	m.trigger&=~0x02;
 	return HAL_STATUS_OK;
 }
 
@@ -546,21 +607,21 @@ void HAL_sleep(uint32_t ms) {
 // #include "../phy.h" 
 int EXT_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize)
 {
+	int status; 
 	m.spi.wdata = wdata;
 	m.spi.wsize = wsize;
 	m.spi.rdata = rdata;
 	m.spi.rsize = rsize;
 	m.trigger |= 0x04;
-	if(que_irq == 0)
-	{
-		int status; 
-		que_irq = 1;
-		wake_up_interruptible(&rf_irq_q);
-		que_th2ex = 0;
-		status = wait_event_interruptible_timeout(ext_q,que_th2ex,2);
-	} else {
-		return -EBUSY;
-	}
+	//if(que_irq == 0)
+	//{
+	que_irq = 1;
+	wake_up_interruptible(&rf_irq_q);
+	que_th2ex = false;
+	status = wait_event_interruptible_timeout(ext_q,que_th2ex,2);
+	//} else {
+	//return -EBUSY;
+	//}
 	return m.spi.ret;
 }
 
@@ -570,15 +631,15 @@ int EXT_I2C_read(unsigned short addr, unsigned char *data, unsigned char size)
 	m.i2c.data = data;
 	m.i2c.size = size;
 	m.trigger |= 0x08;
-	if(que_irq == 0)
-	{
-		que_irq=1;
-		wake_up_interruptible(&rf_irq_q);
-		que_th2ex = 0;
-		wait_event_interruptible_timeout(ext_q,que_th2ex,2);
-	} else {
-		return -EBUSY;
-	}
+	//if(que_irq == 0)
+	//{
+	que_irq=1;
+	wake_up_interruptible(&rf_irq_q);
+	que_th2ex = false;
+	wait_event_interruptible_timeout(ext_q,que_th2ex,2);
+	//} else {
+	//return -EBUSY;
+	//}
 	return m.i2c.ret;
 }
 
@@ -586,23 +647,22 @@ void EXT_tx_led_flash(uint32_t time)
 {
 	if(que_tx_led == 0)
 		que_tx_led = 1;
-		wake_up_interruptible(&tx_led_q);
+	wake_up_interruptible(&tx_led_q);
 }
 void EXT_rx_led_flash(uint32_t time)
 {
 	if(que_rx_led == 0)
 		que_rx_led = 1;
-		wake_up_interruptible(&rx_led_q);
+	wake_up_interruptible(&rx_led_q);
 }
 
 // no need in Raspberry Pi
-void HAL_EX_disableInterrupt(void)
-{
+void HAL_noInterrupts(void) {
 }
 
 // no need in Raspberry Pi
-void HAL_EX_enableInterrupt(void)
-{
+void HAL_interrupts(void) {
+	que_irq=0;
 }
 
 int HAL_GPIO_setValue(uint8_t pin, uint8_t value) {
@@ -612,4 +672,9 @@ int HAL_GPIO_setValue(uint8_t pin, uint8_t value) {
 int HAL_GPIO_getValue(uint8_t pin, uint8_t *value) {
 	*value = gpio_get_value(pin);
 	return 0;
+}
+void HAL_reset(void) {
+}
+int32_t map(int32_t x,int32_t in_min,int32_t in_max,int32_t out_min,int32_t out_max){
+	return (out_min+(x-in_min)*(out_max - out_min)/(in_max - in_min));
 }

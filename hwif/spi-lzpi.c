@@ -40,7 +40,7 @@ static int lzpi_spi_probe(struct spi_device *spi)
 	// initializing SPI
 	lzpi_spi = kzalloc(sizeof(*lzpi_spi), GFP_KERNEL);
 	if (!lzpi_spi) {
-	        return -ENOMEM;
+		return -ENOMEM;
 	}
 
 	spi->bits_per_word = 8;
@@ -73,13 +73,13 @@ static int lzpi_spi_remove(struct spi_device *dev)
 {
 	struct lzpi_spi_dev *lzpi_spi = spi_get_drvdata(dev);
 
-//	finish_flag = 1;
+	//	finish_flag = 1;
 
 	spi_set_drvdata(lzpi_spi->spi, NULL);
 	if (!lzpi_spi)
 		return 0;
 	kfree(lzpi_spi);
-	
+
 	/* gpio uninit */
 	//gpio_free(GPIO_SINTN);
 
@@ -102,7 +102,7 @@ int lzpi_spi_init(int (*callback)(void))
 	return spi_register_driver(&lzpi_spi_driver);
 }
 
-
+#include "../common-lzpi.h"
 int lzpi_spi_del_driver(void)
 {
 	int status = 0;
@@ -111,9 +111,16 @@ int lzpi_spi_del_driver(void)
 }
 
 int lzpi_spi_transfer(const uint8_t* wdata, uint16_t wsize, uint8_t* rdata, uint16_t rsize) {
-    int status;
+	int status;
+
+	//PAYLOADDUMP(wdata,wsize);
 	status = spi_write_then_read(m_lzpi_spi->spi,wdata, wsize, rdata, rsize);
-	if(status != 0) printk("[LZPI] SPI Unknow Error\r\n");
-    return status;
+	if(status != 0) {
+		printk(KERN_INFO"%s %s %d %d %d\n",__FILE__,__func__,__LINE__,wsize,rsize);
+		printk("[LZPI] SPI Unknow Error1 status=%d\n",status);
+		goto error;
+	}
+error:
+	return status;
 }
 

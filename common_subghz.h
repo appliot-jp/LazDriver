@@ -36,9 +36,9 @@
 
 
 typedef struct {
-	uint8_t *data;		// pointer of buffer
+	uint8_t *data;	// pointer of buffer
 	uint16_t len;		// data length
-	int size;			// size <= 0 : size unknown
+	uint16_t size;	// size <= 0 : size unknown
 } BUFFER;
 
 #define DBM_TO_MBM(gain)	(gain*100)

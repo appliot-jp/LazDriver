@@ -21,58 +21,77 @@
 #ifndef _MACL_H_
 #define _MACL_H_
 
-#ifdef LAZURIE_IDE
-	#include <common.h>
+#ifdef LAZURITE_IDE
+	//#include <common.h>
+	//#include <hwif/hal.h>
 #endif
 
 #include "common_subghz.h"
 #include "phy.h"
 
+#ifdef JP
+	#define PREAMBLE_OFFSET	4
+	#define SFD_OFFSET			2
+	#define CRC_OFFSET			2
+	#define TX_TTL_OFFSET (PREAMBLE_OFFSET + SFD_OFFSET + CRC_OFFSET)
+#endif
 typedef enum {
-		SUBGHZ_ST_TX_START = 0,
-		SUBGHZ_ST_CCA_FAST,							// 1
-		SUBGHZ_ST_CCA_IDLE_DETECT,			// 2
-		SUBGHZ_ST_CCA_ABORT,						// 3
-		SUBGHZ_ST_CCA_RETRY,						// 4
-		SUBGHZ_ST_CCA_FAILURE,					// 5
-		SUBGHZ_ST_CCA_DONE,							// 6
-		SUBGHZ_ST_TX_DONE,							// 7
-		SUBGHZ_ST_TX_ACK_TIMEOUT,				// 8
-		SUBGHZ_ST_TX_ACK_DONE,					// 9
-		SUBGHZ_ST_RX_START,							// 10
-		SUBGHZ_ST_RX_DONE,							// 11
-		SUBGHZ_ST_RX_ACK_DONE,					// 12
-		SUBGHZ_ST_RX_ACK_ABORT,					// 13
-		SUBGHZ_ST_NONE									// --
+	SUBGHZ_ST_INIT = 0,
+	SUBGHZ_ST_INIT_FAIL,				// 1
+	SUBGHZ_ST_SLEEP,						// 2
+	SUBGHZ_ST_SLEEPED,					// 3
+	SUBGHZ_ST_SETUP,						// 4
+	SUBGHZ_ST_STANDBY,					// 5
+	SUBGHZ_ST_STOP,							// 6
+	SUBGHZ_ST_TX_START,					// 7
+	SUBGHZ_ST_CCA,							// 8
+	SUBGHZ_ST_CCA_ABORT,				// 9
+	SUBGHZ_ST_CCA_DONE,					// 10
+	SUBGHZ_ST_CCA_FAIL,					// 11
+	SUBGHZ_ST_TX_FIFO,					// 12
+	SUBGHZ_ST_TX_DONE,					// 13
+	SUBGHZ_ST_TX_ABORT,					// 14
+	SUBGHZ_ST_ACK_RX_DONE,			// 15
+	SUBGHZ_ST_ACK_RX_ABORT,			// 16
+	SUBGHZ_ST_ACK_RX_CRC,				// 17
+	SUBGHZ_ST_RX_START,					// 18
+	SUBGHZ_ST_RX_STARTED,				// 19
+	SUBGHZ_ST_RX_DONE,					// 20
+	SUBGHZ_ST_RX_FIFO,					// 21
+	SUBGHZ_ST_ACK_TX,						// 22
+	SUBGHZ_ST_ACK_TX_ABORT,			// 23
+	SUBGHZ_ST_ACK_TX_DONE,			// 24
+	SUBGHZ_ST_DUMMY							// 25
 } SUBGHZ_MAC_STATE;
 
 
-typedef struct {
-	uint8_t condition;
+struct macl_param {
 	uint8_t pages;
 	uint8_t ch;
-	uint8_t ccaRetry;
-	uint8_t ccaBe;
+	uint8_t ccaMode;
+	uint8_t ccaMinBe;
+	uint8_t ccaMaxBe;
 	uint8_t ccaCount;
+	uint8_t ccaRetries;
 	uint8_t txPower;
-	uint8_t txRetry;
-	uint8_t txMode;
-	uint8_t sequnceNum;
+	uint8_t txRetries;
+	uint8_t sequenceNum;
 	uint8_t resendingNum;
 	uint8_t rxOnEnable;
-#ifdef MK74040
-    uint8_t modulation;
-#endif
 	bool promiscuousMode;
 	uint16_t ack_timeout;
 	int status;
-	unsigned long total_send_bytes;
-	unsigned long start_send_time;
-	unsigned long last_send_time;
-	PHY_PARAM *phy;
-	BUFFER ack;
+	int condition;
+	volatile int  done;
 	uint16_t tx_ack_interval;
-} MACL_PARAM;
+	void (*tx_callback)(uint8_t rssi, int status);
+	uint32_t total_send_bytes;
+	uint32_t start_send_time;
+	uint32_t last_send_time;
+	struct phy_param *phy;
+	wait_queue_head_t que;
+	//BUFFER ack;
+};
 
 struct ieee802154_my_addr {
 	uint16_t	pan_id;					// for lazurite
@@ -80,29 +99,25 @@ struct ieee802154_my_addr {
 	uint8_t		ieee_addr[8];			// for lazurite
 	bool		pan_coord;				// common
 };
-extern MACL_PARAM* macl_init(void);	
+extern struct macl_param *macl_init(void);	
 extern int	macl_start(void);
 extern int	macl_stop(void);
 extern int	macl_xmit_sync(BUFFER buff);
-extern int	macl_ed(uint8_t *level);
+extern int	macl_xmit_async(BUFFER buff,void (*callback)(uint8_t rssi, int status));
 extern int	macl_set_channel(uint8_t page,uint8_t ch,uint32_t mbm,uint8_t antsw);
-extern int	macl_set_hw_addr_filt(struct ieee802154_my_addr *filt,unsigned long changed);
+extern int	macl_set_hw_addr_filt(struct ieee802154_my_addr *filt,uint32_t changed);
 extern int	macl_set_cca_ed_level(uint32_t mbm);
 extern int	macl_set_csma_params(uint8_t min_be, uint8_t max_be, uint8_t retries);
-extern int	macl_set_frame_retries(uint8_t retries,uint16_t timeout);
+extern int	macl_set_frame_retries(uint8_t retries,uint32_t timeout);
 extern int	macl_set_promiscuous_mode(bool on);
 
-extern int	macl_rx_irq(BUFFER *rx,BUFFER *ack);
+extern int	macl_rx_irq(bool *isAck);
 extern int	macl_rx_irq_notification(void);
 
-extern int	macl_sleep(bool on);
-extern uint8_t	macl_getCondition(void);
+extern int	macl_sleep(void);
 extern void	macl_set_ack_tx_interval(uint16_t interval);
-extern void macl_phy_cleanup(void);
 
-#ifdef MK74040
-extern int	macl_set_modulation(uint8_t mod, uint8_t sf, uint8_t size);
-extern uint8_t	macl_get_modulation(void);
-#endif
+extern int	macl_set_modulation(int8_t mod, int8_t sf, int8_t size);
+extern int	macl_get_modulation(int8_t *mod, int8_t *sf, int8_t *size);
 #endif
 

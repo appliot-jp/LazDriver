@@ -24,21 +24,11 @@
 
 
 #if	defined LAZURITE_IDE
-	#include <lazurite_system.h>
-#elif defined ARDUINO
-#else	// LAZURITE_IDE
+	//#include <lazurite_system.h>
+#else	
 #include <linux/delay.h>
 #endif	// LAZURITE_IDE
 
-
-/* タイマー割り込みコントロール関数 HAL_TIMER_enableInterrupt() と
- * HAL_TIMER_disableInterrupt() が定義されている場合はコメントアウト
- */
-#define ML7396_HWIF_NOTHAVE_TIMER_DI
-
-/* return value
- * 
- */
 #define HAL_STATUS_OK				0	// 
 #define HAL_ERROR_PARAM		-1	//
 #define HAL_ERROR_STATE		-2	// 
@@ -51,8 +41,17 @@
 #define HAL_PHY_EVENT        0
 #define HAL_MAC_EVENT        1
 
-extern int HAL_wait_event(uint8_t event);
-extern int HAL_wakeup_event(uint8_t event);
+#ifdef LAZURITE_IDE
+typedef struct {
+	uint8_t que;
+} wait_queue_head_t;
+#else
+#endif
+
+extern int HAL_init_waitqueue_head(wait_queue_head_t *q);
+extern uint32_t HAL_wait_event_interruptible_timeout(wait_queue_head_t *q,volatile int *condition,uint32_t ms);
+extern int HAL_wake_up_interruptible(wait_queue_head_t *q);
+extern void HAL_write_lock(bool on);
 extern int HAL_init(void);
 extern int HAL_remove(void);
 extern int HAL_GPIO_setValue(uint8_t pin, uint8_t value);
@@ -63,29 +62,14 @@ extern int HAL_GPIO_disableInterrupt(void);
 extern int HAL_TIMER_setup(void);
 extern int HAL_TIMER_start(uint16_t msec, void (*func)(void));
 extern int HAL_TIMER_stop(void);
-#ifndef ML7396_HWIF_NOTHAVE_TIMER_DI
-extern int HAL_TIMER_enableInterrupt(void);
-extern int HAL_TIMER_disableInterrupt(void);
-#endif  /* #ifndef ML7396_HWIF_NOTHAVE_TIMER_DI */
-extern int HAL_TIMER_getTick(uint32_t *tick);
+//extern int HAL_TIMER_getTick(uint32_t *tick);
 extern int HAL_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize);
 extern int HAL_I2C_read(uint16_t addr, uint8_t *data, uint8_t size);
-extern void HAL_EX_enableInterrupt(void);
-extern void HAL_EX_disableInterrupt(void);
+extern void HAL_reset(void);
 
-#if defined LAZURITE_IDE
-	extern volatile void HAL_delayMicroseconds(unsigned long us);
-	#define HAL_millis() millis()
-	#define HAL_sleep(v) sleep(v)
-#elif defined ARDUINO
-	#define HAL_delayMicroseconds(us) delayMicroseconds(us)
-	#define HAL_millis() millis()
-	#define HAL_sleep(v) delay(v)
-#else
-	#define HAL_delayMicroseconds(us) udelay((unsigned long)us)
-	extern uint32_t HAL_millis(void);
-	extern void HAL_sleep(uint32_t ms);
-#endif
+extern void HAL_delayMicroseconds(uint32_t us);
+extern uint32_t HAL_millis(void);
+extern void HAL_sleep(uint32_t ms);
 
 extern int EXT_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize);
 extern int EXT_I2C_read(uint16_t addr, uint8_t *data, uint8_t size);
@@ -93,6 +77,13 @@ extern void EXT_tx_led_flash(uint32_t time);
 extern void EXT_rx_led_flash(uint32_t time);
 extern void EXT_set_tx_led(int value);
 extern void EXT_set_rx_led(int value);
+
+typedef struct {
+	void (*set)(uint32_t ms, void (*f)(void));
+	void (*start)(void);
+	void (*stop)(void);
+} MsTimer4;
+extern const MsTimer4 timer4;
 
 // debug monitor function
 

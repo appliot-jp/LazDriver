@@ -8,6 +8,7 @@
 #ifndef _OTA_H_
 #define _OTA_H_
 
+#include "subghz_api.h"
 #define OTA_AES_KEY_SIZE		( 16 )
 #define OTA_PRGM_NAME_SIZE		( 16 )		// max 15 bytes + null termination '\0'
 

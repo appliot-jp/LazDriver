@@ -22,11 +22,45 @@
 #ifndef _HAL_LZPI_H_
 #define _HAL_LZPI_H_
 
+#include <linux/wait.h>
+#include <linux/sched.h>
 
 #define GPIO_RESETN 27  // 
 #define GPIO_REGPDIN 17  // 
 #define GPIO_SINTN  18  //
 #define GPIO_TX_LED  6 //
 #define GPIO_RX_LED  13  //
+
+struct s_CHAR_DEV {
+	char name[32];
+	struct class *dev_class;		// device class
+	int major;						// device major number
+	int access_num;					// open count
+	struct mutex	lock;				// chrdev spin lock
+	wait_queue_head_t	read_q;		// polling wait for char dev
+};
+struct thread_param {
+	volatile uint16_t trigger;
+	struct {
+		const uint8_t* wdata;
+		uint16_t wsize;
+		uint8_t* rdata;
+		uint16_t rsize;
+		int ret;
+	} spi;
+	struct {
+		uint16_t addr;
+		uint8_t* data;
+		uint8_t size;
+		int ret;
+		uint8_t addr_bits;
+		uint8_t i2c_addr;
+	} i2c;
+	struct {
+		uint32_t time;
+	} led;
+};
+
+extern int32_t map(int32_t x, int32_t in_min, int32_t in_max, int32_t out_min, int32_t out_max);
 
 #endif  /* #ifndef _HAL_LZPI_H_ */

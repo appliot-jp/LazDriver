@@ -33,30 +33,27 @@
 	#include <linux/wait.h>
 #endif
 
+#include "errno.h"
 #include "common_subghz.h"
+#include "hwif/hal.h"
 
-typedef struct {
+struct phy_param {
 	uint8_t id;
-	uint16_t buf_size;
+	uint16_t unit_backoff_period;
 	BUFFER in;
 	BUFFER out;
-} PHY_PARAM;
+};
 
 typedef enum {
-	CCA_IDLE,                   /* CCA pass */
-	CCA_FAST,                   /* CCA minmum */
-	IDLE_DETECT,                /* CCA Idle detection */
-	CCA_RETRY,                  /* CCA with BACKOFF */
-	CCA_FAILURE                /* CCA failure */
-} CCA_STATE;
+	MANUAL_TX = 0,
+	AUTO_TX
+} TX_MODE;
 
-#ifdef MK74040
 typedef enum {
-	FIFO_NORMAL,                /* Normal access */
-	FIFO_DONE,                  /* INT FIFO DONE */
-	FIFO_AUTO_TX                /* AUTO TX */
-} FIFO_ACCESS;
-
+	FIFO_DONE = 0,
+	FIFO_CONT,
+	CRC_ERROR
+} FIFO_STATE;
 
 #define PHY_MODULATION_FSK		( 0x00 )
 #define PHY_MODULATION_DSSS		( 0x10 )
@@ -68,7 +65,7 @@ typedef enum {
 #define PHY_CHSPACE_150K		( 0x03 )
 #define PHY_CHSPACE_200K		( 0x04 )
 #define PHY_CHSPACE_400K		( 0x05 )
-#define PHY_CHSPACE_5K		    ( 0x06 )
+#define PHY_CHSPACE_5K		  ( 0x06 )
 
 #define PHY_PA_MODE_NORMAL      ( 0x00 )
 #define PHY_PA_MODE_EXTERNAL    ( 0x01 )
@@ -78,58 +75,46 @@ typedef enum {
 #define PHY_DATARATE_100K		( 0x02 )
 #define PHY_DATARATE_80K		( 0x04 )
 #define PHY_DATARATE_200K		( 0x08 )
-#endif
+
 /*
  -------------------------------------------------------------
                     Public interrupt section
  -------------------------------------------------------------
  */
 extern int phy_sint_handler(void (*func)(void));
-extern int phy_sint_ei(void);
-extern int phy_sint_di(void);
-extern int phy_timer_handler(void (*func)(void));
-extern int phy_timer_ei(void);
-extern int phy_timer_di(void);
-extern int phy_timer_start(uint16_t msec);
+extern int phy_timer_start(uint16_t msec,void (*func)(void));
 extern int phy_timer_stop(void);
-extern int phy_timer_tick(uint32_t *msec);
 /*
  -------------------------------------------------------------
                     Public function section
  -------------------------------------------------------------
  */
-extern void phy_wait_phy_event(void);
-extern int phy_wait_mac_event(void);
-extern void phy_wakeup_phy_event(void);
-extern void phy_wakeup_mac_event(void);
 
-extern PHY_PARAM *phy_init(void);
+extern struct phy_param *phy_init(void);
 extern int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw);
 
-// extern void phy_promiscuous(void);
-extern void phy_rxStart(void);
-#ifdef MK74040
-//extern int phy_setup(uint8_t page,uint8_t ch);
-extern void phy_config(uint8_t mod, uint8_t sf, uint16_t size);
-extern bool phy_txfifo(BUFFER *buff);
-extern void phy_regdump(void);
-extern bool phy_txStart(BUFFER *buff,uint8_t mode);
-#else
-extern void phy_txStart(BUFFER *buff,uint8_t mode);
-#endif
-extern int phy_ccaCtrl(CCA_STATE state);
-extern CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry);
+extern int phy_setModulation(int8_t mod, int8_t sf, int8_t size);
+extern int phy_getModulation(int8_t *mod, int8_t *sf, int8_t *size);
+
+extern int phy_txpre(TX_MODE mode);
+extern void phy_ccaCtrl(uint32_t us);
+extern uint8_t phy_ccadone(void);
+extern int phy_txstart(void);
+extern FIFO_STATE phy_txfifo(void);
 extern void phy_txdone(void);
-extern int phy_rxdone(BUFFER *buff);
+
+extern void phy_rxstart(void);
+extern FIFO_STATE phy_rxdone(void);
 extern void phy_stop(void);
 extern void phy_clrAddrFilt(void);
 extern void phy_addrFilt(uint16_t panid, uint8_t *ieee_addr, uint16_t uc_addr, uint16_t bc_addr);
 extern void phy_ed(uint8_t *level, uint8_t rfMode);
 extern void phy_sleep(void);
-extern void phy_cleanup(void);
-extern void phy_monitor(void);
+
 // following function is for debug. and test.bin use it.
+extern void phy_monitor(void);
 extern void phy_regread(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size);
 extern void phy_regwrite(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size);
+extern void phy_regdump(void);
 #endif
 

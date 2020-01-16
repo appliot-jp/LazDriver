@@ -22,7 +22,7 @@
 #define _SPI0_H_
 
 #include "common.h"
-#include "lazurite.h"
+//#include "lazurite.h"
 #include "mcu.h"
 
 //********************************************************************************

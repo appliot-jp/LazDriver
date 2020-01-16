@@ -22,7 +22,7 @@
 #define _ARIB_LAZURITE_H_
 
 #ifdef LAZURITE_IDE
-#include "lazurite.h"
+//#include "lazurite.h"
 //#include "string.h"
 #else
 #include <linux/string.h>

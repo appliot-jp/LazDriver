@@ -39,30 +39,24 @@
 #define DATA_SIZE		256+16
 #define DRV_NAME		"lzgw"
 
+#ifndef RBUF
+#define RBUF			16
+#endif
+
 extern int que_th2ex;
-extern int que_macl;
 volatile int wait_event_macl = 1;
 extern wait_queue_head_t ext_q;
-extern wait_queue_head_t mac_done;
 
 int module_test=0;
 module_param(module_test,int,S_IRUGO | S_IWUSR);
-		
-struct list_data {				
+
+struct list_data {
 	uint8_t	data[DATA_SIZE];
 	int		len;
 	struct list_head list;
 };
 struct list_data head;				// char dev list head
-static struct s_CHAR_DEV {
-	char name[32];
-	struct class *dev_class;		// device class
-	int major;						// device major number
-	int access_num;					// open count
-	struct mutex	lock;				// chardev spin lock
-	wait_queue_head_t	read_q;		// polling wait for char dev
-} chrdev =
-{
+struct s_CHAR_DEV chrdev = {
 	.name = DRV_NAME,
 	.access_num = 0
 };
@@ -106,8 +100,9 @@ static BUFFER eack_tx = { NULL, 0, 0 };
 // *****************************************************************
 //			transfer process (input from chrdev)
 // *****************************************************************
-struct list_data rdata[8];
-static uint8_t rindex;
+struct list_data rdata[RBUF];
+static uint8_t rindex=0;
+
 int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 	int offset = 0;
 	void *msg;
@@ -116,25 +111,38 @@ int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 	const uint8_t *in;
 	uint8_t *out;
 	int errcode = 0;
+	static bool isFull = false;
 
-	mutex_lock( &chrdev.lock );
-
-		rindex++;
-		rindex = rindex&0x07;
-	msg = memset(&(rdata[rindex]),0,sizeof(rdata[rindex]));
-		new_data = &(rdata[rindex]);
-	if (msg == NULL) {
-		printk(KERN_ERR "[DRV-Lazurite] kmalloc (list_data) GFP_KERNEL no memory\n");
-		errcode = -ENOMEM;
-		goto error;
-		//return -ENOMEM;
-	}
 
 	// copy data to list
-	if((len < DATA_SIZE) & (len>0))
+	if((len < DATA_SIZE) && (len>0))
 	{
 		// get time stamp
 		getnstimeofday(&rx_time);
+
+		//check number of list. if the number is  over, delete list.
+		if(listed_packet >= RBUF) {
+			struct list_data *data;
+			if(isFull == false) {
+				printk(KERN_INFO"[DRV-Lazurite] read buffer full\n");
+				isFull = true;
+			}
+			data = list_entry(head.list.next, struct list_data, list);
+			list_del(head.list.next);
+			listed_packet--;
+		} else {
+			isFull = false;
+		}
+
+		if(rindex>=RBUF) rindex=0;
+
+		msg = memset(&(rdata[rindex]),0,sizeof(rdata[rindex]));
+		new_data = &(rdata[rindex]);
+		if (msg == NULL) {
+			errcode = -ENOMEM;
+			goto error;
+		}
+
 		// copy memory
 		in = raw;
 		out = new_data->data;
@@ -146,14 +154,8 @@ int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 		// list add 
 		list_add_tail(&new_data->list, &head.list);
 		listed_packet++;
+		rindex++;
 
-		//check number of list. if the number is  over, delete list.
-		while(listed_packet >4) {
-			struct list_data *data;
-			data = list_entry(head.list.next, struct list_data, list);
-			list_del(head.list.next);
-			listed_packet--;
-		}
 		// poll wait cancell 
 		wake_up_interruptible(&chrdev.read_q);	
 	}
@@ -165,7 +167,6 @@ int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 		// return -1;
 	}
 error:
-	mutex_unlock( &chrdev.lock );
 	return errcode;
 }
 void rx_callback(const uint8_t *data, uint8_t rssi, int status) {
@@ -189,10 +190,6 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 	unsigned int command = cmd & 0xF000;
 	unsigned int param = cmd & 0x0FFF;
 	long ret=-EFAULT;
-
-		if (!wait_event_macl || !que_macl) {
-				goto event_deplicatte;
-		}
 
 	mutex_lock( &chrdev.lock );
 
@@ -276,26 +273,8 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					ret = p.ch;
 					break;
 				case IOCTL_SET_CH:			// set ch
-					if(p.drv_mode == 0xFFFF) {
-						p.ch = arg;
-						ret = p.ch;
-					} else if(p.bps==50) {
-						if((arg>=24) && (arg<=61)) {
-							p.ch = arg;
-							ret = p.ch;
-						} else {
-							printk(KERN_ERR"ch at 50kbps = %ld error!! must be 24-61\n",arg);
-							ret = -EINVAL;
-						}
-					}else if(p.bps==100) {
-						if((arg>=24) && (arg<=60) &&(arg != 32 )) {
-							p.ch = arg;
-							ret = p.ch;
-						} else {
-							printk(KERN_ERR"ch at 100kbps = %ld error!! must be 24-31, 33-60\n",arg);
-							ret = -EINVAL;
-						}
-					}
+					p.ch = arg;
+					ret = p.ch;
 					break;
 				case IOCTL_GET_PWR:			// get pwr
 					ret = p.pwr;
@@ -577,13 +556,6 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 						ret = -EFAULT;
 					}
 					break;
-				case IOCTL_GET_ED_VALUE:
-					{
-						uint8_t edval;
-						SubGHz.getEdValue(&edval);
-						ret = edval;
-					}
-					break;
 				case IOCTL_ANT_SWITCH:
 					if(arg>0) {
 						SubGHz.antSwitch(arg);
@@ -594,8 +566,8 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					break;
 #ifdef MK74040
 				case IOCTL_SET_DSSS_MODE:
-				//if(arg == 0) SubGHz.setModulation(false);
-				//	else SubGHz.setModulation(arg);
+					//if(arg == 0) SubGHz.setModulation(false);
+					//	else SubGHz.setModulation(arg);
 					SubGHz.setModulation(arg);
 					ret = 0;
 					break;
@@ -605,15 +577,15 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					break;
 				case IOCTL_SET_DSSS_SIZE:
 
-//				    SubGHz.setDsssSize(arg,p.tx64);
-//				    ret = 0;
-                    {
-                        uint8_t size = (uint8_t)(arg >> 8);
-                        uint8_t amode = (uint8_t)(arg);
-//                      printk( KERN_INFO "DSSS SIZE: arg:0x%lx, size:0x%x, amode:0x%x\n", arg,size,amode);
-					    SubGHz.setDsssSize(size,amode);
-					    ret = 0;
-				    }
+					//				    SubGHz.setDsssSize(arg,p.tx64);
+					//				    ret = 0;
+					{
+						uint8_t size = (uint8_t)(arg >> 8);
+						uint8_t amode = (uint8_t)(arg);
+						//                      printk( KERN_INFO "DSSS SIZE: arg:0x%lx, size:0x%x, amode:0x%x\n", arg,size,amode);
+						SubGHz.setDsssSize(size,amode);
+						ret = 0;
+					}
 					break;
 #endif
 				default:
@@ -648,7 +620,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 				break;
 			}
 		case IOCTL_LED:
-//		printk(KERN_INFO"%s,%s,%d,command:%x,param:%x\n", __FILE__,__func__,__LINE__,command,param);
+			//		printk(KERN_INFO"%s,%s,%d,command:%x,param:%x\n", __FILE__,__func__,__LINE__,command,param);
 			if(param == 0x800) {
 				EXT_rx_led_flash(arg);
 			} else {
@@ -661,7 +633,6 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 			break;
 	}
 	mutex_unlock( &chrdev.lock );
-event_deplicatte:
 	return ret;
 }
 
@@ -729,45 +700,13 @@ end:
 	mutex_unlock( &chrdev.lock );
 	return bytes_read;
 }
+
 static void tx_callback(uint8_t rssi,int status) {
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d,rssi=%02x\n",
-				__FILE__,__func__,__LINE__,rssi);
-	}
-#endif
-	p.tx_rssi = rssi;
-	//p.tx_status = status;
-
-	if(que_th2ex == 0) {
-		que_th2ex = 1;
-		wake_up_interruptible(&ext_q);
-	}
-	return;
+	p.tx_status = status;
 }
-
-static ssize_t chardev_write (struct file * file, const char __user * buf,
-		size_t count, loff_t * ppos) {
+static ssize_t chardev_write (struct file * file, const char __user * buf, size_t count, loff_t * ppos) {
 	int status = 0;
 	uint8_t payload[DATA_SIZE];
-
-		if (!wait_event_macl) {
-		status = -EFAULT;
-				goto event_deplicatte;
-		}
-
-		if(!que_macl){
-				wait_event_macl = 0;
-				status = wait_event_interruptible_timeout(mac_done, que_macl,HZ*2);
-				if (!status) {
-					status = -EFAULT;
-					que_macl = 1;
-					wait_event_macl = 1;
-					wake_up_interruptible(&mac_done);
-//					printk(KERN_INFO"return_wait_event:%s,%s,%d\n",__FILE__,__func__,__LINE__);
-					goto event_deplicatte;
-				}
-		}
 
 	mutex_lock( &chrdev.lock );
 
@@ -788,26 +727,20 @@ static ssize_t chardev_write (struct file * file, const char __user * buf,
 
 			status = SubGHz.send(p.dst_panid,dst_addr,payload,count,tx_callback);
 		}
-		p.tx_status = status;
-		if(status == SUBGHZ_OK)
-		{
+		if(status == SUBGHZ_OK) {
 			status = count;
-		} else if(p.tx_status == SUBGHZ_TX_CCA_FAIL) {
-			status = -EBUSY;
-		} else if (p.tx_status == SUBGHZ_TX_ACK_FAIL) {
-			status = -ETIMEDOUT;
 		} else {
-			status = -EFAULT;
+			status = p.tx_status;
 		}
 	} else {
-		status = -E2BIG;
+		status = -ENOMEM;
 		goto error;
 	}
 
 error:
 	EXT_set_tx_led(1);
 	mutex_unlock( &chrdev.lock );
-event_deplicatte:
+
 	return status;
 }
 
@@ -838,6 +771,14 @@ static int __init drv_param_init(void) {
 	int status = 0;
 	int err;
 	struct device *dev;
+
+	if(RBUF <= 0) {
+		printk(KERN_ERR"[drv-lazurite] read buffer size error=%d\n",RBUF);
+		goto error;
+	} else {
+		printk(KERN_INFO"[drv-lazurite] read buffer size = %d\n",RBUF);
+	}
+
 	eack_tx.data = NULL;
 	eack_tx.size = 0;
 	eack_tx.len = 0;
@@ -911,13 +852,12 @@ static void __exit drv_param_exit(void) {
 	SubGHz.rxDisable();
 	SubGHz.close();
 	SubGHz.remove();
-	
+
 	while (!list_empty(&head.list)) {
 		struct list_data *data;
 		data = list_entry(head.list.next, struct list_data, list);
 		list_del(head.list.next);
 		listed_packet--;
-		kfree(data);
 	}
 
 	printk(KERN_INFO "[drv-lazurite] exit remove\n");

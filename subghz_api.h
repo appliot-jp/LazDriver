@@ -26,10 +26,14 @@
 #include "mach.h"
 
 // subghz api_status
-#define SUBGHZ_API_SEND			( 0x01 )
-#define SUBGHZ_API_SEND64LE		( 0x02 )
-#define SUBGHZ_API_SEND64BE		( 0x04 )
+#define SUBGHZ_API_NONE				( 0x00 )
+#define SUBGHZ_API_INIT				( 0x01 )
+#define SUBGHZ_API_BEGIN			( 0x02 )
+#define SUBGHZ_API_SEND				( 0x04 )
 #define SUBGHZ_API_RXENABLE		( 0x08 )
+#define SUBGHZ_API_CLOSE		( 0x10 )
+#define SUBGHZ_API_HOPPING_SYNC_SLAVE_ISR		( 0x20 )
+#define SUBGHZ_API_HOPPING_SYNC_HOST_ISR		( 0x40 )
 extern uint8_t subghz_api_status;
 
 typedef enum {
@@ -47,18 +51,16 @@ typedef enum {
 	SUBGHZ_RX_ENB_FAIL,			// 11
 	SUBGHZ_RX_DIS_FAIL,			// 12
 	SUBGHZ_RX_COMP_FAIL,		// 13
-	SUBGHZ_PANID,				// 14
-	SUBGHZ_ERR_ADDRTYPE,		// 15
-	SUBGHZ_TTL_SEND_OVR,		// 16
-	SUBGHZ_DUMMY				// --
+	SUBGHZ_ERR_ADDRTYPE,		// 14
+	SUBGHZ_TTL_SEND_OVR,		// 15
+	SUBGHZ_DEAD_LOCK,				// 16
+	SUBGHZ_DUMMY						// --
 } SUBGHZ_MSG;
 
 // rate parameters
 typedef enum {
-#ifdef MK74040
 	SUBGHZ_200KBPS = 200,
 	SUBGHZ_80KBPS  = 80,
-#endif
 	SUBGHZ_100KBPS = 100,
 	SUBGHZ_50KBPS  = 50
 } SUBGHZ_RATE;
@@ -124,13 +126,10 @@ typedef struct
 	bool (*setEnhanceAck)(uint8_t *data, int size);
 	void (*getEnhanceAck)(uint8_t **data, int *size);
 	void (*setAckTxInterval)(uint16_t interval);
-	void (*getEdValue)(uint8_t *rssi);
 	void (*antSwitch)(uint8_t ant_sw);
-#ifdef MK74040
-    void (*setModulation)(uint8_t mode);
-	void (*setDsssSize)(uint8_t size, uint8_t addr_mode);
-	void (*setDsssSpreadFactor)(uint8_t sf);
-#endif
+	void (*setModulation)(int8_t mode);
+	void (*setDsssSize)(int8_t size, uint8_t addr_mode);
+	void (*setDsssSpreadFactor)(int8_t sf);
 } SubGHz_CTRL;
 
 extern const SubGHz_CTRL SubGHz;

@@ -38,27 +38,15 @@
 #endif
 
 #include "mach.h"
-#include "arib_lazurite.h"
-#ifdef ARDUINO
-	#include "hal.h"
-	#include "aes.h"
-#else
-	#include "hwif/hal.h"
-	#include "aes/aes.h"
-#endif
+//#include "arib_lazurite.h"
+#include "aes/aes.h"
 #include "errno.h"
 #include "endian.h"
-
-//#define DEBUG_AES
-#ifdef DEBUG_AES
-#include "Serial.h"
-#endif
 
 static struct mach_param mach;
 /*! @uint8_t ackbuf[32]
   @brief  data buffer to make ack data
  */
-static uint8_t tx_ackbuf[32];
 static uint8_t rx_enhance_ack_buffer[16];
 static BUFFER tx_enhance_ack;
 static BUFFER rx_enhance_ack;
@@ -69,11 +57,10 @@ static BUFFER rx_enhance_ack;
 1bit : addrType=1
 ...
  */
-const uint8_t enb_dst_panid = 0x52;
-const uint8_t enb_src_panid = 0x04;
-const uint8_t addr_len[] = {0x00,0x01,0x02,0x08};
-static const uint8_t broadcast_addr[8] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
-
+static const uint8_t enb_dst_panid = 0x52;
+static const uint8_t enb_src_panid = 0x04;
+static const uint8_t addr_len[] = {0x00,0x01,0x02,0x08};
+static const uint8_t ieee_addr_ffff[] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
 
 /******************************************************************************/
 /*! @brief get 64bit address
@@ -169,13 +156,6 @@ static int mach_make_header(struct mac_header *header) {
 		int i;
 		switch(header->dst.addr_type)
 		{
-			case 0:
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-				printk(KERN_ERR"dst address is not set in %s,%s,%d\n", __FILE__, __func__, __LINE__);
-#endif
-				status = -EINVAL;
-				goto error;
-				break;
 			case 1:
 				if((header->dst.panid.data == 0xffff) ||
 						(header->dst.panid.data == 0xfffe)||
@@ -237,6 +217,14 @@ static int mach_make_header(struct mac_header *header) {
 					status = -ENOMEM;
 					goto error;
 				}
+				break;
+			default:				// addr_type = 0
+#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
+				printk(KERN_ERR"dst address is not set in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+#endif
+				status = -EINVAL;
+				goto error;
+				break;
 		}
 		if(dst_ffff) header->fc.fc_bit.ack_req=0;
 	} else {
@@ -254,7 +242,7 @@ static int mach_make_header(struct mac_header *header) {
 			status = -EINVAL;
 			goto error;
 		} else {
-			if(header->raw.size >= (int)(offset + sizeof(uint16_t))){
+			if(header->raw.size >= (uint16_t)(offset + sizeof(uint16_t))){
 				H2LBS(header->raw.data[offset],header->src.panid.data), offset+=2;
 			} else {
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
@@ -270,10 +258,6 @@ static int mach_make_header(struct mac_header *header) {
 	{
 		switch(header->src.addr_type)
 		{
-			case 0:
-				status = -EINVAL;
-				goto error;
-				break;
 			case 1:
 				if(header->raw.size < (offset + addr_len[1])){
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
@@ -325,6 +309,10 @@ static int mach_make_header(struct mac_header *header) {
 				}
 				header->fc.fc_bit.src_addr_type = IEEE802154_FC_ADDR_IEEE;
 				break;
+			default:					// addr_type = 0
+				status = -EINVAL;
+				goto error;
+				break;
 		}
 	} else {
 		header->fc.fc_bit.dst_addr_type = IEEE802154_FC_ADDR_NONE;
@@ -333,61 +321,40 @@ static int mach_make_header(struct mac_header *header) {
 	// copy payload to raw buffer
 	header->fc.fc_bit.panid_comp = header->addr_type & 0x01;
 	header->fc.fc_bit.nop = 0;
-	if(header->raw.size >= (offset + header->payload.len)) {
-		if(header->payload.len != 0) {
-
-			if (AES128_getStatus()){
-				header->fc.fc_bit.sec_enb = 1;
+	if(header->payload.len != 0) {
+		if (AES128_getStatus()){
+			header->fc.fc_bit.sec_enb = 1;
+			if(header->raw.size >= ((header->payload.len&0xFFF0)+16+offset)) {
 				if (mach.rx.fc.fc_bit.seq_comp){
-					pad = AES128_CBC_encrypt(&header->raw.data[offset], header->payload.data, header->payload.len,0) ;
-					//  pad = AES128_CBC_encrypt(&mach.tx.payload, (uint8_t *)data, size, 0); 
+					pad = AES128_CBC_encrypt(&header->raw.data[offset], header->payload.data, (uint32_t)header->payload.len,0) ;
 				}else{
-					pad = AES128_CBC_encrypt(&header->raw.data[offset], header->payload.data, header->payload.len,header->seq) ;
-					//  pad = AES128_CBC_encrypt(&mach.tx.payload, (uint8_t *)data, size, header.seq);
+					pad = AES128_CBC_encrypt(&header->raw.data[offset], header->payload.data, (uint32_t)header->payload.len,header->seq) ;
 				}
-				// api.tx.buffer.size += pad;
 				offset += pad;
-
-			}else{
+			} else {
+				status = -ENOMEM;
+				goto error;
+			}
+		} else {
+			if(header->raw.size >= (offset + header->payload.len)) {
 				memcpy(&header->raw.data[offset], header->payload.data, header->payload.len);
+			} else {
+				status = -ENOMEM;
+				goto error;
 			}
 		}
-		offset+=header->payload.len;
-		header->raw.len = offset;
-
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-		if(module_test & MODE_MACH_DEBUG) {
-			printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
-			PAYLOADDUMP(header->payload.data, header->payload.len);
-			PAYLOADDUMP(header->raw.data, header->raw.len);
-		}
-
-#elif defined(DEBUG_AES)
-		{
-			uint8_t i;
-			Serial.print(header->raw.data);
-			Serial.print("\r\n");
-			for(i=0;i<header->raw.len-1;i++)
-			{
-				Serial.print_long((long)*((uint8_t *)header->raw.data+i),HEX);
-			}
-			Serial.print("\r\n");
-			Serial.print("len,pad,seq: ");
-			Serial.print_long( header->raw.len, DEC);
-			Serial.print(" ");
-			Serial.print_long( pad, DEC);
-			Serial.print(" ");
-			Serial.print_long( header->seq, DEC);
-			Serial.print("\r\n");
-		}
-#endif
-	} else {
-		status = -ENOMEM;
-		goto error;
 	}
+	offset+=header->payload.len;
+	header->raw.len = offset;
 
 	// write mac header
 	H2LBS(header->raw.data[0],header->fc.fc16);
+
+#if !defined(LAZURITE_IDE) && defined(DEBUG)
+	printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
+	PAYLOADDUMP(header->payload.data, header->payload.len);
+	PAYLOADDUMP(header->raw.data, header->raw.len);
+#endif
 
 	status = STATUS_OK;
 
@@ -422,8 +389,8 @@ int mach_parse_data(struct mac_header *header) {
 	header->dst.addr_type = header->fc.fc_bit.dst_addr_type;
 
 	// panid enb
-	header->dst.panid.enb = (enb_dst_panid & BIT(header->addr_type)) ? 1: 0;
-	header->src.panid.enb = (enb_src_panid & BIT(header->addr_type)) ? 1: 0;
+	header->dst.panid.enb = (uint8_t)((enb_dst_panid & BIT(header->addr_type)) ? 1: 0);
+	header->src.panid.enb = (uint8_t)((enb_src_panid & BIT(header->addr_type)) ? 1: 0);
 
 	// sequence number
 	if (!header->fc.fc_bit.seq_comp) {
@@ -562,7 +529,8 @@ bool mach_make_ack_header(void) {
 			uint16_t src_target;
 			int16_t enhance_ack_offset = 4;
 			do {
-				src_target = *((uint16_t *)(tx_enhance_ack.data+enhance_ack_offset));
+				src_target = *(tx_enhance_ack.data+enhance_ack_offset+1);
+				src_target = src_target + *(tx_enhance_ack.data+enhance_ack_offset);
 				if ((src_target == 0xffff ) || (src_target == mach.rx.src.addr.short_addr)) {
 					memcpy(&mach.ack.raw.data[offset],&tx_enhance_ack.data[enhance_ack_offset+2],enhance_ack_size);
 					offset += enhance_ack_size;
@@ -574,12 +542,7 @@ bool mach_make_ack_header(void) {
 			} while(enhance_ack_rx_num>0);
 		}
 		mach.ack.raw.len = offset;
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-		if(module_test & MODE_MACH_DEBUG) {
-			printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
-			PAYLOADDUMP(mach.ack.raw.data, mach.ack.raw.len);
-		}
-#endif
+		mach.macl->phy->out.len = offset;
 	}
 
 	return ack_condition;
@@ -601,22 +564,29 @@ struct mach_param *mach_init(void)
 {
 	memset(&mach,0,sizeof(struct mach_param));
 	mach.macl = macl_init();
-	if(mach.macl == NULL) return NULL;
+	if(mach.macl == NULL) {
+		goto error;
+	}
 
-	// set data buffer for ack
-	mach.ack.raw.data = tx_ackbuf;
-	mach.ack.raw.size = sizeof(tx_ackbuf);
-	mach.ack.raw.len = 0;
+	// initialize buffer
+	mach.rx.input.data = mach.macl->phy->in.data;
+	mach.rx.input.size = mach.macl->phy->in.size;
+	mach.tx.raw.data = mach.macl->phy->out.data;
+	mach.tx.raw.size = mach.macl->phy->out.size;
+	mach.ack.raw.data = mach.macl->phy->out.data;
+	mach.ack.raw.size = mach.macl->phy->out.size;
 	tx_enhance_ack.data = NULL;
 	tx_enhance_ack.size = 0;
 	tx_enhance_ack.len = 0;
 	rx_enhance_ack.data = rx_enhance_ack_buffer;
 	rx_enhance_ack.size = sizeof(rx_enhance_ack_buffer);
 	rx_enhance_ack.len = 0;
-	macl_sleep(true);
+	macl_sleep();
 	get_mac_addr(mach.my_addr.ieee_addr);
 
 	return &mach;
+error:
+	return NULL;
 }
 
 /********************************************************************/
@@ -636,13 +606,9 @@ int mach_start(BUFFER *rxbuf) {
 	mach.rx.payload.size = rxbuf->size;
 	mach.rx.payload.len = 0;
 
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d,%lx,%d\n",__FILE__,__func__,__LINE__,(unsigned long)mach.rx.raw.data,mach.rx.raw.len);
-		PAYLOADDUMP(mach.rx.raw.data, mach.rx.raw.len);
-	}
+#if !defined(LAZURITE_IDE) && defined(DEBUG)
+	printk(KERN_INFO"%s %s %d macl_start\n",__FILE__,__func__,__LINE__);
 #endif
-
 	status = macl_start();
 
 	return status;
@@ -669,23 +635,24 @@ int mach_setup(struct rf_param *rf) {
 	// link parameter
 	mach.rf = rf;
 
-#ifdef MK74040
 	// set modulation
 	if((status = macl_set_modulation(rf->modulation,rf->dsssSF,rf->dsssSize)) != STATUS_OK) goto error;
-#endif
 
 	// set channel & txpow
-	if((status = macl_set_channel(rf->pages,rf->ch,rf->tx_power,rf->ant_sw)) != STATUS_OK){
+	status = macl_set_channel(rf->pages,rf->ch,rf->tx_power,rf->ant_sw);
+	if(status != STATUS_OK){
 		goto error;
 	}
 
 	// set setting CCA
-	if((status = macl_set_frame_retries(rf->tx_retry,rf->ack_timeout)) != STATUS_OK) goto error;
+	status = macl_set_frame_retries(rf->tx_retry,(uint32_t)rf->ack_timeout);
+	if(status != STATUS_OK) goto error;
 
 	// set CSMA PARAM
 	//if((status = macl_cca_ed_level(rf->cca_level)) != STATUS_OK) goto error;
 	// set CSMA PARAM
-	if((status = macl_set_csma_params(rf->cca_min_be,rf->cca_max_be, rf->cca_retry)) != STATUS_OK) goto error;
+	status = macl_set_csma_params(rf->cca_min_be,rf->cca_max_be, rf->cca_retry);
+	if(status != STATUS_OK) goto error;
 error:
 	return status;
 }
@@ -813,7 +780,7 @@ int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr)
 		filt.pan_coord = mach.my_addr.pan_coord;
 		filt.short_addr = mach.my_addr.short_addr;
 		memcpy(filt.ieee_addr,mach.my_addr.ieee_addr,8);
-		macl_set_hw_addr_filt(&filt,0x0f);			// update all of addr filter
+		macl_set_hw_addr_filt(&filt,0x0fL);			// update all of addr filter
 	}
 	return status;
 }
@@ -832,8 +799,7 @@ int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr)
 	---    |     0xfffe    | false
 	other  |     other     | true
  ********************************************************************/
-int mach_set_coord_addr(uint16_t panid,uint16_t short_addr,uint8_t *ieee_addr)
-{
+int mach_set_coord_addr(uint16_t panid,uint16_t short_addr,uint8_t *ieee_addr) {
 	int status=STATUS_OK;
 
 	mach.coord_addr.pan_id = panid;
@@ -849,11 +815,9 @@ int mach_set_coord_addr(uint16_t panid,uint16_t short_addr,uint8_t *ieee_addr)
 	return status;
 }
 
-int mach_set_promiscuous(bool on)
-{
+int mach_set_promiscuous(bool on) {
 	int status;
-	if (macl_set_promiscuous_mode(on)==STATUS_OK)
-	{
+	if (macl_set_promiscuous_mode(on)==STATUS_OK) {
 		status = STATUS_OK;
 	} else {
 		status = -EIO;
@@ -861,30 +825,19 @@ int mach_set_promiscuous(bool on)
 	return status;
 }
 
-int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
-{
-	int status = STATUS_OK;
+int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf,void (*callback)(uint8_t rssi, int status)) {
 
+	int status = STATUS_OK;
 	// initializing buffer
-	mach.tx.raw.data = mach.macl->phy->out.data;
-	mach.tx.raw.size = mach.macl->phy->out.size;
 	mach.tx.payload.data = txbuf->data;
 	mach.tx.payload.size = txbuf->size;
 	mach.tx.payload.len = txbuf->len;
 	mach.tx.addr_type = addr_type;
 	memcpy(&mach.tx.fc.fc_bit,&fc,sizeof(fc)) ;
 
-/*
-	if(macl_getCondition() == SUBGHZ_ST_RX_DONE){
-			phy_wait_mac_event();
-	}
-*/
-
-	// This here will copy to raw.data(PHY) from layload.data(user)
-	//if((status = mach_make_header(&mach.tx))!=STATUS_OK) {
 	status = mach_make_header(&mach.tx);
 	if(status != STATUS_OK) {
-		goto error;
+		return status;
 	}
 
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
@@ -893,27 +846,14 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf)
 	//printk(KERN_INFO"PAYLOAD\n");
 	//PAYLOADDUMP(mach.tx.payload.data,mach.tx.payload.len);
 	mach.sending = true;
-	status = macl_xmit_sync(mach.tx.raw);
-	//       macl_xmit_sync(mach.tx.raw);
-	mach.sending = false;
-	if(status == STATUS_OK) {
-		status = mach.tx.rssi;
-	} else {
-		mach.tx.rssi = 0;
-	}
+	status = macl_xmit_async(mach.tx.raw,callback);
 
-error:
 	return status;
 }
 
-int mach_ed(uint8_t *ed)
+int mach_sleep(void)
 {
-	return macl_ed(ed);
-}
-
-int mach_sleep(bool on)
-{
-	return macl_sleep(on);
+	return macl_sleep();
 }
 
 /********************************************************************/
@@ -926,129 +866,95 @@ int mach_sleep(bool on)
 	1= data is ack
 	@exception	
  ********************************************************************/
-int macl_rx_irq(BUFFER *rx,BUFFER *ack)
+int macl_rx_irq(bool *isAck)
 {
 	int status;
 	// end of sending ack during rx
-	if(rx) {
+	//Serial.println("macl_rx_irq");
+	if(isAck) {
 		// receiving data during tx
-		if(ack) {
-			// initialize ack buffer
-			ack->data = NULL;
-			ack->len = 0;
-			ack->size = mach.ack.raw.size;
-		}
-
-		if(rx->len == 0) {
-			return -1;
-		}
-
 		// set rx buffer
-		mach.rx.input.data = rx->data;
-		mach.rx.input.len = rx->len-1;
-		mach.rx.input.size = rx->size;
-		mach.rx.rssi = rx->data[rx->len-1];
+		mach.rx.input.len = mach.macl->phy->in.len-1;					// erase rssi
+		mach.rx.rssi = mach.rx.input.data[mach.rx.input.len];
 
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-		if(module_test & MODE_MACH_DEBUG) {
-			printk(KERN_INFO"%s,%s,%d,%d\n",__FILE__,__func__,__LINE__,mach.rx.input.len);
-			//PAYLOADDUMP(mach.rx.input.data, mach.rx.input.len);
-		}
-#endif
 		if(mach.macl->promiscuousMode) {
+			status = mach_parse_data(&mach.rx);
+			if(mach.rx.raw.size >= mach.rx.input.len) {
+				mach.rx.raw.len = mach.rx.input.len;
+				mach.macl->status = STATUS_OK;
+			} else {
+				mach.rx.raw.len = mach.rx.raw.size;
+				status = -ENOMEM;
+			}
+			memcpy(mach.rx.raw.data,mach.rx.input.data,mach.rx.raw.len);
+			*isAck = false;
 		} else {
-			// parse raw data
-			// short address filter is implemented in ML7396D
-			if((status = mach_parse_data(&mach.rx)!= STATUS_OK) ||
-#ifdef MK74040
+			status = mach_parse_data(&mach.rx);
+			if(status != STATUS_OK) {
+				return status;
+			}
+			if(
+					(mach.rx.dst.addr_type == 0)||
 					((mach.rx.dst.addr_type == 2) && 
-					 (memcmp(&mach.rx.dst.addr.short_addr,&mach.my_addr.short_addr,2)!=0)) ||
-#endif
+					 ((mach.rx.dst.panid.enb == false) || (mach.rx.dst.panid.data == mach.my_addr.pan_id) || (mach.rx.dst.panid.data == 0xffff)) && 
+					 ((mach.rx.dst.addr.short_addr == mach.my_addr.short_addr) || (mach.rx.dst.addr.short_addr==0xffff))) ||
 					((mach.rx.dst.addr_type == 3) && 
-					 (memcmp(mach.rx.dst.addr.ieee_addr,mach.my_addr.ieee_addr,8)!=0) &&
-					 (memcmp(mach.rx.dst.addr.ieee_addr,broadcast_addr,8) !=0))) {
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-				if(module_test & MODE_MACH_DEBUG) {
-					printk(KERN_INFO"%s,%s,%d,mach_parse_data error\n",__FILE__,__func__,__LINE__);
-				}
-#endif
-				return -1;
-			}
-			// data frame and cmd frame
-			if ((mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_DATA) ||
-					(mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_CMD)) {
-				// check sequence number
-				if ((mach.rx.fc.fc_bit.ack_req) &&		// ack is requested
-						(ack) &&
-						(!mach.macl->promiscuousMode) ) {
-					if(mach_make_ack_header()) {
-						ack->data = mach.ack.raw.data;
-						ack->len = mach.ack.raw.len;
-						ack->size = mach.ack.raw.size;
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-						if(module_test & MODE_MACH_DEBUG) {
-							printk(KERN_INFO"%s,%s,%d,%lx,%d\n",__FILE__,__func__,__LINE__,
-									(unsigned long)mach.rx.raw.data,mach.rx.raw.len);
+					 ((memcmp(mach.rx.dst.addr.ieee_addr,mach.my_addr.ieee_addr,8)==0)||(memcmp(mach.rx.dst.addr.ieee_addr,ieee_addr_ffff,8)==0)))
+				) {
+				// data frame and cmd frame
+				switch(mach.rx.fc.fc_bit.frame_type){
+					case IEEE802154_FC_TYPE_DATA:
+					case IEEE802154_FC_TYPE_CMD:
+						// check sequence number
+						if(mach.rx.raw.size >= mach.rx.input.len) {
+							mach.rx.raw.len = mach.rx.input.len;
+							mach.macl->status = STATUS_OK;
+						} else {
+							mach.rx.raw.len = mach.rx.raw.size;
+							status = -ENOMEM;
 						}
-#endif
+						memcpy(mach.rx.raw.data,mach.rx.input.data,mach.rx.raw.len);
+						if((mach.rx.fc.fc_bit.ack_req) && (mach_make_ack_header())) {
+							*isAck = true;
+						} else {
+							*isAck = false;
+						}
+						break;
+					case IEEE802154_FC_TYPE_ACK:
+						// ack process
+						mach.tx.rssi = mach.rx.rssi;
+						rx_enhance_ack.len = (rx_enhance_ack.size < mach.rx.payload.len) ? rx_enhance_ack.size : mach.rx.payload.len;
+						memcpy(rx_enhance_ack.data,&mach.rx.input.data[mach.rx.payload_offset],rx_enhance_ack.len);
 						return STATUS_OK;
-					}
+					default:
+						break;
 				}
-			}
-			// ack process
-			else if (mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_ACK) {
-				mach.tx.rssi = mach.rx.rssi;
-				rx_enhance_ack.len = (rx_enhance_ack.size < mach.rx.payload.len) ? rx_enhance_ack.size : mach.rx.payload.len;
-				memcpy(rx_enhance_ack.data,&mach.rx.input.data[mach.rx.payload_offset],rx_enhance_ack.len);
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-				if(module_test & MODE_MACH_DEBUG) {
-					printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,__LINE__);
-					PAYLOADDUMP(mach.rx.input.data, mach.rx.input.len);
-				}
-#endif
-				return STATUS_OK;
-			} else {									// other data type
+			} else {
+				status = -EADDRNOTAVAIL;
+				return status;
 			}
 		}
 	} else {
 		// reporting data to upper layer
-		if(mach.rx.raw.size >= mach.rx.input.len) {
+		if(mach.macl->status == STATUS_OK) {
 			// copy phy buffer to application buffer
-			memcpy(mach.rx.raw.data,mach.rx.input.data,mach.rx.input.len);
-			mach.rx.raw.len = mach.rx.input.len;
+			if((mach.macl->promiscuousMode)||
+					((mach_match_seq_num()==false) && 
+					 ((mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_DATA) ||
+						(mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_CMD)))) {
+				// rx data is copy to previous
+				memcpy(&mach.rx_prev,&mach.rx,sizeof(mach.rx));
+				mach_rx_irq(mach.macl->status,&mach.rx);				// report data to upper layer
+			} else {								// match sequence number
+#if !defined(LAZURITE_IDE) && defined(DEBUG)
+				printk(KERN_INFO"%s %s %d macl_start\n",__FILE__,__func__,__LINE__);
+#endif
+				status = macl_start();
+			}
 		} else {
-			// buffer error
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-			if(module_test & MODE_MACH_DEBUG) {
-				printk(KERN_INFO"%s,%s,%d,%lx,%d\n",__FILE__,__func__,__LINE__,
-						(unsigned long)mach.rx.raw.size,mach.rx.raw.len);
-			}
-#endif
-			return STATUS_OK;
-		}
-		if((mach.macl->promiscuousMode)||
-				((mach_match_seq_num()==false) && 
-				 ((mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_DATA) ||
-					(mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_CMD)))) {
-			// rx data is copy to previous
-			memcpy(&mach.rx_prev,&mach.rx,sizeof(mach.rx));
-
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-			if(module_test & MODE_MACH_DEBUG) {
-				printk(KERN_INFO"%s,%s,%d\n",__FILE__,__func__,__LINE__);
-				PAYLOADDUMP(mach.rx.raw.data, mach.rx.raw.len);
-			}
-#endif
-			mach_rx_irq(&mach.rx);				// report data to upper layer
-		} else {								// match sequence number
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-			if(module_test & MODE_MACH_DEBUG) {
-				printk(KERN_INFO"Same sequence number!! %s,%s,%d\n",__FILE__,__func__,__LINE__);
-			}
-#endif
+			mach_rx_irq(mach.macl->status,NULL);				// report data to upper layer
 		}
 	}
-
 	return STATUS_OK;
 }
 
@@ -1078,6 +984,3 @@ void mach_set_ack_tx_interval(uint16_t interval){
 	macl_set_ack_tx_interval(interval);
 }
 
-void mach_phy_cleanup(void){
-	macl_phy_cleanup();
-}

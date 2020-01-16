@@ -28,6 +28,9 @@
 //#ifndef LAZURITE_IDE
 extern int module_test;
 //#endif
+#ifndef alert
+#define alert(a) printk(KERN_INFO"%s  %s\n",__func__,a)
+#endif
 
 #ifndef PAYLOADDUMP
 #define PAYLOADDUMP( data, size ) {\
@@ -63,7 +66,7 @@ extern int module_test;
 				str[p] = ' ';p++;\
 			}\
 		}\
-		printk(KERN_INFO"%08X %s", d/16, str);\
+		printk(KERN_INFO"%08X %s\n", d/16, str);\
 	}\
 }
 #endif

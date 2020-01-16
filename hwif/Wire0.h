@@ -22,7 +22,7 @@
 #define _WIRE0_H_
 
 #include "common.h"
-#include "lazurite.h"
+//#include "lazurite.h"
 
 #define I2C_BUFFER_LENGTH 32
 

@@ -249,7 +249,7 @@ static const uint8_t cnv_regular_bank[PHY_MAX_BANK_SEL] = {
 };
 
 
-static PHY_PARAM phy;
+static struct phy_param phy;
 
 
 /*
@@ -499,7 +499,7 @@ static bool phy_int_detection(uint32_t status)
 }
 
 
-static void phy_set_trx_state(PHY_TRX_STATE state) {
+static int phy_set_trx_state(PHY_TRX_STATE state) {
 		uint8_t set_data,get_data,i;
 		
 		set_data = state;
@@ -778,82 +778,6 @@ int phy_timer_tick(uint32_t *msec)
 										Public function section
  -------------------------------------------------------------
  */
-void phy_wait_phy_event(void)
-{
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-		HAL_wait_event(HAL_PHY_EVENT);
-}
-
-
-int phy_wait_mac_event(void)
-{
-		int status;
-	status = HAL_wait_event(HAL_MAC_EVENT);
-#if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-		return status;
-}
-
-
-void phy_wakeup_phy_event(void)
-{
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-		HAL_wakeup_event(HAL_PHY_EVENT);
-}
-
-
-void phy_wakeup_mac_event(void)
-{
-#ifndef LAZURITE_IDE
-	if(module_test & MODE_MACL_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
-#endif
-		HAL_wakeup_event(HAL_MAC_EVENT);
-}
-
-void phy_config(uint8_t mod, uint8_t sf, uint16_t size)
-{
-	dsss_param.modulation = mod;
-		if (sf == 0x08) {
-			dsss_param.sf_bit = 0x03;		 // 8:0x03
-		}else{
-			dsss_param.sf_bit = sf >> 5; // 64:0x02,32:0x01,16:0x00
-		}
-		dsss_param.size = size + PHY_CRC_LEN;
-
-		switch(dsss_param.size) {
-	case 16:
-		dsss_param.ctrl_reg = PHY_DSSS_SIZE_16;
-		break;
-	case 24:
-		dsss_param.ctrl_reg = PHY_DSSS_SIZE_24;
-		break;
-	case 32:
-		dsss_param.ctrl_reg = PHY_DSSS_SIZE_32;
-		break;
-	default:
-		dsss_param.ctrl_reg = PHY_DSSS_SIZE_FREE;
-		break;
-	}
-#if defined(LAZURITE_IDE)
-    #if defined(SERIAL_DEBUG)
-		Serial.print("SF:");
-		Serial.println_long((long)dsss_param.sf_bit,HEX);
-		Serial.print("DSSS_SIZE:");
-		Serial.println_long((long)dsss_param.size,HEX);
-    #endif
-#else
-	if(module_test & MODE_PHY_DEBUG) {
-				printk(KERN_INFO"MODE:0x%x, PSDU:0x%x, DSSS_CTRL:0x%x, SF:0x%x, %s,%s,MODE\n",
-								dsss_param.modulation,dsss_param.size,dsss_param.ctrl_reg,dsss_param.sf_bit,
-								__FILE__,__func__);
-		}
-#endif
-}
 
 /******************************************************************************/
 /*! @brief Register setting of phy
@@ -1574,47 +1498,47 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 			if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s RF MODE: FSK 100kbps \n",__FILE__,__func__);
 #endif
 
-#ifndef ABROAD
-            if (ch == 32) {
-		        status = -1;
-                goto error;
-            }
+#ifndef JP
+			if (ch == 32) {
+				status = -1;
+				goto error;
+			}
 #endif
-				 // Telec: 0x10
-					reg_data[0] = 0x30, reg_wr(REG_ADR_CCA_LEVEL,						reg_data, 1);
+			// Telec: 0x10
+			reg_data[0] = 0x30, reg_wr(REG_ADR_CCA_LEVEL,						reg_data, 1);
 
-						reg_data[0] = 0x00, reg_wr(REG_ADR_PLL_DIV_SET,					reg_data, 1);
+			reg_data[0] = 0x00, reg_wr(REG_ADR_PLL_DIV_SET,					reg_data, 1);
 
-						/* frequency setting */
-						phy_set_zero_channel_req(PHY_FREQ_920_7);
+			/* frequency setting */
+			phy_set_zero_channel_req(PHY_FREQ_920_7);
 
 			/* 100kbps */
 			reg_data[0] = 0xBB, reg_wr(REG_ADR_DRATE_SET,						reg_data, 1);
 			reg_data[0] = 0x01, reg_wr(REG_ADR_CHFIL_BW,						reg_data, 1);
-				reg_data[0] = 0x12, reg_wr(REG_ADR_DC_FIL_ADJ,					reg_data, 1);
+			reg_data[0] = 0x12, reg_wr(REG_ADR_DC_FIL_ADJ,					reg_data, 1);
 			reg_data[0] = 0x17, reg_wr(REG_ADR_IQ_DEC_GAIN,					reg_data, 1);
-				reg_data[0] = 0x00, reg_wr(REG_ADR_IF_FREQ,							reg_data, 1);
+			reg_data[0] = 0x00, reg_wr(REG_ADR_IF_FREQ,							reg_data, 1);
 			reg_data[0] = 0x81, reg_wr(REG_ADR_CHFIL_BW_CCA,				reg_data, 1);
-				reg_data[0] = 0x00, reg_wr(REG_ADR_DC_FIL_ADJ2,					reg_data, 1);
+			reg_data[0] = 0x00, reg_wr(REG_ADR_DC_FIL_ADJ2,					reg_data, 1);
 			reg_data[0] = 0x18, reg_wr(REG_ADR_DEC_GAIN_CCA,				reg_data, 1);
 			reg_data[0] = 0x0D, reg_wr(REG_ADR_RSSI_MAG_ADJ,				reg_data, 1);
 			reg_data[0] = 0x86, reg_wr(REG_ADR_AFC_GC_CTRL,					reg_data, 1);
 			reg_data[0] = 0x00; reg_data[1] = 0x05; reg_data[2] = 0xB0;
-								reg_wr(REG_ADR_FSK_CTRL,						reg_data, 3);
-						reg_data[0] = 0x24; reg_data[1] = 0xD6; reg_data[2] = 0x19; reg_data[3] = 0x29;
-																reg_wr(REG_ADR_FSK_DEV0_H_GFIL0,		reg_data, 4);
-						reg_data[0] = 0x3A; reg_data[1] = 0x48; reg_data[2] = 0x4C;
-																reg_wr(REG_ADR_FSK_DEV2_H_GFIL4,		reg_data, 3);
+			reg_wr(REG_ADR_FSK_CTRL,						reg_data, 3);
+			reg_data[0] = 0x24; reg_data[1] = 0xD6; reg_data[2] = 0x19; reg_data[3] = 0x29;
+			reg_wr(REG_ADR_FSK_DEV0_H_GFIL0,		reg_data, 4);
+			reg_data[0] = 0x3A; reg_data[1] = 0x48; reg_data[2] = 0x4C;
+			reg_wr(REG_ADR_FSK_DEV2_H_GFIL4,		reg_data, 3);
 			reg_data[0] = 0x04; reg_data[1] = 0x01; reg_data[2] = 0x10;
 			reg_data[3] = 0x00; reg_data[4] = 0x00; reg_data[5] = 0x15;
 			reg_data[6] = 0x0B; reg_data[7] = 0x02; reg_data[8] = 0xCC;
-								reg_wr(REG_ADR_DEMOD_SET1,					reg_data, 9);
+			reg_wr(REG_ADR_DEMOD_SET1,					reg_data, 9);
 
-				reg_data[0] = 0x5B, reg_wr(REG_ADR_RSSI_ADJ2,						reg_data, 1);
-						reg_data[0] = 0x8C; reg_data[1] = 0x32; reg_data[2] = 0x8C;
-						reg_data[3] = 0x32; reg_data[4] = 0x8C; reg_data[5] = 0x32;
-						reg_data[6] = 0x2A; reg_data[7] = 0x52; reg_data[8] = 0x7F;
-								reg_wr(REG_ADR_GAIN_HHTH,						reg_data, 9);
+			reg_data[0] = 0x5B, reg_wr(REG_ADR_RSSI_ADJ2,						reg_data, 1);
+			reg_data[0] = 0x8C; reg_data[1] = 0x32; reg_data[2] = 0x8C;
+			reg_data[3] = 0x32; reg_data[4] = 0x8C; reg_data[5] = 0x32;
+			reg_data[6] = 0x2A; reg_data[7] = 0x52; reg_data[8] = 0x7F;
+			reg_wr(REG_ADR_GAIN_HHTH,						reg_data, 9);
 			reg_data[0] = 0x33, reg_wr(REG_ADR_DIF_SET0,						reg_data, 1);
 
 #ifdef FCC
@@ -1632,100 +1556,100 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 			reg_data[0] = 0x00, reg_wr(REG_ADR_DEMOD_SET2,reg_data, 1);		// WREG, 0x58, 0x00        # DEM_SET2(DEM_GAIN)
 			reg_data[0] = 0x1b, reg_wr(REG_ADR_DEMOD_SET6,reg_data, 1);		// WREG, 0x5C, 0x1B        # DEM_SET6(RXDEV_RANGE)
 #endif
-		}
+				}
 				reg_data[0] = 0x01, reg_wr(REG_ADR_DATA_SET2,						reg_data, 1);
 				reg_data[0] = 0x16; reg_data[1] = 0x5D;
-														reg_wr(REG_ADR_PKT_CTRL1,						reg_data, 2);
+				reg_wr(REG_ADR_PKT_CTRL1,						reg_data, 2);
 				reg_data[0] = 0x00; reg_data[1] = 0x10;
-														reg_wr(REG_ADR_TXPR_LEN_H,					reg_data, 2);
+				reg_wr(REG_ADR_TXPR_LEN_H,					reg_data, 2);
 				reg_data[0] = 0x77; reg_wr(REG_ADR_RSSI_STABLE_TIME,		reg_data, 1);
 				reg_data[0] = 0x10, reg_wr(REG_ADR_SYNC_WORD_LEN,				reg_data, 1);
 				reg_data[0] = 0x00; reg_data[1] = 0x00; reg_data[2] = 0x90; reg_data[3] = 0x4E;
-														reg_wr(REG_ADR_SYNCWORD1_SET0,			reg_data, 4);
+				reg_wr(REG_ADR_SYNCWORD1_SET0,			reg_data, 4);
 				reg_data[0] = 0x00; reg_data[1] = 0x00; reg_data[2] = 0x6F; reg_data[3] = 0x4E;
-														reg_wr(REG_ADR_SYNCWORD2_SET0,			reg_data, 4);
+				reg_wr(REG_ADR_SYNCWORD2_SET0,			reg_data, 4);
 				reg_data[0] = 0x00; reg_data[1] = 0x00; reg_data[2] = 0x08; reg_data[3] = 0x10;
-														reg_wr(REG_ADR_CRC_POLY3,						reg_data, 4);
+				reg_wr(REG_ADR_CRC_POLY3,						reg_data, 4);
 				reg_data[0] = 0x00; reg_data[1] = 0xF0; reg_data[2] = 0x10;
-														reg_wr(REG_ADR_WHT_INIT_H,					reg_data, 3);
+				reg_wr(REG_ADR_WHT_INIT_H,					reg_data, 3);
 	}
 
-		/* channel setting */
-		reg_data[0] = base_channel, reg_wr(REG_ADR_CH_SET,							reg_data, 1);
+				/* channel setting */
+				reg_data[0] = base_channel, reg_wr(REG_ADR_CH_SET,							reg_data, 1);
 
-		/* own apparatus address acquisition */
-		HAL_I2C_read(0x26, reg_data, 2), address = H2LS(*reg_data);
+				/* own apparatus address acquisition */
+				HAL_I2C_read(0x26, reg_data, 2), address = H2LS(*reg_data);
 
-		if (vco_cal() == false) {
-			goto error;
-		}
-
-		status = 0;
-error:
-		return status;
-}
-
-
-PHY_PARAM *phy_init(void)
-{
-	uint8_t reg_data;
-	uint8_t i;
-	uint32_t wait_t;
-	int status = -1;
-
-	hwif.timer.handler = NULL;
-#ifdef PHY_HWIF_NOTHAVE_TIMER_DI
-	hwif.timer.active = Disable;
-	hwif.timer.call_count = 0;
-#endif	/* #ifdef PHY_HWIF_NOTHAVE_TIMER_DI */
-	status = HAL_init();
-	if(status == 0){
-	//	HAL_SPI_setup();
-	//	HAL_GPIO_setup();
-			HAL_TIMER_setup();
-	//	HAL_I2C_setup();
-			phy_timer_tick(&wait_t);
-			regbank(0xff);
-			reg_data=0x00; reg_wr(REG_ADR_SPI_EXT_PA_CTRL, &reg_data, 1);
-//			reg_data=0xC3; reg_wr(REG_ADR_CLK_SET2,				 &reg_data, 1);		// TCXO:0xC3, XTAL:0x93
-			for(i=0;i<100;i++){
-				HAL_delayMicroseconds(100);
-				if (phy_int_detection(HW_EVENT_CLK_DONE) == true) {
-					break;
+				if (vco_cal() == false) {
+					goto error;
 				}
-			}
-			reg_data = 0x00; reg_wr(REG_ADR_INT_SOURCE_GRP1, &reg_data, 1);
-	}
 
-	memset(reg.rdata,0,sizeof(reg.rdata));
-	memset(reg.wdata,0,sizeof(reg.wdata));
-	memset(reg.rfifo,0,sizeof(reg.rfifo));
-	memset(reg.wfifo,0,sizeof(reg.wfifo));
-	phy.in.size = BUFFER_SIZE;
-	phy.in.data = reg.rfifo+1;
-	phy.in.len = 0;
-	phy.out.size = BUFFER_SIZE;
-	phy.out.len = 0;
-	phy.out.data = reg.wfifo+1;
+				status = 0;
+error:
+				return status;
+				}
 
-	reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
+
+				struct phy_param *phy_init(void)
+				{
+					uint8_t reg_data;
+					uint8_t i;
+					uint32_t wait_t;
+					int status = -1;
+
+					hwif.timer.handler = NULL;
+#ifdef PHY_HWIF_NOTHAVE_TIMER_DI
+					hwif.timer.active = Disable;
+					hwif.timer.call_count = 0;
+#endif	/* #ifdef PHY_HWIF_NOTHAVE_TIMER_DI */
+					status = HAL_init();
+					if(status == 0){
+						//	HAL_SPI_setup();
+						//	HAL_GPIO_setup();
+						HAL_TIMER_setup();
+						//	HAL_I2C_setup();
+						phy_timer_tick(&wait_t);
+						regbank(0xff);
+						reg_data=0x00; reg_wr(REG_ADR_SPI_EXT_PA_CTRL, &reg_data, 1);
+						//			reg_data=0xC3; reg_wr(REG_ADR_CLK_SET2,				 &reg_data, 1);		// TCXO:0xC3, XTAL:0x93
+						for(i=0;i<100;i++){
+							HAL_delayMicroseconds(100);
+							if (phy_int_detection(HW_EVENT_CLK_DONE) == true) {
+								break;
+							}
+						}
+						reg_data = 0x00; reg_wr(REG_ADR_INT_SOURCE_GRP1, &reg_data, 1);
+					}
+
+					memset(reg.rdata,0,sizeof(reg.rdata));
+					memset(reg.wdata,0,sizeof(reg.wdata));
+					memset(reg.rfifo,0,sizeof(reg.rfifo));
+					memset(reg.wfifo,0,sizeof(reg.wfifo));
+					phy.in.size = BUFFER_SIZE;
+					phy.in.data = reg.rfifo+1;
+					phy.in.len = 0;
+					phy.out.size = BUFFER_SIZE;
+					phy.out.len = 0;
+					phy.out.data = reg.wfifo+1;
+
+					reg_rd(REG_ADR_RF_STATUS, &reg_data, 1);
 
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,rfifo:%lx,wfifo:%lx\n",__FILE__,__func__,
-														(unsigned long)reg.rfifo+1,(unsigned long)reg.wfifo+1);
+					if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s,rfifo:%lx,wfifo:%lx\n",__FILE__,__func__,
+							(unsigned long)reg.rfifo+1,(unsigned long)reg.wfifo+1);
 #endif
-	return &phy;
-}
+					return &phy;
+				}
 
 
-/*
-void phy_promiscuous(void)
-{
-//	phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
-		phy_inten(HW_EVENT_RX_DONE);
-		phy_set_trx_state(PHY_ST_RXON);
+				/*
+					 void phy_promiscuous(void)
+					 {
+				//	phy_inten(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR);
+				phy_inten(HW_EVENT_RX_DONE);
+				phy_set_trx_state(PHY_ST_RXON);
 #ifndef LAZURITE_IDE
-	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
 }
 */
@@ -1733,35 +1657,35 @@ void phy_promiscuous(void)
 
 void phy_rxStart(void)
 {
-		uint8_t reg_data[3];
+	uint8_t reg_data[3];
 
-		phy_inten(HW_EVENT_FIFO_FULL|HW_EVENT_RX_DONE);
-		phy_rst();
+	phy_inten(HW_EVENT_FIFO_FULL|HW_EVENT_RX_DONE);
+	phy_rst();
 
-		// address filter
-		/*
-		if (dsss_param.modulation == PHY_MODULATION_FSK){
-			reg_data[0] = 0x80;
-			reg_data[1] = 0x00;
-			reg_data[2] = 0x0F;
-			reg_wr(REG_ADR_C_CHECK_CTRL, reg_data, 3);
-		}
-		*/
-		
-		// ----- RF STATUS CTRL & INT STATUS
-		reg_rd(REG_ADR_RF_STATUS_CTRL, reg_data, 1);
-		reg_data[0] &= ~PHY_REG_RXDONE_MODE;
-		reg_wr(REG_ADR_RF_STATUS_CTRL, reg_data, 1);
+	// address filter
+	/*
+		 if (dsss_param.modulation == PHY_MODULATION_FSK){
+		 reg_data[0] = 0x80;
+		 reg_data[1] = 0x00;
+		 reg_data[2] = 0x0F;
+		 reg_wr(REG_ADR_C_CHECK_CTRL, reg_data, 3);
+		 }
+		 */
 
-		fifo_param.fifo_temp_len = 0;
-		fifo_param.fifo_temp_buf = 0;
+	// ----- RF STATUS CTRL & INT STATUS
+	reg_rd(REG_ADR_RF_STATUS_CTRL, reg_data, 1);
+	reg_data[0] &= ~PHY_REG_RXDONE_MODE;
+	reg_wr(REG_ADR_RF_STATUS_CTRL, reg_data, 1);
 
-		reg_data[0] = 0x80 | PHY_FIFO_FULL_TRG;
-		reg_data[1] = 0x80 | (PHY_FIFO_FULL_TRG - 1);
-		reg_wr(REG_ADR_RXFIFO_THRH,reg_data,2);
-		phy_set_trx_state(PHY_ST_RXON);
-//		reg_rd(REG_ADR_INT_SOURCE_GRP1, reg_data, 3);
-//		reg_rd(REG_ADR_INT_EN_GRP1, reg_data, 3);
+	fifo_param.fifo_temp_len = 0;
+	fifo_param.fifo_temp_buf = 0;
+
+	reg_data[0] = 0x80 | PHY_FIFO_FULL_TRG;
+	reg_data[1] = 0x80 | (PHY_FIFO_FULL_TRG - 1);
+	reg_wr(REG_ADR_RXFIFO_THRH,reg_data,2);
+	phy_set_trx_state(PHY_ST_RXON);
+	//		reg_rd(REG_ADR_INT_SOURCE_GRP1, reg_data, 3);
+	//		reg_rd(REG_ADR_INT_EN_GRP1, reg_data, 3);
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
@@ -1775,289 +1699,288 @@ void phy_rxStart(void)
  ******************************************************************************/
 bool phy_txStart(BUFFER *buff,uint8_t mode)
 {
-		uint8_t reg_data[2];
-		uint16_t length;
-		uint8_t *payload = buff->data;
-		uint8_t ret=0;
+	uint8_t reg_data[2];
+	uint16_t length;
+	uint8_t *payload = buff->data;
+	uint8_t ret=0;
 
-		if(mode == FIFO_NORMAL) return ret;
+	if(mode == FIFO_NORMAL) return ret;
 
-		// ----- make fcf
-		if (dsss_param.modulation == PHY_MODULATION_DSSS) {
-				length = dsss_param.size - PHY_CRC_LEN;
-		}else if (dsss_param.modulation == PHY_MODULATION_SIGFOX) {
-				length = buff->len;
-				reg_data[0] = 0x00;							// PHR
-				reg_data[1] = length + PHY_CRC_LEN;				// length : crc size + payload length
-				reg_wr(REG_ADR_TX_PKT_LEN_H, reg_data, 2);
-		}else{ // PHY_MODULATION_FSK
-				length = buff->len;
-				reg_data[0] = 0x18;							// PHR
-				reg_data[1] = length + PHY_CRC_LEN;				// length : crc size + payload length
-				reg_wr(REG_ADR_TX_PKT_LEN_H, reg_data, 2);
-		}
+	// ----- make fcf
+	if (dsss_param.modulation == PHY_MODULATION_DSSS) {
+		length = dsss_param.size - PHY_CRC_LEN;
+	}else if (dsss_param.modulation == PHY_MODULATION_SIGFOX) {
+		length = buff->len;
+		reg_data[0] = 0x00;							// PHR
+		reg_data[1] = length + PHY_CRC_LEN;				// length : crc size + payload length
+		reg_wr(REG_ADR_TX_PKT_LEN_H, reg_data, 2);
+	}else{ // PHY_MODULATION_FSK
+		length = buff->len;
+		reg_data[0] = 0x18;							// PHR
+		reg_data[1] = length + PHY_CRC_LEN;				// length : crc size + payload length
+		reg_wr(REG_ADR_TX_PKT_LEN_H, reg_data, 2);
+	}
 
-		// ----- RF STATUS CTRL & INT STATUS
-		reg_rd(REG_ADR_RF_STATUS_CTRL, reg_data, 1);
-		reg_data[0] &= ~PHY_REG_TXDONE_MODE;
-		if(mode == FIFO_AUTO_TX) {
-				if (length > PHY_FIFO_DATA_TRG){
-						reg_data[0] |= 0x30;		// FAST_TX
-						phy_inten(HW_EVENT_FIFO_EMPTY);
-				}else{
-						reg_data[0] |= 0x10;		// auto tx on
-						phy_inten(HW_EVENT_TX_DONE);
-				}
-		}else {
-				reg_data[0] &= ~0x10;		// auto tx off
-		}
-		reg_wr(REG_ADR_RF_STATUS_CTRL, reg_data, 1);
-
-		// ----- make payload
+	// ----- RF STATUS CTRL & INT STATUS
+	reg_rd(REG_ADR_RF_STATUS_CTRL, reg_data, 1);
+	reg_data[0] &= ~PHY_REG_TXDONE_MODE;
+	if(mode == FIFO_AUTO_TX) {
 		if (length > PHY_FIFO_DATA_TRG){
-				reg_data[0] = 0x80 | (PHY_FIFO_EMPTY_TRG + 3);
-				reg_data[1] = 0x80 | PHY_FIFO_EMPTY_TRG;
-				reg_wr(REG_ADR_TXFIFO_THRH, reg_data, 2);
-				fifo_wr(REG_ADR_WR_TX_FIFO, buff->data, payload, PHY_FIFO_DATA_TRG);
-				fifo_param.fifo_temp_len = length - PHY_FIFO_DATA_TRG;
-				fifo_param.fifo_temp_buf = payload + PHY_FIFO_DATA_TRG;
-				ret = 1;
+			reg_data[0] |= 0x30;		// FAST_TX
+			phy_inten(HW_EVENT_FIFO_EMPTY);
 		}else{
-				fifo_wr(REG_ADR_WR_TX_FIFO, buff->data, payload, length);
-				ret = 0;
+			reg_data[0] |= 0x10;		// auto tx on
+			phy_inten(HW_EVENT_TX_DONE);
 		}
+	}else {
+		reg_data[0] &= ~0x10;		// auto tx off
+	}
+	reg_wr(REG_ADR_RF_STATUS_CTRL, reg_data, 1);
+
+	// ----- make payload
+	if (length > PHY_FIFO_DATA_TRG){
+		reg_data[0] = 0x80 | (PHY_FIFO_EMPTY_TRG + 3);
+		reg_data[1] = 0x80 | PHY_FIFO_EMPTY_TRG;
+		reg_wr(REG_ADR_TXFIFO_THRH, reg_data, 2);
+		fifo_wr(REG_ADR_WR_TX_FIFO, buff->data, payload, PHY_FIFO_DATA_TRG);
+		fifo_param.fifo_temp_len = length - PHY_FIFO_DATA_TRG;
+		fifo_param.fifo_temp_buf = payload + PHY_FIFO_DATA_TRG;
+		ret = 1;
+	}else{
+		fifo_wr(REG_ADR_WR_TX_FIFO, buff->data, payload, length);
+		ret = 0;
+	}
 
 #ifdef LAZURITE_IDE
-		#ifdef SERIAL_DEBUG
-		Serial.print("USER LEN:");
-		Serial.println_long((long)dsss_param.size - PHY_ADDR_TYPE6_LEN - PHY_CRC_LEN ,DEC);
-		Serial.print("BUFF LEN:");
-		Serial.println_long((long)buff->len,DEC);
-		Serial.print("PSDU LEN(for writing to fifo):");
-		Serial.println_long((long)length,DEC);
-		Serial.print("DSSS SIZE:");
-		Serial.println_long((long)dsss_param.size,DEC);
-		Serial.print("RETRUN VALUE:");
-		Serial.println_long((long)ret,DEC);
+#ifdef SERIAL_DEBUG
+	Serial.print("USER LEN:");
+	Serial.println_long((long)dsss_param.size - PHY_ADDR_TYPE6_LEN - PHY_CRC_LEN ,DEC);
+	Serial.print("BUFF LEN:");
+	Serial.println_long((long)buff->len,DEC);
+	Serial.print("PSDU LEN(for writing to fifo):");
+	Serial.println_long((long)length,DEC);
+	Serial.print("DSSS SIZE:");
+	Serial.println_long((long)dsss_param.size,DEC);
+	Serial.print("RETRUN VALUE:");
+	Serial.println_long((long)ret,DEC);
 
-		reg_rd(REG_ADR_RF_STATUS, reg_data, 1);
-		Serial.print("RF_STATUS:");
-		Serial.println_long((long)reg_data[0],HEX);
+	reg_rd(REG_ADR_RF_STATUS, reg_data, 1);
+	Serial.print("RF_STATUS:");
+	Serial.println_long((long)reg_data[0],HEX);
 
-		reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
-	    Serial.print("INT_G3:");
-		Serial.println_long((long)reg_data[0],HEX);
-        
-		reg_rd(REG_ADR_RF_STATUS_CTRL, reg_data, 1);
-		Serial.print("RF_CTRL:");
-		Serial.println_long((long)reg_data[0],HEX);
-		Serial.print("LEN:");
-		Serial.println_long((long)buff->len,DEC);
-		Serial.print("MODE:");
-		Serial.println_long((long)mode,DEC);
-		Serial.print("RET VAL:");
-		Serial.println_long((long)ret,DEC);
-        #endif
+	reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
+	Serial.print("INT_G3:");
+	Serial.println_long((long)reg_data[0],HEX);
+
+	reg_rd(REG_ADR_RF_STATUS_CTRL, reg_data, 1);
+	Serial.print("RF_CTRL:");
+	Serial.println_long((long)reg_data[0],HEX);
+	Serial.print("LEN:");
+	Serial.println_long((long)buff->len,DEC);
+	Serial.print("MODE:");
+	Serial.println_long((long)mode,DEC);
+	Serial.print("RET VAL:");
+	Serial.println_long((long)ret,DEC);
+#endif
 #else
-		if(module_test & MODE_PHY_DEBUG) {
-				printk(KERN_INFO"%s,%s,%lx,%d,SequnceNumber:%d, mode:%d\n",
+	if(module_test & MODE_PHY_DEBUG) {
+		printk(KERN_INFO"%s,%s,%lx,%d,SequnceNumber:%d, mode:%d\n",
 				__FILE__,__func__,(unsigned long)payload,length,payload[2],mode);
-		 // PAYLOADDUMP(payload,length);
-		}
+		// PAYLOADDUMP(payload,length);
+	}
 #endif
 
-		return ret;
+	return ret;
 }
 
-bool phy_txfifo(BUFFER *buff){
+FIFO_STATE phy_txfifo(){
+	uint8_t reg_data[2];
+	uint8_t ret;
 
-		uint8_t reg_data[2];
-		uint8_t ret;
+	/*
+		 reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
+		 if (reg_data[0] & 0x10) {
+		 Serial.print("INT_G3-2:");
+		 Serial.println_long((long)reg_data[0],HEX);
+		 }
+		 */
 
-        /*
-		reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
-        if (reg_data[0] & 0x10) {
-		    Serial.print("INT_G3-2:");
-		    Serial.println_long((long)reg_data[0],HEX);
-        }
-        */
+	if (fifo_param.fifo_temp_len > PHY_FIFO_DATA_TRG){
+		fifo_wr(REG_ADR_WR_TX_FIFO, buff->data, fifo_param.fifo_temp_buf, PHY_FIFO_DATA_TRG);
+		fifo_param.fifo_temp_len -= PHY_FIFO_DATA_TRG;
+		fifo_param.fifo_temp_buf += PHY_FIFO_DATA_TRG;
+		phy_inten(HW_EVENT_FIFO_EMPTY);
+		ret = 1;
+	}else{
+		fifo_wr(REG_ADR_WR_TX_FIFO, buff->data, fifo_param.fifo_temp_buf, fifo_param.fifo_temp_len);
+		reg_data[0] = 0;
+		reg_data[1] = 0;
+		reg_wr(REG_ADR_TXFIFO_THRH, reg_data, 2);
+		fifo_param.fifo_temp_len = 0;
+		fifo_param.fifo_temp_buf = 0;
+		phy_inten(HW_EVENT_TX_DONE);
+		ret = 0;
+	}
 
-		if (fifo_param.fifo_temp_len > PHY_FIFO_DATA_TRG){
-				fifo_wr(REG_ADR_WR_TX_FIFO, buff->data, fifo_param.fifo_temp_buf, PHY_FIFO_DATA_TRG);
-				fifo_param.fifo_temp_len -= PHY_FIFO_DATA_TRG;
-				fifo_param.fifo_temp_buf += PHY_FIFO_DATA_TRG;
-				phy_inten(HW_EVENT_FIFO_EMPTY);
-				ret = 1;
-		}else{
-				fifo_wr(REG_ADR_WR_TX_FIFO, buff->data, fifo_param.fifo_temp_buf, fifo_param.fifo_temp_len);
-				reg_data[0] = 0;
-				reg_data[1] = 0;
-				reg_wr(REG_ADR_TXFIFO_THRH, reg_data, 2);
-				fifo_param.fifo_temp_len = 0;
-				fifo_param.fifo_temp_buf = 0;
-				phy_inten(HW_EVENT_TX_DONE);
-				ret = 0;
-		}
-
-		phy_intclr(HW_EVENT_FIFO_EMPTY);
+	phy_intclr(HW_EVENT_FIFO_EMPTY);
 #ifdef LAZURITE_IDE
-		#ifdef SERIAL_DEBUG
-		reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
-        if (reg_data[0] & 0x10) {
-		    Serial.print("INT_G3-3:");
-		    Serial.println_long((long)reg_data[0],HEX);
-        }
-		Serial.print("FIFO_DONE:");
-		Serial.print_long((long)fifo_param.fifo_temp_len,DEC);
-		Serial.print(",");
-		Serial.println_long((long)fifo_param.fifo_temp_buf,DEC);
-		Serial.print("RET VAL:");
-		Serial.println_long((long)ret,DEC);
-		#endif
+#ifdef SERIAL_DEBUG
+	reg_rd(REG_ADR_INT_SOURCE_GRP3, reg_data, 1);
+	if (reg_data[0] & 0x10) {
+		Serial.print("INT_G3-3:");
+		Serial.println_long((long)reg_data[0],HEX);
+	}
+	Serial.print("FIFO_DONE:");
+	Serial.print_long((long)fifo_param.fifo_temp_len,DEC);
+	Serial.print(",");
+	Serial.println_long((long)fifo_param.fifo_temp_buf,DEC);
+	Serial.print("RET VAL:");
+	Serial.println_long((long)ret,DEC);
 #endif
-		return ret;
+#endif
+	return ret;
 }
 
 
 int phy_ccaCtrl(CCA_STATE state) {
 
-		uint8_t reg_cca_cntl;
-		uint8_t reg_idl_wait;
-		uint8_t reg_data;
-		int status = STATUS_OK;
+	uint8_t reg_cca_cntl;
+	uint8_t reg_idl_wait;
+	uint8_t reg_data;
+	int status = STATUS_OK;
 
-		phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+	phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
 
-		if (state == CCA_FAILURE || state == CCA_IDLE){
-				reg_data = 0x00;
-				reg_wr(REG_ADR_CCA_SYNC_OFF, &reg_data, 1);
-				reg_data = store_cca_sync_off;
-				reg_wr(REG_ADR_DEMSET38, &reg_data, 1);
-				reg_cca_cntl = 0x00;
-				reg_idl_wait = 0x00;
-				reg_wr(REG_ADR_IDLE_WAIT_L, &reg_idl_wait, 1);
-				reg_wr(REG_ADR_CCA_CNTRL, &reg_cca_cntl, 1);
+	if (state == CCA_FAILURE || state == CCA_IDLE){
+		reg_data = 0x00;
+		reg_wr(REG_ADR_CCA_SYNC_OFF, &reg_data, 1);
+		reg_data = store_cca_sync_off;
+		reg_wr(REG_ADR_DEMSET38, &reg_data, 1);
+		reg_cca_cntl = 0x00;
+		reg_idl_wait = 0x00;
+		reg_wr(REG_ADR_IDLE_WAIT_L, &reg_idl_wait, 1);
+		reg_wr(REG_ADR_CCA_CNTRL, &reg_cca_cntl, 1);
 
-				reg_wr(REG_ADR_CH_SET, &base_channel, 1);
-				dsss_param.cca_cnt = 0;
+		reg_wr(REG_ADR_CH_SET, &base_channel, 1);
+		dsss_param.cca_cnt = 0;
 
-				if(state == CCA_FAILURE){
-						reg_data = 0x22; // modem reset
-						reg_wr(REG_ADR_RST_SET, &reg_data, 1);
-				}
-		}else{
-				if (state == CCA_FAST) {
-						reg_cca_cntl = 0x10;
-						reg_idl_wait = 0x00;
-
-					if ((dsss_param.modulation == PHY_MODULATION_DSSS) && (dsss_param.page == PHY_DATARATE_200K)) {
-								if (!dsss_param.cca_cnt){
-										reg_data = 0x00; reg_wr(REG_ADR_INT_SOURCE_GRP1, &reg_data, 1);
-										reg_data = 0x01; reg_wr(REG_ADR_CCA_SYNC_OFF, &reg_data, 1);
-										reg_rd(REG_ADR_DEMSET38, &store_cca_sync_off, 1);
-										reg_data = 0x07; reg_wr(REG_ADR_DEMSET38, &reg_data, 1);
-										reg_data = 0x22; reg_wr(REG_ADR_RST_SET, &reg_data, 1);
-
-										dsss_param.cca_cnt = PHY_DSSS_MULTI_CCA - 1;
-										reg_rd(REG_ADR_CH_SET, &reg_data, 1);
-										reg_data -= PHY_DSSS_MULTI_CCA;
-										reg_wr(REG_ADR_CH_SET, &reg_data, 1);
-#if defined(LAZURITE_IDE) && defined(CCA_DEBUG)
-										Serial.print("BASE CH:");
-									Serial.println_long((long)base_channel,HEX);
-										Serial.print("CCA CH:");
-									Serial.println_long((long)reg_data,HEX);
-#endif
-								}else{
-										reg_rd(REG_ADR_CH_SET, &reg_data, 1);
-										dsss_param.cca_cnt--;
-
-										if (PHY_DSSS_MULTI_CCA == 2) {
-												reg_data += (PHY_DSSS_MULTI_CCA*2);
-										}else
-										if (PHY_DSSS_MULTI_CCA == 3) {
-												reg_data += PHY_DSSS_MULTI_CCA;
-										}
-
-										reg_wr(REG_ADR_CH_SET, &reg_data, 1);
-#if defined(LAZURITE_IDE) && defined(CCA_DEBUG)
-										Serial.print("CCA CH:");
-									Serial.println_long((long)reg_data,HEX);
-#endif
-								}
-						}else{
-								reg_data = 0x00; reg_wr(REG_ADR_INT_SOURCE_GRP1, &reg_data, 1);
-								reg_data = 0x01; reg_wr(REG_ADR_CCA_SYNC_OFF, &reg_data, 1);
-								reg_rd(REG_ADR_DEMSET38, &store_cca_sync_off, 1);
-								reg_data = 0x07; reg_wr(REG_ADR_DEMSET38, &reg_data, 1);
-								reg_data = 0x22; reg_wr(REG_ADR_RST_SET, &reg_data, 1);
-						}
-				} else
-				if (state == IDLE_DETECT) {
-						reg_cca_cntl = 0x50;
-						reg_idl_wait = 0x64;
-				} else
-				if (state == CCA_RETRY) {
-						phy_backoffTimer();
-						reg_cca_cntl = 0x10;
-						reg_idl_wait = 0x64;
-				}
-
-		 // if (state != CCA_FAST) phy_inten(HW_EVENT_CCA_DONE);
-				phy_inten(HW_EVENT_CCA_DONE);
-
-				reg_wr(REG_ADR_IDLE_WAIT_L, &reg_idl_wait, 1);
-				reg_wr(REG_ADR_CCA_CNTRL, &reg_cca_cntl, 1);
-				reg_data = PHY_ST_RXON;
-				reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
+		if(state == CCA_FAILURE){
+			reg_data = 0x22; // modem reset
+			reg_wr(REG_ADR_RST_SET, &reg_data, 1);
 		}
-		return status;
+	}else{
+		if (state == CCA_FAST) {
+			reg_cca_cntl = 0x10;
+			reg_idl_wait = 0x00;
+
+			if ((dsss_param.modulation == PHY_MODULATION_DSSS) && (dsss_param.page == PHY_DATARATE_200K)) {
+				if (!dsss_param.cca_cnt){
+					reg_data = 0x00; reg_wr(REG_ADR_INT_SOURCE_GRP1, &reg_data, 1);
+					reg_data = 0x01; reg_wr(REG_ADR_CCA_SYNC_OFF, &reg_data, 1);
+					reg_rd(REG_ADR_DEMSET38, &store_cca_sync_off, 1);
+					reg_data = 0x07; reg_wr(REG_ADR_DEMSET38, &reg_data, 1);
+					reg_data = 0x22; reg_wr(REG_ADR_RST_SET, &reg_data, 1);
+
+					dsss_param.cca_cnt = PHY_DSSS_MULTI_CCA - 1;
+					reg_rd(REG_ADR_CH_SET, &reg_data, 1);
+					reg_data -= PHY_DSSS_MULTI_CCA;
+					reg_wr(REG_ADR_CH_SET, &reg_data, 1);
+#if defined(LAZURITE_IDE) && defined(CCA_DEBUG)
+					Serial.print("BASE CH:");
+					Serial.println_long((long)base_channel,HEX);
+					Serial.print("CCA CH:");
+					Serial.println_long((long)reg_data,HEX);
+#endif
+				}else{
+					reg_rd(REG_ADR_CH_SET, &reg_data, 1);
+					dsss_param.cca_cnt--;
+
+					if (PHY_DSSS_MULTI_CCA == 2) {
+						reg_data += (PHY_DSSS_MULTI_CCA*2);
+					}else
+						if (PHY_DSSS_MULTI_CCA == 3) {
+							reg_data += PHY_DSSS_MULTI_CCA;
+						}
+
+					reg_wr(REG_ADR_CH_SET, &reg_data, 1);
+#if defined(LAZURITE_IDE) && defined(CCA_DEBUG)
+					Serial.print("CCA CH:");
+					Serial.println_long((long)reg_data,HEX);
+#endif
+				}
+			}else{
+				reg_data = 0x00; reg_wr(REG_ADR_INT_SOURCE_GRP1, &reg_data, 1);
+				reg_data = 0x01; reg_wr(REG_ADR_CCA_SYNC_OFF, &reg_data, 1);
+				reg_rd(REG_ADR_DEMSET38, &store_cca_sync_off, 1);
+				reg_data = 0x07; reg_wr(REG_ADR_DEMSET38, &reg_data, 1);
+				reg_data = 0x22; reg_wr(REG_ADR_RST_SET, &reg_data, 1);
+			}
+		} else
+			if (state == IDLE_DETECT) {
+				reg_cca_cntl = 0x50;
+				reg_idl_wait = 0x64;
+			} else
+				if (state == CCA_RETRY) {
+					phy_backoffTimer();
+					reg_cca_cntl = 0x10;
+					reg_idl_wait = 0x64;
+				}
+
+		// if (state != CCA_FAST) phy_inten(HW_EVENT_CCA_DONE);
+		phy_inten(HW_EVENT_CCA_DONE);
+
+		reg_wr(REG_ADR_IDLE_WAIT_L, &reg_idl_wait, 1);
+		reg_wr(REG_ADR_CCA_CNTRL, &reg_cca_cntl, 1);
+		reg_data = PHY_ST_RXON;
+		reg_wr(REG_ADR_RF_STATUS, &reg_data, 1);
+	}
+	return status;
 }
 
 
 CCA_STATE phy_ccadone(uint8_t be,uint8_t count, uint8_t retry)
 {
-		int state;
-		uint8_t reg_data;
+	int state;
+	uint8_t reg_data;
 
-		phy_cca_be = be;
+	phy_cca_be = be;
 
-		// Notice: A following must not change.
+	// Notice: A following must not change.
 	reg_rd(REG_ADR_CCA_CNTRL, &reg_data, 1);
-		phy_intclr(HW_EVENT_CCA_DONE | HW_EVENT_RF_STATUS);
+	phy_intclr(HW_EVENT_CCA_DONE | HW_EVENT_RF_STATUS);
 
-		if(reg_data&0x03){
-				if ((dsss_param.modulation == PHY_MODULATION_DSSS) && (dsss_param.page == PHY_DATARATE_200K)) {
-					 state = CCA_FAILURE;
-				}else{
-#if 1		// when it force retrying CCA, is zero.
-						if(!count){
-							 state = IDLE_DETECT;
-						}else
-#endif
-						if(count < retry){
-							 state = CCA_RETRY;
-						}else{
-							 state = CCA_FAILURE;
-						}
-				}
+	if(reg_data&0x03){
+		if ((dsss_param.modulation == PHY_MODULATION_DSSS) && (dsss_param.page == PHY_DATARATE_200K)) {
+			state = CCA_FAILURE;
 		}else{
-				if (dsss_param.cca_cnt){
-						state = CCA_FAST;
+#if 1		// when it force retrying CCA, is zero.
+			if(!count){
+				state = IDLE_DETECT;
+			}else
+#endif
+				if(count < retry){
+					state = CCA_RETRY;
 				}else{
-						state = CCA_IDLE;
+					state = CCA_FAILURE;
 				}
 		}
+	}else{
+		if (dsss_param.cca_cnt){
+			state = CCA_FAST;
+		}else{
+			state = CCA_IDLE;
+		}
+	}
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG)printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
-		return state;
+	return state;
 }
 
 
 void phy_txdone(void)
 {
-		phy_intclr(HW_EVENT_TX_DONE | HW_EVENT_TX_FIFO_DONE | HW_EVENT_RF_STATUS);
+	phy_intclr(HW_EVENT_TX_DONE | HW_EVENT_TX_FIFO_DONE | HW_EVENT_RF_STATUS);
 }
 
 
@@ -2068,118 +1991,118 @@ uint16_t per_ok_cnt = 0;
 
 int phy_rxdone(BUFFER *buff)
 {
-		int status=STATUS_OK;
-		uint8_t reg_data[2];
-		uint8_t err_status;
-		uint8_t rx_done;
-		uint8_t int_status;
-		uint8_t fifo_last;
+	int status=STATUS_OK;
+	uint8_t reg_data[2];
+	uint8_t err_status;
+	uint8_t rx_done;
+	uint8_t int_status;
+	uint8_t fifo_last;
 
-		phy_mesg();
+	phy_mesg();
 
-		// Notice: A following must not change.
-		reg_rd(REG_ADR_INT_SOURCE_GRP2, &int_status, 1);
-		reg_rd(REG_ADR_RD_FIFO_LAST, &fifo_last, 1);
+	// Notice: A following must not change.
+	reg_rd(REG_ADR_INT_SOURCE_GRP2, &int_status, 1);
+	reg_rd(REG_ADR_RD_FIFO_LAST, &fifo_last, 1);
 
-		err_status = int_status&0x9a; // sync error | fifo errr | length error | crc err0r
-		rx_done = int_status&0x01;
+	err_status = int_status&0x9a; // sync error | fifo errr | length error | crc err0r
+	rx_done = int_status&0x01;
 
-		if(err_status){
-			status=-EBADE;
-			goto error;
-		}
+	if(err_status){
+		status=-EBADE;
+		goto error;
+	}
 
-		// Set length
-		if (!fifo_param.fifo_temp_len) {
-				if (dsss_param.modulation == PHY_MODULATION_DSSS && dsss_param.ctrl_reg != PHY_DSSS_SIZE_FREE){
-						buff->len = dsss_param.size;
-				}else{
-						reg_rd(REG_ADR_RX_PKT_LEN_H, reg_data, 2);
-						buff->len = (((unsigned int)reg_data[0] << 8) | reg_data[1]) & 0x07ff; 
-				}
-
-				fifo_param.fifo_temp_len = buff->len;
-				fifo_param.fifo_temp_buf = buff->data;
-
-				// first is 2 byte only.
-				if (fifo_param.fifo_temp_len > PHY_FIFO_DATA_TRG){
-						reg_data[0] = 0x80 | PHY_FIFO_DATA_TRG;
-						reg_data[1] = 0x80 | (PHY_FIFO_DATA_TRG - 1);
-						reg_wr(REG_ADR_RXFIFO_THRH, reg_data, 2);
-						phy_inten(HW_EVENT_FIFO_FULL);
-				}else{
-						reg_data[0] = 0;
-						reg_data[1] = 0;
-						reg_wr(REG_ADR_RXFIFO_THRH, reg_data, 2);
-						phy_inten(HW_EVENT_RX_DONE);
-				}
-				phy_intclr(HW_EVENT_FIFO_FULL | HW_EVENT_FIFO_EMPTY);
-				status=1;
-				goto nextState;
+	// Set length
+	if (!fifo_param.fifo_temp_len) {
+		if (dsss_param.modulation == PHY_MODULATION_DSSS && dsss_param.ctrl_reg != PHY_DSSS_SIZE_FREE){
+			buff->len = dsss_param.size;
 		}else{
-		// fifo read
-			if(rx_done){
-					fifo_rd(REG_ADR_RD_RX_FIFO, buff->data, fifo_param.fifo_temp_buf, fifo_param.fifo_temp_len);
-			}else{
-					if (fifo_param.fifo_temp_len > PHY_FIFO_DATA_TRG){
-							fifo_rd(REG_ADR_RD_RX_FIFO, buff->data, fifo_param.fifo_temp_buf, PHY_FIFO_DATA_READ); 
-							fifo_param.fifo_temp_len -= PHY_FIFO_DATA_READ;
-							fifo_param.fifo_temp_buf += PHY_FIFO_DATA_READ;
-					}
-
-					if (fifo_param.fifo_temp_len > PHY_FIFO_DATA_TRG){
-							reg_data[0] = 0x80 | PHY_FIFO_DATA_TRG;
-							reg_data[1] = 0x80 | (PHY_FIFO_DATA_TRG - 1);
-							reg_wr(REG_ADR_RXFIFO_THRH, reg_data, 2);
-							phy_inten(HW_EVENT_FIFO_FULL);
-					}else{
-							reg_data[0] = 0;
-							reg_data[1] = 0;
-							reg_wr(REG_ADR_RXFIFO_THRH, reg_data, 2);
-							phy_inten(HW_EVENT_RX_DONE);
-					}
-					phy_intclr(HW_EVENT_FIFO_FULL | HW_EVENT_FIFO_EMPTY);
-					status=1;
-					goto nextState;
-			}
+			reg_rd(REG_ADR_RX_PKT_LEN_H, reg_data, 2);
+			buff->len = (((unsigned int)reg_data[0] << 8) | reg_data[1]) & 0x07ff; 
 		}
 
-		buff->len -= 2; // crc data
-		buff->len += 1; // add ed result
-		reg_rd(REG_ADR_ED_RSLT,reg_data,1); buff->data[buff->len] = reg_data[0];
+		fifo_param.fifo_temp_len = buff->len;
+		fifo_param.fifo_temp_buf = buff->data;
+
+		// first is 2 byte only.
+		if (fifo_param.fifo_temp_len > PHY_FIFO_DATA_TRG){
+			reg_data[0] = 0x80 | PHY_FIFO_DATA_TRG;
+			reg_data[1] = 0x80 | (PHY_FIFO_DATA_TRG - 1);
+			reg_wr(REG_ADR_RXFIFO_THRH, reg_data, 2);
+			phy_inten(HW_EVENT_FIFO_FULL);
+		}else{
+			reg_data[0] = 0;
+			reg_data[1] = 0;
+			reg_wr(REG_ADR_RXFIFO_THRH, reg_data, 2);
+			phy_inten(HW_EVENT_RX_DONE);
+		}
+		phy_intclr(HW_EVENT_FIFO_FULL | HW_EVENT_FIFO_EMPTY);
+		status=1;
+		goto nextState;
+	}else{
+		// fifo read
+		if(rx_done){
+			fifo_rd(REG_ADR_RD_RX_FIFO, buff->data, fifo_param.fifo_temp_buf, fifo_param.fifo_temp_len);
+		}else{
+			if (fifo_param.fifo_temp_len > PHY_FIFO_DATA_TRG){
+				fifo_rd(REG_ADR_RD_RX_FIFO, buff->data, fifo_param.fifo_temp_buf, PHY_FIFO_DATA_READ); 
+				fifo_param.fifo_temp_len -= PHY_FIFO_DATA_READ;
+				fifo_param.fifo_temp_buf += PHY_FIFO_DATA_READ;
+			}
+
+			if (fifo_param.fifo_temp_len > PHY_FIFO_DATA_TRG){
+				reg_data[0] = 0x80 | PHY_FIFO_DATA_TRG;
+				reg_data[1] = 0x80 | (PHY_FIFO_DATA_TRG - 1);
+				reg_wr(REG_ADR_RXFIFO_THRH, reg_data, 2);
+				phy_inten(HW_EVENT_FIFO_FULL);
+			}else{
+				reg_data[0] = 0;
+				reg_data[1] = 0;
+				reg_wr(REG_ADR_RXFIFO_THRH, reg_data, 2);
+				phy_inten(HW_EVENT_RX_DONE);
+			}
+			phy_intclr(HW_EVENT_FIFO_FULL | HW_EVENT_FIFO_EMPTY);
+			status=1;
+			goto nextState;
+		}
+	}
+
+	buff->len -= 2; // crc data
+	buff->len += 1; // add ed result
+	reg_rd(REG_ADR_ED_RSLT,reg_data,1); buff->data[buff->len] = reg_data[0];
 
 error:
-		phy_intclr(~(HW_EVENT_ALL_MASK));
+	phy_intclr(~(HW_EVENT_ALL_MASK));
 
 nextState:
 #ifdef LAZURITE_IDE
-		#ifdef SERIAL_DEBUG
-		Serial.print("INT GRP2:");
-		Serial.print_long((long)int_grp2,HEX);
+#ifdef SERIAL_DEBUG
+	Serial.print("INT GRP2:");
+	Serial.print_long((long)int_grp2,HEX);
 
-		if (crc_err) {
-				per_err_cnt++;
-				Serial.print(" CRC ERR:");
-				Serial.println_long((long)per_err_cnt,DEC);
-		}else{
-				per_ok_cnt++;
-				Serial.print(" CRC OK:");
-				Serial.print_long((long)per_ok_cnt,DEC);
-		}
+	if (crc_err) {
+		per_err_cnt++;
+		Serial.print(" CRC ERR:");
+		Serial.println_long((long)per_err_cnt,DEC);
+	}else{
+		per_ok_cnt++;
+		Serial.print(" CRC OK:");
+		Serial.print_long((long)per_ok_cnt,DEC);
+	}
 
-		Serial.print(" RX_LEN:");
-		Serial.print_long((long)buff->len,DEC);
-		Serial.print(" DATA:");
-		{
-				uint8_t cnt;
+	Serial.print(" RX_LEN:");
+	Serial.print_long((long)buff->len,DEC);
+	Serial.print(" DATA:");
+	{
+		uint8_t cnt;
 		for(cnt=0;cnt<buff->len;cnt++)
 		{
 			Serial.print_long(buff->data[cnt],HEX);
 			Serial.print(" ");
 		}
 		Serial.println("");
-		}
-		#endif
+	}
+#endif
 #else
 	if(module_test & MODE_PHY_DEBUG){
 		printk(KERN_INFO"%s,%s,%lx,total length:%d,fifo_last:%d,status:0x%x,temp len:%d,seq:%d\n",__FILE__,__func__,
@@ -2191,15 +2114,15 @@ nextState:
 }
 
 
-void phy_stop(void)
+void phy_rxstop(void)
 {
 	uint8_t reg_data = 0x06;
 	reg_wr(REG_ADR_SLEEP_WU_SET, &reg_data, 1);
 
-		phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
-		phy_intclr(~(HW_EVENT_ALL_MASK));
-		phy_inten(HW_EVENT_ALL_MASK);
-		phy_rst();
+	phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+	phy_intclr(~(HW_EVENT_ALL_MASK));
+	phy_inten(HW_EVENT_ALL_MASK);
+	phy_rst();
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
@@ -2208,112 +2131,112 @@ void phy_stop(void)
 
 void phy_clrAddrFilt(void)
 {
-		uint8_t reg_data[3];
+	uint8_t reg_data[3];
 
-		if (dsss_param.modulation == PHY_MODULATION_FSK){
-				reg_data[0] = 0x00;
-				reg_data[1] = 0x00;
-				reg_data[2] = 0x00;
-				reg_wr(REG_ADR_C_CHECK_CTRL, reg_data, 3);
-		}
+	if (dsss_param.modulation == PHY_MODULATION_FSK){
+		reg_data[0] = 0x00;
+		reg_data[1] = 0x00;
+		reg_data[2] = 0x00;
+		reg_wr(REG_ADR_C_CHECK_CTRL, reg_data, 3);
+	}
 }
 
 
 void phy_addrFilt(uint16_t panid, uint8_t *ieee_addr, uint16_t uc_addr, uint16_t bc_addr)
 {
-		uint8_t reg_data[4];
+	uint8_t reg_data[4];
 
-/*
+	/*
 #if 0 // unicast recive
-		// address filter
-		if (dsss_param.modulation == PHY_MODULATION_FSK){
-			reg_data[0] = 0x80;
-			reg_data[1] = 0x00;
-			reg_data[2] = 0x0F;
-		}else {
-			reg_data[0] = 0x00;
-			reg_data[1] = 0x00;
-			reg_data[2] = 0x00;
-		}
-		reg_wr(REG_ADR_C_CHECK_CTRL, reg_data, 3);
+	// address filter
+	if (dsss_param.modulation == PHY_MODULATION_FSK){
+	reg_data[0] = 0x80;
+	reg_data[1] = 0x00;
+	reg_data[2] = 0x0F;
+	}else {
+	reg_data[0] = 0x00;
+	reg_data[1] = 0x00;
+	reg_data[2] = 0x00;
+	}
+	reg_wr(REG_ADR_C_CHECK_CTRL, reg_data, 3);
 
-		reg_data[0] = panid>>0&0xff;
-		reg_data[1] = panid>>8&0xff;
-		reg_data[2] = uc_addr>>0&0xff;
-		reg_data[3] = uc_addr>>8&0xff;
-		reg_wr(REG_ADR_A_FIELD_CODE1, reg_data, 4);
+	reg_data[0] = panid>>0&0xff;
+	reg_data[1] = panid>>8&0xff;
+	reg_data[2] = uc_addr>>0&0xff;
+	reg_data[3] = uc_addr>>8&0xff;
+	reg_wr(REG_ADR_A_FIELD_CODE1, reg_data, 4);
 #else // broadcast recive
-		reg_data[0] = 0x80;
-		reg_data[1] = 0x00;
-		reg_data[2] = 0x0F;
-		reg_wr(REG_ADR_C_CHECK_CTRL, reg_data, 3);
+reg_data[0] = 0x80;
+reg_data[1] = 0x00;
+reg_data[2] = 0x0F;
+reg_wr(REG_ADR_C_CHECK_CTRL, reg_data, 3);
 
-		reg_data[0] = 0xff;
-		reg_data[1] = 0xff;
-		reg_data[2] = 0xff;
-		reg_data[3] = 0xff;
-		reg_wr(REG_ADR_A_FIELD_CODE1, reg_data, 4);
+reg_data[0] = 0xff;
+reg_data[1] = 0xff;
+reg_data[2] = 0xff;
+reg_data[3] = 0xff;
+reg_wr(REG_ADR_A_FIELD_CODE1, reg_data, 4);
 #endif
 */
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG){
 
-			printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
+		printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 
-				reg_rd(REG_ADR_A_CHECK_CTRL, reg_data, 1);
-				printk(KERN_INFO"ADDFIL_CNTRL: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
+		reg_rd(REG_ADR_A_CHECK_CTRL, reg_data, 1);
+		printk(KERN_INFO"ADDFIL_CNTRL: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
 
-				reg_rd(REG_ADR_A_FIELD_CODE1, reg_data, 4);
-				printk(KERN_INFO"ADDFIL1: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
-				printk(KERN_INFO"ADDFIL2: %s,%s,%x\n",__FILE__,__func__,reg_data[1]);
-				printk(KERN_INFO"ADDFIL3: %s,%s,%x\n",__FILE__,__func__,reg_data[2]);
-				printk(KERN_INFO"ADDFIL4: %s,%s,%x\n",__FILE__,__func__,reg_data[3]);
-				printk(KERN_INFO"MODULATION: %s,%s,%x\n",__FILE__,__func__,dsss_param.modulation);
-		}
+		reg_rd(REG_ADR_A_FIELD_CODE1, reg_data, 4);
+		printk(KERN_INFO"ADDFIL1: %s,%s,%x\n",__FILE__,__func__,reg_data[0]);
+		printk(KERN_INFO"ADDFIL2: %s,%s,%x\n",__FILE__,__func__,reg_data[1]);
+		printk(KERN_INFO"ADDFIL3: %s,%s,%x\n",__FILE__,__func__,reg_data[2]);
+		printk(KERN_INFO"ADDFIL4: %s,%s,%x\n",__FILE__,__func__,reg_data[3]);
+		printk(KERN_INFO"MODULATION: %s,%s,%x\n",__FILE__,__func__,dsss_param.modulation);
+	}
 #endif
 }
 
 
 void phy_ed(uint8_t *level, uint8_t rfMode)
 {
-		uint8_t i,temp_ed=0;
-		uint8_t ch_val;
-		uint8_t reg_data;
+	uint8_t i,temp_ed=0;
+	uint8_t ch_val;
+	uint8_t reg_data;
 
-		if(!rfMode)phy_set_trx_state(PHY_ST_RXON);
+	if(!rfMode)phy_set_trx_state(PHY_ST_RXON);
 
-		if ((dsss_param.modulation == PHY_MODULATION_DSSS) && (dsss_param.page == PHY_DATARATE_200K)) {
-				reg_rd(REG_ADR_CH_SET, &ch_val, 1);
-				ch_val -= PHY_DSSS_MULTI_CCA;
-				*level = 0;
-				temp_ed = 0;
+	if ((dsss_param.modulation == PHY_MODULATION_DSSS) && (dsss_param.page == PHY_DATARATE_200K)) {
+		reg_rd(REG_ADR_CH_SET, &ch_val, 1);
+		ch_val -= PHY_DSSS_MULTI_CCA;
+		*level = 0;
+		temp_ed = 0;
 
-				reg_data = 0x30;
-				reg_wr(REG_ADR_CCA_CNTRL, &reg_data, 1);
+		reg_data = 0x30;
+		reg_wr(REG_ADR_CCA_CNTRL, &reg_data, 1);
 
-				for(i=0; i < PHY_DSSS_MULTI_CCA; i++){
-						reg_wr(REG_ADR_CH_SET, &ch_val, 1);
-						HAL_delayMicroseconds(100);
-						reg_rd(REG_ADR_ED_RSLT, &temp_ed, 1);
-					 if(*level < temp_ed) *level = temp_ed;
+		for(i=0; i < PHY_DSSS_MULTI_CCA; i++){
+			reg_wr(REG_ADR_CH_SET, &ch_val, 1);
+			HAL_delayMicroseconds(100);
+			reg_rd(REG_ADR_ED_RSLT, &temp_ed, 1);
+			if(*level < temp_ed) *level = temp_ed;
 #if defined(LAZURITE_IDE) && defined(CCA_DEBUG)
-						Serial.print("CCA CH:");
-						Serial.print_long((long)ch_val,DEC);
-						Serial.print("VALUE: 0x");
-						Serial.println_long((long)temp_ed,HEX);
+			Serial.print("CCA CH:");
+			Serial.print_long((long)ch_val,DEC);
+			Serial.print("VALUE: 0x");
+			Serial.println_long((long)temp_ed,HEX);
 #endif
-						ch_val += PHY_DSSS_MULTI_CCA;
-				}
-				reg_data = 0x80;
-				reg_wr(REG_ADR_CCA_CNTRL, &reg_data, 1);
-				reg_wr(REG_ADR_CH_SET, &base_channel, 1);
-				reg_data = 0x00;
-				reg_wr(REG_ADR_CCA_CNTRL, &reg_data, 1);
-		}else{
-				reg_rd(REG_ADR_ED_RSLT, level, 1);
+			ch_val += PHY_DSSS_MULTI_CCA;
 		}
+		reg_data = 0x80;
+		reg_wr(REG_ADR_CCA_CNTRL, &reg_data, 1);
+		reg_wr(REG_ADR_CH_SET, &base_channel, 1);
+		reg_data = 0x00;
+		reg_wr(REG_ADR_CCA_CNTRL, &reg_data, 1);
+	}else{
+		reg_rd(REG_ADR_ED_RSLT, level, 1);
+	}
 
-		if(!rfMode)phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+	if(!rfMode)phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s,ED_value:%x\n",__FILE__,__func__,*level);
 #endif
@@ -2322,15 +2245,15 @@ void phy_ed(uint8_t *level, uint8_t rfMode)
 
 void phy_sleep(void)
 {
-/*
-		uint8_t reg_data;
-		phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
-	reg_rd(REG_ADR_SLEEP_WU_SET, &reg_data, 1);
-	reg_data |=  0x01;
-	reg_wr(REG_ADR_SLEEP_WU_SET, &reg_data, 1);
-		reg_data = 0x00;
-	reg_wr(REG_ADR_2DIV_CNTRL, &reg_data, 1);
-*/
+	/*
+		 uint8_t reg_data;
+		 phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
+		 reg_rd(REG_ADR_SLEEP_WU_SET, &reg_data, 1);
+		 reg_data |=  0x01;
+		 reg_wr(REG_ADR_SLEEP_WU_SET, &reg_data, 1);
+		 reg_data = 0x00;
+		 reg_wr(REG_ADR_2DIV_CNTRL, &reg_data, 1);
+		 */
 #ifndef LAZURITE_IDE
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
@@ -2343,9 +2266,9 @@ void phy_cleanup(void)
 
 	phy_set_trx_state(PHY_ST_FORCE_TRXOFF);
 	phy_rst();
-		reg_data = 0x00;
-		reg_wr(REG_ADR_INT_SOURCE_GRP2, &reg_data, 1);
-		reg_wr(REG_ADR_INT_SOURCE_GRP3, &reg_data, 1);
+	reg_data = 0x00;
+	reg_wr(REG_ADR_INT_SOURCE_GRP2, &reg_data, 1);
+	reg_wr(REG_ADR_INT_SOURCE_GRP3, &reg_data, 1);
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_PHY_DEBUG) printk(KERN_INFO"%s,%s\n",__FILE__,__func__);
 #endif
@@ -2354,15 +2277,15 @@ void phy_cleanup(void)
 
 void phy_monitor(void){
 #ifndef LAZURITE_IDE
-		uint8_t rdata[4];
-		reg_rd(0, 0x24, rdata, 4);
+	uint8_t rdata[4];
+	reg_rd(0, 0x24, rdata, 4);
 	printk(KERN_INFO"INT SOURCE:: %x,%x,%x,%x\n", rdata[0],rdata[1],rdata[2],rdata[3]);
-		reg_rd(0, 0x2A, rdata, 4);
+	reg_rd(0, 0x2A, rdata, 4);
 	printk(KERN_INFO"INT ENABLE:: %x,%x,%x,%x\n", rdata[0],rdata[1],rdata[2],rdata[3]);
-		reg_rd(0, 0x6c, rdata, 1);
+	reg_rd(0, 0x6c, rdata, 1);
 	printk(KERN_INFO"RF STATUS:: %x\n", rdata[0]);
-		reg_rd(0, 0x15, rdata, 1);
-		printk(KERN_INFO"RF CCA CNTL:: %x\n", rdata[0]);
+	reg_rd(0, 0x15, rdata, 1);
+	printk(KERN_INFO"RF CCA CNTL:: %x\n", rdata[0]);
 #endif
 }
 
@@ -2370,95 +2293,95 @@ void phy_monitor(void){
 // following function is for debug. and test.bin use it.
 
 void phy_regread(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
-		reg_rd(bank, addr, data, size);
+	reg_rd(bank, addr, data, size);
 }
 
 
 void phy_regwrite(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
-		reg_wr(bank, addr, data, size);
+	reg_wr(bank, addr, data, size);
 }
 
 #ifdef LAZURITE_IDE
 void phy_regdump(void)
 {
-		uint8_t dump_cnt,dat_dump,reg_data[4];
+	uint8_t dump_cnt,dat_dump,reg_data[4];
 
 
-		Serial.println("-----------------/ bank0 /---------------");
-		for(dump_cnt=0; dump_cnt <= 0x7F; dump_cnt++) {
-				reg_rd(0, dump_cnt, reg_data, 1); dat_dump = reg_data[0];
-				if (dump_cnt == 0) Serial.print(""); 
-				else if (dump_cnt%16 == 0) Serial.println("");
-			else Serial.print(" ");
-				if(dat_dump < 16) Serial.print("0");
-			Serial.print_long((long)dat_dump,HEX);
+	Serial.println("-----------------/ bank0 /---------------");
+	for(dump_cnt=0; dump_cnt <= 0x7F; dump_cnt++) {
+		reg_rd(0, dump_cnt, reg_data, 1); dat_dump = reg_data[0];
+		if (dump_cnt == 0) Serial.print(""); 
+		else if (dump_cnt%16 == 0) Serial.println("");
+		else Serial.print(" ");
+		if(dat_dump < 16) Serial.print("0");
+		Serial.print_long((long)dat_dump,HEX);
 	}
 	Serial.println("");
 
-		Serial.println("-----------------/ bank1 /---------------");
-		for(dump_cnt=0; dump_cnt <= 0x7F; dump_cnt++) {
-				reg_rd(1, dump_cnt, reg_data, 1); dat_dump = reg_data[0];
-				if (dump_cnt == 0) Serial.print(""); 
-				else if (dump_cnt%16 == 0) Serial.println("");
-			else Serial.print(" ");
-				if(dat_dump < 16) Serial.print("0");
-			Serial.print_long((long)dat_dump,HEX);
-		}
+	Serial.println("-----------------/ bank1 /---------------");
+	for(dump_cnt=0; dump_cnt <= 0x7F; dump_cnt++) {
+		reg_rd(1, dump_cnt, reg_data, 1); dat_dump = reg_data[0];
+		if (dump_cnt == 0) Serial.print(""); 
+		else if (dump_cnt%16 == 0) Serial.println("");
+		else Serial.print(" ");
+		if(dat_dump < 16) Serial.print("0");
+		Serial.print_long((long)dat_dump,HEX);
+	}
 	Serial.println("");
 
-		Serial.println("-----------------/ bank2 /---------------");
-		for(dump_cnt=0; dump_cnt <= 0x7F; dump_cnt++) {
-				reg_rd(2, dump_cnt, reg_data, 1); dat_dump = reg_data[0];
-				if (dump_cnt == 0) Serial.print(""); 
-				else if (dump_cnt%16 == 0) Serial.println("");
-			else Serial.print(" ");
-				if(dat_dump < 16) Serial.print("0");
-			Serial.print_long((long)dat_dump,HEX);
-		}
+	Serial.println("-----------------/ bank2 /---------------");
+	for(dump_cnt=0; dump_cnt <= 0x7F; dump_cnt++) {
+		reg_rd(2, dump_cnt, reg_data, 1); dat_dump = reg_data[0];
+		if (dump_cnt == 0) Serial.print(""); 
+		else if (dump_cnt%16 == 0) Serial.println("");
+		else Serial.print(" ");
+		if(dat_dump < 16) Serial.print("0");
+		Serial.print_long((long)dat_dump,HEX);
+	}
 	Serial.println("");
 
-		Serial.println("-----------------/ bank3 /---------------");
-		for(dump_cnt=0; dump_cnt <= 0x7F; dump_cnt++) {
-				reg_rd(3, dump_cnt, reg_data, 1); dat_dump = reg_data[0];
-				if (dump_cnt == 0) Serial.print(""); 
-				else if (dump_cnt%16 == 0) Serial.println("");
-			else Serial.print(" ");
-				if(dat_dump < 16) Serial.print("0");
-			Serial.print_long((long)dat_dump,HEX);
-		}
+	Serial.println("-----------------/ bank3 /---------------");
+	for(dump_cnt=0; dump_cnt <= 0x7F; dump_cnt++) {
+		reg_rd(3, dump_cnt, reg_data, 1); dat_dump = reg_data[0];
+		if (dump_cnt == 0) Serial.print(""); 
+		else if (dump_cnt%16 == 0) Serial.println("");
+		else Serial.print(" ");
+		if(dat_dump < 16) Serial.print("0");
+		Serial.print_long((long)dat_dump,HEX);
+	}
 	Serial.println("");
 
-		Serial.println("-----------------/ bank6 /---------------");
-		for(dump_cnt=0; dump_cnt <= 0x7F; dump_cnt++) {
-				reg_rd(6, dump_cnt, reg_data, 1); dat_dump = reg_data[0];
-				if (dump_cnt == 0) Serial.print(""); 
-				else if (dump_cnt%16 == 0) Serial.println("");
-			else Serial.print(" ");
-				if(dat_dump < 16) Serial.print("0");
-			Serial.print_long((long)dat_dump,HEX);
-		}
+	Serial.println("-----------------/ bank6 /---------------");
+	for(dump_cnt=0; dump_cnt <= 0x7F; dump_cnt++) {
+		reg_rd(6, dump_cnt, reg_data, 1); dat_dump = reg_data[0];
+		if (dump_cnt == 0) Serial.print(""); 
+		else if (dump_cnt%16 == 0) Serial.println("");
+		else Serial.print(" ");
+		if(dat_dump < 16) Serial.print("0");
+		Serial.print_long((long)dat_dump,HEX);
+	}
 	Serial.println("");
 
-		Serial.println("-----------------/ bank7 /---------------");
-		for(dump_cnt=0; dump_cnt <= 0x7F; dump_cnt++) {
-				reg_rd(7, dump_cnt, reg_data, 1); dat_dump = reg_data[0];
-				if (dump_cnt == 0) Serial.print(""); 
-				else if (dump_cnt%16 == 0) Serial.println("");
-			else Serial.print(" ");
-				if(dat_dump < 16) Serial.print("0");
-			Serial.print_long((long)dat_dump,HEX);
-		}
+	Serial.println("-----------------/ bank7 /---------------");
+	for(dump_cnt=0; dump_cnt <= 0x7F; dump_cnt++) {
+		reg_rd(7, dump_cnt, reg_data, 1); dat_dump = reg_data[0];
+		if (dump_cnt == 0) Serial.print(""); 
+		else if (dump_cnt%16 == 0) Serial.println("");
+		else Serial.print(" ");
+		if(dat_dump < 16) Serial.print("0");
+		Serial.print_long((long)dat_dump,HEX);
+	}
 	Serial.println("");
 
-		Serial.println("-----------------/ bank10 /---------------");
-		for(dump_cnt=0; dump_cnt <= 0x7F; dump_cnt++) {
-				reg_rd(10, dump_cnt, reg_data, 1); dat_dump = reg_data[0];
-				if (dump_cnt == 0) Serial.print(""); 
-				else if (dump_cnt%16 == 0) Serial.println("");
-			else Serial.print(" ");
-				if(dat_dump < 16) Serial.print("0");
-			Serial.print_long((long)dat_dump,HEX);
-		}
+	Serial.println("-----------------/ bank10 /---------------");
+	for(dump_cnt=0; dump_cnt <= 0x7F; dump_cnt++) {
+		reg_rd(10, dump_cnt, reg_data, 1); dat_dump = reg_data[0];
+		if (dump_cnt == 0) Serial.print(""); 
+		else if (dump_cnt%16 == 0) Serial.println("");
+		else Serial.print(" ");
+		if(dat_dump < 16) Serial.print("0");
+		Serial.print_long((long)dat_dump,HEX);
+	}
 	Serial.println("");
 }
 #endif

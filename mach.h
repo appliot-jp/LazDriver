@@ -41,8 +41,8 @@ struct fc_addr {
 	} panid;
 	uint8_t addr_type;
 	union {
+		uint8_t lddn_addr;
 		uint16_t short_addr;
-		uint16_t lddn_addr;
 		uint8_t ieee_addr[8];
 	}addr;
 };
@@ -110,12 +110,10 @@ struct rf_param {
 	uint8_t tx_max_be;
 	uint8_t tx_retry;
 	uint8_t ant_sw;
-#ifdef MK74040
-	uint8_t modulation;
-	uint8_t dsssSF;
-	uint8_t dsssSize;
-#endif
-	uint32_t ack_timeout;
+	int8_t modulation;
+	int8_t dsssSF;
+	int8_t dsssSize;
+	uint16_t ack_timeout;
 	int32_t cca_level;		//mbm
 	int32_t tx_power;
 };
@@ -128,7 +126,7 @@ struct mac_addr {
 	uint8_t		ieee_addr[8];			// for lazurite
 };
 struct mach_param {
-	MACL_PARAM *macl;
+	struct macl_param *macl;
 	struct mac_addr my_addr;
 	struct mac_addr coord_addr;
 	struct mac_header tx;
@@ -141,23 +139,22 @@ struct mach_param {
 };
 
 extern struct mach_param *mach_init(void);
-extern int mach_sleep(bool on);
+extern int mach_sleep(void);
 extern int mach_setup(struct rf_param *rf);
 extern int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr);
 extern int mach_set_dst_ieee_addr(uint16_t panid,uint8_t *addr);
 extern int mach_set_dst_short_addr(uint16_t panid,uint16_t short_addr);
 extern int mach_set_src_addr(uint8_t addr_mode);
-extern int mach_tx(struct mac_fc_alignment,uint8_t addr_type,BUFFER *txbuf);
+extern int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf,void (*callback)(uint8_t rssi, int status));
 extern int mach_start(BUFFER *rxbuf);
 extern int mach_stop(void);
 extern int mach_parse_data(struct mac_header *header);
 extern int mach_ed(uint8_t *ed);
-extern int mach_rx_irq(struct mac_header *rx);
+extern int mach_rx_irq(int status, struct mac_header *rx);
 extern int mach_set_promiscuous(bool on);
 extern void mach_get_enhance_ack(uint8_t **data, int *size);
 extern bool mach_set_enhance_ack(uint8_t *data, int size);
 extern void mach_set_ack_tx_interval(uint16_t interval);
-extern void mach_phy_cleanup(void);
 
 #endif
 
