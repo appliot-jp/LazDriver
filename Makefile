@@ -9,10 +9,10 @@ endif
 EXTRA_CFLAGS += -D$(AREA) -DRBUF=$(RBUF)
 
 ifeq ($(CFLAGS),DMK74040)
- CFILES = drv-lazurite.c subghz_api.c aes/aes.c mach.c  arib_lazurite.c macl.c phy/phy_ml7404.c hwif/hal-lzpi.c  hwif/random-lzpi.c  hwif/spi-lzpi.c hwif/i2c-lzpi.c 
+ CFILES = drv-lazurite.c subghz_api.c aes/aes.c mach.c  macl.c phy/phy_ml7404.c hwif/hal-lzpi.c  hwif/random-lzpi.c  hwif/spi-lzpi.c hwif/i2c-lzpi.c 
  EXTRA_CFLAGS += -$(CFLAGS)
 else
- CFILES = drv-lazurite.c subghz_api.c aes/aes.c mach.c  arib_lazurite.c macl.c phy/phy_ml7396.c hwif/hal-lzpi.c  hwif/random-lzpi.c  hwif/spi-lzpi.c hwif/i2c-lzpi.c 
+ CFILES = drv-lazurite.c subghz_api.c aes/aes.c mach.c  macl.c phy/phy_ml7396.c hwif/hal-lzpi.c  hwif/random-lzpi.c  hwif/spi-lzpi.c hwif/i2c-lzpi.c 
 endif
 
 lazdriver-objs := $(CFILES:.c=.o)

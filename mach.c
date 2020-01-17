@@ -38,7 +38,6 @@
 #endif
 
 #include "mach.h"
-//#include "arib_lazurite.h"
 #include "aes/aes.h"
 #include "errno.h"
 #include "endian.h"
