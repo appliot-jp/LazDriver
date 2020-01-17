@@ -302,7 +302,7 @@ static void fifo_wr(uint8_t bank, uint8_t addr)
 {
 	uint8_t *p_header = phy.out.data -1;
 	uint16_t size = phy.out.len;
-	static const unsigned char s1[] = "PHY BUFFER ERROR";
+	static const char s1[] = "PHY BUFFER ERROR";
 
 	regbank(bank);
 	*p_header = (uint8_t)((addr << 1) | 0x01);
@@ -383,7 +383,7 @@ static void phy_rst(void)
 static bool vco_cal(void) {
 
 	uint8_t cycle = 0;
-	static const unsigned char s1[] = "vco_cal error";
+	static const char s1[] = "vco_cal error";
 
 	reg.wdata[1]=0x01;
 	reg_wr(REG_ADR_VCO_CAL_START, 2);
@@ -451,8 +451,8 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 	uint8_t device_id[4];
 	uint8_t eui64_extend_type;
 	const REGSET *regset;
-	static const unsigned char s1[] = "unsupported device1";
-	static const unsigned char s2[] = "unsupported device2";
+	static const char s1[] = "unsupported device1";
+	static const char s2[] = "unsupported device2";
 
 	// Check Parameters
 #ifdef JP
@@ -810,8 +810,8 @@ void phy_txdone(void)
 {
 	int cycle = 0;
 	uint32_t intsrc;
-	static const unsigned char s1[] = "auto txdone error1";
-	static const unsigned char s2[] = "auto txdone error2";
+	static const char s1[] = "auto txdone error1";
+	static const char s2[] = "auto txdone error2";
 
 	reg_rd(REG_ADR_INT_SOURCE_GRP1, 4);
 	memcpy(&intsrc,reg.rdata,4);
@@ -939,16 +939,16 @@ extern struct thread_param m;
 
 void phy_monitor(void){
 #ifdef LAZURITE_IDE
-	static const unsigned char s1[] = "PHY_MONITOR";
-	static const unsigned char s2[] = "INT SOURCE:: ";
-	static const unsigned char s3[] = ",";
-	static const unsigned char s4[] = "INT ENABLE:: ";
-	static const unsigned char s5[] = "RF STATUS:: ";
-	static const unsigned char s6[] = "RF CCA CNTL:: ";
-	static const unsigned char s7[] = "PACKET MODE SET:: ";
-	static const unsigned char s8[] = "PD DATA REQ:: ";
-	static const unsigned char s9[] = "PD DATA IND:: ";
-	static const unsigned char s10[] = "AUTO ACK SET: ";
+	static const char s1[] = "PHY_MONITOR";
+	static const char s2[] = "INT SOURCE:: ";
+	static const char s3[] = ",";
+	static const char s4[] = "INT ENABLE:: ";
+	static const char s5[] = "RF STATUS:: ";
+	static const char s6[] = "RF CCA CNTL:: ";
+	static const char s7[] = "PACKET MODE SET:: ";
+	static const char s8[] = "PD DATA REQ:: ";
+	static const char s9[] = "PD DATA IND:: ";
+	static const char s10[] = "AUTO ACK SET: ";
 #endif
 	// READ INT SOURCE
 	reg_rd(REG_ADR_INT_SOURCE_GRP1, 4);
@@ -1049,11 +1049,11 @@ void phy_regdump(void) {
 	uint8_t bank,dump_cnt;
 #ifdef LAZURITE_IDE
 	uint8_t i;
-	static const unsigned char s1[] = "-----------------/ bank";
-	static const unsigned char s2[] = " /---------------";
-	static const unsigned char s3[] = " ";
-	static const unsigned char s4[] = "0";
-	static const unsigned char s5[] = "";
+	static const char s1[] = "-----------------/ bank";
+	static const char s2[] = " /---------------";
+	static const char s3[] = " ";
+	static const char s4[] = "0";
+	static const char s5[] = "";
 #endif
 
 	for(bank = 8; bank<=10; bank++) {

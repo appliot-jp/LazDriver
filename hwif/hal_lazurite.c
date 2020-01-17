@@ -364,9 +364,9 @@ extern void uart_check_irq(void);
 extern struct macl_param macl;
 void HAL_reset(){
 	int i;
-	static const unsigned char s1[] = "************** PHY MONITOR ***************";
-	static const unsigned char s2[] = "macl.condition::";
-	static const unsigned char s3[] = "********* HW RESET after 5sec  ***********";
+	static const char s1[] = "************** PHY MONITOR ***************";
+	static const char s2[] = "macl.condition::";
+	static const char s3[] = "********* HW RESET after 5sec  ***********";
 	dis_interrupts(DI_SUBGHZ);
 	alert(s1);
 	Serial.print(s2);

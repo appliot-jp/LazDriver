@@ -255,8 +255,8 @@ static SUBGHZ_MSG subghz_tx_raw(struct mac_fc_alignment fc, void (*callback)(uin
 
 	int result;
 	uint32_t time;
-	static const unsigned char s1[] = "subghz_tx_raw error1";
-	static const unsigned char s2[] = "subghz_tx_raw error2";
+	static const char s1[] = "subghz_tx_raw error1";
+	static const char s2[] = "subghz_tx_raw error2";
 
 	subghz_param.mach->macl->done = false;
 	result = mach_tx(fc,subghz_param.addr_type,&subghz_param.tx,callback);
