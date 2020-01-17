@@ -62,7 +62,7 @@ static void macl_txdone_handler(void);
 static void macl_txdone_abort_handler(void);
 static void macl_ack_rxdone_handler(void);
 static void macl_ack_rxdone_abort_handler(void);
-#if !defined(LAZURITE_IDE) || defined(DEBUG)
+#if defined(DEBUG)
 static const char macl_condition_string[][32] = {
 	"SUBGHZ_ST_INIT",
 	"SUBGHZ_ST_INIT_FAIL",
@@ -353,14 +353,15 @@ static void macl_ccadone_handler(void)
 
 static void macl_ccadone_abort_handler(void)
 {
+	uint8_t ccadone;
 	phy_timer_stop();
-#if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
-#endif
 	macl.status = -EBUSY;
 	macl.condition=SUBGHZ_ST_CCA_ABORT;
 
-	phy_ccadone();
+	ccadone = phy_ccadone();
+#if !defined(LAZURITE_IDE) && defined(DEBUG)
+	printk(KERN_INFO"%s,%d,%02x\n",__func__,__LINE__,ccadone);
+#endif
 	macl.done = true;
 	if(macl.tx_callback) macl.tx_callback(0,macl.status);
 
