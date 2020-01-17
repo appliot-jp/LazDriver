@@ -22,6 +22,7 @@
 	#pragma SEGCODE "OTA_SEGCODE"
 	#pragma SEGINIT "OTA_SEGINIT"
 	#pragma SEGNOINIT "OTA_SEGNOINIT"
+	#pragma SEGCONST "OTA_SEGCONST"
 #endif
 #ifdef LAZURITE_IDE
 	#include <common.h>
@@ -363,9 +364,12 @@ extern void uart_check_irq(void);
 extern struct macl_param macl;
 void HAL_reset(){
 	int i;
+	static const unsigned char s1[] = "************** PHY MONITOR ***************";
+	static const unsigned char s2[] = "macl.condition::";
+	static const unsigned char s3[] = "********* HW RESET after 5sec  ***********";
 	dis_interrupts(DI_SUBGHZ);
-	alert("************** PHY MONITOR ***************");
-	Serial.print("macl.condition::");
+	alert(s1);
+	Serial.print(s2);
 	Serial.println_long(macl.condition,DEC);
 	phy_monitor();
 
@@ -374,7 +378,7 @@ void HAL_reset(){
 	digitalWrite(25,LOW);
 	digitalWrite(26,LOW);
 
-	alert("********* HW RESET after 5sec  ***********");
+	alert(s3);
 	for(i = 0; i < 10 ; i++) {
 		delay(500);
 		digitalWrite(25,!digitalRead(25));

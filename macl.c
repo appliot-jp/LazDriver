@@ -287,7 +287,8 @@ static void macl_ack_txdone_handler(void)
 extern int reg_access_check;
 static void macl_ack_txdone_abort_handler(void)
 {
-	alert("macl_txdone_abort_handler");
+	static const unsigned char s1[] = "macl_txdone_abort_handler";
+	alert(s1);
 	phy_monitor();
 
 	phy_timer_stop();
@@ -302,11 +303,12 @@ int macl_cca_setting(void) {
 	uint8_t be;
 	uint16_t bo;
 	uint16_t cca_time;
+	static const unsigned char s1[] = "phy.unit_backoff_period is not set";
 #ifdef JP
 	be = (uint8_t)(macl.ccaMinBe + macl.ccaCount);
 	if(be >= macl.ccaMaxBe) be = macl.ccaMaxBe;
 	if(macl.phy->unit_backoff_period == 0) {
-		alert("phy.unit_backoff_period is not set");
+		alert(s1);
 		return -EINVAL;
 	}
 	bo = (rand()%(( 1 << be) - 1))*macl.phy->unit_backoff_period;
@@ -371,10 +373,11 @@ static void macl_ccadone_abort_handler(void)
 
 static void macl_txdone_abort_handler(void)
 {
+	static const unsigned char s1[] = "macl_txdone_abort_handler";
 	macl.condition=SUBGHZ_ST_TX_ABORT;
 	phy_timer_stop();
 	phy_stop();
-	alert("macl_txdone_abort_handler");
+	alert(s1);
 	phy_monitor();
 	macl.status = -EDEADLK;
 	macl.done = true;
@@ -444,6 +447,7 @@ static void macl_ack_rxdone_handler(void)
 static void macl_ack_rxdone_abort_handler(void)
 {
 	int status;
+	static const unsigned char s1[] = "macl_ack_txdone txpre error";
 	macl.condition=SUBGHZ_ST_ACK_RX_ABORT;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s,%d,%s,%d\n",__func__,__LINE__,macl_state_to_string(macl.condition),macl.condition);
@@ -460,7 +464,7 @@ static void macl_ack_rxdone_abort_handler(void)
 		}
 		status = phy_txpre(MANUAL_TX);
 		if(status != STATUS_OK) {
-			alert("macl_ack_txdone txpre error");
+			alert(s1);
 			macl.status = -EDEADLK;
 			macl.done = true;
 			if(macl.tx_callback) macl.tx_callback(0,macl.status);

@@ -60,6 +60,7 @@ You should pad the end of the string with zeros if this is not the case.
 
 #ifdef SUBGHZ_OTA
 #pragma SEGCODE "OTA_SEGCODE"
+#pragma SEGINIT "OTA_SEGINIT"
 #pragma SEGNOINIT "OTA_SEGNOINIT"
 #pragma SEGCONST "OTA_SEGCONST"
 #endif

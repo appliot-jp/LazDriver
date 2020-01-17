@@ -22,6 +22,9 @@
 #ifndef	_SUBGHZ_API_H_
 #define _SUBGHZ_API_H_
 
+#if !defined(JP)
+	#error Missing area code macro definie.
+#endif
 //#include "common_lazurite.h"
 #include "mach.h"
 

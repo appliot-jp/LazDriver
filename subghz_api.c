@@ -255,6 +255,8 @@ static SUBGHZ_MSG subghz_tx_raw(struct mac_fc_alignment fc, void (*callback)(uin
 
 	int result;
 	uint32_t time;
+	static const unsigned char s1[] = "subghz_tx_raw error1";
+	static const unsigned char s2[] = "subghz_tx_raw error2";
 
 	subghz_param.mach->macl->done = false;
 	result = mach_tx(fc,subghz_param.addr_type,&subghz_param.tx,callback);
@@ -269,7 +271,7 @@ static SUBGHZ_MSG subghz_tx_raw(struct mac_fc_alignment fc, void (*callback)(uin
 	if(time == 0) {
 		subghz_param.tx_stat.rssi = 0;
 		subghz_param.tx_stat.status = -EDEADLK;
-		alert("subghz_tx_raw error1");
+		alert(s1);
 #ifdef	LAZURITE_IDE
 		dis_interrupts(DI_SUBGHZ);
 #endif
@@ -291,7 +293,7 @@ error:
 	if (subghz_param.mach->macl->rxOnEnable) {
 		if(mach_start(&subghz_param.rx)!=STATUS_OK) {
 			subghz_param.tx_stat.status = -EDEADLK;
-			alert("subghz_tx_raw error2");
+			alert(s2);
 			HAL_reset();
 		}
 	} else {

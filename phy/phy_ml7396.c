@@ -302,13 +302,15 @@ static void fifo_wr(uint8_t bank, uint8_t addr)
 {
 	uint8_t *p_header = phy.out.data -1;
 	uint16_t size = phy.out.len;
+	static const unsigned char s1[] = "PHY BUFFER ERROR";
+
 	regbank(bank);
 	*p_header = (uint8_t)((addr << 1) | 0x01);
 
 	if(size <= 256) {
 		HAL_SPI_transfer(p_header,size+1,reg.rdata,0);
 	} else {
-		alert("PHY BUFFER ERROR");
+		alert(s1);
 	}
 
 }
@@ -381,6 +383,7 @@ static void phy_rst(void)
 static bool vco_cal(void) {
 
 	uint8_t cycle = 0;
+	static const unsigned char s1[] = "vco_cal error";
 
 	reg.wdata[1]=0x01;
 	reg_wr(REG_ADR_VCO_CAL_START, 2);
@@ -390,7 +393,7 @@ static bool vco_cal(void) {
 		HAL_delayMicroseconds(100L);
 		reg_rd(REG_ADR_INT_SOURCE_GRP1, 1);
 		if(cycle > 100) {
-			alert("vco_cal error");
+			alert(s1);
 			phy_monitor();
 			goto error;
 		}
@@ -448,6 +451,8 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 	uint8_t device_id[4];
 	uint8_t eui64_extend_type;
 	const REGSET *regset;
+	static const unsigned char s1[] = "unsupported device1";
+	static const unsigned char s2[] = "unsupported device2";
 
 	// Check Parameters
 #ifdef JP
@@ -527,13 +532,13 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 				}
 				break;
 			default:
-				alert("unsupported device1");
+				alert(s1);
 				return -EINVAL;
 				break;
 		}
 		HAL_I2C_read(0x80, &reg.wdata[1],1),  reg_wr(REG_ADR_OSC_ADJ2, 2);  /* Additional parameter */
 	} else {
-		alert("unsupported device2");
+		alert(s2);
 	}
 	reg.wdata[1] = 0x22, reg_wr(REG_ADR_RX_PR_LEN_SFD_LEN,  2);
 	reg.wdata[1] = 0x00, reg_wr(REG_ADR_SYNC_CONDITION,     2);
@@ -805,17 +810,20 @@ void phy_txdone(void)
 {
 	int cycle = 0;
 	uint32_t intsrc;
+	static const unsigned char s1[] = "auto txdone error1";
+	static const unsigned char s2[] = "auto txdone error2";
+
 	reg_rd(REG_ADR_INT_SOURCE_GRP1, 4);
 	memcpy(&intsrc,reg.rdata,4);
 	do {
 		cycle++;
 		reg_rd(REG_ADR_RF_STATUS,1);
 		if((reg.rdata[0] & 0x0F) != 0x08) {
-			alert("auto txdone error1");
+			alert(s1);
 			phy_trx_state(PHY_ST_FORCE_TRXOFF);
 			break;
 		} else if(cycle > 10000) {
-			alert("auto txdone error2");
+			alert(s2);
 			phy_trx_state(PHY_ST_FORCE_TRXOFF);
 			break;
 		}
@@ -930,7 +938,18 @@ extern struct thread_param m;
 
 
 void phy_monitor(void){
-
+#ifdef LAZURITE_IDE
+	static const unsigned char s1[] = "PHY_MONITOR";
+	static const unsigned char s2[] = "INT SOURCE:: ";
+	static const unsigned char s3[] = ",";
+	static const unsigned char s4[] = "INT ENABLE:: ";
+	static const unsigned char s5[] = "RF STATUS:: ";
+	static const unsigned char s6[] = "RF CCA CNTL:: ";
+	static const unsigned char s7[] = "PACKET MODE SET:: ";
+	static const unsigned char s8[] = "PD DATA REQ:: ";
+	static const unsigned char s9[] = "PD DATA IND:: ";
+	static const unsigned char s10[] = "AUTO ACK SET: ";
+#endif
 	// READ INT SOURCE
 	reg_rd(REG_ADR_INT_SOURCE_GRP1, 4);
 #ifndef LAZURITE_IDE
@@ -938,14 +957,14 @@ void phy_monitor(void){
 	printk(KERN_INFO"INT SOURCE:: %x,%x,%x,%x\n", reg.rdata[0],reg.rdata[1],reg.rdata[2],reg.rdata[3]);
 #else
 	delay(10);
-	Serial.println("PHY_MONITOR");
-	Serial.print("INT SOURCE:: ");
+	Serial.println(s1);
+	Serial.print(s2);
 	Serial.print_long((long)reg.rdata[0],HEX);
-	Serial.print(",");
+	Serial.print(s3);
 	Serial.print_long((long)reg.rdata[1],HEX);
-	Serial.print(",");
+	Serial.print(s3);
 	Serial.print_long((long)reg.rdata[2],HEX);
-	Serial.print(",");
+	Serial.print(s3);
 	Serial.println_long((long)reg.rdata[3],HEX);
 #endif
 
@@ -954,13 +973,13 @@ void phy_monitor(void){
 #ifndef LAZURITE_IDE
 	printk(KERN_INFO"INT ENABLE:: %x,%x,%x,%x\n", reg.rdata[0],reg.rdata[1],reg.rdata[2],reg.rdata[3]);
 #else
-	Serial.print("INT ENABLE:: ");
+	Serial.print(s4);
 	Serial.print_long((long)reg.rdata[0],HEX);
-	Serial.print(",");
+	Serial.print(s3);
 	Serial.print_long((long)reg.rdata[1],HEX);
-	Serial.print(",");
+	Serial.print(s3);
 	Serial.print_long((long)reg.rdata[2],HEX);
-	Serial.print(",");
+	Serial.print(s3);
 	Serial.println_long((long)reg.rdata[3],HEX);
 #endif
 
@@ -969,42 +988,42 @@ void phy_monitor(void){
 #ifndef LAZURITE_IDE
 	printk(KERN_INFO"RF STATUS:: %x\n", reg.rdata[0]);
 #else
-	Serial.print("RF STATUS:: ");
+	Serial.print(s5);
 	Serial.println_long((long)reg.rdata[0],HEX);
 #endif
 	reg_rd(REG_ADR_CCA_CNTRL, 1);
 #ifndef LAZURITE_IDE
 	printk(KERN_INFO"RF CCA CNTL:: %x\n", reg.rdata[0]);
 #else
-	Serial.print("RF CCA CNTL:: ");
+	Serial.print(s6);
 	Serial.println_long((long)reg.rdata[0],HEX);
 #endif
 	reg_rd(REG_ADR_PACKET_MODE_SET, 1);
 #ifndef LAZURITE_IDE
 	printk(KERN_INFO"PACKET MODE SET:: %x\n", reg.rdata[0]);
 #else
-	Serial.print("PACKET MODE SET:: ");
+	Serial.print(s7);
 	Serial.println_long((long)reg.rdata[0],HEX);
 #endif
 	reg_rd(REG_ADR_PD_DATA_REQ, 1);
 #ifndef LAZURITE_IDE
 	printk(KERN_INFO"PD DATA REQ:: %x\n", reg.rdata[0]);
 #else
-	Serial.print("PD DATA REQ:: ");
+	Serial.print(s8);
 	Serial.println_long((long)reg.rdata[0],HEX);
 #endif
 	reg_rd(REG_ADR_PD_DATA_IND, 1);
 #ifndef LAZURITE_IDE
 	printk(KERN_INFO"PD DATA IND:: %x\n", reg.rdata[0]);
 #else
-	Serial.print("PD DATA IND:: ");
+	Serial.print(s9);
 	Serial.println_long((long)reg.rdata[0],HEX);
 #endif
 	reg_rd(REG_ADR_AUTO_ACK_SET, 1);
 #ifndef LAZURITE_IDE
 	printk(KERN_INFO"AUTO ACK SET: %x\n", reg.rdata[0]);
 #else
-	Serial.print("AUTO ACK SET: ");
+	Serial.print(s10);
 	Serial.println_long((long)reg.rdata[0],HEX);
 #endif
 }
@@ -1030,13 +1049,18 @@ void phy_regdump(void) {
 	uint8_t bank,dump_cnt;
 #ifdef LAZURITE_IDE
 	uint8_t i;
+	static const unsigned char s1[] = "-----------------/ bank";
+	static const unsigned char s2[] = " /---------------";
+	static const unsigned char s3[] = " ";
+	static const unsigned char s4[] = "0";
+	static const unsigned char s5[] = "";
 #endif
 
 	for(bank = 8; bank<=10; bank++) {
 #ifdef LAZURITE_IDE
-		Serial.print("-----------------/ bank");
+		Serial.print(s1);
 		Serial.print_long((long)(bank-8),DEC);
-		Serial.println(" /---------------");
+		Serial.println(s2);
 #else
 		printk(KERN_INFO"-----------------/ bank%d /---------------",bank-8);
 #endif
@@ -1044,13 +1068,13 @@ void phy_regdump(void) {
 			reg_rd(bank, dump_cnt, 8);
 #ifdef LAZURITE_IDE
 			for(i=0;i<8;i++) {
-				Serial.print(" ");
+				Serial.print(s3);
 				if(reg.rdata[i] < 16) {
-					Serial.print("0");
+					Serial.print(s4);
 				}
 				Serial.print_long((long)reg.rdata[i],HEX);
 			}
-			Serial.println("");
+			Serial.println(s5);
 #else
 			printk(KERN_INFO"%02X %02X %02X %02X %02X %02X %02X %02X\n",
 					reg.rdata[0],
