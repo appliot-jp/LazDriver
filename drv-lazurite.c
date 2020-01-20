@@ -247,19 +247,27 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 						char ckey[33]; 
 						unsigned char shift;
 						unsigned char hex;
-						memcpy(ckey,(const void *)arg,32);
-						ckey[32]='\0';
-						for(i=0;i < 32;i++){
-							index = ckey[i]&0x0f;
-							// a - f or A - f
-							if(ckey[i]&0xc0) index +=10;
-							hex = chr_to_hex[index];
-							// LSB side is 0 shift, MSB side is 4 bits shifth
-							shift = 4*(i%2);
-							p.key[i/2] |= (hex >> shift);
+						if(arg == 0) {
+							ret = SubGHz.setKey(NULL);
+						} else {
+							if(copy_from_user(ckey,(const char __user *)arg,32)) {
+								printk(KERN_INFO"%s %d %s\n",__func__,__LINE__,"error of copy key");
+								ret = -EFAULT;
+							} else {
+								ckey[32]='\0';
+								for(i=0;i < 32;i++){
+									index = ckey[i]&0x0f;
+									// a - f or A - f
+									if(ckey[i]&0xc0) index +=10;
+									hex = chr_to_hex[index];
+									// LSB side is 0 shift, MSB side is 4 bits shifth
+									shift = 4*(i%2);
+									p.key[i/2] |= (hex >> shift);
+								}
+							}
+							ret = SubGHz.setKey(p.key);
+							if(ret != SUBGHZ_OK) ret = -EFAULT;
 						}
-						ret = SubGHz.setKey(p.key);
-						if(ret != SUBGHZ_OK) ret = -EFAULT;
 					}
 					break;
 				default:

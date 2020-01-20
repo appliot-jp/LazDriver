@@ -321,7 +321,8 @@ static int mach_make_header(struct mac_header *header) {
 	header->fc.fc_bit.panid_comp = header->addr_type & 0x01;
 	header->fc.fc_bit.nop = 0;
 	if(header->payload.len != 0) {
-		if (AES128_getStatus()){
+		uint8_t keyStatus = AES128_getStatus();
+		if (keyStatus){
 			header->fc.fc_bit.sec_enb = 1;
 			if(header->raw.size >= ((header->payload.len&0xFFF0)+16+offset)) {
 				if (mach.rx.fc.fc_bit.seq_comp){
