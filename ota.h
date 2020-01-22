@@ -11,6 +11,8 @@
 #include "subghz_api.h"
 #define OTA_AES_KEY_SIZE		( 16 )
 #define OTA_PRGM_NAME_SIZE		( 16 )		// max 15 bytes + null termination '\0'
+#define OTA_ERR_PARAMS	( -1 )
+#define OTA_ERR_EEPROM_VERIFY	( -2 )
 
 __packed typedef struct {
 	uint8_t hw_type;
@@ -24,11 +26,11 @@ __packed typedef struct {
 } OTA_PARAM;
 
 typedef struct {
-    void	(*init)(void);		// Do not call this function. It shall be called only from main.c
-    void	(*boot)(void);		// Do not call this function. It shall be called only from main.c
-	void	(*start)(OTA_PARAM *param);
-    uint8_t	(*getHwType)(void);
-    uint8_t	(*getVersion)(void);
+	void	(*init)(void);		// Do not call this function. It shall be called only from main.c
+	void	(*boot)(void);		// Do not call this function. It shall be called only from main.c
+	int		(*start)(OTA_PARAM *param);
+	uint8_t	(*getHwType)(void);
+	uint8_t	(*getVersion)(void);
 	bool	(*checkAesKey)(void);
 } st_OTA_f;
 
