@@ -1160,7 +1160,6 @@ int phy_ccaCtrl(uint32_t us){
 }
 uint8_t phy_ccadone(void) {
 	volatile uint8_t ccadone;
-	int status;
 	phy_inten(~HW_EVENT_ALL);
 	reg_rd(BANK_CCA_CTRL_ADR,RADIO_CCA_CTRL_ADR,1);
 	ccadone = reg.data[0];
