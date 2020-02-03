@@ -182,7 +182,7 @@ int rf_main_thread(void *p)
 		if((flag_irq_enable == true) && (gpio_get_value(PHY_SINTN) == 0)) {
 			m.trigger |= 0x01;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-			printk(KERN_INFO"%s %s %d macl.condition=%d\n",__FILE__,__func__,__LINE__,macl.condition);
+			printk(KERN_INFO"%s %s %d %d %d macl.condition=%d\n",__FILE__,__func__,__LINE__,m.trigger, gpio_get_value(PHY_SINTN),macl.condition);
 #endif
 		}
 		if(m.trigger == 0x00) {
@@ -192,7 +192,6 @@ int rf_main_thread(void *p)
 		if(kthread_should_stop()) break;
 		if(m.trigger&0x01){ 				// SINT INTERRUPT
 			if(ext_irq_func) {
-				//que_th2ex=true;
 				ext_irq_func();
 			}
 			m.trigger&=~0x03;

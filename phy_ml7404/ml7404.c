@@ -1085,8 +1085,6 @@ int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw){
 	printk(KERN_INFO"%s %d %06x %d\n",__func__,__LINE__,intsrc,i);
 #endif
 
-	phy_regdump();
-
 	return STATUS_OK;
 }
 
