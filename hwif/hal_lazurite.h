@@ -23,11 +23,11 @@
 #define _HAL_LAZURITE_H_
 
 
-#define HAL_GPIO_CSB    6
-#define HAL_GPIO_RESETN 7
-#define HAL_GPIO_DMON   5
-#define HAL_GPIO_SINTN  27
-#define HAL_GPIO_REGPDIN        32
-#define BP3596A_SINTN_IRQNUM	3
+#define PHY_CSB					6
+#define PHY_RESETN				7
+#define PHY_DMON				5
+#define PHY_SINTN				27
+#define PHY_REGPDIN				32
+#define PHY_SINTN_IRQNUM		3
 
 #endif  //_HAL_LAZURIE_H_

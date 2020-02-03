@@ -117,7 +117,7 @@ extern int	macl_rx_irq_notification(void);
 extern int	macl_sleep(void);
 extern void	macl_set_ack_tx_interval(uint16_t interval);
 
-extern int	macl_set_modulation(int8_t mod, int8_t sf, int8_t size);
-extern int	macl_get_modulation(int8_t *mod, int8_t *sf, int8_t *size);
+extern int	macl_set_modulation(int8_t mod, int8_t sf);
+extern int	macl_get_modulation(int8_t *mod, int8_t *sf);
 #endif
 

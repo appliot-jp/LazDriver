@@ -25,11 +25,11 @@
 #include <linux/wait.h>
 #include <linux/sched.h>
 
-#define GPIO_RESETN 27  // 
-#define GPIO_REGPDIN 17  // 
-#define GPIO_SINTN  18  //
-#define GPIO_TX_LED  6 //
-#define GPIO_RX_LED  13  //
+#define PHY_RESETN			27
+#define PHY_REGPDIN			17
+#define PHY_SINTN				18
+#define GPIO_TX_LED 		6
+#define GPIO_RX_LED			13
 
 struct s_CHAR_DEV {
 	char name[32];

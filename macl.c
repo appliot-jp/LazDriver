@@ -162,32 +162,36 @@ static void macl_dummy_handler(void)
 	macl.condition = SUBGHZ_ST_DUMMY;
 	return;
 }
+static void macl_rxdone_abort_handler(void) {
+	printk(KERN_INFO"%s,%d\n",__func__,__LINE__);
+	macl.condition=SUBGHZ_ST_RX_START;
+	phy_rxstart();
+	HAL_write_lock(false);
+}
 static void macl_rxfifo_handler(void)
 {
 	int status;
-
 	macl.condition=SUBGHZ_ST_RX_FIFO;
 
 	phy_timer_stop();
 	HAL_write_lock(true);
 
-#if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
-#endif
 	status = phy_rxdone();
+#if !defined(LAZURITE_IDE) && defined(DEBUG)
+	printk(KERN_INFO"%s,%d,%s,%d\n",__func__,__LINE__,macl_state_to_string(macl.condition),status);
+#endif
 	switch(status) {
 		case FIFO_CONT:			// next data 
-			phy_timer_start(100,macl_ack_txdone_abort_handler);
+			phy_timer_start(100,macl_rxdone_abort_handler);
 			break;
 		case FIFO_DONE:		// rxdone
 			if((macl.promiscuousMode) || (((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_CMD) || ((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_DATA) )){
 				if(macl_rxdone_handler() == true) {
 					HAL_write_lock(false);
 				}
-				if(macl.status == STATUS_OK) {
-					break;
-				}
+				macl.status = STATUS_OK;
 			}
+			break;
 		case CRC_ERROR:		// rxdone
 		default:			// error
 			macl.condition=SUBGHZ_ST_RX_START;
@@ -338,15 +342,13 @@ static void macl_ccadone_handler(void)
 	phy_timer_stop();
 
 	cca_idle = phy_ccadone();
-	if(cca_idle != false) {
-		phy_timer_start(160,macl_txdone_abort_handler);
-		phy_sint_handler(macl_txfifo_handler);
-		status = phy_txstart();
-		if(status != STATUS_OK) {
-			macl.status = status;
-			macl.done = true;
-			if(macl.tx_callback) macl.tx_callback(0,macl.status);
-		}
+	phy_timer_start(160,macl_txdone_abort_handler);
+	phy_sint_handler(macl_txfifo_handler);
+	status = phy_txstart();
+	if(status != STATUS_OK) {
+		macl.status = status;
+		macl.done = true;
+		if(macl.tx_callback) macl.tx_callback(0,macl.status);
 	}
 
 	HAL_wake_up_interruptible(&macl.que);
@@ -376,9 +378,10 @@ static void macl_txdone_abort_handler(void)
 	static const char s1[] = "macl_txdone_abort_handler";
 	macl.condition=SUBGHZ_ST_TX_ABORT;
 	phy_timer_stop();
+	phy_monitor();
 	phy_stop();
 	alert(s1);
-	phy_monitor();
+	//phy_monitor();
 	macl.status = -EDEADLK;
 	macl.done = true;
 	if(macl.tx_callback) macl.tx_callback(0,macl.status);
@@ -392,11 +395,11 @@ static void macl_txdone_handler(void)
 	uint16_t ack_timeout;
 	macl.condition=SUBGHZ_ST_TX_DONE;
 	phy_timer_stop();
-	phy_txdone();
-	ack_req = (uint8_t)(macl.phy->out.data[0]&0x20);
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
+	phy_txdone();
+	ack_req = (uint8_t)(macl.phy->out.data[0]&0x20);
 	if(ack_req){
 		ack_timeout = (uint16_t)(macl.ack_timeout == 0 ? 20: macl.ack_timeout);
 		phy_timer_start(ack_timeout,macl_ack_rxdone_abort_handler);
@@ -428,7 +431,7 @@ static void macl_ack_rxdone_handler(void)
 			if(((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_ACK) && (macl.phy->in.data[2] == macl.sequenceNum)){
 				phy_timer_stop();
 				macl_rx_irq(&isAck);
-				macl_rx_irq(NULL);
+				//macl_rx_irq(NULL);
 				macl.done = true;
 				if(macl.tx_callback) macl.tx_callback(macl.phy->in.data[macl.phy->in.len-1],STATUS_OK);
 				break;
@@ -559,7 +562,7 @@ int	macl_stop(void)
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
-	HAL_GPIO_enableInterrupt();
+	HAL_GPIO_disableInterrupt();
 	phy_stop();
 	phy_timer_stop();
 	phy_sint_handler(macl_dummy_handler);
@@ -603,14 +606,14 @@ error:
 	return macl.status;
 }
 
-int	macl_set_modulation(int8_t mod, int8_t sf, int8_t size)
+int	macl_set_modulation(int8_t mod, int8_t sf)
 {
-	return phy_setModulation(mod, sf, size);
+	return phy_setModulation(mod, sf);
 }
 
-int	macl_get_modulation(int8_t *mod, int8_t *sf, int8_t *size)
+int	macl_get_modulation(int8_t *mod, int8_t *sf)
 {
-	return phy_getModulation(mod,sf,size);
+	return phy_getModulation(mod,sf);
 }
 
 int	macl_set_channel(uint8_t page,uint8_t ch, uint32_t mbm, uint8_t antsw)

@@ -54,9 +54,9 @@ void ota_boot(void)
 	return;
 }
 
-void ota_start(OTA_PARAM *param)
+int ota_start(OTA_PARAM *param)
 {
-	return;
+	return 0;
 }
 
 uint8_t ota_get_hw_type(void)

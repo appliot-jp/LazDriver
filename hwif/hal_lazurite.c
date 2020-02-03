@@ -90,7 +90,7 @@ void HAL_write_lock(bool on) {
 }
 
 // api_debug add 4
-int HAL_init(void) {
+int HAL_init(struct hw_mode *mode) {
 
 	//uint32_t wait_t, t;
 
@@ -99,42 +99,19 @@ int HAL_init(void) {
 	SPI0.setClockDivider(SPI_CLOCK_DIV8);
 	SPI0.begin();
 
-	// GPIO init
-	drv_digitalWrite(HAL_GPIO_REGPDIN,HIGH);
-	drv_digitalWrite(HAL_GPIO_RESETN,HIGH);
-	drv_digitalWrite(HAL_GPIO_CSB,HIGH);
-	drv_pinMode(HAL_GPIO_SINTN,INPUT);
-	drv_pinMode(HAL_GPIO_REGPDIN,OUTPUT);
-	drv_pinMode(HAL_GPIO_RESETN,OUTPUT);
-	drv_pinMode(HAL_GPIO_CSB,OUTPUT);
-
-	drv_digitalWrite(HAL_GPIO_REGPDIN, LOW);
-	drv_digitalWrite(HAL_GPIO_RESETN, LOW);
-
-	HAL_sleep(3L);
-
-#ifdef MK74040
-	drv_pinMode(HAL_GPIO_REGPDIN,OUTPUT);
-	digitalWrite(HAL_GPIO_REGPDIN,HIGH);	
-	delay(1);
-	digitalWrite(HAL_GPIO_REGPDIN,LOW);
-	delay(1);
-#endif
-
-	//    idle();
-	drv_digitalWrite(HAL_GPIO_RESETN, HIGH);
-
-	HAL_sleep(3L);
-
 	// I2C init
-	i2c_config.i2c_addr = 0x50;
-#if defined(LAZURITE_MINI) || defined(MK74040)
-	i2c_config.addr_bits = 16;
-#else
-	i2c_config.addr_bits = 8;
-#endif
+	i2c_config.i2c_addr = mode->i2c_addr;
+	i2c_config.addr_bits = mode->i2c_addr_bits;
 	Wire0.begin();
-	//HAL_GPIO_enableInterrupt();
+
+	// GPIO init
+	drv_digitalWrite(PHY_REGPDIN,LOW);
+	drv_digitalWrite(PHY_RESETN,LOW);
+	drv_digitalWrite(PHY_CSB,HIGH);
+	drv_pinMode(PHY_SINTN,INPUT);
+	drv_pinMode(PHY_REGPDIN,OUTPUT);
+	drv_pinMode(PHY_RESETN,OUTPUT);
+	drv_pinMode(PHY_CSB,OUTPUT);
 
 	return 0;
 }
@@ -148,43 +125,51 @@ int HAL_SPI_transfer(const unsigned char *wdata, uint16_t wsize,unsigned char *r
 {
 	uint16_t n;
 
-	drv_digitalWrite(HAL_GPIO_CSB, HIGH);
-	drv_digitalWrite(HAL_GPIO_CSB, LOW);
+	drv_digitalWrite(PHY_CSB, HIGH);
+	drv_digitalWrite(PHY_CSB, LOW);
 
 	//  api_debug mod
 	for(n=0;n<wsize;n++)
 	{
 		SPI0.transfer(*(wdata + n));
 	}
-	if(rdata==NULL) return HAL_STATUS_OK;
+	if(rdata==NULL) return STATUS_OK;
 	for(n=0;n<rsize;n++)
 	{
 		*(rdata + n) = SPI0.transfer(0);
 	}
 
-	drv_digitalWrite(HAL_GPIO_CSB, HIGH);
+	drv_digitalWrite(PHY_CSB, HIGH);
 
-	return HAL_STATUS_OK;
+	return STATUS_OK;
 }
 
+int HAL_GPIO_setValue(uint8_t pin, uint8_t value) {
+	drv_digitalWrite(pin,value);
+	return STATUS_OK;
+}
+int HAL_GPIO_getValue(uint8_t pin, uint8_t *value) {
+	*value = drv_digitalRead(pin);
+	return STATUS_OK;
+}
 int HAL_GPIO_setInterrupt(bool (*func)(void))
 {
 	hal_gpio_func = func;
-	drv_attachInterrupt(HAL_GPIO_SINTN,BP3596A_SINTN_IRQNUM,hal_gpio_func,LOW,false,false);
-	return HAL_STATUS_OK;
+	drv_attachInterrupt(PHY_SINTN,PHY_SINTN_IRQNUM,hal_gpio_func,LOW,false,false);
+	return STATUS_OK;
 }
 
 int HAL_GPIO_enableInterrupt(void)
 {
 	//	void drv_attachInterrupt(unsigned char pin,unsigned char irqnum, void (*func)(void), int mode,bool sampling, bool filter)
-	drv_attachInterrupt(HAL_GPIO_SINTN,BP3596A_SINTN_IRQNUM,hal_gpio_func,LOW,false,false);
-	return HAL_STATUS_OK;
+	drv_attachInterrupt(PHY_SINTN,PHY_SINTN_IRQNUM,hal_gpio_func,LOW,false,false);
+	return STATUS_OK;
 }
 
 int HAL_GPIO_disableInterrupt(void)
 {
-	drv_detachInterrupt(BP3596A_SINTN_IRQNUM);
-	return HAL_STATUS_OK;
+	drv_detachInterrupt(PHY_SINTN_IRQNUM);
+	return STATUS_OK;
 }
 
 int HAL_I2C_read(uint16_t addr, uint8_t *data, uint8_t size)
@@ -210,7 +195,7 @@ int HAL_I2C_read(uint16_t addr, uint8_t *data, uint8_t size)
 		*(data + n) = (uint8_t)dtmp;
 	}
 
-	return HAL_STATUS_OK;
+	return STATUS_OK;
 }
 
 /*
@@ -221,14 +206,14 @@ int HAL_TIMER_getTick(unsigned long *tick)
 
 	*tick = hal_current_time - hal_previous_time;
 
-	return HAL_STATUS_OK;
+	return STATUS_OK;
 }
 */
 
 int HAL_TIMER_setup(void)
 {
 	hal_previous_time = millis();
-	return HAL_STATUS_OK;
+	return STATUS_OK;
 }
 
 int HAL_TIMER_start(uint16_t msec, void (*func)(void))
@@ -237,14 +222,14 @@ int HAL_TIMER_start(uint16_t msec, void (*func)(void))
 	timer_16bit_set(6,0xE8,(uint16_t)msec,func);
 	timer_16bit_start(6);
 
-	return HAL_STATUS_OK;
+	return STATUS_OK;
 }
 
 int HAL_TIMER_stop(void)
 {
 	timer_16bit_stop(6);
 
-	return HAL_STATUS_OK;
+	return STATUS_OK;
 }
 
 void HAL_delayMicroseconds(uint32_t us)

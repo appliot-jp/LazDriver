@@ -352,8 +352,6 @@ static int mach_make_header(struct mac_header *header) {
 
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
-	PAYLOADDUMP(header->payload.data, header->payload.len);
-	PAYLOADDUMP(header->raw.data, header->raw.len);
 #endif
 
 	status = STATUS_OK;
@@ -636,7 +634,7 @@ int mach_setup(struct rf_param *rf) {
 	mach.rf = rf;
 
 	// set modulation
-	if((status = macl_set_modulation(rf->modulation,rf->dsssSF,rf->dsssSize)) != STATUS_OK) goto error;
+	if((status = macl_set_modulation(rf->modulation,rf->dsssSF)) != STATUS_OK) goto error;
 
 	// set channel & txpow
 	status = macl_set_channel(rf->pages,rf->ch,rf->tx_power,rf->ant_sw);
@@ -879,14 +877,17 @@ int macl_rx_irq(bool *isAck)
 
 		if(mach.macl->promiscuousMode) {
 			status = mach_parse_data(&mach.rx);
+			if(status != STATUS_OK) {
+				return status;
+			}
 			if(mach.rx.raw.size >= mach.rx.input.len) {
 				mach.rx.raw.len = mach.rx.input.len;
 				mach.macl->status = STATUS_OK;
+				memcpy(mach.rx.raw.data,mach.rx.input.data,mach.rx.raw.len);
 			} else {
 				mach.rx.raw.len = mach.rx.raw.size;
 				status = -ENOMEM;
 			}
-			memcpy(mach.rx.raw.data,mach.rx.input.data,mach.rx.raw.len);
 			*isAck = false;
 		} else {
 			status = mach_parse_data(&mach.rx);
@@ -909,14 +910,15 @@ int macl_rx_irq(bool *isAck)
 						if(mach.rx.raw.size >= mach.rx.input.len) {
 							mach.rx.raw.len = mach.rx.input.len;
 							mach.macl->status = STATUS_OK;
+							memcpy(mach.rx.raw.data,mach.rx.input.data,mach.rx.raw.len);
+							if((mach.rx.fc.fc_bit.ack_req) && (mach_make_ack_header())) {
+								*isAck = true;
+							} else {
+								*isAck = false;
+							}
 						} else {
-							mach.rx.raw.len = mach.rx.raw.size;
+							mach.rx.raw.len = 0;
 							status = -ENOMEM;
-						}
-						memcpy(mach.rx.raw.data,mach.rx.input.data,mach.rx.raw.len);
-						if((mach.rx.fc.fc_bit.ack_req) && (mach_make_ack_header())) {
-							*isAck = true;
-						} else {
 							*isAck = false;
 						}
 						break;

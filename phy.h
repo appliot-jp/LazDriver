@@ -42,6 +42,8 @@ struct phy_param {
 	uint16_t unit_backoff_period;
 	BUFFER in;
 	BUFFER out;
+	int in_ptr;
+	int out_ptr;
 };
 
 typedef enum {
@@ -93,12 +95,12 @@ extern int phy_timer_stop(void);
 extern struct phy_param *phy_init(void);
 extern int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw);
 
-extern int phy_setModulation(int8_t mod, int8_t sf, int8_t size);
-extern int phy_getModulation(int8_t *mod, int8_t *sf, int8_t *size);
+extern int phy_setModulation(int8_t mod, int8_t sf);
+extern int phy_getModulation(int8_t *mod, int8_t *sf);
 
 extern int phy_txpre(TX_MODE mode);
-extern void phy_ccaCtrl(uint32_t us);
-extern uint8_t phy_ccadone(void);
+extern int phy_ccaCtrl(uint32_t us);
+extern int phy_ccadone(void);
 extern int phy_txstart(void);
 extern FIFO_STATE phy_txfifo(void);
 extern void phy_txdone(void);

@@ -29,7 +29,6 @@
 #include <linux/delay.h>
 #endif	// LAZURITE_IDE
 
-#define HAL_STATUS_OK				0	// 
 #define HAL_ERROR_PARAM		-1	//
 #define HAL_ERROR_STATE		-2	// 
 #define HAL_ERROR_TIMEOUT	-3	// 
@@ -38,21 +37,25 @@
 #define HAL_ERROR_IRQ		-5 		 // IRQ error
 #define HAL_ERROR_THREAD	-6 		 // thread error
 
-#define HAL_PHY_EVENT        0
-#define HAL_MAC_EVENT        1
-
 #ifdef LAZURITE_IDE
+	#include "hwif/hal_lazurite.h"
 typedef struct {
 	uint8_t que;
 } wait_queue_head_t;
 #else
+	#include "hal-lzpi.h"
 #endif
+
+struct hw_mode {
+	uint8_t i2c_addr;
+	uint8_t i2c_addr_bits;
+};
 
 extern int HAL_init_waitqueue_head(wait_queue_head_t *q);
 extern uint32_t HAL_wait_event_interruptible_timeout(wait_queue_head_t *q,volatile int *condition,uint32_t ms);
 extern int HAL_wake_up_interruptible(wait_queue_head_t *q);
 extern void HAL_write_lock(bool on);
-extern int HAL_init(void);
+extern int HAL_init(struct hw_mode *mode);
 extern int HAL_remove(void);
 extern int HAL_GPIO_setValue(uint8_t pin, uint8_t value);
 extern int HAL_GPIO_getValue(uint8_t pin, uint8_t *value);

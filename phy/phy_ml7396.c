@@ -367,18 +367,27 @@ static void phy_intclr(uint32_t intclr)
 	reg_wr(REG_ADR_INT_SOURCE_GRP1, 5);
 }
 
+uint32_t phy_intsrc(void)
+{
+	uint32_t intsrc=0;
+	reg_rd(REG_ADR_INT_SOURCE_GRP1, 4);
+	memcpy(&intsrc,reg.rdata,4);
+	return intsrc;
+}
+
 static void phy_trx_state(PHY_TRX_STATE state) {
 
 	reg.wdata[1] = (uint8_t)state;
 	reg_wr(REG_ADR_RF_STATUS, 2);
 }
 
-static void phy_rst(void)
+static void phy_reset(void)
 {
-	reg.wdata[1] = 0x88;
-	reg_wr(REG_ADR_RST_SET, 2);
+	HAL_GPIO_setValue(PHY_RESETN,LOW);
+	HAL_delayMicroseconds(2000L);
+	HAL_GPIO_setValue(PHY_RESETN,HIGH);
+	HAL_delayMicroseconds(1000L);
 }
-
 
 static bool vco_cal(void) {
 
@@ -454,6 +463,10 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 	static const char s1[] = "unsupported device1";
 	static const char s2[] = "unsupported device2";
 
+	// CLK START
+	reg.wdata[1] = 0x0f, reg_wr(REG_ADR_CLK_SET,             2);
+	HAL_sleep(10L);
+
 	// Check Parameters
 #ifdef JP
 	switch(page) {
@@ -488,16 +501,11 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 	}
 	reg.wdata[1] = 0x01, reg_wr(REG_ADR_PA_CNTRL,                    2);
 
-	// Initializing
-	phy_rst();
+	// PHY RST
+	reg.wdata[1] = 0x88, reg_wr(REG_ADR_RST_SET, 2);
 
 	phy_inten(HW_EVENT_ALL_MASK);
 	phy_intclr(~HW_EVENT_FIFO_CLEAR);
-
-	// CLK START
-	reg.wdata[1] = 0x0f, reg_wr(REG_ADR_CLK_SET,             2);
-
-	HAL_sleep(2L);
 
 	// Operation Mode Set
 	reg.wdata[1] = 0x10, reg_wr(REG_ADR_ACK_TIMER_EN,       2);		// enable TX_DONE_OFF
@@ -695,7 +703,18 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 
 struct phy_param *phy_init(void)
 {
-	if(HAL_init() != STATUS_OK) return NULL;
+	struct hw_mode hwif;
+	hwif.i2c_addr = 0x50;
+
+#if defined(LAZURITE_MINI) || defined(MK74040)
+    hwif.i2c_addr_bits = 16;
+#else
+    hwif.i2c_addr_bits = 8;
+#endif
+	if(HAL_init(&hwif) != STATUS_OK) return NULL;
+
+	phy_reset();
+
 	regbank(0xff);
 
 	phy_intclr(~HW_EVENT_ALL_MASK);
@@ -751,7 +770,7 @@ int phy_txpre(TX_MODE mode)
 	return STATUS_OK;
 }
 
-void phy_ccaCtrl(uint32_t us) {
+int phy_ccaCtrl(uint32_t us) {
 	long d;
 	// data invalid setting during CCA
 	reg.wdata[1] = 0x00;
@@ -768,10 +787,10 @@ void phy_ccaCtrl(uint32_t us) {
 	reg.wdata[1] = 0x18;
 	reg_wr(REG_ADR_CCA_CNTRL,   2);
 	phy_trx_state(PHY_ST_RXON);
-	return;
+	return STATUS_OK;
 }
 
-uint8_t phy_ccadone(void) {
+int phy_ccadone(void) {
 	uint8_t ccadone;
 	union {
 		uint8_t d8[4];
@@ -838,6 +857,7 @@ void phy_rxstart(void)
 	reg_wr(REG_ADR_DEMSET3,  2);
 	reg.wdata[1] = 0x27;
 	reg_wr(REG_ADR_DEMSET14, 2);
+	phy_intclr(~HW_EVENT_ALL_MASK);
 	phy_inten(HW_EVENT_RX_DONE | HW_EVENT_ADD_FIL_DONE);
 	phy_trx_state(PHY_ST_RXON);
 }
@@ -855,7 +875,7 @@ FIFO_STATE phy_rxdone()
 
 	// Notice: A following must not change.
 	reg_rd(REG_ADR_INT_SOURCE_GRP1, 4);
-	memcpy(&intsrc,reg.rdata,4);
+	memcpy(&intsrc.d32,reg.rdata,4);
 
 	if(intsrc.d8[2] != 0x04) {
 		status = CRC_ERROR;
@@ -872,7 +892,7 @@ FIFO_STATE phy_rxdone()
 	}
 error:
 	phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS | HW_EVENT_ADD_FIL_DONE);
-	phy_rst();
+	reg.wdata[1] = 0x88, reg_wr(REG_ADR_RST_SET, 2);		// PHY RESET
 	return status;
 }
 
@@ -919,14 +939,13 @@ void phy_sleep(void)
 	reg.wdata[1] = 0x00, reg_wr(REG_ADR_2DIV_CNTRL, 2);
 }
 
-int phy_setModulation(int8_t mode,int8_t sf, int8_t size) {
+int phy_setModulation(int8_t mode,int8_t sf) {
 	return STATUS_OK;
 }
 
-int phy_getModulation(int8_t *mode,int8_t *sf, int8_t *size) {
+int phy_getModulation(int8_t *mode,int8_t *sf) {
 	*mode = -1;
 	*sf = -1;
-	*size = -1;
 	return -EINVAL;
 }
 

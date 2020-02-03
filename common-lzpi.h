@@ -71,4 +71,7 @@ extern int module_test;
 }
 #endif
 
+#define LOW 0
+#define HIGH 1
+
 #endif // _COMMON_802154E_H_
