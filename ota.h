@@ -26,11 +26,11 @@ __packed typedef struct {
 } OTA_PARAM;
 
 typedef struct {
-    void	(*init)(void);		// Do not call this function. It shall be called only from main.c
-    void	(*boot)(void);		// Do not call this function. It shall be called only from main.c
+	void	(*init)(void);		// Do not call this function. It shall be called only from main.c
+	void	(*boot)(void);		// Do not call this function. It shall be called only from main.c
 	int		(*start)(OTA_PARAM *param);
-    uint8_t	(*getHwType)(void);
-    uint8_t	(*getVersion)(void);
+	uint8_t	(*getHwType)(void);
+	uint8_t	(*getVersion)(void);
 	bool	(*checkAesKey)(void);
 } st_OTA_f;
 
