@@ -1,7 +1,11 @@
 AREA=JP
 DEBUG=OFF
 RBUF=16
-#RF=MK74040
+
+cmd_path = $(PWD)/lib/lapis_rf_device_detect
+cmd_exist = $(shell ls $(cmd_path))
+
+
 
 ifeq ($(DEBUG),ON)
 	EXTRA_CFLAGS += -DDEBUG
@@ -10,11 +14,18 @@ endif
 EXTRA_CFLAGS += -D$(AREA) -DRBUF=$(RBUF)
 
 CFILES = drv-lazurite.c subghz_api.c aes/aes.c mach.c  macl.c hwif/hal-lzpi.c  hwif/random-lzpi.c  hwif/spi-lzpi.c hwif/i2c-lzpi.c 
+
+ifndef
+	RF=$(shell $(PWD)/lib/lapis_rf_device_detect)
+endif
+
 ifeq ($(RF),MK74040)
 	CFILES += phy_ml7404/ml7404.c
-else
+endif
+ifeq ($(RF),BP3596A)
 	CFILES += phy/phy_ml7396.c
 endif
+
 
 lazdriver-objs := $(CFILES:.c=.o)
 obj-m += lazdriver.o
@@ -33,7 +44,7 @@ endif
 ifeq ($(shell uname -n),armadillo)
 	KERNEL_SRC=/lib/modules/$(shell uname -r)/build
 all:
-	echo $(CFILES)
+	echo $(RF)
 	make -C $(KERNEL_SRC) SUBDIRS=$(PWD) modules
 
 clean:
@@ -44,6 +55,7 @@ ifeq ($(shell uname -n),raspberrypi)
 	KERNEL_SRC=/lib/modules/$(shell uname -r)/build
 
 all:
+	echo $(RF)
 	echo $(EXTRA_CFLAGS)
 	make -C $(KERNEL_SRC) SUBDIRS=$(PWD) modules
 
