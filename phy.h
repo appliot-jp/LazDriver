@@ -100,7 +100,7 @@ extern int phy_getModulation(int8_t *mod, int8_t *sf);
 
 extern int phy_txpre(TX_MODE mode);
 extern int phy_ccaCtrl(uint32_t us);
-extern int phy_ccadone(void);
+extern uint8_t phy_ccadone(void);
 extern int phy_txstart(void);
 extern FIFO_STATE phy_txfifo(void);
 extern void phy_txdone(void);

@@ -1158,7 +1158,7 @@ int phy_ccaCtrl(uint32_t us){
 	//if(status != STATUS_OK) return status;
 	return STATUS_OK;
 }
-int phy_ccadone(void) {
+uint8_t phy_ccadone(void) {
 	volatile uint8_t ccadone;
 	int status;
 	phy_inten(~HW_EVENT_ALL);
@@ -1167,12 +1167,9 @@ int phy_ccadone(void) {
 	if(ccadone & 0x10) {
 		reg.data[1] = 0x80;
 		reg_wr(BANK_CCA_CTRL_ADR,RADIO_CCA_CTRL_ADR,2);
-		status = phy_trx_state(PHY_ST_FORCE_TRXOFF);
-		if(status != STATUS_OK) {
-			return status;
-		}
+		phy_trx_state(PHY_ST_FORCE_TRXOFF);
 	}
-	return (int)ccadone;
+	return ccadone;
 }
 
 int phy_txstart(void) {

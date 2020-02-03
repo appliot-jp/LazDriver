@@ -790,7 +790,7 @@ int phy_ccaCtrl(uint32_t us) {
 	return STATUS_OK;
 }
 
-int phy_ccadone(void) {
+uint8_t phy_ccadone(void) {
 	uint8_t ccadone;
 	union {
 		uint8_t d8[4];

@@ -163,7 +163,6 @@ static void macl_dummy_handler(void)
 	return;
 }
 static void macl_rxdone_abort_handler(void) {
-	printk(KERN_INFO"%s,%d\n",__func__,__LINE__);
 	macl.condition=SUBGHZ_ST_RX_START;
 	phy_rxstart();
 	HAL_write_lock(false);
