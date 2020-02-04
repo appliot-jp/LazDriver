@@ -253,6 +253,7 @@ error:
 extern unsigned short di_flag;
 static SUBGHZ_MSG subghz_tx_raw(struct mac_fc_alignment fc, void (*callback)(uint8_t rssi, int status)) {
 
+	static const char s0[]="rxdone abort in tx";
 	int result;
 	uint32_t time;
 	static const char s1[] = "subghz_tx_raw error1";
@@ -260,7 +261,7 @@ static SUBGHZ_MSG subghz_tx_raw(struct mac_fc_alignment fc, void (*callback)(uin
 
 	time =  HAL_wait_event_interruptible_timeout(&subghz_param.mach->macl->que,&subghz_param.mach->macl->rxdone,1000L);
 	if(time == 0) {
-		printk(KERN_INFO"%s %d rxdone abort\n",__func__,__LINE__);
+		alert(s0);
 	}
 
 	subghz_param.mach->macl->txdone = false;
