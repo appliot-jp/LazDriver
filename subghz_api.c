@@ -258,7 +258,12 @@ static SUBGHZ_MSG subghz_tx_raw(struct mac_fc_alignment fc, void (*callback)(uin
 	static const char s1[] = "subghz_tx_raw error1";
 	static const char s2[] = "subghz_tx_raw error2";
 
-	subghz_param.mach->macl->done = false;
+	time =  HAL_wait_event_interruptible_timeout(&subghz_param.mach->macl->que,&subghz_param.mach->macl->rxdone,1000L);
+	if(time == 0) {
+		printk(KERN_INFO"%s %d rxdone abort\n",__func__,__LINE__);
+	}
+
+	subghz_param.mach->macl->txdone = false;
 	result = mach_tx(fc,subghz_param.addr_type,&subghz_param.tx,callback);
 	if(result != STATUS_OK) {
 		subghz_param.tx_stat.rssi = 0;
@@ -266,7 +271,7 @@ static SUBGHZ_MSG subghz_tx_raw(struct mac_fc_alignment fc, void (*callback)(uin
 		if(callback) callback(0,subghz_param.tx_stat.status);
 		goto error;
 	}
-	time =  HAL_wait_event_interruptible_timeout(&subghz_param.mach->macl->que,&subghz_param.mach->macl->done,2000L);
+	time =  HAL_wait_event_interruptible_timeout(&subghz_param.mach->macl->que,&subghz_param.mach->macl->txdone,2000L);
 
 	if(time == 0) {
 		subghz_param.tx_stat.rssi = 0;

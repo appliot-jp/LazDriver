@@ -82,7 +82,8 @@ struct macl_param {
 	uint16_t ack_timeout;
 	int status;
 	int condition;
-	volatile int  done;
+	volatile int  txdone;
+	volatile int  rxdone;
 	uint16_t tx_ack_interval;
 	void (*tx_callback)(uint8_t rssi, int status);
 	uint32_t total_send_bytes;

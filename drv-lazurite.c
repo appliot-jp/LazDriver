@@ -716,8 +716,8 @@ static ssize_t chardev_write (struct file * file, const char __user * buf, size_
 	int status = 0;
 	uint8_t payload[DATA_SIZE];
 
-	mutex_lock( &chrdev.lock );
 	HAL_GPIO_disableInterrupt();
+	mutex_lock( &chrdev.lock );
 
 	if(count<DATA_SIZE)
 	{

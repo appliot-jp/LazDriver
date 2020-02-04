@@ -53,6 +53,9 @@ int main(void) {
 	int status;
 	wdata[0] = 0x20;
 	status = i2c_write_read(0x50,wdata,1,mac_address,8);
+	if( status == -1) {
+		return status;
+	}
 	if(memcmp(mac_address,rohm_mac_address,sizeof(rohm_mac_address)) == 0) {
 		printf("BP3596A\n");
 	} else if(memcmp(mac_address,allf,sizeof(allf)) == 0) {
@@ -66,7 +69,16 @@ int main(void) {
 			if(device == 0x0A) {
 				printf("MK74040\n");
 			} else {
-				fprintf(stderr, "unsupported device\n");
+				fprintf(stderr, "unsupported device %02x %02x %02x %02x  %02x %02x %02x %02x\n",
+						mac_address[7],
+						mac_address[6],
+						mac_address[5],
+						mac_address[4],
+						mac_address[3],
+						mac_address[2],
+						mac_address[1],
+						mac_address[0]
+						);
 			}
 		}
 	}

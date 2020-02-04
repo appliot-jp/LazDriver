@@ -959,6 +959,13 @@ int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw){
 
 	reg_block_wr(PHY_INIT);
 
+	reg_rd(BANK_ID_CODE_ADR,RADIO_ID_CODE_ADR,1);
+	if(reg.data[0] != 0x65) {
+		phy_regdump();
+		phy_sleep();
+		return -EDEADLK;
+	}
+
 	mod_params.mod_pages += page;
 	switch(mod_params.mod_pages) {
 		case ((PHY_MODULATION_FSK << 8) + 1):					// GFSK 50kbps
@@ -1213,14 +1220,7 @@ FIFO_STATE phy_txfifo(void) {
 	const char s0[] = "phy_txfifo error";
 	intsrc = phy_intsrc();
 	len = phy.out.len - phy.out_ptr;
-	if(intsrc & 0x010000) {
-#if !defined(LAZURITE_IDE) && defined(DEBUG)
-		printk(KERN_INFO"%s %d %06x\n",__func__,__LINE__,intsrc);
-#endif
-		phy_intclr(HW_EVENT_ALL);
-		phy_inten(~HW_EVENT_ALL);
-		return FIFO_DONE;
-	} else if(intsrc & 0x180000) {
+	if(intsrc & 0x180000) {
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 		printk(KERN_INFO"%s %d %06x\n",__func__,__LINE__,intsrc);
 #endif
@@ -1229,6 +1229,13 @@ FIFO_STATE phy_txfifo(void) {
 		phy_intclr(HW_EVENT_ALL);
 		phy_inten(~HW_EVENT_ALL);
 		return CRC_ERROR;
+	} else if(intsrc & 0x010000) {
+#if !defined(LAZURITE_IDE) && defined(DEBUG)
+		printk(KERN_INFO"%s %d %06x\n",__func__,__LINE__,intsrc);
+#endif
+		phy_intclr(HW_EVENT_ALL);
+		phy_inten(~HW_EVENT_ALL);
+		return FIFO_DONE;
 	} else if (len <= 32) {
 		reg.data[1]=0;
 		reg.data[2]=0;
@@ -1317,6 +1324,8 @@ FIFO_STATE phy_rxdone(void){
 }
 void phy_stop(void){
 	phy_trx_state(PHY_ST_TRXOFF);
+	phy_intclr(HW_EVENT_ALL);
+	phy_inten(~HW_EVENT_ALL);
 	return;
 }
 void phy_clrAddrFilt(void){

@@ -86,8 +86,6 @@ int HAL_wake_up_interruptible(wait_queue_head_t *q)
 }
 
 
-void HAL_write_lock(bool on) {
-}
 
 // api_debug add 4
 int HAL_init(struct hw_mode *mode) {

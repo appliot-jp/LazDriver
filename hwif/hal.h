@@ -54,7 +54,6 @@ struct hw_mode {
 extern int HAL_init_waitqueue_head(wait_queue_head_t *q);
 extern uint32_t HAL_wait_event_interruptible_timeout(wait_queue_head_t *q,volatile int *condition,uint32_t ms);
 extern int HAL_wake_up_interruptible(wait_queue_head_t *q);
-extern void HAL_write_lock(bool on);
 extern int HAL_init(struct hw_mode *mode);
 extern int HAL_remove(void);
 extern int HAL_GPIO_setValue(uint8_t pin, uint8_t value);

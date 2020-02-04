@@ -165,17 +165,17 @@ static void macl_dummy_handler(void)
 static void macl_rxdone_abort_handler(void) {
 	macl.condition=SUBGHZ_ST_RX_START;
 	phy_rxstart();
-	HAL_write_lock(false);
+	macl.rxdone = true;
+	HAL_wake_up_interruptible(&macl.que);
 }
 static void macl_rxfifo_handler(void)
 {
 	int status;
+	macl.rxdone = false;
 	macl.condition=SUBGHZ_ST_RX_FIFO;
-
 	phy_timer_stop();
-	HAL_write_lock(true);
-
 	status = phy_rxdone();
+
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s,%d,%s,%d\n",__func__,__LINE__,macl_state_to_string(macl.condition),status);
 #endif
@@ -186,7 +186,7 @@ static void macl_rxfifo_handler(void)
 		case FIFO_DONE:		// rxdone
 			if((macl.promiscuousMode) || (((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_CMD) || ((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_DATA) )){
 				if(macl_rxdone_handler() == true) {
-					HAL_write_lock(false);
+					macl.rxdone = true;
 				}
 				macl.status = STATUS_OK;
 			}
@@ -200,9 +200,10 @@ static void macl_rxfifo_handler(void)
 			phy_sint_handler(macl_rxfifo_handler);
 			phy_rxstart();
 			macl.condition=SUBGHZ_ST_RX_STARTED;
-			HAL_write_lock(false);
+			macl.rxdone = true;
 			break;
 	}
+	HAL_wake_up_interruptible(&macl.que);
 	return;
 }
 
@@ -283,7 +284,8 @@ static void macl_ack_txdone_handler(void)
 
 	macl.status = STATUS_OK;
 	macl_rx_irq(NULL);				// rx callback
-	HAL_write_lock(false);
+	macl.rxdone = true;
+	HAL_wake_up_interruptible(&macl.que);
 
 	return;
 }
@@ -291,14 +293,18 @@ extern int reg_access_check;
 static void macl_ack_txdone_abort_handler(void)
 {
 	static const char s1[] = "macl_txdone_abort_handler";
-	alert(s1);
-	phy_monitor();
-
 	phy_timer_stop();
-	macl.status=-EDEADLK;
+	if(phy_txfifo() == FIFO_DONE) {
+		macl.status = STATUS_OK;
+	} else {
+		alert(s1);
+		macl.status=-EDEADLK;
+	}
+	phy_txdone();
 	macl_rx_irq(NULL);				// rx callback
 
-	HAL_write_lock(false);
+	macl.rxdone = true;
+	HAL_wake_up_interruptible(&macl.que);
 	return;
 }
 
@@ -346,7 +352,7 @@ static void macl_ccadone_handler(void)
 	status = phy_txstart();
 	if(status != STATUS_OK) {
 		macl.status = status;
-		macl.done = true;
+		macl.txdone = true;
 		if(macl.tx_callback) macl.tx_callback(0,macl.status);
 	}
 
@@ -365,7 +371,7 @@ static void macl_ccadone_abort_handler(void)
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s,%d,%02x\n",__func__,__LINE__,ccadone);
 #endif
-	macl.done = true;
+	macl.txdone = true;
 	if(macl.tx_callback) macl.tx_callback(0,macl.status);
 
 	HAL_wake_up_interruptible(&macl.que);
@@ -382,7 +388,7 @@ static void macl_txdone_abort_handler(void)
 	alert(s1);
 	//phy_monitor();
 	macl.status = -EDEADLK;
-	macl.done = true;
+	macl.txdone = true;
 	if(macl.tx_callback) macl.tx_callback(0,macl.status);
 
 	HAL_wake_up_interruptible(&macl.que);
@@ -405,7 +411,7 @@ static void macl_txdone_handler(void)
 		phy_sint_handler(macl_ack_rxdone_handler);
 		phy_rxstart();
 	}else{
-		macl.done = true;
+		macl.txdone = true;
 		if(macl.tx_callback) macl.tx_callback(0,STATUS_OK);
 	}
 	HAL_wake_up_interruptible(&macl.que);
@@ -431,7 +437,7 @@ static void macl_ack_rxdone_handler(void)
 				phy_timer_stop();
 				macl_rx_irq(&isAck);
 				//macl_rx_irq(NULL);
-				macl.done = true;
+				macl.txdone = true;
 				if(macl.tx_callback) macl.tx_callback(macl.phy->in.data[macl.phy->in.len-1],STATUS_OK);
 				break;
 			} else if((macl.rxOnEnable == 1) &&
@@ -460,7 +466,7 @@ static void macl_ack_rxdone_abort_handler(void)
 	if(macl.resendingNum <= macl.txRetries) {
 		macl.status = macl_total_transmission_time(macl.phy->out.len+TX_TTL_OFFSET);
 		if(macl.status != STATUS_OK) {
-			macl.done = true;
+			macl.txdone = true;
 			if(macl.tx_callback) macl.tx_callback(0,macl.status);
 			goto error;
 		}
@@ -468,21 +474,21 @@ static void macl_ack_rxdone_abort_handler(void)
 		if(status != STATUS_OK) {
 			alert(s1);
 			macl.status = -EDEADLK;
-			macl.done = true;
+			macl.txdone = true;
 			if(macl.tx_callback) macl.tx_callback(0,macl.status);
 			goto error;
 		}
 		status = macl_cca_setting();
 		if(status != STATUS_OK) {
 			macl.status = status;
-			macl.done = true;
+			macl.txdone = true;
 			if(macl.tx_callback) macl.tx_callback(0,macl.status);
 			goto error;
 		}
 		macl.condition=SUBGHZ_ST_CCA;
 	} else {
 		macl.status = -ETIMEDOUT;
-		macl.done = true;
+		macl.txdone = true;
 		if(macl.tx_callback) macl.tx_callback(0,macl.status);
 		goto error;
 	}
@@ -498,6 +504,7 @@ error:
 struct macl_param *macl_init(void)
 {
 	memset(&macl,0,sizeof(struct macl_param));
+	macl.rxdone = true;
 	macl.condition = SUBGHZ_ST_INIT;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
@@ -541,6 +548,7 @@ int	macl_start(void)
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
+	macl.rxdone = true;
 	macl.condition=SUBGHZ_ST_RX_START;
 	phy_timer_stop();
 	macl.rxOnEnable = 1;

@@ -401,16 +401,6 @@ int HAL_wake_up_interruptible(wait_queue_head_t *q)
 	wake_up_interruptible_sync(q);
 	return status;
 }
-void HAL_write_lock(bool on) {
-	static bool locked = false;
-	if((!locked) && (on)) {
-		mutex_lock( &chrdev.lock );
-		locked = true;
-	} else if((locked) && (!on)) {
-		mutex_unlock( &chrdev.lock );
-		locked = false;
-	}
-}
 
 uint8_t lastSequenceNum = 0;
 void timer4_func(void) {
