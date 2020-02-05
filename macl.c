@@ -582,10 +582,16 @@ int	macl_xmit_sync(BUFFER buff) {
 }
 int	macl_xmit_async(BUFFER buff,void (*callback)(uint8_t rssi, int status))
 {
+	static const char s0[] = "rxdone abort in tx";
+	uint32_t time;
 	macl.condition=SUBGHZ_ST_TX_START;
 
-	phy_stop();
+	time =  HAL_wait_event_interruptible_timeout(&macl.que,&macl.rxdone,100L);
+	if(time == 0) {
+		alert(s0);
+	}
 	HAL_GPIO_disableInterrupt();
+	phy_stop();
 	phy_timer_stop();
 	phy_sint_handler(macl_dummy_handler);
 
