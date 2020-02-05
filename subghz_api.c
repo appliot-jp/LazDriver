@@ -266,7 +266,7 @@ static SUBGHZ_MSG subghz_tx_raw(struct mac_fc_alignment fc, void (*callback)(uin
 		if(callback) callback(0,subghz_param.tx_stat.status);
 		goto error;
 	}
-	time =  HAL_wait_event_interruptible_timeout(&subghz_param.mach->macl->que,&subghz_param.mach->macl->txdone,2000L);
+	time =  HAL_wait_event_interruptible_timeout(&subghz_param.mach->macl->que,&subghz_param.mach->macl->txdone,1000L);
 
 	if(time == 0) {
 		subghz_param.tx_stat.rssi = 0;

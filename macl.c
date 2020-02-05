@@ -263,12 +263,21 @@ end:
 
 static void macl_txfifo_handler(void)
 {
+	FIFO_STATE fifo_state;
 	macl.condition = SUBGHZ_ST_TX_FIFO;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
-	if(phy_txfifo() == FIFO_DONE){
-		macl_txdone_handler();
+	fifo_state = phy_txfifo();
+	switch(fifo_state) {
+		case CRC_ERROR:
+			macl_txdone_abort_handler();
+			break;
+		case FIFO_DONE:
+			macl_txdone_handler();
+			break;
+		default:
+			break;
 	}
 	return;
 }
