@@ -113,7 +113,7 @@ typedef struct
 	SUBGHZ_MSG (*send64be)(uint8_t *dstAddr_be, uint8_t *data, uint16_t len, void (*callback)(uint8_t rssi, int status));
 	SUBGHZ_MSG (*rxEnable)(void (*callback)(const uint8_t *data, uint8_t rssi, int status));
 	SUBGHZ_MSG (*setPromiscuous)(bool on);
-	SUBGHZ_MSG (*setMonitor)(bool on);
+	void (*setMonitor)(bool on);
 	uint8_t (*getEd)(void);
 	SUBGHZ_MSG (*setAckReq)(bool on);
 	SUBGHZ_MSG (*setBroadcastEnb)(bool on);

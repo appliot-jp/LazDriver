@@ -723,30 +723,6 @@ static void subghz_setModulation(int8_t mode) {
 static void subghz_setDsssSpreadFactor(int8_t sf) {
 	subghz_param.rf.dsssSF = sf;
 }
-static void subghz_setDsssSize(int8_t size, uint8_t addr_mode){
-
-	subghz_param.rf.dsssSize = (int8_t)(size + mac_overhead_len[subghz_param.addr_type]);
-
-	if (addr_mode) {
-		switch (subghz_param.addr_type){
-			case 0:
-			case 1:
-				break;
-			case 2:
-			case 3:
-			case 4:
-			case 5:
-				subghz_param.rf.dsssSize += 6;
-				break;
-			case 6:
-			case 7:
-				subghz_param.rf.dsssSize += 12;
-				break;
-			default:
-				break;
-		}
-	}
-}
 
 // setting of function
 const SubGHz_CTRL SubGHz = {

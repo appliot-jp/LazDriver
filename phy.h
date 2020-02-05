@@ -111,7 +111,7 @@ extern void phy_stop(void);
 extern void phy_clrAddrFilt(void);
 extern void phy_addrFilt(uint16_t panid, uint8_t *ieee_addr, uint16_t uc_addr, uint16_t bc_addr);
 extern void phy_set_monitor(bool on);
-extern uint8_t phy_ed();
+extern uint8_t phy_ed(void);
 extern void phy_sleep(void);
 
 // following function is for debug. and test.bin use it.
