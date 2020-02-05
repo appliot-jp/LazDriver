@@ -707,7 +707,7 @@ static struct{
 #define HW_EVENT_RX_DONE      0x000B20L  /* RX complete */
 
 static int regbank(uint8_t bank) {
-	static const char s0[] = "regbank error";
+	const char s0[] = "regbank error";
 	uint8_t reg_data[2];
 	uint8_t dummy;
 
@@ -762,7 +762,7 @@ static int reg_wr(uint8_t bank,uint8_t addr, int size) {
 	if(status != STATUS_OK) {
 		return status;
 	}
-	reg.data[0] = (addr << 1) + 1;
+	reg.data[0] = (uint8_t)((addr << 1) + 1);
 	HAL_SPI_transfer(reg.data,size,&dummy,0);
 	return STATUS_OK;
 };
@@ -774,7 +774,7 @@ static int reg_rd(uint8_t bank,uint8_t addr, int size) {
 		return status;
 	}
 	if(size > 65) return -ENOMEM;
-	reg_addr = (addr << 1) + 0;
+	reg_addr = (uint8_t)((addr << 1) + 0);
 	HAL_SPI_transfer(&reg_addr,1,reg.data,size);
 	return STATUS_OK;
 };
@@ -795,7 +795,7 @@ static int fifo_rd(int len) {
 }
 
 static void reg_block_wr(RF_PARAM_MODE mode) {
-	static const char s0[] = "reg_block error";
+	const char s0[] = "reg_block error";
 	const struct rf_reg_set_s *reg_set;
 	uint8_t dummy;
 	int i;
@@ -860,7 +860,7 @@ static void phy_intclr(uint32_t intclr)
 }
 
 int phy_trx_state(PHY_TRX_STATE mode){
-	reg.data[1] = mode;
+	reg.data[1] = (uint8_t)mode;
 	reg_wr(BANK_RF_STATUS_ADR,RADIO_RF_STATUS_ADR,2);
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s %d %d\n",__func__,__LINE__,mode);
@@ -937,12 +937,12 @@ int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw){
 	int i;
 
 	HAL_GPIO_setValue(PHY_REGPDIN,LOW);
-	HAL_delayMicroseconds(1000);
+	HAL_delayMicroseconds(1000L);
 	HAL_GPIO_setValue(PHY_RESETN,HIGH);
 
 	i=0;
 	do {
-		HAL_delayMicroseconds(1000);
+		HAL_delayMicroseconds(1000L);
 		HAL_GPIO_getValue(PHY_SINTN,&data);
 		i++;
 		if( i > 100) {
@@ -975,7 +975,7 @@ int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw){
 			return -EINVAL;
 #endif
 			reg_block_wr(GFSK_50KBPS);
-			reg.data[1] = ch-24,reg_wr(BANK_CH_SET_ADR,RADIO_CH_SET_ADR,2);
+			reg.data[1] = (uint8_t)(ch-24),reg_wr(BANK_CH_SET_ADR,RADIO_CH_SET_ADR,2);
 			phy.unit_backoff_period = 320;
 			break;
 		case ((PHY_MODULATION_FSK << 8) + 2):					// GFSK 100kbps
@@ -985,7 +985,7 @@ int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw){
 			return -EINVAL;
 #endif
 			reg_block_wr(GFSK_100KBPS);
-			reg.data[1] = ch-24,reg_wr(BANK_CH_SET_ADR,RADIO_CH_SET_ADR,2);
+			reg.data[1] = (uint8_t)(ch-24),reg_wr(BANK_CH_SET_ADR,RADIO_CH_SET_ADR,2);
 			phy.unit_backoff_period = 320;
 			break;
 		case ((PHY_MODULATION_DSSS <<8) +1):					// DSSS 50kcps
@@ -995,7 +995,7 @@ int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw){
 			return -EINVAL;
 #endif
 			reg_block_wr(DSSS_50KCPS);
-			reg.data[1] = ch-24,reg_wr(BANK_CH_SET_ADR,RADIO_CH_SET_ADR,2);
+			reg.data[1] = (uint8_t)(ch-24),reg_wr(BANK_CH_SET_ADR,RADIO_CH_SET_ADR,2);
 			switch(mod_params.sf) {
 				case 32:
 					data = 0x11;
@@ -1016,7 +1016,7 @@ int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw){
 			return -EINVAL;
 #endif
 			reg_block_wr(DSSS_100KCPS);
-			reg.data[1] = ch-24,reg_wr(BANK_CH_SET_ADR,RADIO_CH_SET_ADR,2);
+			reg.data[1] = (uint8_t)(ch-24),reg_wr(BANK_CH_SET_ADR,RADIO_CH_SET_ADR,2);
 			switch(mod_params.sf) {
 				case 32:
 					data = 0x11;
@@ -1037,7 +1037,7 @@ int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw){
 			return -EINVAL;
 #endif
 			reg_block_wr(DSSS_200KCPS);
-			reg.data[1] = (ch-24)*2+3, reg_wr(BANK_CH_SET_ADR,RADIO_CH_SET_ADR,2);
+			reg.data[1] = (uint8_t)((ch-24)*2+3), reg_wr(BANK_CH_SET_ADR,RADIO_CH_SET_ADR,2);
 			switch(mod_params.sf) {
 				case 32:
 					reg.data[1] = 0x11;
@@ -1078,7 +1078,7 @@ int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw){
 
 	i=0;
 	do {
-		HAL_delayMicroseconds(1000);
+		HAL_delayMicroseconds(1000L);
 		HAL_GPIO_getValue(PHY_SINTN,&data);
 		i++;
 		if( i > 100) {
@@ -1221,11 +1221,10 @@ FIFO_STATE phy_txfifo(void) {
 	intsrc = phy_intsrc();
 	len = phy.out.len - phy.out_ptr;
 	if(intsrc & 0x180000) {
+		alert(s0);
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 		printk(KERN_INFO"%s %d %06x\n",__func__,__LINE__,intsrc);
 #endif
-		alert(s0);
-		printk(KERN_INFO"%s %d %06x\n",__func__,__LINE__,intsrc);
 		phy_intclr(HW_EVENT_ALL);
 		phy_inten(~HW_EVENT_ALL);
 		return CRC_ERROR;
@@ -1272,7 +1271,7 @@ void phy_rxstart(void) {
 FIFO_STATE phy_rxdone(void){
 	uint32_t intsrc;
 	int len;
-	static const char s0[]="rx data length over";
+	const char s0[]="rx data length over";
 	FIFO_STATE state=FIFO_DONE;
 
 	intsrc = phy_intsrc();
@@ -1334,8 +1333,19 @@ void phy_clrAddrFilt(void){
 void phy_addrFilt(uint16_t panid, uint8_t *ieee_addr, uint16_t uc_addr, uint16_t bc_addr) {
 	return;
 }
-void phy_ed(uint8_t *level, uint8_t rfMode) {
-	return;
+
+void phy_set_monitor(bool on) {
+	if(on) {
+		phy_inten(~HW_EVENT_ALL);
+		phy_trx_state(PHY_ST_RXON);
+	} else {
+		phy_trx_state(PHY_ST_TRXOFF);
+		phy_intclr(HW_EVENT_ALL);
+	}
+}
+uint8_t phy_ed(void) {
+	reg_rd(BANK_ED_RSLT_ADR,RADIO_ED_RSLT_ADR,1);
+	return reg.data[0];
 }
 void phy_sleep() {
 	HAL_GPIO_setValue(PHY_RESETN,LOW);
@@ -1348,16 +1358,16 @@ void phy_sleep() {
 void phy_monitor(void) {
 	uint32_t intsrc;
 #ifdef LAZURITE_IDE
-	static const char s1[] = "PHY_MONITOR";
-	static const char s2[] = "INT SOURCE:: ";
-	static const char s3[] = ",";
-	static const char s4[] = "INT ENABLE:: ";
-	static const char s5[] = "RF STATUS:: ";
-	static const char s6[] = "RF CCA CNTL:: ";
-	static const char s7[] = "PACKET MODE SET:: ";
-	static const char s8[] = "PD DATA REQ:: ";
-	static const char s9[] = "PD DATA IND:: ";
-	static const char s10[] = "AUTO ACK SET: ";
+	const char s1[] = "PHY_MONITOR";
+	const char s2[] = "INT SOURCE:: ";
+	const char s3[] = ",";
+	const char s4[] = "INT ENABLE:: ";
+	const char s5[] = "RF STATUS:: ";
+	const char s6[] = "RF CCA CNTL:: ";
+	const char s7[] = "PACKET MODE SET:: ";
+	const char s8[] = "PD DATA REQ:: ";
+	const char s9[] = "PD DATA IND:: ";
+	const char s10[] = "AUTO ACK SET: ";
 #endif
 	// READ INT SOURCE
 	intsrc = phy_intsrc();
@@ -1376,7 +1386,7 @@ void phy_monitor(void) {
 	printk(KERN_INFO"RF STATUS:: %x\n", reg.data[0]);
 #else
 	Serial.print(s5);
-	Serial.println_long((long)reg.rdata[0],HEX);
+	Serial.println_long((long)reg.data[0],HEX);
 #endif
 	return;
 }
@@ -1391,11 +1401,11 @@ void phy_regdump(void) {
 	const uint8_t bank_map[]={0,1,2,3,4,6,7,8,10};
 #ifdef LAZURITE_IDE
 	uint8_t i;
-	static const char s1[] = "-----------------/ bank";
-	static const char s2[] = " /---------------";
-	static const char s3[] = " ";
-	static const char s4[] = "0";
-	static const char s5[] = "";
+	const char s1[] = "-----------------/ bank";
+	const char s2[] = " /---------------";
+	const char s3[] = " ";
+	const char s4[] = "0";
+	const char s5[] = "";
 #endif
 
 	for(bank = 0; bank<sizeof(bank_map);bank++) {

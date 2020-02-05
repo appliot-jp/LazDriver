@@ -949,6 +949,20 @@ int phy_getModulation(int8_t *mode,int8_t *sf) {
 	return -EINVAL;
 }
 
+void phy_set_monitor(bool on) {
+	if(on) {
+		phy_inten(HW_EVENT_ALL_MASK);
+		phy_trx_state(PHY_ST_RXON);
+	} else {
+		phy_trx_state(PHY_ST_TRX_OFF);
+		phy_intclr(~HW_EVENT_ALL_MASK);
+	}
+}
+uint8_t phy_ed(void) {
+	reg_rd(REG_ADR_ED_RSLT,1);
+	return reg.rdata[0];
+}
+
 // TEST CODE
 #ifndef LAZURITE_IDE
 extern volatile int que_irq;

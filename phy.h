@@ -42,8 +42,8 @@ struct phy_param {
 	uint16_t unit_backoff_period;
 	BUFFER in;
 	BUFFER out;
-	int in_ptr;
-	int out_ptr;
+	uint16_t in_ptr;
+	uint16_t out_ptr;
 };
 
 typedef enum {
@@ -110,7 +110,8 @@ extern FIFO_STATE phy_rxdone(void);
 extern void phy_stop(void);
 extern void phy_clrAddrFilt(void);
 extern void phy_addrFilt(uint16_t panid, uint8_t *ieee_addr, uint16_t uc_addr, uint16_t bc_addr);
-extern void phy_ed(uint8_t *level, uint8_t rfMode);
+extern void phy_set_monitor(bool on);
+extern uint8_t phy_ed();
 extern void phy_sleep(void);
 
 // following function is for debug. and test.bin use it.
