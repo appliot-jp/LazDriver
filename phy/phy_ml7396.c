@@ -706,7 +706,7 @@ struct phy_param *phy_init(void)
 	struct hw_mode hwif;
 	hwif.i2c_addr = 0x50;
 
-#if defined(LAZURITE_MINI) || defined(MK74040)
+#if defined(LAZURITE_MINI)
     hwif.i2c_addr_bits = 16;
 #else
     hwif.i2c_addr_bits = 8;

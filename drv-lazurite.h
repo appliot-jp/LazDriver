@@ -84,7 +84,6 @@
 #define	IOCTL_ANT_SWITCH	0x45
 #define	IOCTL_SET_DSSS_MODE		0x80
 #define	IOCTL_SET_DSSS_SF		0x81
-#define	IOCTL_SET_DSSS_SIZE		0x82
 
 #define	IOCTL_RF				0x2000
 #define	IOCTL_EEPROM			0x3000
