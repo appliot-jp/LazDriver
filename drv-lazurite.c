@@ -548,7 +548,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 							ret = size;
 						} else {
 							SubGHz.getEnhanceAck(&data,&size);
-							if(copy_to_user((void *)arg,data,size)){
+							if(copy_to_user((char __user *)arg,data,size)){
 								ret = -EFAULT;
 							} else {
 								ret = size;
@@ -562,6 +562,28 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 						ret = arg;
 					} else {
 						ret = -EFAULT;
+					}
+					break;
+				case IOCTL_GET_ED_VALUE1:
+				case IOCTL_GET_ED_VALUE2:
+				case IOCTL_GET_ED_VALUE3:
+					{
+						uint8_t *data;
+						int size;
+						int result;
+						int edmode;
+						if(arg == 0){
+							ret = -EINVAL;
+							break;
+						}
+						edmode = ((param - (IOCTL_GET_ED_VALUE1&0x0FFF)) >> 1)+1;
+						result = SubGHz.getEd(edmode,&data,&size);
+						if(result == STATUS_OK) {
+							memcpy((char __user *)arg,data,size);
+							ret = size;
+						} else {
+							ret = result;
+						}
 					}
 					break;
 				case IOCTL_ANT_SWITCH:

@@ -392,9 +392,9 @@ static void macl_txdone_abort_handler(void)
 	static const char s1[] = "macl_txdone_abort_handler";
 	macl.condition=SUBGHZ_ST_TX_ABORT;
 	phy_timer_stop();
+	alert(s1);
 	phy_monitor();
 	phy_stop();
-	alert(s1);
 	//phy_monitor();
 	macl.status = -EDEADLK;
 	macl.txdone = true;
@@ -448,10 +448,10 @@ static void macl_ack_rxdone_handler(void)
 				//macl_rx_irq(NULL);
 				macl.txdone = true;
 				if(macl.tx_callback) macl.tx_callback(macl.phy->in.data[macl.phy->in.len-1],STATUS_OK);
-				break;
-			} else if((macl.rxOnEnable == 1) &&
-					(((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_CMD) || ((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_DATA) )) {
+			} else {
+				macl_ack_rxdone_abort_handler();
 			}
+			break;
 		case CRC_ERROR:
 		default:
 			macl.condition = SUBGHZ_ST_ACK_RX_CRC;

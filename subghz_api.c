@@ -735,7 +735,6 @@ const SubGHz_CTRL SubGHz = {
 	subghz_tx64be,
 	subghz_rxEnable,
 	subghz_setPromiscuous,
-	phy_set_monitor,
 	phy_ed,
 	subghz_setAckReq,
 	subghz_setBroadcastEnb,

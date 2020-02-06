@@ -153,7 +153,7 @@ int HAL_GPIO_getValue(uint8_t pin, uint8_t *value) {
 int HAL_GPIO_setInterrupt(bool (*func)(void))
 {
 	hal_gpio_func = func;
-	drv_attachInterrupt(PHY_SINTN,PHY_SINTN_IRQNUM,hal_gpio_func,LOW,false,false);
+	//drv_attachInterrupt(PHY_SINTN,PHY_SINTN_IRQNUM,hal_gpio_func,LOW,false,false);
 	return STATUS_OK;
 }
 
