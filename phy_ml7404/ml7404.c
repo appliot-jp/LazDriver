@@ -1507,7 +1507,7 @@ int phy_regwrite(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
 	if(size<sizeof(reg.data)-1) {
 		reg.data[0] = addr;
 		memcpy(reg.data,data,size);
-		reg_rd(bank,addr,size);
+		reg_wr(bank,addr,size+1);
 		status = STATUS_OK;
 	}
 	return status;
