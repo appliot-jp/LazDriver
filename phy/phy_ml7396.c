@@ -949,20 +949,87 @@ int phy_getModulation(int8_t *mode,int8_t *sf) {
 	return -EINVAL;
 }
 
-void phy_set_monitor(bool on) {
-	if(on) {
-		phy_inten(HW_EVENT_ALL_MASK);
-		phy_trx_state(PHY_ST_RXON);
-	} else {
-		phy_trx_state(PHY_ST_TRX_OFF);
-		phy_intclr(~HW_EVENT_ALL_MASK);
-	}
-}
-uint8_t phy_ed(void) {
-	reg_rd(REG_ADR_ED_RSLT,1);
-	return reg.rdata[0];
-}
+int phy_ed(int mode,uint8_t **data,int *size) {
+	uint32_t *avr_p;
+	uint8_t ch;
+	int cycle;
+	const uint8_t ch_num[2]={38,37};
+	phy.in.len = 0;
+	phy.out.len = 0;
+	switch(mode) {
+		case 1:
+			avr_p = (uint32_t *) phy.in.data;
+			memset(phy.out.data,0,1);
+			memset(avr_p,0,sizeof(uint32_t));
 
+			reg.wdata[1] = 0x00;
+			reg_wr(REG_ADR_DEMSET3, 2);
+			reg_wr(REG_ADR_DEMSET14,2);
+			phy_inten(HW_EVENT_ALL_MASK);
+			phy_trx_state(PHY_ST_RXON);
+
+			HAL_delayMicroseconds(128);
+
+			for(cycle = 0; cycle < 128; cycle ++) {
+				HAL_delayMicroseconds(128);
+				reg_rd(REG_ADR_ED_RSLT,1);
+				if(phy.out.data[0]  < reg.rdata[0]) phy.out.data[0] = reg.rdata[0];
+				avr_p[0] += reg.rdata[0];
+			}
+			avr_p[0] = avr_p[0]/128;
+			phy.out.data[1] = (uint8_t)avr_p[0];
+			phy.out.len = 2;
+
+			reg.wdata[1] = 0x64;
+			reg_wr(REG_ADR_DEMSET3, 2);
+			reg.wdata[1] = 0x27;
+			reg_wr(REG_ADR_DEMSET14, 2);
+			phy_trx_state(PHY_ST_TRXOFF);
+			phy_intclr(~HW_EVENT_ALL_MASK);
+			break;
+		case 2:
+		case 3:
+			avr_p = (uint32_t *) phy.in.data;
+			memset(phy.out.data,0,ch_num[mode-2]);
+			memset(avr_p,0,sizeof(uint32_t)*ch_num[mode-2]);
+
+			reg.wdata[1] = 0x00;
+			reg_wr(REG_ADR_DEMSET3, 2);
+			reg_wr(REG_ADR_DEMSET14,2);
+			phy_inten(HW_EVENT_ALL_MASK);
+			phy_trx_state(PHY_ST_TRXOFF);
+
+			for(cycle = 0; cycle < 16; cycle ++) {
+				for(ch=0;ch<ch_num[mode-2];ch++) {
+					if(phy_setup(mode-1,24+ch, 20,0) != STATUS_OK) {
+						continue;
+					}
+					phy_trx_state(PHY_ST_RXON);
+					HAL_delayMicroseconds(256);
+					reg_rd(REG_ADR_ED_RSLT,1);
+					if(phy.out.data[ch]  < reg.rdata[0]) phy.out.data[ch] = reg.rdata[0];
+					avr_p[ch] += reg.rdata[0];
+					phy_trx_state(PHY_ST_TRXOFF);
+				}
+			}
+			for(ch=0;ch<ch_num[mode-2];ch++) {
+				phy.out.data[ch_num[mode-2]+ch] = avr_p[ch]/16;
+			}
+			phy.out.len = ch_num[mode-2]*2;
+			reg.wdata[1] = 0x64;
+			reg_wr(REG_ADR_DEMSET3, 2);
+			reg.wdata[1] = 0x27;
+			reg_wr(REG_ADR_DEMSET14, 2);
+			phy_intclr(~HW_EVENT_ALL_MASK);
+			break;
+		default:
+			return -EINVAL;
+			break;
+	}
+	*data = phy.out.data;
+	*size = phy.out.len;
+	return STATUS_OK;
+}
 // TEST CODE
 #ifndef LAZURITE_IDE
 extern volatile int que_irq;
@@ -1063,19 +1130,25 @@ void phy_monitor(void){
 
 // following function is for debug. and test.bin use it.
 
-void phy_regread(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
-	if(size<8) {
+int phy_regread(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
+	int status = -ENOMEM;
+	if(size<=sizeof(reg.rdata)) {
 		reg_rd(bank,addr,size);
 		memcpy(data,reg.rdata,size);
+		status = STATUS_OK;
 	}
+	return status;
 }
 
 
-void phy_regwrite(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
-	if(size<=7) {
+int phy_regwrite(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
+	int status = -ENOMEM;
+	if(size<=sizeof(reg.wdata)-1) {
 		memcpy(reg.wdata+1,data,size);
 		reg_wr(bank, addr, (uint8_t)(size+1));
+		status = STATUS_OK;
 	}
+	return status;
 }
 
 void phy_regdump(void) {

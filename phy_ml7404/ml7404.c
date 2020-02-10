@@ -1495,7 +1495,7 @@ void phy_monitor(void) {
 }
 int phy_regread(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
 	int status = -ENOMEM;
-	if(size<sizeof(reg.data)) {
+	if(size<=sizeof(reg.data)) {
 		reg_rd(bank,addr,size);
 		memcpy(data,reg.data,size);
 		status = STATUS_OK;
@@ -1504,9 +1504,9 @@ int phy_regread(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
 }
 int phy_regwrite(uint8_t bank, uint8_t addr, uint8_t *data, uint8_t size) {
 	int status = -ENOMEM;
-	if(size<sizeof(reg.data)-1) {
+	if(size<=sizeof(reg.data)-1) {
 		reg.data[0] = addr;
-		memcpy(reg.data,data,size);
+		memcpy(reg.data+1,data,size);
 		reg_wr(bank,addr,size+1);
 		status = STATUS_OK;
 	}
