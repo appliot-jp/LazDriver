@@ -49,7 +49,6 @@ static struct I2C_CONFIG  {
 	uint8_t addr_bits;
 } i2c_config;
 
-void (*hal_gpio_func)(void);
 static uint32_t hal_previous_time;
 // 2015.12.14 Eiichi Saito: for preference of SubGHz
 //static unsigned char hal_setbit_exi;
@@ -150,17 +149,15 @@ int HAL_GPIO_getValue(uint8_t pin, uint8_t *value) {
 	*value = drv_digitalRead(pin);
 	return STATUS_OK;
 }
-int HAL_GPIO_setInterrupt(bool (*func)(void))
+int HAL_GPIO_setInterrupt(void (*func)(void))
 {
-	hal_gpio_func = func;
-	//drv_attachInterrupt(PHY_SINTN,PHY_SINTN_IRQNUM,hal_gpio_func,LOW,false,false);
+	ext_irq_param[PHY_SINTN_IRQNUM].func = func;
 	return STATUS_OK;
 }
 
 int HAL_GPIO_enableInterrupt(void)
 {
-	//	void drv_attachInterrupt(unsigned char pin,unsigned char irqnum, void (*func)(void), int mode,bool sampling, bool filter)
-	drv_attachInterrupt(PHY_SINTN,PHY_SINTN_IRQNUM,hal_gpio_func,LOW,false,false);
+	drv_attachInterrupt(PHY_SINTN,PHY_SINTN_IRQNUM,ext_irq_param[PHY_SINTN_IRQNUM].func,LOW,false,false);
 	return STATUS_OK;
 }
 
