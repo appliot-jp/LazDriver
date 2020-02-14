@@ -75,15 +75,19 @@ A return value: Fixed-point numerical value
 /* headware interrupt */
 #define HW_EVENT_ALL_MASK     0x00000000L  /* Interrupt all mask */
 #define HW_EVENT_VCO_CAL_DONE 0x00000004L  /* VCO CAL DONE */
-#define HW_EVENT_ADD_FIL_DONE 0x00000008L  /* Address Filter done */
 #define HW_EVENT_FIFO_CLEAR   0x000000C0L  /* FIFO_EMPTY */
 #define HW_EVENT_FIFO_EMPTY   0x00000010L  /* FIFO_EMPTY */
 #define HW_EVENT_FIFO_FULL    0x00000020L  /* FIFO_FULL */
 #define HW_EVENT_CCA_DONE     0x00000100L  /* CCA DONE */
 #define HW_EVENT_RF_STATUS    0x00000400L  /* RF status */
 #define HW_EVENT_TX_DONE      0x00030000L  /* TX complete */
+
+#define HW_EVENT_RX_START     0x003C0808L  /* RX complete */
+#define HW_EVENT_ADD_FIL_DONE 0x00000008L  /* Address Filter done */
+#define HW_EVENT_SFD_DETECT   0x00000800L  /* Address Filter done */
 #define HW_EVENT_RX_DONE      0x000C0000L  /* RX complete */
-#define HW_EVENT_CRC_ERROR    0x00300000L  /* CRC error */
+#define HW_EVENT_CRC_ERROR    0x00305000L  /* CRC error */
+
 #define HW_EVENT_TX_FIFO_DONE 0x00C00000L  /* FIFO complete */
 #define HW_EVENT_TIMEOUT      0x80000000L  /* Timer timeout */
 
@@ -821,7 +825,7 @@ int phy_txstart(void) {
 	return STATUS_OK;
 }
 
-FIFO_STATE phy_txfifo(void) {
+RF_STATE phy_txfifo(void) {
 	return FIFO_DONE;
 }
 
@@ -858,41 +862,49 @@ void phy_rxstart(void)
 	reg.wdata[1] = 0x27;
 	reg_wr(REG_ADR_DEMSET14, 2);
 	phy_intclr(~HW_EVENT_ALL_MASK);
-	phy_inten(HW_EVENT_RX_DONE | HW_EVENT_ADD_FIL_DONE);
+	phy_inten(HW_EVENT_RX_START);
 	phy_trx_state(PHY_ST_RXON);
 }
 
-FIFO_STATE phy_rxdone()
+RF_STATE phy_rxdone()
 {
-	FIFO_STATE status=FIFO_DONE;
+	RF_STATE status=FIFO_DONE;
 	uint16_t data_size=0;
 	union{
 		uint8_t d8[4];
 		uint32_t d32;
 	} intsrc;
 
-	phy_trx_state(PHY_ST_FORCE_TRXOFF);
 
 	// Notice: A following must not change.
 	reg_rd(REG_ADR_INT_SOURCE_GRP1, 4);
 	memcpy(&intsrc.d32,reg.rdata,4);
 
-	if(intsrc.d8[2] != 0x04) {
+	if((intsrc.d8[2] & 0x30) || (intsrc.d8[1]&0x50)) {
+		phy_trx_state(PHY_ST_FORCE_TRXOFF);
 		status = CRC_ERROR;
-		goto error;
+		phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS | HW_EVENT_ADD_FIL_DONE);
+		reg.wdata[1] = 0x88, reg_wr(REG_ADR_RST_SET, 2);		// PHY RESET
+	} else if(intsrc.d8[2] &0x04) {
+		phy_trx_state(PHY_ST_FORCE_TRXOFF);
+		reg_rd(REG_ADR_RD_RX_FIFO, 2);
+		data_size = reg.rdata[0] & 0x07;
+		data_size = (data_size << 8) + reg.rdata[1];
+		if(data_size<=256) {
+			phy.in.len = data_size + 1; // add ED vale
+			fifo_rd(REG_ADR_RD_RX_FIFO);
+			phy.in.data[phy.in.len-3] = phy.in.data[phy.in.len-1];		// erase crc and move ed
+			phy.in.len -= 2;
+		}
+		phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS | HW_EVENT_ADD_FIL_DONE);
+		reg.wdata[1] = 0x88, reg_wr(REG_ADR_RST_SET, 2);		// PHY RESET
+	} else if(intsrc.d8[0] & 0x08) {
+		status = RF_RELEASE;
+		phy_intclr(HW_EVENT_ADD_FIL_DONE);
+	} else if(intsrc.d8[1] & 0x08){
+		status = RF_DETECT;
+		phy_intclr(HW_EVENT_SFD_DETECT);
 	}
-	reg_rd(REG_ADR_RD_RX_FIFO, 2);
-	data_size = reg.rdata[0] & 0x07;
-	data_size = (data_size << 8) + reg.rdata[1];
-	if(data_size<=256) {
-		phy.in.len = data_size + 1; // add ED vale
-		fifo_rd(REG_ADR_RD_RX_FIFO);
-		phy.in.data[phy.in.len-3] = phy.in.data[phy.in.len-1];		// erase crc and move ed
-		phy.in.len -= 2;
-	}
-error:
-	phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS | HW_EVENT_ADD_FIL_DONE);
-	reg.wdata[1] = 0x88, reg_wr(REG_ADR_RST_SET, 2);		// PHY RESET
 	return status;
 }
 
