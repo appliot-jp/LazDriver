@@ -1227,8 +1227,8 @@ int phy_txstart(void) {
 	return STATUS_OK;
 }
 
-RF_STATE phy_txfifo(void) {
-	RF_STATE status = FIFO_CONT;
+FIFO_STATE phy_txfifo(void) {
+	FIFO_STATE status = FIFO_CONT;
 	uint32_t intsrc;
 	int len;
 	const char s0[] = "phy_txfifo error";
@@ -1283,12 +1283,12 @@ void phy_rxstart(void) {
 	phy_trx_state(PHY_ST_RXON);
 }
 
-RF_STATE phy_rxdone(void){
+FIFO_STATE phy_rxdone(void){
 	uint32_t intsrc;
 	int len;
 	const char s0[]="rx data length over";
 	const char s1[]="rx fifo over run";
-	RF_STATE state=FIFO_DONE;
+	FIFO_STATE state=FIFO_DONE;
 
 	intsrc = phy_intsrc();
 #if !defined(LAZURITE_IDE) && defined(DEBUG)

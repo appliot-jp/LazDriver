@@ -54,10 +54,8 @@ typedef enum {
 typedef enum {
 	FIFO_DONE = 0,
 	FIFO_CONT,
-	CRC_ERROR,
-	RF_DETECT,
-	RF_RELEASE
-} RF_STATE;
+	CRC_ERROR
+} FIFO_STATE;
 
 #define PHY_MODULATION_FSK		( 0x00 )
 #define PHY_MODULATION_DSSS		( 0x10 )
@@ -104,11 +102,11 @@ extern int phy_txpre(TX_MODE mode);
 extern int phy_ccaCtrl(uint32_t us);
 extern uint8_t phy_ccadone(void);
 extern int phy_txstart(void);
-extern RF_STATE phy_txfifo(void);
+extern FIFO_STATE phy_txfifo(void);
 extern void phy_txdone(void);
 
 extern void phy_rxstart(void);
-extern RF_STATE phy_rxdone(void);
+extern FIFO_STATE phy_rxdone(void);
 extern void phy_stop(void);
 extern void phy_clrAddrFilt(void);
 extern void phy_addrFilt(uint16_t panid, uint8_t *ieee_addr, uint16_t uc_addr, uint16_t bc_addr);

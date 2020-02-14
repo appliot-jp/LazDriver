@@ -171,6 +171,7 @@ static void macl_rxdone_abort_handler(void) {
 static void macl_rxfifo_handler(void)
 {
 	int status;
+	macl.rxdone = false;
 	macl.condition=SUBGHZ_ST_RX_FIFO;
 	phy_timer_stop();
 	status = phy_rxdone();
@@ -179,13 +180,6 @@ static void macl_rxfifo_handler(void)
 	printk(KERN_INFO"%s,%d,%s,%d\n",__func__,__LINE__,macl_state_to_string(macl.condition),status);
 #endif
 	switch(status) {
-		case RF_DETECT:			// next data 
-			phy_timer_start(100,macl_rxdone_abort_handler);
-			macl.rxdone = false;
-			break;
-		case RF_RELEASE:			// next data 
-			macl.rxdone = true;
-			break;
 		case FIFO_CONT:			// next data 
 			phy_timer_start(100,macl_rxdone_abort_handler);
 			break;
@@ -199,7 +193,6 @@ static void macl_rxfifo_handler(void)
 			break;
 		case CRC_ERROR:		// rxdone
 		default:			// error
-			phy_timer_stop();
 			macl.condition=SUBGHZ_ST_RX_START;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 			printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
@@ -270,13 +263,13 @@ end:
 
 static void macl_txfifo_handler(void)
 {
-	RF_STATE rf_state;
+	FIFO_STATE fifo_state;
 	macl.condition = SUBGHZ_ST_TX_FIFO;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
-	rf_state = phy_txfifo();
-	switch(rf_state) {
+	fifo_state = phy_txfifo();
+	switch(fifo_state) {
 		case CRC_ERROR:
 			macl_txdone_abort_handler();
 			break;
@@ -435,7 +428,7 @@ static void macl_txdone_handler(void)
 
 static void macl_ack_rxdone_handler(void)
 {
-	RF_STATE rxtype;
+	FIFO_STATE rxtype;
 	bool isAck;
 	macl.condition=SUBGHZ_ST_ACK_RX_DONE;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
