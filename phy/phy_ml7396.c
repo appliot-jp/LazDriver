@@ -498,7 +498,6 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 	{
 		uint8_t calibs[5];
 		HAL_I2C_read(0x29, calibs, 5);
-		printk(KERN_INFO"%s %d %02x %02x %02x %02x %02x\n",__func__,__LINE__,calibs[0],calibs[1],calibs[2],calibs[3], calibs[4]);
 		reg.wdata[1] = calibs[0], reg_wr(REG_ADR_PA_ADJ3, 2);  /* 20mW rough adjustment */
 		reg.wdata[1] = calibs[2], reg_wr(REG_ADR_PA_ADJ1, 2);  /*  1mW rough adjustment */
 		reg.wdata[1] = calibs[4], reg_wr(REG_ADR_OSC_ADJ, 2);  /* XA */
@@ -705,7 +704,6 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 	if(vco_cal() == false) {
 		return -EDEADLK;
 	};
-	phy_regdump();
 	return STATUS_OK;
 }
 
