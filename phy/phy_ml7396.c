@@ -488,24 +488,34 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 	}
 #else
 #endif
-	switch (txPower) {
-		case  1:  /*  1mW */
-			HAL_I2C_read(0x2c, &reg.wdata[1], 1), reg_wr(REG_ADR_PA_REG_FINE_ADJ, 2);
-			break;
-		case 20:  /* 20mW */
-			HAL_I2C_read(0x2a, &reg.wdata[1],1), reg_wr(REG_ADR_PA_REG_FINE_ADJ, 2);
-			break;
-		default:
-			return -EINVAL;
-			break;
-	}
-	reg.wdata[1] = 0x01, reg_wr(REG_ADR_PA_CNTRL,                    2);
-
 	// PHY RST
 	reg.wdata[1] = 0x88, reg_wr(REG_ADR_RST_SET, 2);
 
 	phy_inten(HW_EVENT_ALL_MASK);
 	phy_intclr(~HW_EVENT_FIFO_CLEAR);
+
+	// set calibration parameters
+	{
+		uint8_t calibs[5];
+		HAL_I2C_read(0x29, calibs, 5);
+		printk(KERN_INFO"%s %d %02x %02x %02x %02x %02x\n",__func__,__LINE__,calibs[0],calibs[1],calibs[2],calibs[3], calibs[4]);
+		reg.wdata[1] = calibs[0], reg_wr(REG_ADR_PA_ADJ3, 2);  /* 20mW rough adjustment */
+		reg.wdata[1] = calibs[2], reg_wr(REG_ADR_PA_ADJ1, 2);  /*  1mW rough adjustment */
+		reg.wdata[1] = calibs[4], reg_wr(REG_ADR_OSC_ADJ, 2);  /* XA */
+		switch (txPower) {
+			case  1:  /*  1mW */
+				reg.wdata[1] = calibs[3], reg_wr(REG_ADR_PA_REG_FINE_ADJ, 2);
+				reg.wdata[1] = 0x01, reg_wr(REG_ADR_PA_CNTRL,             2);
+				break;
+			case 20:  /* 20mW */
+				reg.wdata[1] = calibs[1], reg_wr(REG_ADR_PA_REG_FINE_ADJ, 2);
+				reg.wdata[1] = 0x13, reg_wr(REG_ADR_PA_CNTRL,             2);
+				break;
+			default:
+				return -EINVAL;
+				break;
+		}
+	}
 
 	// Operation Mode Set
 	reg.wdata[1] = 0x10, reg_wr(REG_ADR_ACK_TIMER_EN,       2);		// enable TX_DONE_OFF
@@ -588,8 +598,6 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 	reg.wdata[1] = 0xc0, reg_wr(REG_ADR_PRIVATE_BPF_CAP2,   2);  /* Hidden register */
 	reg.wdata[1] = 0x17, reg_wr(REG_ADR_PRIVATE_BPF_ADJ1,   2);  /* Hidden register */
 	reg.wdata[1] = 0x17, reg_wr(REG_ADR_PRIVATE_BPF_ADJ2,   2);  /* Hidden register */
-	HAL_I2C_read(0x2b, &reg.wdata[1], 1), reg_wr(REG_ADR_PA_ADJ1, 2);  /*  1mW rough adjustment */
-	HAL_I2C_read(0x29, &reg.wdata[1], 1), reg_wr(REG_ADR_PA_ADJ3, 2);  /* 20mW rough adjustment */
 
 	// Other Initialization
 	reg.wdata[1]=0x00;
@@ -615,7 +623,6 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 	reg.wdata[1] = 0x04, reg_wr(REG_ADR_TX_PR_LEN,           2);  /* more than 0x04 */
 	reg.wdata[1] = 0x1f, reg_wr(REG_ADR_RSSI_LPF_ADJ,        2);
 	reg.wdata[1] = 0x44, reg_wr(REG_ADR_PLL_CP_ADJ,          2);
-	HAL_I2C_read(0x2d, &reg.wdata[1],1), reg_wr(REG_ADR_OSC_ADJ,  2);  /* XA */
 	/* rate setting */
 	reg.wdata[1] = regset->rate, reg_wr(REG_ADR_DATA_SET, 2);
 	{/* frequency setting */
@@ -698,6 +705,7 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 	if(vco_cal() == false) {
 		return -EDEADLK;
 	};
+	phy_regdump();
 	return STATUS_OK;
 }
 
@@ -707,9 +715,9 @@ struct phy_param *phy_init(void)
 	hwif.i2c_addr = 0x50;
 
 #if defined(LAZURITE_MINI)
-    hwif.i2c_addr_bits = 16;
+	hwif.i2c_addr_bits = 16;
 #else
-    hwif.i2c_addr_bits = 8;
+	hwif.i2c_addr_bits = 8;
 #endif
 	if(HAL_init(&hwif) != STATUS_OK) return NULL;
 
