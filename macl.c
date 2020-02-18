@@ -184,13 +184,16 @@ static void macl_rxfifo_handler(void)
 			phy_timer_start(100,macl_rxdone_abort_handler);
 			break;
 		case FIFO_DONE:		// rxdone
+			// my packet
 			if((macl.promiscuousMode) || (((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_CMD) || ((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_DATA) )){
 				if(macl_rxdone_handler() == true) {
 					macl.rxdone = true;
 				}
 				macl.status = STATUS_OK;
+				break;
+			} else {
+				// CRC_ERROR process should work for disposal packet.
 			}
-			break;
 		case CRC_ERROR:		// rxdone
 		default:			// error
 			macl.condition=SUBGHZ_ST_RX_START;
