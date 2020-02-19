@@ -529,6 +529,7 @@ error:
 struct macl_param *macl_init(void)
 {
 	memset(&macl,0,sizeof(struct macl_param));
+	macl.txdone = true;
 	macl.rxdone = true;
 	macl.condition = SUBGHZ_ST_INIT;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)

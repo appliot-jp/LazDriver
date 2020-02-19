@@ -274,6 +274,12 @@ static irqreturn_t rf_irq_handler(int irq,void *dev_id) {
 		//if (que_irq==0)
 		//{
 		//			printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,que_irq);
+		if((macl.rxdone == false) && (macl.txdone == false )) {
+			printk(KERN_INFO"%s %d rx & tx\n",__func__,__LINE__);
+		}
+		if(macl.rxdone && macl.txdone) {
+			macl.rxdone = false;
+		}
 		que_irq=1;
 		wake_up_interruptible_sync(&rf_irq_q);
 		//return IRQ_WAKE_THREAD;
