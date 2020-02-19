@@ -256,9 +256,7 @@ static SUBGHZ_MSG subghz_tx_raw(struct mac_fc_alignment fc, void (*callback)(uin
 	int result;
 	uint32_t time;
 	static const char s1[] = "subghz_tx_raw error1";
-	static const char s2[] = "subghz_tx_raw error2";
 
-	subghz_param.mach->macl->txdone = false;
 	result = mach_tx(fc,subghz_param.addr_type,&subghz_param.tx,callback);
 	if(result != STATUS_OK) {
 		subghz_param.tx_stat.rssi = 0;
@@ -279,26 +277,28 @@ static SUBGHZ_MSG subghz_tx_raw(struct mac_fc_alignment fc, void (*callback)(uin
 #ifdef	LAZURITE_IDE
 		enb_interrupts(DI_SUBGHZ);
 #endif
-		HAL_GPIO_enableInterrupt();
 		if(callback) callback(0,subghz_param.tx_stat.status);
-		goto error;
-	}
 
+		if (subghz_param.read == true) {
+			if(mach_start(&subghz_param.rx)!=STATUS_OK) {
+				subghz_param.tx_stat.status = -EDEADLK;
+				HAL_reset();
+				subghz_param.rx.len = 0;
+				mach_set_my_short_addr(subghz_param.panid,subghz_param.short_addr);
+				mach_setup(&subghz_param.rf);
+				mach_start(&subghz_param.rx);
+				subghz_param.read = true;
+				subghz_api_status |= SUBGHZ_API_RXENABLE;
+			}
+			goto error;
+		}
+	}
 	subghz_param.tx_stat.status = subghz_param.mach->macl->status;
 	if ( subghz_param.tx_stat.status == SUBGHZ_OK) {
 		subghz_param.tx_stat.rssi = subghz_param.mach->tx.rssi;
 	}
 
 error:
-	if (subghz_param.mach->macl->rxOnEnable) {
-		if(mach_start(&subghz_param.rx)!=STATUS_OK) {
-			subghz_param.tx_stat.status = -EDEADLK;
-			alert(s2);
-			HAL_reset();
-		}
-	} else {
-		mach_stop();
-	}
 	return subghz_genErrMsg(subghz_param.tx_stat.status);
 }
 
@@ -385,6 +385,12 @@ int mach_rx_irq(int status,struct mac_header *rx)
 {
 	if(status == -EDEADLK) {
 		HAL_reset();
+		subghz_param.rx.len = 0;
+		mach_set_my_short_addr(subghz_param.panid,subghz_param.short_addr);
+		mach_setup(&subghz_param.rf);
+		mach_start(&subghz_param.rx);
+		subghz_param.read = true;
+		subghz_api_status |= SUBGHZ_API_RXENABLE;
 		return STATUS_OK;
 	}
 	// ignore broadcast
@@ -435,11 +441,6 @@ int mach_rx_irq(int status,struct mac_header *rx)
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s %s %d mach_start\n",__FILE__,__func__,__LINE__);
 #endif
-	if(!subghz_param.mach->macl->promiscuousMode){
-		if(mach_start(&subghz_param.rx)!=STATUS_OK) {
-			HAL_reset();
-		}
-	}
 	return STATUS_OK;
 }
 

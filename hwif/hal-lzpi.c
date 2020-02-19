@@ -188,6 +188,11 @@ int rf_main_thread(void *p)
 		if(m.trigger == 0x00) {
 			que_irq=0;
 			wait_event_interruptible(rf_irq_q, que_irq);
+			if(flag_irq_enable == false) {
+				printk(KERN_INFO"%s %s %d %d %d macl.condition=%d\n",__FILE__,__func__,__LINE__,m.trigger, gpio_get_value(PHY_SINTN),macl.condition);
+				m.trigger &= ~0x01;
+				continue;
+			}
 		}
 		if(kthread_should_stop()) break;
 		if(m.trigger&0x01){ 				// SINT INTERRUPT
@@ -268,10 +273,10 @@ static irqreturn_t rf_irq_handler(int irq,void *dev_id) {
 		m.trigger |= 0x01;
 		//if (que_irq==0)
 		//{
-			//			printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,que_irq);
-			que_irq=1;
-			wake_up_interruptible_sync(&rf_irq_q);
-			//return IRQ_WAKE_THREAD;
+		//			printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,que_irq);
+		que_irq=1;
+		wake_up_interruptible_sync(&rf_irq_q);
+		//return IRQ_WAKE_THREAD;
 		//}
 	}
 	return IRQ_HANDLED;
@@ -453,8 +458,14 @@ int HAL_remove(void)
 
 int HAL_SPI_transfer(const uint8_t *wdata, uint16_t wsize,unsigned char *rdata, uint16_t rsize)
 {
+	static int access_num = 0;
 	int result;
+	if(access_num != 0) {
+		printk(KERN_INFO"%s %d %d\n",__func__,__LINE__,access_num);
+	}
+	access_num++;
 	result = lzpi_spi_transfer(wdata,wsize,rdata,rsize);
+	access_num--;
 	return result;
 }
 
