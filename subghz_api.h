@@ -37,6 +37,27 @@
 #define SUBGHZ_API_CLOSE		( 0x10 )
 #define SUBGHZ_API_HOPPING_SYNC_SLAVE_ISR		( 0x20 )
 #define SUBGHZ_API_HOPPING_SYNC_HOST_ISR		( 0x40 )
+#define SUBGHZ_HOPPING				( 0xF0 )
+#define SUBGHZ_HOPPING_TS_H		( SUBGHZ_HOPPING + 0 )
+#define SUBGHZ_HOPPING_TS_S		( SUBGHZ_HOPPING + 1 )
+#define SUBGHZ_HOPPING_PB_H		( SUBGHZ_HOPPING + 2 )
+#define SUBGHZ_HOPPING_PB_S		( SUBGHZ_HOPPING + 3 )
+
+#define SUBGHZ_HOPPING_SEARCH_CYCLE				2
+#define SUBGHZ_HOPPING_SEARCH_INTERVAL		200
+#define SUBGHZ_HOPPING_CH_DURATION				1000
+
+#define SUBGHZ_HOPPING_SYNC_FRAME_SIZE 16
+struct subghz_hopping_sync_frame {
+	uint8_t cmd;
+	uint8_t index;
+	uint8_t size;
+	uint8_t reserve;
+	uint32_t sync_interval;
+	uint32_t sync_from;
+	uint32_t base;
+	uint8_t data[32];					// dummy
+};
 extern uint8_t subghz_api_status;
 
 typedef enum {
@@ -57,6 +78,7 @@ typedef enum {
 	SUBGHZ_ERR_ADDRTYPE,		// 14
 	SUBGHZ_TTL_SEND_OVR,		// 15
 	SUBGHZ_DEAD_LOCK,				// 16
+	SUBGHZ_SYNC_FAIL,		// 17
 	SUBGHZ_DUMMY						// --
 } SUBGHZ_MSG;
 

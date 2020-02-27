@@ -48,12 +48,40 @@
 
 static const uint8_t mac_overhead_len[8] = {3,5,7,5,7,5,9,7};
 
+static const uint8_t SUBGHZ_HOPPING_SEARCH_LIST[] = {
+	24,
+	26,
+	28,
+	30,
+	34,
+	36,
+	38,
+	40,
+	42,
+	44
+};
 // this proto-type is for linux
 static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len);
+static SUBGHZ_MSG subghz_rxEnable(void (*callback)(const uint8_t *data, uint8_t rssi, int status));
 uint8_t subghz_api_status = 0;
 
 // local parameters
 static struct {
+	uint8_t ch;									// ch setting from application layer
+	union {
+		struct {
+			volatile bool sync_enb;							// hopping mode only. sync enable
+			uint8_t ch_scan_cycle;					// hopping mode only. cycle time of scan
+			uint8_t ch_scan_count;					// hopping mode only. cycle time of scan
+			uint16_t backoff_unit;					// hopping mode only. cycle time of scan
+			uint32_t backoff_time;					// hopping mode only. cycle time of scan
+		} slave;
+		struct { 
+			uint8_t ch_index;						// hopping mode only. ch index.
+			uint32_t sync_time;							// hopping mode only. sync time(millis)
+			uint32_t ch_duration;		// hopping mode only. sync time(millis)
+		} host;
+	} hopping;
 	uint8_t addr_type;
 	bool read;
 	bool ack_req;
@@ -69,13 +97,21 @@ static struct {
 	uint16_t short_addr;
 	BUFFER tx;
 	BUFFER rx;
+	BUFFER hopping_tx;
+	BUFFER hopping_rx;
 } subghz_param;
 
+static uint8_t hopping_ch_list[64];
+static uint8_t subghz_rx_data[256];
+#define SUBGHZ_HOPPING_SYNC_REQUEST	0x80
+#define SUBGHZ_HOPPING_SYNC_OK			0x81
+const uint8_t SUBGHZ_HOPPING_ID[] = {0x00,0x1D,0x12,0x90};
 
 static SUBGHZ_MSG subghz_init(void)
 {
 	SUBGHZ_MSG msg;
 	int result;
+	subghz_api_status = SUBGHZ_API_INIT;
 
 	// clear parameter memory
 	memset(&subghz_param,0,sizeof(subghz_param));
@@ -99,6 +135,12 @@ static SUBGHZ_MSG subghz_init(void)
 	subghz_param.rf.tx_retry = 3;
 	subghz_param.rf.ant_sw = 0;
 	AES128_setKey(NULL);
+	subghz_param.hopping_tx.data = hopping_ch_list;
+	subghz_param.hopping_tx.size = sizeof(hopping_ch_list);
+	subghz_param.hopping_tx.len = 0;
+	subghz_param.hopping_rx.data = NULL;
+	subghz_param.hopping_rx.size = 0;
+	subghz_param.hopping_rx.len = 0;
 
 	// reset
 	subghz_param.mach = mach_init();
@@ -106,7 +148,8 @@ static SUBGHZ_MSG subghz_init(void)
 	{
 		result = -EIO;
 		msg = SUBGHZ_RESET_FAIL;
-		goto error;
+		subghz_param.tx_stat.status = result;
+		return msg;
 	}
 
 	// initializing parameters
@@ -118,8 +161,6 @@ static SUBGHZ_MSG subghz_init(void)
 		((uint16_t)subghz_param.mach->my_addr.ieee_addr[1]<<8);
 	srand((uint16_t)subghz_param.short_addr);
 	msg =  SUBGHZ_OK;
-
-error:
 	subghz_param.tx_stat.status = result;
 	return msg;
 }
@@ -185,10 +226,12 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 		if(result !=STATUS_OK) {
 			subghz_param.open = true;
 			msg = SUBGHZ_WAKEUP_FAIL;
-			goto error;
+			subghz_param.tx_stat.status = result;
+			return msg;
 		}
 	}
 	//initializing parameter
+	subghz_param.sending = false;
 	subghz_param.read = false;
 	// 
 	subghz_param.rf.ch = ch;
@@ -209,26 +252,46 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 	result = mach_set_my_short_addr(subghz_param.panid,subghz_param.short_addr);
 	if(result != STATUS_OK) {
 		msg = SUBGHZ_MYADDR_FAIL;
-		goto error;
+			subghz_param.tx_stat.status = result;
+			return msg;
 	}
 
 	if(txPower == 1) 
 		subghz_param.rf.tx_power = DBM_TO_MBM(1);
 	else if(txPower == 20) 
 		subghz_param.rf.tx_power = DBM_TO_MBM(13);
-	else goto error;
+	else {
+			subghz_param.tx_stat.status = result;
+			return msg;
+		}
 
-	result = mach_setup(&subghz_param.rf);
-	if(result != STATUS_OK) {
-		msg = SUBGHZ_SETUP_FAIL;
-		goto error;
+	if(subghz_param.open == false)
+	{
+		// start clock of ml7386
+		if((result = mach_sleep(false))!=STATUS_OK)
+		{
+			subghz_param.open = true;
+			msg = SUBGHZ_WAKEUP_FAIL;
+			subghz_param.tx_stat.status = result;
+			return msg;
+		}
+	}
+	if(ch < SUBGHZ_HOPPING) {
+		subghz_param.rf.ch = ch;
+		subghz_param.ch = ch;
+		if((result = mach_setup(&subghz_param.rf)) != STATUS_OK) {
+			msg = SUBGHZ_SETUP_FAIL;
+			subghz_param.tx_stat.status = result;
+			return msg;
+		}
+	} else {
+		subghz_param.ch = ch;
 	}
 
 	msg = SUBGHZ_OK;
-
-error:
-	subghz_param.tx_stat.status = result;
+	subghz_api_status = SUBGHZ_API_NONE;
 	return msg;
+
 }
 
 static SUBGHZ_MSG subghz_close(void)
@@ -236,6 +299,12 @@ static SUBGHZ_MSG subghz_close(void)
 	SUBGHZ_MSG msg;
 	int result;
 	result = mach_sleep();
+	subghz_api_status = SUBGHZ_API_CLOSE;
+
+	if(subghz_param.ch == SUBGHZ_HOPPING_TS_H) {
+		timer4.stop();
+	}
+	
 	if( result != STATUS_OK)
 	{
 		msg = SUBGHZ_SLEEP_FAIL;
@@ -471,7 +540,9 @@ static SUBGHZ_MSG subghz_rxEnable(void (*callback)(const uint8_t *data, uint8_t 
 	static uint8_t data[256];
 	int result;
 	SUBGHZ_MSG msg = SUBGHZ_OK;
+	struct subghz_hopping_sync_frame *sf;
 
+	subghz_api_status |= SUBGHZ_API_RXENABLE;
 	subghz_param.rx.data = data;
 	subghz_param.rx.size = sizeof(data);
 	subghz_param.rx.len = 0;
