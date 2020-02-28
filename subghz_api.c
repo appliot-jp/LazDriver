@@ -46,8 +46,6 @@
 #include "errno.h"
 #include "aes/aes.h"
 
-static const uint8_t mac_overhead_len[8] = {3,5,7,5,7,5,9,7};
-
 // this proto-type is for linux
 static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len);
 uint8_t subghz_api_status = 0;
