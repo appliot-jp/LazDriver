@@ -56,7 +56,7 @@ struct subghz_hopping_sync_frame {
 	uint32_t sync_interval;
 	uint32_t sync_from;
 	uint32_t base;
-	uint8_t data[32];					// dummy
+	uint8_t data[32];
 };
 extern uint8_t subghz_api_status;
 
@@ -78,16 +78,18 @@ typedef enum {
 	SUBGHZ_ERR_ADDRTYPE,		// 14
 	SUBGHZ_TTL_SEND_OVR,		// 15
 	SUBGHZ_DEAD_LOCK,				// 16
-	SUBGHZ_SYNC_FAIL,		// 17
+	SUBGHZ_SYNC_FAIL,				// 17
+	SUBGHZ_RATE_FAIL,
 	SUBGHZ_DUMMY						// --
 } SUBGHZ_MSG;
 
 // rate parameters
 typedef enum {
-	SUBGHZ_200KBPS = 200,
-	SUBGHZ_80KBPS  = 80,
+	SUBGHZ_50KBPS  = 50,
+	SUBGHZ_50KCPS = 51,
 	SUBGHZ_100KBPS = 100,
-	SUBGHZ_50KBPS  = 50
+	SUBGHZ_100KCPS = 101,
+	SUBGHZ_200KCPS = 201
 } SUBGHZ_RATE;
 
 // txPower parameters
@@ -148,12 +150,11 @@ typedef struct
 	SUBGHZ_MSG (*setSendMode)(SUBGHZ_PARAM *param);
 	SUBGHZ_MSG (*getSendMode)(SUBGHZ_PARAM *param);
 	void (*decMac)(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len);
-    SUBGHZ_MSG (*setKey)(uint8_t *key);
+	SUBGHZ_MSG (*setKey)(uint8_t *key);
 	bool (*setEnhanceAck)(uint8_t *data, int size);
 	void (*getEnhanceAck)(uint8_t **data, int *size);
 	void (*setAckTxInterval)(uint16_t interval);
 	void (*antSwitch)(uint8_t ant_sw);
-	void (*setModulation)(int8_t mode);
 	void (*setDsssSpreadFactor)(int8_t sf);
 } SubGHz_CTRL;
 

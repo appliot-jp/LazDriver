@@ -490,7 +490,7 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 #endif
 	// PHY RST
 	reg.wdata[1] = 0x88, reg_wr(REG_ADR_RST_SET, 2);
-
+	phy_trx_state(PHY_ST_FORCE_TRXOFF);
 	phy_inten(HW_EVENT_ALL_MASK);
 	phy_intclr(~HW_EVENT_FIFO_CLEAR);
 
