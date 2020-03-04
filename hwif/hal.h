@@ -53,21 +53,25 @@ struct hw_mode {
 };
 
 #ifdef LAZURITE_IDE
-extern int HAL_init_waitqueue_head(wait_queue_head_t *q);
-#define HAL_wait_event_interruptible_timeout(que,condition,ms) \
-{\
-	volatile uint32_t __st_time = millis();\
-	volatile uint32_t __ret;\
-	do {\
-		__ret = __st_time+ms-millis();\
-		if(__ret > ms) {\
-			__ret = 0;\
-		}\
-		lp_setHaltMode();\
-	} while((condition == false) && (__ret > 0));\
-	__ret;\
+#pragma INLINE HAL_init_waitqueue_head HAL_wait_event_interruptible_timeout HAL_wake_up_interruptible
+int HAL_init_waitqueue_head(wait_queue_head_t *q) {
+	return 0;
 }
-#define HAL_wake_up_interruptible(que) 0
+uint32_t HAL_wait_event_interruptible_timeout(wait_queue_head_t q,volatile int condition,uint32_t ms){
+	volatile uint32_t __st_time = millis();
+	volatile uint32_t __ret;
+	do {\
+		__ret = __st_time - millis() +ms;
+		if(__ret > ms) {
+			__ret = 0;
+		}
+		lp_setHaltMode();
+	} while((condition == false) && (__ret > 0));
+	return __ret;
+}
+int HAL_wake_up_interruptible(wait_queue_head_t *q) {
+	return 0;
+}
 #else
 #define HAL_init_waitqueue_head(que)	init_waitqueue_head(que)
 #define HAL_wait_event_interruptible_timeout(a,b,c) wait_event_interruptible_timeout(a,b,c)
