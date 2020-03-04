@@ -604,7 +604,49 @@ int	macl_stop(void)
 }
 
 int	macl_xmit_sync(BUFFER buff) {
-	return -EINVAL;
+	static const char s0[] = "rxdone abort in tx";
+	uint32_t time;
+	macl.condition=SUBGHZ_ST_TX_START;
+
+	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.rxdone,100L);
+	HAL_GPIO_disableInterrupt();
+	macl.txdone = false;
+	if(time == 0) {
+		alert(s0);
+	}
+	phy_stop();
+	phy_timer_stop();
+	phy_sint_handler(macl_dummy_handler);
+
+	macl.status=STATUS_OK;
+	macl.phy->out = buff;
+	macl.resendingNum = 0;
+	macl.ccaCount=0;
+	macl.sequenceNum= buff.data[2];
+	macl.tx_callback = NULL;
+
+	macl.status = macl_total_transmission_time(macl.phy->out.len+TX_TTL_OFFSET);
+	if (macl.status != STATUS_OK){
+		goto error;
+	}
+
+	phy_txpre(MANUAL_TX);
+	macl_cca_setting();
+	macl.condition=SUBGHZ_ST_CCA;
+	HAL_GPIO_enableInterrupt();
+#if !defined(LAZURITE_IDE) && defined(DEBUG)
+	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
+#endif
+
+	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.txdone,1000L);
+	if(time == 0) {
+		if(macl.rxOnEnable == true) {
+			macl_start();
+		}
+		macl.status = -EDEADLK;
+	}
+error:
+	return macl.status;
 }
 int	macl_xmit_async(BUFFER buff,void (*callback)(uint8_t rssi, int status))
 {
@@ -612,7 +654,7 @@ int	macl_xmit_async(BUFFER buff,void (*callback)(uint8_t rssi, int status))
 	uint32_t time;
 	macl.condition=SUBGHZ_ST_TX_START;
 
-	time =  HAL_wait_event_interruptible_timeout(&macl.que,&macl.rxdone,100L);
+	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.rxdone,100L);
 	HAL_GPIO_disableInterrupt();
 	macl.txdone = false;
 	if(time == 0) {

@@ -27,6 +27,7 @@
 	//#include <lazurite_system.h>
 #else	
 #include <linux/delay.h>
+#include <linux/wait.h>
 #endif	// LAZURITE_IDE
 
 #define HAL_ERROR_PARAM		-1	//
@@ -51,9 +52,27 @@ struct hw_mode {
 	uint8_t i2c_addr_bits;
 };
 
+#ifdef LAZURITE_IDE
 extern int HAL_init_waitqueue_head(wait_queue_head_t *q);
-extern uint32_t HAL_wait_event_interruptible_timeout(wait_queue_head_t *q,volatile int *condition,uint32_t ms);
-extern int HAL_wake_up_interruptible(wait_queue_head_t *q);
+#define HAL_wait_event_interruptible_timeout(que,condition,ms) \
+{\
+	volatile uint32_t __st_time = millis();\
+	volatile uint32_t __ret;\
+	do {\
+		__ret = __st_time+ms-millis();\
+		if(__ret > ms) {\
+			__ret = 0;\
+		}\
+		lp_setHaltMode();\
+	} while((condition == false) && (__ret > 0));\
+	__ret;\
+}
+#define HAL_wake_up_interruptible(que) 0
+#else
+#define HAL_init_waitqueue_head(que)	init_waitqueue_head(que)
+#define HAL_wait_event_interruptible_timeout(a,b,c) wait_event_interruptible_timeout(a,b,c)
+#define HAL_wake_up_interruptible(que) wake_up_interruptible(que)
+#endif
 extern int HAL_init(struct hw_mode *mode);
 extern int HAL_remove(void);
 extern int HAL_GPIO_setValue(uint8_t pin, uint8_t value);

@@ -84,7 +84,6 @@
 #define	IOCTL_GET_ED_VALUE1			0x46
 #define	IOCTL_GET_ED_VALUE2			0x48
 #define	IOCTL_GET_ED_VALUE3			0x4A
-#define	IOCTL_SET_DSSS_MODE			0x80
 #define	IOCTL_SET_DSSS_SF				0x81
 
 #define	IOCTL_RF				0x2000

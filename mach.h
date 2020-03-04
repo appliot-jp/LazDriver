@@ -145,7 +145,7 @@ extern int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr);
 extern int mach_set_dst_ieee_addr(uint16_t panid,uint8_t *addr);
 extern int mach_set_dst_short_addr(uint16_t panid,uint16_t short_addr);
 extern int mach_set_src_addr(uint8_t addr_mode);
-extern int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf,void (*callback)(uint8_t rssi, int status));
+extern int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf);
 extern int mach_start(BUFFER *rxbuf);
 extern int mach_stop(void);
 extern int mach_parse_data(struct mac_header *header);

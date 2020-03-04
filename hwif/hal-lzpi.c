@@ -394,6 +394,7 @@ wait_event_interruptible_timeout - sleep until a condition gets true or a timeou
 0: timeout
 n: remaining time
  ******************************************************************************/
+/*
 int HAL_init_waitqueue_head(wait_queue_head_t *q) {
 	init_waitqueue_head(q);
 	return 0;
@@ -412,6 +413,7 @@ int HAL_wake_up_interruptible(wait_queue_head_t *q)
 	wake_up_interruptible_sync(q);
 	return status;
 }
+*/
 
 uint8_t lastSequenceNum = 0;
 void timer4_func(void) {

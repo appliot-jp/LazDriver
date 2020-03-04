@@ -62,10 +62,11 @@ volatile uint8_t hal_event_flag = 0;
 // Function
 //*****************************************************
 
+extern unsigned short di_flag;
+/*
 int HAL_init_waitqueue_head(wait_queue_head_t *q) {
 	return 0;
 }
-extern unsigned short di_flag;
 uint32_t HAL_wait_event_interruptible_timeout(wait_queue_head_t *q,volatile int *condition,uint32_t ms){
 	volatile uint32_t st_time = millis();
 	volatile uint32_t status;
@@ -83,6 +84,7 @@ int HAL_wake_up_interruptible(wait_queue_head_t *q)
 {
 	return 0;
 }
+*/
 
 
 

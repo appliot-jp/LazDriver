@@ -823,7 +823,7 @@ int mach_set_promiscuous(bool on) {
 	return status;
 }
 
-int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf,void (*callback)(uint8_t rssi, int status)) {
+int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf) {
 
 	int status = STATUS_OK;
 	// initializing buffer
@@ -844,7 +844,7 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf,void (*ca
 	//printk(KERN_INFO"PAYLOAD\n");
 	//PAYLOADDUMP(mach.tx.payload.data,mach.tx.payload.len);
 	mach.sending = true;
-	status = macl_xmit_async(mach.tx.raw,callback);
+	status = macl_xmit_sync(mach.tx.raw);
 
 	return status;
 }

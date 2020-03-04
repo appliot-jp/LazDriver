@@ -594,12 +594,6 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 						ret = -EFAULT;
 					}
 					break;
-				case IOCTL_SET_DSSS_MODE:
-					//if(arg == 0) SubGHz.setModulation(false);
-					//	else SubGHz.setModulation(arg);
-					SubGHz.setModulation(arg);
-					ret = 0;
-					break;
 				case IOCTL_SET_DSSS_SF:
 					SubGHz.setDsssSpreadFactor(arg);
 					ret = 0;
