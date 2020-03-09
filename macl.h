@@ -80,11 +80,7 @@ typedef enum {
 } SUBGHZ_MAC_STATE;
 
 #ifdef LAZURITE_IDE
-#define PACKED __packed
-#else
-#define PACKED __attribute((packed))
-#endif
-typedef PACKED struct {
+typedef __packed struct {
 	uint16_t mac_header;
 	uint8_t  seq;
 	uint16_t panid;
@@ -96,7 +92,7 @@ typedef PACKED struct {
 	} payload;
 } macl_timesync_search_request_cmd;
 
-typedef PACKED struct  {
+typedef __packed struct  {
 	uint16_t mac_header;
 	uint8_t  seq;
 	uint16_t panid;
@@ -114,6 +110,37 @@ typedef PACKED struct  {
 	} payload;
 } macl_timesync_params_cmd;
 
+#else
+typedef struct {
+	uint16_t mac_header;
+	uint8_t  seq;
+	uint16_t panid;
+	uint16_t dst;
+	uint8_t src[8];
+	struct {
+		uint8_t cmd;
+		uint8_t id[8];
+	} payload;
+} __attribute__((packed)) macl_timesync_search_request_cmd;
+
+typedef struct  {
+	uint16_t mac_header;
+	uint8_t  seq;
+	uint16_t panid;
+	uint8_t dst[8];
+	uint8_t src[8];
+	struct {
+		uint8_t cmd;
+		uint8_t index;
+		uint8_t size;
+		uint8_t reserve;
+		uint32_t sync_interval;
+		uint32_t sync_from;
+		uint32_t base;
+		uint8_t ch_list [32];
+	} payload;
+} __attribute__((packed)) macl_timesync_params_cmd;
+#endif
 struct macl_param {
 	struct mach_param* parent;
 	uint8_t pages;

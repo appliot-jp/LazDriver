@@ -619,7 +619,6 @@ static void macl_ack_rxdone_handler(void) {
 }
 
 static void macl_ack_rxdone_abort_handler(void) {
-	int status;
 	static const char s1[] = "macl_ack_txdone txpre error";
 	macl.condition=SUBGHZ_ST_ACK_RX_ABORT;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
@@ -662,10 +661,10 @@ error:
  Public function section
  ******************************************************
  */
-struct macl_param *macl_init(struct mach_param* parent)
+struct macl_param *macl_init(void* parent)
 {
 	memset(&macl,0,sizeof(struct macl_param));
-	macl.parent = parent;
+	macl.parent = (struct mach_param*) parent;
 	macl.txdone = true;
 	macl.rxdone = true;
 	macl.rxcmd = true;
