@@ -35,6 +35,19 @@
 	#define CRC_OFFSET			2
 	#define TX_TTL_OFFSET (PREAMBLE_OFFSET + SFD_OFFSET + CRC_OFFSET)
 #endif
+
+#define SUBGHZ_HOPPING				( 0xF0 )
+#define SUBGHZ_HOPPING_TS_H		( SUBGHZ_HOPPING + 0 )
+#define SUBGHZ_HOPPING_TS_S		( SUBGHZ_HOPPING + 1 )
+#define SUBGHZ_HOPPING_PB_H		( SUBGHZ_HOPPING + 2 )
+#define SUBGHZ_HOPPING_PB_S		( SUBGHZ_HOPPING + 3 )
+
+#define SUBGHZ_HOPPING_SEARCH_CYCLE				2
+#define SUBGHZ_HOPPING_SEARCH_INTERVAL		200
+#define SUBGHZ_HOPPING_CH_DURATION				1000
+
+#define SUBGHZ_HOPPING_SYNC_FRAME_SIZE 16
+
 typedef enum {
 	SUBGHZ_ST_INIT = 0,
 	SUBGHZ_ST_INIT_FAIL,				// 1
@@ -61,11 +74,48 @@ typedef enum {
 	SUBGHZ_ST_ACK_TX,						// 22
 	SUBGHZ_ST_ACK_TX_ABORT,			// 23
 	SUBGHZ_ST_ACK_TX_DONE,			// 24
-	SUBGHZ_ST_DUMMY							// 25
+	SUBGHZ_ST_HOPPING_SYNC_SLAVE_ISR,				//25
+	SUBGHZ_ST_HOPPING_SYNC_HOST_ISR,	//27
+	SUBGHZ_ST_DUMMY							// 28
 } SUBGHZ_MAC_STATE;
 
+#ifdef LAZURITE_IDE
+#define PACKED __packed
+#else
+#define PACKED __attribute((packed))
+#endif
+struct macl_timesync_search_request_cmd {
+	uint16_t mac_header;
+	uint8_t  seq;
+	uint16_t panid;
+	uint16_t dst;
+	uint8_t src[8];
+	struct {
+		uint8_t cmd;
+		uint8_t id[8];
+	} payload;
+};
 
-struct macl_param {
+PACKED struct macl_timesync_params_cmd {
+	uint16_t mac_header;
+	uint8_t  seq;
+	uint16_t panid;
+	uint8_t dst[8];
+	uint8_t src[8];
+	struct {
+		uint8_t cmd;
+		uint8_t index;
+		uint8_t size;
+		uint8_t reserve;
+		uint32_t sync_interval;
+		uint32_t sync_from;
+		uint32_t base;
+		uint8_t ch_list [32];
+	} payload;
+};
+
+PACKED struct macl_param {
+	struct mach_param* parent;
 	uint8_t pages;
 	uint8_t ch;
 	uint8_t ccaMode;
@@ -76,13 +126,13 @@ struct macl_param {
 	uint8_t txPower;
 	uint8_t txRetries;
 	uint8_t sequenceNum;
+	uint8_t antsw;
 	uint8_t resendingNum;
-	uint8_t rxOnEnable;
-	bool promiscuousMode;
 	uint16_t ack_timeout;
 	int status;
 	int condition;
 	volatile int  txdone;
+	volatile int  rxcmd;
 	volatile int  rxdone;
 	uint16_t tx_ack_interval;
 	void (*tx_callback)(uint8_t rssi, int status);
@@ -91,7 +141,28 @@ struct macl_param {
 	uint32_t last_send_time;
 	struct phy_param *phy;
 	wait_queue_head_t que;
-	//BUFFER ack;
+	struct {
+		uint8_t hopping_sync_host_irq:1;
+		uint8_t hopping_sync_slave_irq:1;
+		uint8_t hopping:1;
+		uint8_t sync_enb:1;
+		uint8_t rxOnEnable:1;
+		uint8_t promiscuousMode:1;
+	} bit_params;
+	BUFFER cmd;
+	union {
+		struct {
+			uint8_t ch_scan_cycle;					// hopping mode only. cycle time of scan
+			uint8_t ch_scan_count;					// hopping mode only. cycle time of scan
+			uint16_t backoff_unit;					// hopping mode only. cycle time of scan
+			uint32_t backoff_time;					// hopping mode only. cycle time of scan
+		} slave;
+		struct { 
+			uint8_t ch_index;						// hopping mode only. ch index.
+			uint32_t sync_time;							// hopping mode only. sync time(millis)
+			uint32_t ch_duration;		// hopping mode only. sync time(millis)
+		} host;
+	} hopping;
 };
 
 struct ieee802154_my_addr {
@@ -100,7 +171,7 @@ struct ieee802154_my_addr {
 	uint8_t		ieee_addr[8];			// for lazurite
 	bool		pan_coord;				// common
 };
-extern struct macl_param *macl_init(void);	
+extern struct macl_param *macl_init(struct mach_param* parent);
 extern int	macl_start(void);
 extern int	macl_stop(void);
 extern int	macl_xmit_sync(BUFFER buff);
@@ -120,5 +191,6 @@ extern void	macl_set_ack_tx_interval(uint16_t interval);
 
 extern int	macl_set_modulation(int8_t mod, int8_t sf);
 extern int	macl_get_modulation(int8_t *mod, int8_t *sf);
+extern void macl_set_antsw(uint8_t antsw);
 #endif
 

@@ -109,7 +109,7 @@ struct rf_param {
 	uint8_t tx_min_be;
 	uint8_t tx_max_be;
 	uint8_t tx_retry;
-	uint8_t ant_sw;
+	uint8_t antsw;
 	int8_t modulation;
 	int8_t dsssSF;
 	int8_t dsssSize;
@@ -156,5 +156,6 @@ extern void mach_get_enhance_ack(uint8_t **data, int *size);
 extern bool mach_set_enhance_ack(uint8_t *data, int size);
 extern void mach_set_ack_tx_interval(uint16_t interval);
 
+extern void mach_set_antsw(uint8_t antsw);
 #endif
 

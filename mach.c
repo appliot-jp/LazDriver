@@ -561,7 +561,7 @@ int mach_update_rx_data(void)
 struct mach_param *mach_init(void)
 {
 	memset(&mach,0,sizeof(struct mach_param));
-	mach.macl = macl_init();
+	mach.macl = macl_init(&mach);
 	if(mach.macl == NULL) {
 		goto error;
 	}
@@ -637,7 +637,7 @@ int mach_setup(struct rf_param *rf) {
 	if((status = macl_set_modulation(rf->modulation,rf->dsssSF)) != STATUS_OK) goto error;
 
 	// set channel & txpow
-	status = macl_set_channel(rf->pages,rf->ch,rf->tx_power,rf->ant_sw);
+	status = macl_set_channel(rf->pages,rf->ch,rf->tx_power,rf->antsw);
 	if(status != STATUS_OK){
 		goto error;
 	}
@@ -771,7 +771,7 @@ int mach_set_my_short_addr(uint16_t panid,uint16_t short_addr)
 		mach.my_addr.pan_coord = true;
 	}
 
-	if(!mach.macl->promiscuousMode)
+	if(!mach.macl->bit_params.promiscuousMode)
 	{
 		struct ieee802154_my_addr filt;
 		filt.pan_id = mach.my_addr.pan_id;
@@ -875,7 +875,7 @@ int macl_rx_irq(bool *isAck)
 		mach.rx.input.len = mach.macl->phy->in.len-1;					// erase rssi
 		mach.rx.rssi = mach.rx.input.data[mach.rx.input.len];
 
-		if(mach.macl->promiscuousMode) {
+		if(mach.macl->bit_params.promiscuousMode) {
 			status = mach_parse_data(&mach.rx);
 			if(status != STATUS_OK) {
 				return status;
@@ -940,21 +940,22 @@ int macl_rx_irq(bool *isAck)
 		// reporting data to upper layer
 		if(mach.macl->status == STATUS_OK) {
 			// copy phy buffer to application buffer
-			if((mach.macl->promiscuousMode)||
-					((mach_match_seq_num()==false) && 
-					 ((mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_DATA) ||
-						(mach.rx.fc.fc_bit.frame_type == IEEE802154_FC_TYPE_CMD)))) {
-				// rx data is copy to previous
+			if((mach.macl->bit_params.promiscuousMode)||
+					(mach_match_seq_num()==false)) {
 				memcpy(&mach.rx_prev,&mach.rx,sizeof(mach.rx));
-				mach_rx_irq(mach.macl->status,&mach.rx);				// report data to upper layer
+				switch(mach.rx.fc.fc_bit.frame_type) {
+				case IEEE802154_FC_TYPE_DATA:
+					mach_rx_irq(mach.macl->status,NULL);				// report data to upper layer
+					break;
+				case IEEE802154_FC_TYPE_CMD:
+					mach.macl->rxcmd = true;
+					break;
+				}
 			} else {								// match sequence number
-#if !defined(LAZURITE_IDE) && defined(DEBUG)
-				printk(KERN_INFO"%s %s %d macl_start\n",__FILE__,__func__,__LINE__);
-#endif
 				status = macl_start();
 			}
 		} else {
-			mach_rx_irq(mach.macl->status,NULL);				// report data to upper layer
+			mach_rx_irq(mach.macl->status,NULL); // report error to upper layer
 		}
 	}
 	return STATUS_OK;
@@ -985,4 +986,6 @@ bool mach_set_enhance_ack(uint8_t* data, int size) {
 void mach_set_ack_tx_interval(uint16_t interval){
 	macl_set_ack_tx_interval(interval);
 }
-
+void mach_set_antsw(uint8_t antsw) {
+	macl_set_antsw(antsw);
+}

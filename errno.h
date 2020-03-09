@@ -32,6 +32,7 @@
 #define EFBIG			27			// File too large
 #define EDEADLK		35			/* Resource deadlock would occur */
 #define EBADE			52			// crc error
+#define ENOPROTOOPT     92      /* Protocol not available */
 #define EADDRNOTAVAIL   99      /* Cannot assign requested address */
 #define ETIMEDOUT	110			// no ack
 #endif
