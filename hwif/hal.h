@@ -24,10 +24,11 @@
 
 
 #if	defined LAZURITE_IDE
-	//#include <lazurite_system.h>
+	#include <lazurite_system.h>
+	#include <lp_manage.h>
 #else	
-#include <linux/delay.h>
-#include <linux/wait.h>
+	#include <linux/delay.h>
+	#include <linux/wait.h>
 #endif	// LAZURITE_IDE
 
 #define HAL_ERROR_PARAM		-1	//
@@ -65,7 +66,6 @@ uint32_t HAL_wait_event_interruptible_timeout(wait_queue_head_t q,volatile int c
 		if(__ret > ms) {
 			__ret = 0;
 		}
-		lp_setHaltMode();
 	} while((condition == false) && (__ret > 0));
 	return __ret;
 }

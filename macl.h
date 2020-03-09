@@ -84,7 +84,7 @@ typedef enum {
 #else
 #define PACKED __attribute((packed))
 #endif
-struct macl_timesync_search_request_cmd {
+typedef PACKED struct {
 	uint16_t mac_header;
 	uint8_t  seq;
 	uint16_t panid;
@@ -94,9 +94,9 @@ struct macl_timesync_search_request_cmd {
 		uint8_t cmd;
 		uint8_t id[8];
 	} payload;
-};
+} macl_timesync_search_request_cmd;
 
-PACKED struct macl_timesync_params_cmd {
+typedef PACKED struct  {
 	uint16_t mac_header;
 	uint8_t  seq;
 	uint16_t panid;
@@ -112,9 +112,9 @@ PACKED struct macl_timesync_params_cmd {
 		uint32_t base;
 		uint8_t ch_list [32];
 	} payload;
-};
+} macl_timesync_params_cmd;
 
-PACKED struct macl_param {
+struct macl_param {
 	struct mach_param* parent;
 	uint8_t pages;
 	uint8_t ch;
@@ -171,8 +171,9 @@ struct ieee802154_my_addr {
 	uint8_t		ieee_addr[8];			// for lazurite
 	bool		pan_coord;				// common
 };
-extern struct macl_param *macl_init(struct mach_param* parent);
+
 extern int	macl_start(void);
+extern struct macl_param *macl_init(void *parent);
 extern int	macl_stop(void);
 extern int	macl_xmit_sync(BUFFER buff);
 extern int	macl_xmit_async(BUFFER buff,void (*callback)(uint8_t rssi, int status));

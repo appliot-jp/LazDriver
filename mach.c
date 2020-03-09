@@ -634,7 +634,8 @@ int mach_setup(struct rf_param *rf) {
 	mach.rf = rf;
 
 	// set modulation
-	if((status = macl_set_modulation(rf->modulation,rf->dsssSF)) != STATUS_OK) goto error;
+	status = macl_set_modulation(rf->modulation,rf->dsssSF);
+	if(status != STATUS_OK) goto error;
 
 	// set channel & txpow
 	status = macl_set_channel(rf->pages,rf->ch,rf->tx_power,rf->antsw);
@@ -950,9 +951,9 @@ int macl_rx_irq(bool *isAck)
 				case IEEE802154_FC_TYPE_CMD:
 					mach.macl->rxcmd = true;
 					break;
+				default:
+					break;
 				}
-			} else {								// match sequence number
-				status = macl_start();
 			}
 		} else {
 			mach_rx_irq(mach.macl->status,NULL); // report error to upper layer
