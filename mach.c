@@ -34,7 +34,7 @@
 #endif
 
 #ifdef LAZURITE_IDE
-#include "driver_uart.h"
+	#include "driver_uart.h"
 #endif
 
 #include "mach.h"

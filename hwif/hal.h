@@ -24,7 +24,7 @@
 
 
 #if	defined LAZURITE_IDE
-	#include <lazurite_system.h>
+//	#include <lazurite_system.h>
 	#include <lp_manage.h>
 #else	
 	#include <linux/delay.h>

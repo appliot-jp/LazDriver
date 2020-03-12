@@ -32,7 +32,6 @@
 #endif
 
 #include "macl.h"
-#include "endian.h"
 
 struct fc_addr {
 	struct {
@@ -65,7 +64,6 @@ struct fc_addr {
 	internal use only
 	bit alightment of mac header
 	*/
-#ifdef LITTLE_ENDIAN
 struct mac_fc_alignment{
 	uint8_t frame_type:3;
 	uint8_t sec_enb:1;
@@ -79,7 +77,6 @@ struct mac_fc_alignment{
 	uint8_t frame_ver:2;
 	uint8_t src_addr_type:2;
 };
-#endif
 
 union mac_frame_control {
 	uint8_t fc8[2];

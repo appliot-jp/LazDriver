@@ -27,11 +27,11 @@
 #ifdef LAZURITE_IDE
 	#include <common.h>
 	#include <lazurite_system.h>
+	#include <serial.h>
 	#include <driver_timer.h>
 	#include <driver_extirq.h>
 	#include <driver_irq.h>
 	#include <driver_gpio.h>
-	#include <driver_uart.h>
 	#include <lp_manage.h>
 	#include <wdt.h>
 	#include "hal.h"

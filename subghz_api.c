@@ -53,7 +53,6 @@ uint8_t subghz_api_status = 0;
 
 // local parameters
 static struct {
-	uint8_t ch;									// ch setting from application layer
 	uint8_t addr_type;
 	bool read;
 	bool ack_req;
@@ -307,17 +306,12 @@ static SUBGHZ_MSG subghz_begin(uint8_t ch, uint16_t panid, SUBGHZ_RATE rate, SUB
 			subghz_param.tx_stat.status = result;
 			return msg;
 	}
-	if(ch < SUBGHZ_HOPPING) {
-		subghz_param.rf.ch = ch;
-		subghz_param.ch = ch;
-		result = mach_setup(&subghz_param.rf);
-		if(result != STATUS_OK) {
-			msg = SUBGHZ_SETUP_FAIL;
-			subghz_param.tx_stat.status = result;
-			return msg;
-		}
-	} else {
-		subghz_param.ch = ch;
+	subghz_param.rf.ch = ch;
+	result = mach_setup(&subghz_param.rf);
+	if(result != STATUS_OK) {
+		msg = SUBGHZ_SETUP_FAIL;
+		subghz_param.tx_stat.status = result;
+		return msg;
 	}
 	msg = SUBGHZ_OK;
 	subghz_api_status = SUBGHZ_API_NONE;
@@ -330,23 +324,15 @@ static SUBGHZ_MSG subghz_close(void)
 	SUBGHZ_MSG msg;
 	int result;
 	result = mach_sleep();
-	subghz_api_status = SUBGHZ_API_CLOSE;
-
-	if(subghz_param.ch == SUBGHZ_HOPPING_TS_H) {
-		timer4.stop();
-	}
-
+	subghz_param.open = false;
 	if( result != STATUS_OK)
 	{
 		msg = SUBGHZ_SLEEP_FAIL;
-		goto error;
+		subghz_param.tx_stat.status = result;
+	} else {
+		msg = SUBGHZ_OK;
 	}
-	subghz_param.open = false;
-
-	msg = SUBGHZ_OK;
-error:
-	subghz_param.tx_stat.status = result;
-	subghz_api_status = 0;
+	subghz_api_status = SUBGHZ_API_CLOSE;
 	return msg;
 }
 
@@ -541,22 +527,15 @@ static SUBGHZ_MSG subghz_rxDisable(void)
 	SUBGHZ_MSG msg;
 	int result;
 
-	if(subghz_param.ch == SUBGHZ_HOPPING_TS_H) {
-		timer4.stop();
-	}
 	result = mach_stop();
-	if(result != STATUS_OK)
-	{
-		msg = SUBGHZ_RX_DIS_FAIL;
-		goto error;
-	}
-	subghz_param.read = false;
-	msg = SUBGHZ_OK;
-	subghz_api_status &= ~SUBGHZ_API_RXENABLE;
-
-error:
 	subghz_param.rx_stat.status = result;
-
+	subghz_param.read = false;
+	if(result != STATUS_OK) {
+		msg = SUBGHZ_RX_DIS_FAIL;
+	} else {
+		msg = SUBGHZ_OK;
+	}
+	subghz_api_status &= ~SUBGHZ_API_RXENABLE;
 	return msg;
 }
 

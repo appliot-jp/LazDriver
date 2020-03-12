@@ -145,15 +145,15 @@ struct macl_param {
 	struct mach_param* parent;
 	uint8_t pages;
 	uint8_t ch;
+	uint8_t txPower;
+	uint8_t antsw;
 	uint8_t ccaMode;
 	uint8_t ccaMinBe;
 	uint8_t ccaMaxBe;
 	uint8_t ccaCount;
 	uint8_t ccaRetries;
-	uint8_t txPower;
 	uint8_t txRetries;
 	uint8_t sequenceNum;
-	uint8_t antsw;
 	uint8_t resendingNum;
 	uint16_t ack_timeout;
 	int status;

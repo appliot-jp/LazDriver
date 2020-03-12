@@ -27,7 +27,6 @@
 #include "common.h"
 #include "binary.h"
 #include "lazurite_system.h"
-//#include "lazurite.h"
 #include "wire0.h"
 #include "driver_i2c.h"
 #include <stdlib.h>
@@ -156,7 +155,7 @@ static size_t _wire0_requestFrom(UCHAR address,UCHAR quantity, UCHAR sendStop)
 	// Check quantity
 	if(quantity > I2C_BUFFER_LENGTH)
 	{
-	    return 0;
+		return 0;
 	}
 	// reset buffer pointer
 	wire0.rx.index = 0;
@@ -164,15 +163,15 @@ static size_t _wire0_requestFrom(UCHAR address,UCHAR quantity, UCHAR sendStop)
 
 	// set rx pointer
 	i2c_set_rx_buf(0,wire0.rx.buffer,quantity);
-	
+
 	// Send I2C Slave Address
 	i2c_set_address(0, address);					// set I2C address
 
 	// start transmittion
 	i2c_start(0,false,sendStop);						// ch, write, cont
-	
+
 	// wait end of communication
-  	HALT_Until_Event(HALT_I2C0_END,100);
+	HALT_Until_Event(HALT_I2C0_END,100);
 
 	return i2c_read_amount(0);
 }

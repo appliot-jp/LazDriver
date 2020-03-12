@@ -704,6 +704,13 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 	if(vco_cal() == false) {
 		return -EDEADLK;
 	};
+	Serial.print_long(page,DEC);
+	Serial.print(",");
+	Serial.print_long(ch,DEC);
+	Serial.print(",");
+	Serial.print_long(txPower,DEC);
+	Serial.print(",");
+	Serial.println_long(antsw,DEC);
 	return STATUS_OK;
 }
 
