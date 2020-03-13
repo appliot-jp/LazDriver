@@ -39,6 +39,7 @@
 	#include "spi0.h"
 	#include "wire0.h"
 	#include "mcu.h"
+	#include "serial.h"
 #endif
 
 //*****************************************************
@@ -350,7 +351,7 @@ void HAL_reset(){
 	dis_interrupts(DI_SUBGHZ);
 	alert(s1);
 	Serial.print(s2);
-	Serial.println_long(macl.condition,DEC);
+	Serial.println_long((long)macl.condition,DEC);
 	phy_monitor();
 
 	pinMode(25,OUTPUT);
