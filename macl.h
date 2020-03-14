@@ -43,8 +43,8 @@
 #define SUBGHZ_HOPPING_PB_S		( SUBGHZ_HOPPING + 3 )
 
 #define SUBGHZ_HOPPING_SEARCH_CYCLE				2
-#define SUBGHZ_HOPPING_SEARCH_INTERVAL		200
-#define SUBGHZ_HOPPING_CH_DURATION				1000
+#define SUBGHZ_HOPPING_SEARCH_INTERVAL		200L
+#define SUBGHZ_HOPPING_CH_DURATION				1000L
 
 #define SUBGHZ_HOPPING_SYNC_FRAME_SIZE 16
 
@@ -88,7 +88,7 @@ typedef __packed struct {
 	uint8_t src[8];
 	struct {
 		uint8_t cmd;
-		uint8_t id[8];
+		uint8_t id[4];
 	} payload;
 } macl_timesync_search_request_cmd;
 
@@ -119,7 +119,7 @@ typedef struct {
 	uint8_t src[8];
 	struct {
 		uint8_t cmd;
-		uint8_t id[8];
+		uint8_t id[4];
 	} payload;
 } __attribute__((packed)) macl_timesync_search_request_cmd;
 

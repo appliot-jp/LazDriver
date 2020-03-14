@@ -118,7 +118,6 @@ static const char *macl_cca_to_str(int condition) {
 
 static void macl_timesync_host_isr(void) {
 	if(macl.txdone && macl.rxdone) {
-	uint8_t device_id[4];
 		HAL_GPIO_disableInterrupt();
 		phy_timer_stop();
 		macl.hopping.host.sync_time = HAL_millis();
@@ -135,6 +134,7 @@ static void macl_timesync_host_isr(void) {
 		phy_rxstart();
 		HAL_GPIO_enableInterrupt();
 		macl.bit_params.hopping_sync_host_irq = false;
+		Serial.println("macl_timesync_host_isr");
 	} else {
 		macl.bit_params.hopping_sync_host_irq = true;
 	}
@@ -218,6 +218,8 @@ static bool macl_timesync_search_gateway(void){
 	volatile uint32_t search_st_time;
 	uint8_t ch_index;
 	struct mac_fc_alignment fc;
+	macl_timesync_search_request_cmd *req;
+	macl_timesync_params_cmd *res;
 
 	ch_index = 0;
 	//initializing search gateway
@@ -245,18 +247,19 @@ static bool macl_timesync_search_gateway(void){
 	macl.phy->out.data = &cmd_data_buf[1];
 	macl.phy->out.size = sizeof(cmd_data_buf)-1;
 	// payload of search gateway
-	{
-		macl_timesync_search_request_cmd *sf;
-		sf = (macl_timesync_search_request_cmd *)macl.phy->out.data;
-		sf->mac_header = 0xAAAA;
-		sf->seq = (uint8_t) rand();
-		sf->panid = 0xFFFF;
-		sf->dst = 0xFFFF;
-		memcpy(sf->src,macl.parent->my_addr.ieee_addr,8);
-		sf->payload.cmd = SUBGHZ_HOPPING_SYNC_REQUEST;
-		memcpy(sf->payload.id,SUBGHZ_HOPPING_ID,sizeof(SUBGHZ_HOPPING_ID));;
-	}
+	req = (macl_timesync_search_request_cmd *)macl.phy->out.data;
+	req->mac_header = 0xE803;
+	req->seq = (uint8_t) rand();
+	req->panid = 0xFFFF;
+	req->dst = 0xFFFF;
+	memcpy(req->src,macl.parent->my_addr.ieee_addr,8);
+	req->payload.cmd = SUBGHZ_HOPPING_SYNC_REQUEST;
+	memcpy(req->payload.id,SUBGHZ_HOPPING_ID,sizeof(SUBGHZ_HOPPING_ID));;
 	macl.phy->out.len= sizeof(macl_timesync_search_request_cmd);
+	Serial.print("macl_timesync_search_request_cmd:: ");
+	Serial.print_long(macl.phy->out.len,DEC);
+	Serial.print(",");
+	Serial.println_long(sizeof(macl_timesync_search_request_cmd),DEC);
 	/*
 		 PAYLOADDUMP(macl.phy->out.data,macl.phy->out.len);
 		 */
@@ -281,11 +284,14 @@ static bool macl_timesync_search_gateway(void){
 			macl_cca_setting();
 			search_st_time = HAL_millis();
 			// wait receive sync_cmd
+#ifdef NOT_INLINE
+			HAL_wait_event_interruptible_timeout(&macl.que,&macl.rxcmd,SUBGHZ_HOPPING_SEARCH_INTERVAL);
+#else
 			HAL_wait_event_interruptible_timeout(macl.que,macl.rxcmd,SUBGHZ_HOPPING_SEARCH_INTERVAL);
+#endif
 			if(macl.parent->rx.raw.len > 0) {
-				macl_timesync_params_cmd *sf;
-				sf = (macl_timesync_params_cmd *) macl.parent->rx.raw.data;
-				sf->payload.base = search_st_time - sf->payload.sync_from;
+				res = (macl_timesync_params_cmd *) macl.parent->rx.raw.data;
+				res->payload.base = search_st_time - res->payload.sync_from;
 				macl.bit_params.sync_enb = true;
 				break;
 			} else {
@@ -353,10 +359,20 @@ static void macl_rxfifo_handler(void)
 			break;
 		case FIFO_DONE:		// rxdone
 			// my packet
-			if((macl.bit_params.promiscuousMode) || (((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_CMD) || ((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_DATA) )){
+			if(macl.bit_params.promiscuousMode) {
+				// macl_start();
+				phy_sint_handler(macl_rxfifo_handler);
+				phy_rxstart();
+				macl.condition=SUBGHZ_ST_RX_STARTED;
+				macl_rxdone_handler();
+				macl.rxdone = true;
+			} else if ((((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_CMD) || ((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_DATA) )){
 				if(macl_rxdone_handler() == true) {
 					macl.status = STATUS_OK;
-					// TODO: macl_start();
+					// macl_start();
+					phy_sint_handler(macl_rxfifo_handler);
+					phy_rxstart();
+					macl.condition=SUBGHZ_ST_RX_STARTED;
 					macl.rxdone = true;
 					break;
 				} else {
@@ -364,7 +380,7 @@ static void macl_rxfifo_handler(void)
 					break;
 				}
 			} else {
-				// Disposal packet would work as same as CRC_ERROR
+				// Disposal packet continue to CRC_ERROR
 			}
 		case CRC_ERROR:		// rxdone
 		default:			// error
@@ -372,7 +388,10 @@ static void macl_rxfifo_handler(void)
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 			printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
-			// TODO: macl_start();
+			// macl_start();
+			phy_sint_handler(macl_rxfifo_handler);
+			phy_rxstart();
+			macl.condition=SUBGHZ_ST_RX_STARTED;
 			macl.rxdone = true;
 			break;
 	}
@@ -731,8 +750,17 @@ int macl_start(void) {
 			HAL_GPIO_enableInterrupt();
 			break;
 		case SUBGHZ_HOPPING_TS_S:
-			timer4.set(macl.hopping.host.ch_duration,macl_timesync_slave_isr);
-			timer4.start();
+			if(macl.bit_params.sync_enb == false) {
+				if(macl_timesync_search_gateway() == true) {
+					timer4.set(macl.hopping.host.ch_duration,macl_timesync_slave_isr);
+					timer4.start();
+				} else {
+					return -ENOPROTOOPT;
+				}
+			} else {
+				// TODO: 送信により時刻同期済状態でRX STARTする。
+				// OFFSET時刻を計算して最初のタイマー時間をセットする
+			}
 			break;
 		default:
 			ch = macl.ch;
@@ -768,7 +796,23 @@ int	macl_xmit_sync(BUFFER buff) {
 	uint32_t time;
 	macl.condition=SUBGHZ_ST_TX_START;
 
+#ifdef NOT_INLINE
+	//uint32_t HAL_wait_event_interruptible_timeout(wait_queue_head_t *q,volatile int *condition,uint32_t ms)
+	{
+		volatile uint32_t st_time = millis();
+		volatile uint32_t status;
+		const uint32_t ms = 100L;
+		do {
+			status = st_time+ms-millis();
+			if(status > ms) {
+				status = 0;
+			}
+		} while(((macl.rxdone & macl.rxcmd) == false) && (status > 0));
+		time = status;
+	}
+#else
 	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.rxdone&macl.rxcmd,100L);
+#endif
 	HAL_GPIO_disableInterrupt();
 	phy_stop();
 	phy_timer_stop();
@@ -806,7 +850,11 @@ int	macl_xmit_sync(BUFFER buff) {
 	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
 
+#ifdef NOT_INLINE
+	time =  HAL_wait_event_interruptible_timeout(&macl.que,&macl.txdone,1000L);
+#else
 	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.txdone,1000L);
+#endif
 	if(time == 0) {
 		if(macl.bit_params.rxOnEnable == true) {
 			// TODO: macl_start();
@@ -823,7 +871,11 @@ int	macl_xmit_async(BUFFER buff,void (*callback)(uint8_t rssi, int status))
 	uint32_t time;
 	macl.condition=SUBGHZ_ST_TX_START;
 
+#ifdef NOT_INLINE
+	time =  HAL_wait_event_interruptible_timeout(&macl.que,&macl.rxdone,100L);
+#else
 	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.rxdone,100L);
+#endif
 	HAL_GPIO_disableInterrupt();
 	macl.txdone = false;
 	if(time == 0) {

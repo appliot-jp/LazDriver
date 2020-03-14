@@ -62,11 +62,11 @@ volatile uint8_t hal_event_flag = 0;
 // Function
 //*****************************************************
 
-extern unsigned short di_flag;
-/*
+#ifdef NOT_INLINE
 int HAL_init_waitqueue_head(wait_queue_head_t *q) {
 	return 0;
 }
+
 uint32_t HAL_wait_event_interruptible_timeout(wait_queue_head_t *q,volatile int *condition,uint32_t ms){
 	volatile uint32_t st_time = millis();
 	volatile uint32_t status;
@@ -76,7 +76,6 @@ uint32_t HAL_wait_event_interruptible_timeout(wait_queue_head_t *q,volatile int 
 			status = 0;
 		}
 	} while((*condition == false) && (status > 0));
-
 	return status;
 }
 
@@ -84,7 +83,7 @@ int HAL_wake_up_interruptible(wait_queue_head_t *q)
 {
 	return 0;
 }
-*/
+#endif
 
 
 
@@ -196,16 +195,16 @@ int HAL_I2C_read(uint16_t addr, uint8_t *data, uint8_t size)
 }
 
 /*
-int HAL_TIMER_getTick(unsigned long *tick)
-{
-	unsigned long hal_current_time;
-	hal_current_time = millis(); 
+	 int HAL_TIMER_getTick(unsigned long *tick)
+	 {
+	 unsigned long hal_current_time;
+	 hal_current_time = millis(); 
 
-	*tick = hal_current_time - hal_previous_time;
+ *tick = hal_current_time - hal_previous_time;
 
-	return STATUS_OK;
-}
-*/
+ return STATUS_OK;
+ }
+ */
 
 int HAL_TIMER_setup(void)
 {

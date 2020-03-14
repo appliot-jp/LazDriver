@@ -44,7 +44,6 @@ struct phy_param {
 	BUFFER out;
 	uint16_t in_ptr;
 	uint16_t out_ptr;
-	uint8_t antsw[2];
 };
 
 typedef enum {

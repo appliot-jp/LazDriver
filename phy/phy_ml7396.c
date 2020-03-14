@@ -100,6 +100,18 @@ A return value: Fixed-point numerical value
 
 #define UNIT_BACKOFF_PERIOD  320
 #define DEFAUL_BAKOF        1000
+
+#define PHY_INIT  1
+#define PHY_SLEEP 2
+#define PHY_SETUP 3
+
+static struct {
+	uint8_t page:3;
+	uint8_t antsw:1;
+	uint8_t state:3;
+	uint8_t txPower;
+	uint8_t ch;
+} local_params;
 /*
 	 ---------------------------------------------------------------
 	 Struct and Enum section
@@ -486,7 +498,24 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 			return -EINVAL;
 			break;
 	}
-#else
+#elif TW
+	switch(page) {
+		case 1:			// 50kbps
+			if (ch < 24 || ch > 44) {
+				return -EINVAL;
+			}
+			regset = &regset_50kbps;
+			break;
+		case 2:			// 100kbps
+			if (ch < 24 || ch > 43) {
+				return -EINVAL;
+			}
+			regset = &regset_100kbps;
+			break;
+		default:
+			return -EINVAL;
+			break;
+	}
 #endif
 	// PHY RST
 	reg.wdata[1] = 0x88, reg_wr(REG_ADR_RST_SET, 2);
@@ -495,7 +524,7 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 	phy_intclr(~HW_EVENT_FIFO_CLEAR);
 
 	// set calibration parameters
-	{
+	if((local_params.state == PHY_INIT) || (txPower != local_params.txPower)) {
 		uint8_t calibs[5];
 		HAL_I2C_read(0x29, calibs, 5);
 		reg.wdata[1] = calibs[0], reg_wr(REG_ADR_PA_ADJ3, 2);  /* 20mW rough adjustment */
@@ -516,11 +545,6 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 		}
 	}
 
-	// Operation Mode Set
-	reg.wdata[1] = 0x10, reg_wr(REG_ADR_ACK_TIMER_EN,       2);		// enable TX_DONE_OFF
-	reg.wdata[1] = 0x3a, reg_wr(REG_ADR_PACKET_MODE_SET,    2);		// set MANUAL_TX
-	reg.wdata[1] = 0x0b, reg_wr(REG_ADR_FEC_CRC_SET,        2);   // CRC_EN, CRC_MODE=16bit, CRC_DONE
-
 	// Set RF antena Switch
 	/*  <Antenna definition>
 	 *                   920j  MJ2001 BP3596A
@@ -529,102 +553,118 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 	 *  outside        : 0x02  0x02    0x04
 	 */
 	// Get Device ID
-	HAL_I2C_read(0x20, device_id, 4);
-	// BP3596
-	if(memcmp(device_id, device_id_bp3596,4) == 0) {
-		reg.wdata[1] = 0x04, reg_wr(REG_ADR_2DIV_CNTRL,      2);
-	} else if (memcmp(device_id,device_id_lazurite,4) == 0) {
-		// Lazurite 920J or MJ2001
-		HAL_I2C_read(0xA0, &eui64_extend_type, 1);
-		switch(eui64_extend_type) {
-			case 0x04:					// Lazurite 920J
-			case 0xFF:					// Lazurite 920J
-				reg.wdata[1] = 0x02, reg_wr(REG_ADR_2DIV_CNTRL,      2);
-				break;
-			case 0x05:					// MJ2001
-				if (antsw == 0x00) {
-					reg.wdata[1] = 0x06, reg_wr(REG_ADR_2DIV_CNTRL,      2);			// inside
-				}else{
-					reg.wdata[1] = 0x02, reg_wr(REG_ADR_2DIV_CNTRL,      2);			// outside
-				}
-				break;
-			default:
-				alert(s1);
-				return -EINVAL;
-				break;
+	if((local_params.state == PHY_INIT) || (antsw != local_params.antsw)) {
+		HAL_I2C_read(0x20, device_id, 4);
+		// BP3596
+		if(memcmp(device_id, device_id_bp3596,4) == 0) {
+			reg.wdata[1] = 0x04, reg_wr(REG_ADR_2DIV_CNTRL,      2);
+		} else if (memcmp(device_id,device_id_lazurite,4) == 0) {
+			// Lazurite 920J or MJ2001
+			HAL_I2C_read(0xA0, &eui64_extend_type, 1);
+			switch(eui64_extend_type) {
+				case 0x04:					// Lazurite 920J
+				case 0xFF:					// Lazurite 920J
+					reg.wdata[1] = 0x02, reg_wr(REG_ADR_2DIV_CNTRL,      2);
+					break;
+				case 0x05:					// MJ2001
+					if (antsw == 0x00) {
+						reg.wdata[1] = 0x06, reg_wr(REG_ADR_2DIV_CNTRL,      2);			// inside
+					}else{
+						reg.wdata[1] = 0x02, reg_wr(REG_ADR_2DIV_CNTRL,      2);			// outside
+					}
+					break;
+				default:
+					alert(s1);
+					return -EINVAL;
+					break;
+			}
+			HAL_I2C_read(0x80, &reg.wdata[1],1),  reg_wr(REG_ADR_OSC_ADJ2, 2);  /* Additional parameter */
+		} else {
+			alert(s2);
 		}
-		HAL_I2C_read(0x80, &reg.wdata[1],1),  reg_wr(REG_ADR_OSC_ADJ2, 2);  /* Additional parameter */
-	} else {
-		alert(s2);
 	}
-	reg.wdata[1] = 0x22, reg_wr(REG_ADR_RX_PR_LEN_SFD_LEN,  2);
-	reg.wdata[1] = 0x00, reg_wr(REG_ADR_SYNC_CONDITION,     2);
-	reg.wdata[1] = 0x04, reg_wr(REG_ADR_SYNC_MODE,          2);
-	reg.wdata[1] = 0x10, reg_wr(REG_ADR_RAMP_CNTRL,         2);
-	reg.wdata[1] = 0x1e, reg_wr(REG_ADR_GAIN_MtoL,          2);
-	reg.wdata[1] = 0x02, reg_wr(REG_ADR_GAIN_LtoM,          2);
-	reg.wdata[1] = 0x9e, reg_wr(REG_ADR_GAIN_HtoM,          2);
-	reg.wdata[1] = 0x02, reg_wr(REG_ADR_GAIN_MtoH,          2);
-	reg.wdata[1] = 0x15, reg_wr(REG_ADR_RSSI_ADJ_M,         2);
-	reg.wdata[1] = 0x2b, reg_wr(REG_ADR_RSSI_ADJ_L,         2);
-	reg.wdata[1] = 0x22, reg_wr(REG_ADR_RSSI_STABLE_TIME,   2);
-	reg.wdata[1] = 0xd4, reg_wr(REG_ADR_RSSI_VAL_ADJ,       2);
-	reg.wdata[1] = 0x01, reg_wr(REG_ADR_AFC_CNTRL,          2);
-	reg.wdata[1] = 0xaa, reg_wr(REG_ADR_PREAMBLE_SET,       2);
-	reg.wdata[1] = 0x09, reg_wr(REG_ADR_SFD1_SET1,          2);
-	reg.wdata[1] = 0x72, reg_wr(REG_ADR_SFD1_SET2,          2);
-	reg.wdata[1] = 0xf6, reg_wr(REG_ADR_SFD1_SET3,          2);
-	reg.wdata[1] = 0x72, reg_wr(REG_ADR_SFD1_SET4,          2);
-	reg.wdata[1] = 0x5e, reg_wr(REG_ADR_SFD2_SET1,          2);
-	reg.wdata[1] = 0x70, reg_wr(REG_ADR_SFD2_SET2,          2);
-	reg.wdata[1] = 0xc6, reg_wr(REG_ADR_SFD2_SET3,          2);
-	reg.wdata[1] = 0xb4, reg_wr(REG_ADR_SFD2_SET4,          2);
-	reg.wdata[1] = 0xb6, reg_wr(REG_ADR_2DIV_GAIN_CNTRL,    2);
-	reg.wdata[1] = 0x84, reg_wr(1,0x39,                     2);  /* Hidden register */
-	reg.wdata[1] = 0x8f, reg_wr(REG_ADR_PLL_CTRL,           2);
-	reg.wdata[1] = 0x32, reg_wr(REG_ADR_RX_ON_ADJ2,         2);
-	reg.wdata[1] = 0x0f, reg_wr(REG_ADR_LNA_GAIN_ADJ_M,     2);
-	reg.wdata[1] = 0x01, reg_wr(REG_ADR_LNA_GAIN_ADJ_L,     2);
-	reg.wdata[1] = 0xff, reg_wr(REG_ADR_MIX_GAIN_ADJ_M,     2);
-	reg.wdata[1] = 0xff, reg_wr(REG_ADR_MIX_GAIN_ADJ_L,     2);
-	reg.wdata[1] = 0xb4, reg_wr(REG_ADR_TX_OFF_ADJ1,        2);
-	reg.wdata[1] = 0x01, reg_wr(REG_ADR_RSSI_SLOPE_ADJ,     2);
-	reg.wdata[1] = 0x04, reg_wr(REG_ADR_PA_ON_ADJ,          2);
-	reg.wdata[1] = 0x0a, reg_wr(REG_ADR_RX_ON_ADJ,          2);
-	reg.wdata[1] = 0x00, reg_wr(REG_ADR_RXD_ADJ,            2);
-	// Other Initialization
-	reg.wdata[1] = 0x2c, reg_wr(REG_ADR_PRIVATE_BPF_CAP1,   2);  /* Hidden register */
-	reg.wdata[1] = 0xc0, reg_wr(REG_ADR_PRIVATE_BPF_CAP2,   2);  /* Hidden register */
-	reg.wdata[1] = 0x17, reg_wr(REG_ADR_PRIVATE_BPF_ADJ1,   2);  /* Hidden register */
-	reg.wdata[1] = 0x17, reg_wr(REG_ADR_PRIVATE_BPF_ADJ2,   2);  /* Hidden register */
+	if(local_params.state == PHY_INIT) {
+		// Operation Mode Set
+		reg.wdata[1] = 0x10, reg_wr(REG_ADR_ACK_TIMER_EN,       2);		// enable TX_DONE_OFF
+		reg.wdata[1] = 0x3a, reg_wr(REG_ADR_PACKET_MODE_SET,    2);		// set MANUAL_TX
+		reg.wdata[1] = 0x0b, reg_wr(REG_ADR_FEC_CRC_SET,        2);   // CRC_EN, CRC_MODE=16bit, CRC_DONE
 
-	// Other Initialization
-	reg.wdata[1]=0x00;
-	reg_wr(REG_ADR_TX_ALARM_LH,2);
-	reg_wr(REG_ADR_TX_ALARM_HL,2); 
-	reg_wr(REG_ADR_RX_ALARM_LH,2);
-	reg_wr(REG_ADR_RX_ALARM_HL,2);
+		reg.wdata[1] = 0x22, reg_wr(REG_ADR_RX_PR_LEN_SFD_LEN,  2);
+		reg.wdata[1] = 0x00, reg_wr(REG_ADR_SYNC_CONDITION,     2);
+		reg.wdata[1] = 0x04, reg_wr(REG_ADR_SYNC_MODE,          2);
+		reg.wdata[1] = 0x10, reg_wr(REG_ADR_RAMP_CNTRL,         2);
+		reg.wdata[1] = 0x1e, reg_wr(REG_ADR_GAIN_MtoL,          2);
+		reg.wdata[1] = 0x02, reg_wr(REG_ADR_GAIN_LtoM,          2);
+		reg.wdata[1] = 0x9e, reg_wr(REG_ADR_GAIN_HtoM,          2);
+		reg.wdata[1] = 0x02, reg_wr(REG_ADR_GAIN_MtoH,          2);
+		reg.wdata[1] = 0x15, reg_wr(REG_ADR_RSSI_ADJ_M,         2);
+		reg.wdata[1] = 0x2b, reg_wr(REG_ADR_RSSI_ADJ_L,         2);
+		reg.wdata[1] = 0x22, reg_wr(REG_ADR_RSSI_STABLE_TIME,   2);
+		reg.wdata[1] = 0xd4, reg_wr(REG_ADR_RSSI_VAL_ADJ,       2);
+		reg.wdata[1] = 0x01, reg_wr(REG_ADR_AFC_CNTRL,          2);
+		reg.wdata[1] = 0xaa, reg_wr(REG_ADR_PREAMBLE_SET,       2);
+		reg.wdata[1] = 0x09, reg_wr(REG_ADR_SFD1_SET1,          2);
+		reg.wdata[1] = 0x72, reg_wr(REG_ADR_SFD1_SET2,          2);
+		reg.wdata[1] = 0xf6, reg_wr(REG_ADR_SFD1_SET3,          2);
+		reg.wdata[1] = 0x72, reg_wr(REG_ADR_SFD1_SET4,          2);
+		reg.wdata[1] = 0x5e, reg_wr(REG_ADR_SFD2_SET1,          2);
+		reg.wdata[1] = 0x70, reg_wr(REG_ADR_SFD2_SET2,          2);
+		reg.wdata[1] = 0xc6, reg_wr(REG_ADR_SFD2_SET3,          2);
+		reg.wdata[1] = 0xb4, reg_wr(REG_ADR_SFD2_SET4,          2);
+		reg.wdata[1] = 0xb6, reg_wr(REG_ADR_2DIV_GAIN_CNTRL,    2);
+		reg.wdata[1] = 0x84, reg_wr(1,0x39,                     2);  /* Hidden register */
+		reg.wdata[1] = 0x8f, reg_wr(REG_ADR_PLL_CTRL,           2);
+		reg.wdata[1] = 0x32, reg_wr(REG_ADR_RX_ON_ADJ2,         2);
+		reg.wdata[1] = 0x0f, reg_wr(REG_ADR_LNA_GAIN_ADJ_M,     2);
+		reg.wdata[1] = 0x01, reg_wr(REG_ADR_LNA_GAIN_ADJ_L,     2);
+		reg.wdata[1] = 0xff, reg_wr(REG_ADR_MIX_GAIN_ADJ_M,     2);
+		reg.wdata[1] = 0xff, reg_wr(REG_ADR_MIX_GAIN_ADJ_L,     2);
+		reg.wdata[1] = 0xb4, reg_wr(REG_ADR_TX_OFF_ADJ1,        2);
+		reg.wdata[1] = 0x01, reg_wr(REG_ADR_RSSI_SLOPE_ADJ,     2);
+		reg.wdata[1] = 0x04, reg_wr(REG_ADR_PA_ON_ADJ,          2);
+		reg.wdata[1] = 0x0a, reg_wr(REG_ADR_RX_ON_ADJ,          2);
+		reg.wdata[1] = 0x00, reg_wr(REG_ADR_RXD_ADJ,            2);
+		// Other Initialization
+		reg.wdata[1] = 0x2c, reg_wr(REG_ADR_PRIVATE_BPF_CAP1,   2);  /* Hidden register */
+		reg.wdata[1] = 0xc0, reg_wr(REG_ADR_PRIVATE_BPF_CAP2,   2);  /* Hidden register */
+		reg.wdata[1] = 0x17, reg_wr(REG_ADR_PRIVATE_BPF_ADJ1,   2);  /* Hidden register */
+		reg.wdata[1] = 0x17, reg_wr(REG_ADR_PRIVATE_BPF_ADJ2,   2);  /* Hidden register */
 
-	reg.wdata[1] = 0x0f, reg_wr(REG_ADR_SW_OUT_RAMP_ADJ,     2);
-	reg.wdata[1] = 0x08, reg_wr(REG_ADR_IQ_MAG_ADJ,          2);
-	reg.wdata[1] = 0x20, reg_wr(REG_ADR_IQ_PHASE_ADJ,        2);
+		// Other Initialization
+		reg.wdata[1]=0x00;
+		reg_wr(REG_ADR_TX_ALARM_LH,2);
+		reg_wr(REG_ADR_TX_ALARM_HL,2); 
+		reg_wr(REG_ADR_RX_ALARM_LH,2);
+		reg_wr(REG_ADR_RX_ALARM_HL,2);
+
+		reg.wdata[1] = 0x0f, reg_wr(REG_ADR_SW_OUT_RAMP_ADJ,     2);
+		reg.wdata[1] = 0x08, reg_wr(REG_ADR_IQ_MAG_ADJ,          2);
+		reg.wdata[1] = 0x20, reg_wr(REG_ADR_IQ_PHASE_ADJ,        2);
 #ifdef LAZURITE_MINI
-	reg.wdata[1] = 0x07, reg_wr(REG_ADR_PA_REG_ADJ1,         2);
-	reg.wdata[1] = 0x07, reg_wr(REG_ADR_PA_REG_ADJ2,         2);
-	reg.wdata[1] = 0x07, reg_wr(REG_ADR_PA_REG_ADJ3,         2);
-	reg.wdata[1] = 0x30, reg_wr(REG_ADR_CCA_LEVEL,           2);
+		reg.wdata[1] = 0x07, reg_wr(REG_ADR_PA_REG_ADJ1,         2);
+		reg.wdata[1] = 0x07, reg_wr(REG_ADR_PA_REG_ADJ2,         2);
+		reg.wdata[1] = 0x07, reg_wr(REG_ADR_PA_REG_ADJ3,         2);
+		reg.wdata[1] = 0x30, reg_wr(REG_ADR_CCA_LEVEL,           2);
 #else
-	reg.wdata[1] = 0x06, reg_wr(REG_ADR_PA_REG_ADJ1,         2);
-	reg.wdata[1] = 0x01, reg_wr(REG_ADR_PA_REG_ADJ2,         2);
-	reg.wdata[1] = 0x01, reg_wr(REG_ADR_PA_REG_ADJ3,         2);
-	reg.wdata[1] = 0x55, reg_wr(REG_ADR_CCA_LEVEL,           2);
+		reg.wdata[1] = 0x06, reg_wr(REG_ADR_PA_REG_ADJ1,         2);
+		reg.wdata[1] = 0x01, reg_wr(REG_ADR_PA_REG_ADJ2,         2);
+		reg.wdata[1] = 0x01, reg_wr(REG_ADR_PA_REG_ADJ3,         2);
+		reg.wdata[1] = 0x55, reg_wr(REG_ADR_CCA_LEVEL,           2);
 #endif
-	reg.wdata[1] = 0x04, reg_wr(REG_ADR_TX_PR_LEN,           2);  /* more than 0x04 */
-	reg.wdata[1] = 0x1f, reg_wr(REG_ADR_RSSI_LPF_ADJ,        2);
-	reg.wdata[1] = 0x44, reg_wr(REG_ADR_PLL_CP_ADJ,          2);
-	/* rate setting */
-	reg.wdata[1] = regset->rate, reg_wr(REG_ADR_DATA_SET, 2);
-	{/* frequency setting */
+		reg.wdata[1] = 0x04, reg_wr(REG_ADR_TX_PR_LEN,           2);  /* more than 0x04 */
+		reg.wdata[1] = 0x1f, reg_wr(REG_ADR_RSSI_LPF_ADJ,        2);
+		reg.wdata[1] = 0x44, reg_wr(REG_ADR_PLL_CP_ADJ,          2);
+
+		reg.wdata[1] = 0x2c, reg_wr(REG_ADR_PRIVATE_BPF_CAP1,  2);
+		reg.wdata[1] = 0xc0, reg_wr(REG_ADR_PRIVATE_BPF_CAP2,  2);
+		reg.wdata[1] = 0x17, reg_wr(REG_ADR_PRIVATE_BPF_ADJ1,  2);
+		reg.wdata[1] = 0x17, reg_wr(REG_ADR_PRIVATE_BPF_ADJ2,  2);
+
+		reg.wdata[1] = 0x44, reg.wdata[2] = 0x44, reg.wdata[3] = 0x08, reg.wdata[4] = 0x07;
+		reg_wr(REG_ADR_VCO_CAL_MIN_FL, 5);
+	}
+	if((local_params.state == PHY_INIT) || (ch != local_params.ch)) {
+		/* frequency setting */
 		uint32_t freq_ch0, freq_min;
 		uint32_t n4, a;
 		uint32_t f;
@@ -646,71 +686,71 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 		reg.wdata[1] = (uint8_t)(f >>  0 & 0xff), reg.wdata[2] = (uint8_t)(f >>  8 & 0xff), reg.wdata[3] = (uint8_t)(f >> 16 & 0x0f);
 		reg.wdata[4] = (uint8_t)(n4 << 2 | a);
 		reg_wr(REG_ADR_CH0_FL, 5);  /* A special command: I set a value of bp.param[BP_PARAM_CH0_FL] */
-		reg.wdata[1] = 0x44, reg.wdata[2] = 0x44, reg.wdata[3] = 0x08, reg.wdata[4] = 0x07;
-		reg_wr(REG_ADR_VCO_CAL_MIN_FL, 5);
 	}
-	{
-		uint16_t n;
 
-		/* bandwidth setting */
-		n = (uint16_t)(regset->chspc / 36);
-		reg.wdata[1] = (uint8_t)(n >>  0 & 0xff), reg.wdata[2] = (uint8_t)(n >>  8 & 0xff);
-		reg_wr(REG_ADR_CH_SPACE_L, 3);
-		/* IF frequency setting */
-		n = (uint16_t)(regset->iffreq / 36);
-		reg.wdata[1] = (uint8_t)(n >>  8 & 0xff), reg.wdata[2] = (uint8_t)(n >>  0 & 0xff);
-		reg_wr(REG_ADR_IF_FREQ_H, 3);
-		reg_wr(REG_ADR_IF_FREQ_AFC_H, 3);
-		n = (uint16_t)(regset->iffreq_cca / 36);
-		reg.wdata[1] = (uint8_t)(n >>  8 & 0xff), reg.wdata[2] = (uint8_t)(n >>  0 & 0xff);
-		reg_wr(REG_ADR_IF_FREQ_CCA_H, 3);
-	}
-	{  /* BPF setting */
-		uint8_t bpf;
-		uint16_t n;
+	if((local_params.state == PHY_INIT) || (page != local_params.page)) {
+		{
+			uint16_t n;
+			/* rate setting */
+			reg.wdata[1] = regset->rate, reg_wr(REG_ADR_DATA_SET, 2);
 
-		reg_rd(REG_ADR_BPF_ADJ_OFFSET, 1), bpf = reg.rdata[0];
-		if (bpf & 0x80) {
-			n = regset->ref + (uint16_t)INTQ((uint32_t)(bpf & 0x7f) * regset->coef, 14);
-		} else {
-			n = regset->ref - (uint16_t)INTQ((uint32_t)(bpf & 0x7f) * regset->coef, 14);
+			/* bandwidth setting */
+			n = (uint16_t)(regset->chspc / 36);
+			reg.wdata[1] = (uint8_t)(n >>  0 & 0xff), reg.wdata[2] = (uint8_t)(n >>  8 & 0xff);
+			reg_wr(REG_ADR_CH_SPACE_L, 3);
+			/* IF frequency setting */
+			n = (uint16_t)(regset->iffreq / 36);
+			reg.wdata[1] = (uint8_t)(n >>  8 & 0xff), reg.wdata[2] = (uint8_t)(n >>  0 & 0xff);
+			reg_wr(REG_ADR_IF_FREQ_H, 3);
+			reg_wr(REG_ADR_IF_FREQ_AFC_H, 3);
+			n = (uint16_t)(regset->iffreq_cca / 36);
+			reg.wdata[1] = (uint8_t)(n >>  8 & 0xff), reg.wdata[2] = (uint8_t)(n >>  0 & 0xff);
+			reg_wr(REG_ADR_IF_FREQ_CCA_H, 3);
 		}
-		reg.wdata[1] = (uint8_t)(n >> 8 & 0xff), reg.wdata[2] = (uint8_t)(n >> 0 & 0xff);
-		reg_wr(REG_ADR_BPF_ADJ_H,     3);
-		reg_wr(REG_ADR_BPF_AFC_ADJ_H, 3);
-		if (bpf & 0x80)
-			n = regset->ref_cca + (uint16_t)INTQ((uint32_t)(bpf & 0x7f) * regset->coef_cca, 14);
-		else
-			n = regset->ref_cca - (uint16_t)INTQ((uint32_t)(bpf & 0x7f) * regset->coef_cca, 14);
-		reg.wdata[1] = (uint8_t)(n >> 8 & 0xff), reg.wdata[2] = (uint8_t)(n >> 0 & 0xff);
-		reg_wr(REG_ADR_BPF_CCA_ADJ_H, 3);
+		{  /* BPF setting */
+			uint8_t bpf;
+			uint16_t n;
+
+			reg_rd(REG_ADR_BPF_ADJ_OFFSET, 1), bpf = reg.rdata[0];
+			if (bpf & 0x80) {
+				n = regset->ref + (uint16_t)INTQ((uint32_t)(bpf & 0x7f) * regset->coef, 14);
+			} else {
+				n = regset->ref - (uint16_t)INTQ((uint32_t)(bpf & 0x7f) * regset->coef, 14);
+			}
+			reg.wdata[1] = (uint8_t)(n >> 8 & 0xff), reg.wdata[2] = (uint8_t)(n >> 0 & 0xff);
+			reg_wr(REG_ADR_BPF_ADJ_H,     3);
+			reg_wr(REG_ADR_BPF_AFC_ADJ_H, 3);
+			if (bpf & 0x80)
+				n = regset->ref_cca + (uint16_t)INTQ((uint32_t)(bpf & 0x7f) * regset->coef_cca, 14);
+			else
+				n = regset->ref_cca - (uint16_t)INTQ((uint32_t)(bpf & 0x7f) * regset->coef_cca, 14);
+			reg.wdata[1] = (uint8_t)(n >> 8 & 0xff), reg.wdata[2] = (uint8_t)(n >> 0 & 0xff);
+			reg_wr(REG_ADR_BPF_CCA_ADJ_H, 3);
+
+			/* GFSK Frequency shift setting */
+			reg.wdata[1] = (uint8_t)(regset->fdev >> 0 & 0xff), reg.wdata[2] = (uint8_t)(regset->fdev >> 8 & 0xff);
+			reg_wr(REG_ADR_F_DEV_L, 3);
+			/* Hidden register setting */
+			reg.wdata[1] = regset->reg1, reg_wr(2,0x0e, 2);
+			/* diversity search setting */
+			reg.wdata[1] = regset->div, reg_wr(REG_ADR_2DIV_SEARCH, 2);
+		}
 	}
-
-	reg.wdata[1] = 0x2c, reg_wr(REG_ADR_PRIVATE_BPF_CAP1,  2);
-	reg.wdata[1] = 0xc0, reg_wr(REG_ADR_PRIVATE_BPF_CAP2,  2);
-	reg.wdata[1] = 0x17, reg_wr(REG_ADR_PRIVATE_BPF_ADJ1,  2);
-	reg.wdata[1] = 0x17, reg_wr(REG_ADR_PRIVATE_BPF_ADJ2,  2);
-
-	/* GFSK Frequency shift setting */
-	reg.wdata[1] = (uint8_t)(regset->fdev >> 0 & 0xff), reg.wdata[2] = (uint8_t)(regset->fdev >> 8 & 0xff);
-	reg_wr(REG_ADR_F_DEV_L, 3);
-	/* Hidden register setting */
-	reg.wdata[1] = regset->reg1, reg_wr(2,0x0e, 2);
-	/* diversity search setting */
-	reg.wdata[1] = regset->div, reg_wr(REG_ADR_2DIV_SEARCH, 2);
 
 	/* own apparatus address acquisition */
 
-	if(vco_cal() == false) {
-		return -EDEADLK;
-	};
-	Serial.print_long(page,DEC);
-	Serial.print(",");
-	Serial.print_long(ch,DEC);
-	Serial.print(",");
-	Serial.print_long(txPower,DEC);
-	Serial.print(",");
-	Serial.println_long(antsw,DEC);
+	if((local_params.state == PHY_INIT) ||
+			(page != local_params.page) ||
+			(ch != local_params.ch)) {
+		if(vco_cal() == false) {
+			return -EDEADLK;
+		};
+	}
+	local_params.ch = ch;
+	local_params.txPower = txPower;
+	local_params.page = page;
+	local_params.state = PHY_SETUP;
+
 	return STATUS_OK;
 }
 
@@ -743,6 +783,8 @@ struct phy_param *phy_init(void)
 
 	reg.wdata[1] = 0xD3,reg_wr(REG_ADR_ADC_CLK_SET,2);
 	reg.wdata[1] = 0x2F,reg_wr(REG_ADR_CLK_SET,2);
+
+	local_params.state = PHY_INIT;
 
 	return &phy;
 }
@@ -947,9 +989,12 @@ void phy_addrFilt(uint16_t panid, uint8_t *ieee_addr, uint16_t uc_addr, uint16_t
 
 void phy_sleep(void)
 {
-	phy_trx_state(PHY_ST_FORCE_TRXOFF);
-	reg.wdata[1] = 0x2F, reg_wr(REG_ADR_CLK_SET, 2);
-	reg.wdata[1] = 0x00, reg_wr(REG_ADR_2DIV_CNTRL, 2);
+	if(local_params.state == PHY_SETUP) {
+		phy_trx_state(PHY_ST_FORCE_TRXOFF);
+		reg.wdata[1] = 0x2F, reg_wr(REG_ADR_CLK_SET, 2);
+		reg.wdata[1] = 0x00, reg_wr(REG_ADR_2DIV_CNTRL, 2);
+		local_params.state = PHY_SLEEP;
+	}
 }
 
 int phy_setModulation(int8_t mode,int8_t sf) {
