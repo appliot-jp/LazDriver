@@ -80,7 +80,7 @@ struct hw_mode {
 #endif
 #else
 #define HAL_init_waitqueue_head(que)	init_waitqueue_head(que)
-#define HAL_wait_event_interruptible_timeout(a,b,c) wait_event_interruptible_timeout(a,b,c)
+#define HAL_wait_event_interruptible_timeout(que,flag,time) wait_event_interruptible_timeout(que,flag,time*HZ/1000)
 #define HAL_wake_up_interruptible(que) wake_up_interruptible(que)
 #endif
 extern int HAL_init(struct hw_mode *mode);

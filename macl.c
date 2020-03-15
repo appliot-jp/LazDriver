@@ -205,7 +205,11 @@ static void macl_timesync_host_isr(void) {
 		phy_rxstart();
 		HAL_GPIO_enableInterrupt();
 		macl.bit_params.hopping_sync_host_irq = false;
+#ifdef LAZURITE_IDE
 		Serial.println("macl_timesync_host_isr");
+#else
+		printk(KERN_INFO"%s\n",__func__);
+#endif
 	} else {
 		macl.bit_params.hopping_sync_host_irq = true;
 	}
@@ -306,6 +310,8 @@ static bool macl_timesync_search_gateway(void){
 	macl_timesync_search_request_cmd *req;
 	macl_timesync_params_cmd *res;
 
+	printk(KERN_INFO"%s start %d\n",__func__,HZ);
+
 	ch_index = 0;
 	//initializing search gateway
 	macl.hopping.slave.ch_scan_count = 0;
@@ -341,10 +347,12 @@ static bool macl_timesync_search_gateway(void){
 	req->payload.cmd = SUBGHZ_HOPPING_SYNC_REQUEST;
 	memcpy(req->payload.id,SUBGHZ_HOPPING_ID,sizeof(SUBGHZ_HOPPING_ID));;
 	macl.phy->out.len= sizeof(macl_timesync_search_request_cmd);
+#ifdef LAZURITE_IDE
 	Serial.print("macl_timesync_search_request_cmd:: ");
 	Serial.print_long((long)macl.phy->out.len,DEC);
 	Serial.print(",");
 	Serial.println_long((long)sizeof(macl_timesync_search_request_cmd),DEC);
+#endif
 	/*
 		 PAYLOADDUMP(macl.phy->out.data,macl.phy->out.len);
 		 */
@@ -359,6 +367,7 @@ static bool macl_timesync_search_gateway(void){
 			}
 			// CH切り替え
 			HAL_GPIO_disableInterrupt();
+			phy_timer_stop();
 			phy_stop();
 			phy_setup(macl.pages,HOPPING_SEARCH_LIST[macl.hopping.host.ch_index],macl.txPower,macl.antsw);
 			// subghz_send
@@ -374,6 +383,7 @@ static bool macl_timesync_search_gateway(void){
 #else
 			HAL_wait_event_interruptible_timeout(macl.que,macl.hoppingdone,SUBGHZ_HOPPING_SEARCH_INTERVAL);
 #endif
+			printk(KERN_INFO"end of HAL_wait_event_interruptible_timeout\n");
 			if(macl.parent->rx.raw.len > 0) {
 				res = (macl_timesync_params_cmd *) macl.parent->rx.raw.data;
 				res->payload.base = search_st_time - res->payload.sync_from;
@@ -388,6 +398,7 @@ static bool macl_timesync_search_gateway(void){
 	}
 	memcpy(&macl.phy->out,&buf_cache,sizeof(BUFFER));
 error:
+	printk(KERN_INFO"%s end\n",__func__);
 	return macl.bit_params.sync_enb;
 }
 

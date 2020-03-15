@@ -247,6 +247,7 @@ static SUBGHZ_MSG subghz_remove(void)
 {
 	SUBGHZ_MSG msg;
 
+	macl_force_stop();
 	msg = (SUBGHZ_MSG)HAL_remove();
 
 	return msg;

@@ -30,7 +30,8 @@
 #include <linux/time.h>
 
 #include "common-lzpi.h"
-//#include "subghz_api.h"
+#include "common_subghz.h"
+#include "subghz_api.h"
 #include "drv-lazurite.h"
 #include "hwif/hal.h"
 #include "hwif/hal-lzpi.h"
