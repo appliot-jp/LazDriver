@@ -115,6 +115,77 @@ static const char *macl_cca_to_str(int condition) {
 }
 */
 #endif
+void macl_hopping_cmd_rx(void *buff) {
+	struct mac_header *mh;
+	mh = buff;
+	switch(macl.ch) {
+		case SUBGHZ_HOPPING_TS_S:
+			break;
+		case SUBGHZ_HOPPING_TS_H:
+			switch(mh->payload.data[0]) {
+				case SUBGHZ_HOPPING_SYNC_REQUEST:
+					{
+						macl_timesync_search_request_cmd *req;
+						req = (macl_timesync_search_request_cmd *)mh->raw.data;
+						if(memcmp(req->payload.id,SUBGHZ_HOPPING_ID,sizeof(SUBGHZ_HOPPING_ID)) != 0) {
+							break;
+						}
+					}
+					{
+						macl_timesync_params_cmd *res;
+
+						phy_stop();
+						phy_timer_stop();
+
+						res = (macl_timesync_params_cmd *)macl.phy->out.data;
+						macl.phy->out.len = 37+sizeof(HOPPING_SEARCH_LIST);
+
+						res->mac_header = 0xEC21;
+						res->seq = (uint8_t)rand();
+						macl.sequenceNum= res->seq;
+						res->panid = 0xFFFF;
+						memcpy(res->dst,mh->src.addr.ieee_addr,8);
+						memcpy(res->src,macl.parent->my_addr.ieee_addr,8);
+						res->payload.cmd = SUBGHZ_HOPPING_SYNC_OK;
+						res->payload.index = macl.hopping.host.ch_index;
+						res->payload.size = (uint8_t) sizeof(HOPPING_SEARCH_LIST);
+						res->payload.sync_interval = SUBGHZ_HOPPING_CH_DURATION;
+						res->payload.sync_from = HAL_millis() - macl.hopping.host.sync_time;
+						res->payload.base = 0;
+						memcpy(res->payload.ch_list,HOPPING_SEARCH_LIST,sizeof(HOPPING_SEARCH_LIST));
+
+						macl.hopping_state = SUBGHZ_ST_HOPPING_HOST_CMD_TX;
+
+						macl.status = macl_total_transmission_time(macl.phy->out.len+TX_TTL_OFFSET);
+						if (macl.status != STATUS_OK){
+							break;
+						}
+
+						macl.hoppingdone = false;
+
+						macl.status=STATUS_OK;
+						macl.resendingNum = 0;
+						macl.ccaCount=0;
+						macl.tx_callback = NULL;
+
+						phy_txpre(MANUAL_TX);
+						macl_cca_setting();
+						macl.condition=SUBGHZ_ST_CCA;
+						HAL_GPIO_enableInterrupt();
+#if !defined(LAZURITE_IDE) && defined(DEBUG)
+						printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
+#endif
+					}
+					break;
+				default:
+					break;
+			}
+			break;
+		default:
+			break;
+	}
+	return;
+}
 
 static void macl_timesync_host_isr(void) {
 	if(macl.txdone && macl.rxdone) {
@@ -137,6 +208,20 @@ static void macl_timesync_host_isr(void) {
 		Serial.println("macl_timesync_host_isr");
 	} else {
 		macl.bit_params.hopping_sync_host_irq = true;
+	}
+	return;
+}
+
+static void macl_txdone(void) {
+	switch(macl.hopping_state) {
+		case SUBGHZ_ST_HOPPING_NOP:
+			macl.txdone = true;
+			if(macl.bit_params.hopping_sync_host_irq) macl_timesync_host_isr();
+			break;
+		default:
+			macl.hoppingdone = true;
+			macl.hopping_state = SUBGHZ_ST_HOPPING_NOP;
+			break;
 	}
 	return;
 }
@@ -257,9 +342,9 @@ static bool macl_timesync_search_gateway(void){
 	memcpy(req->payload.id,SUBGHZ_HOPPING_ID,sizeof(SUBGHZ_HOPPING_ID));;
 	macl.phy->out.len= sizeof(macl_timesync_search_request_cmd);
 	Serial.print("macl_timesync_search_request_cmd:: ");
-	Serial.print_long(macl.phy->out.len,DEC);
+	Serial.print_long((long)macl.phy->out.len,DEC);
 	Serial.print(",");
-	Serial.println_long(sizeof(macl_timesync_search_request_cmd),DEC);
+	Serial.println_long((long)sizeof(macl_timesync_search_request_cmd),DEC);
 	/*
 		 PAYLOADDUMP(macl.phy->out.data,macl.phy->out.len);
 		 */
@@ -280,14 +365,14 @@ static bool macl_timesync_search_gateway(void){
 			phy_txpre(MANUAL_TX);
 			HAL_GPIO_enableInterrupt();
 			macl.condition=SUBGHZ_ST_CCA;
-			macl.rxcmd = false;
+			macl.hoppingdone = false;
 			macl_cca_setting();
 			search_st_time = HAL_millis();
 			// wait receive sync_cmd
 #ifdef NOT_INLINE
-			HAL_wait_event_interruptible_timeout(&macl.que,&macl.rxcmd,SUBGHZ_HOPPING_SEARCH_INTERVAL);
+			HAL_wait_event_interruptible_timeout(&macl.que,&macl.hoppingdone,SUBGHZ_HOPPING_SEARCH_INTERVAL);
 #else
-			HAL_wait_event_interruptible_timeout(macl.que,macl.rxcmd,SUBGHZ_HOPPING_SEARCH_INTERVAL);
+			HAL_wait_event_interruptible_timeout(macl.que,macl.hoppingdone,SUBGHZ_HOPPING_SEARCH_INTERVAL);
 #endif
 			if(macl.parent->rx.raw.len > 0) {
 				res = (macl_timesync_params_cmd *) macl.parent->rx.raw.data;
@@ -532,7 +617,7 @@ static void macl_ccadone_handler(void)
 		if(macl.bit_params.rxOnEnable == true) {
 			// TODO: macl_start();
 		}
-		macl.txdone = true;
+		macl_txdone();
 		if(macl.bit_params.hopping_sync_host_irq) macl_timesync_host_isr();
 	}
 
@@ -555,8 +640,7 @@ static void macl_ccadone_abort_handler(void)
 	if(macl.bit_params.rxOnEnable == true) {
 		// TODO: macl_start();
 	}
-	macl.txdone = true;
-	if(macl.bit_params.hopping_sync_host_irq) macl_timesync_host_isr();
+	macl_txdone();
 	HAL_wake_up_interruptible(&macl.que);
 	return;
 }
@@ -573,8 +657,7 @@ static void macl_txdone_abort_handler(void)
 	macl.status = -EDEADLK;
 	if(macl.tx_callback) macl.tx_callback(0,macl.status);
 
-	macl.txdone = true;
-	if(macl.bit_params.hopping_sync_host_irq) macl_timesync_host_isr();
+	macl_txdone();
 	HAL_wake_up_interruptible(&macl.que);
 }
 
@@ -599,8 +682,7 @@ static void macl_txdone_handler(void)
 		if(macl.bit_params.rxOnEnable == true) {
 			// TODO: macl_start();
 		}	
-		macl.txdone = true;
-		if(macl.bit_params.hopping_sync_host_irq) macl_timesync_host_isr();
+		macl_txdone();
 	}
 	HAL_wake_up_interruptible(&macl.que);
 }
@@ -627,8 +709,7 @@ static void macl_ack_rxdone_handler(void) {
 				if(macl.bit_params.rxOnEnable == true) {
 					// TODO: macl_start();
 				}
-				macl.txdone = true;
-				if(macl.bit_params.hopping_sync_host_irq) macl_timesync_host_isr();
+				macl_txdone();
 			} else {
 				macl_ack_rxdone_abort_handler();
 			}
@@ -656,12 +737,18 @@ static void macl_ack_rxdone_abort_handler(void) {
 		if(macl.status != STATUS_OK) {
 			goto error;
 		}
+		if(macl.hopping_state == SUBGHZ_ST_HOPPING_HOST_CMD_TX) {
+			macl_timesync_params_cmd *res;
+			res = (macl_timesync_params_cmd *)macl.phy->out.data;
+			res->payload.sync_from = HAL_millis() - macl.hopping.host.sync_time;
+		}
 		macl.status = phy_txpre(MANUAL_TX);
 		if(macl.status != STATUS_OK) {
 			alert(s1);
 			macl.status = -EDEADLK;
 			goto error;
 		}
+		macl.status = macl_cca_setting();
 		if(macl.status != STATUS_OK) {
 			goto error;
 		}
@@ -676,8 +763,7 @@ error:
 	if(macl.bit_params.rxOnEnable == true) {
 		macl_start();
 	}
-	macl.txdone = true;
-	if(macl.bit_params.hopping_sync_host_irq) macl_timesync_host_isr();
+	macl_txdone();
 	HAL_wake_up_interruptible(&macl.que);
 }
 
@@ -692,7 +778,7 @@ struct macl_param *macl_init(void* parent)
 	macl.parent = (struct mach_param*) parent;
 	macl.txdone = true;
 	macl.rxdone = true;
-	macl.rxcmd = true;
+	macl.hoppingdone = true;
 	macl.condition = SUBGHZ_ST_INIT;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
@@ -791,7 +877,7 @@ int	macl_stop(void)
 	return status;
 }
 
-int	macl_xmit_sync(BUFFER buff) {
+int	macl_xmit_sync(BUFFER *buff) {
 	static const char s0[] = "rxdone abort in tx";
 	uint32_t time;
 	macl.condition=SUBGHZ_ST_TX_START;
@@ -807,11 +893,11 @@ int	macl_xmit_sync(BUFFER buff) {
 			if(status > ms) {
 				status = 0;
 			}
-		} while(((macl.rxdone & macl.rxcmd) == false) && (status > 0));
+		} while(((macl.rxdone & macl.hoppingdone) == false) && (status > 0));
 		time = status;
 	}
 #else
-	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.rxdone&macl.rxcmd,100L);
+	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.rxdone&macl.hoppingdone,100L);
 #endif
 	HAL_GPIO_disableInterrupt();
 	phy_stop();
@@ -831,10 +917,10 @@ int	macl_xmit_sync(BUFFER buff) {
 			break;
 	}
 	macl.status=STATUS_OK;
-	macl.phy->out = buff;
+	macl.phy->out = *buff;
 	macl.resendingNum = 0;
 	macl.ccaCount=0;
-	macl.sequenceNum= buff.data[2];
+	macl.sequenceNum= buff->data[2];
 	macl.tx_callback = NULL;
 
 	macl.status = macl_total_transmission_time(macl.phy->out.len+TX_TTL_OFFSET);
@@ -865,7 +951,7 @@ error:
 	return macl.status;
 }
 
-int	macl_xmit_async(BUFFER buff,void (*callback)(uint8_t rssi, int status))
+int	macl_xmit_async(BUFFER *buff,void (*callback)(uint8_t rssi, int status))
 {
 	static const char s0[] = "rxdone abort in tx";
 	uint32_t time;
@@ -886,10 +972,10 @@ int	macl_xmit_async(BUFFER buff,void (*callback)(uint8_t rssi, int status))
 	phy_sint_handler(macl_dummy_handler);
 
 	macl.status=STATUS_OK;
-	macl.phy->out = buff;
+	macl.phy->out = *buff;
 	macl.resendingNum = 0;
 	macl.ccaCount=0;
-	macl.sequenceNum= buff.data[2];
+	macl.sequenceNum= buff->data[2];
 	macl.tx_callback = callback;
 
 	macl.status = macl_total_transmission_time(macl.phy->out.len+TX_TTL_OFFSET);

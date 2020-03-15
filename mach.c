@@ -845,7 +845,7 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf) {
 	//printk(KERN_INFO"PAYLOAD\n");
 	//PAYLOADDUMP(mach.tx.payload.data,mach.tx.payload.len);
 	mach.sending = true;
-	status = macl_xmit_sync(mach.tx.raw);
+	status = macl_xmit_sync(&mach.tx.raw);
 
 	return status;
 }
@@ -945,14 +945,14 @@ int macl_rx_irq(bool *isAck)
 					(mach_match_seq_num()==false)) {
 				memcpy(&mach.rx_prev,&mach.rx,sizeof(mach.rx));
 				switch(mach.rx.fc.fc_bit.frame_type) {
-				case IEEE802154_FC_TYPE_DATA:
-					mach_rx_irq(mach.macl->status,NULL);				// report data to upper layer
-					break;
-				case IEEE802154_FC_TYPE_CMD:
-					mach.macl->rxcmd = true;
-					break;
-				default:
-					break;
+					case IEEE802154_FC_TYPE_DATA:
+						mach_rx_irq(mach.macl->status,&mach.rx);				// report data to upper layer
+						break;
+					case IEEE802154_FC_TYPE_CMD:
+						macl_hopping_cmd_rx((void *)&mach.rx);
+						break;
+					default:
+						break;
 				}
 			}
 		} else {

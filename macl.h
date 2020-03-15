@@ -74,11 +74,14 @@ typedef enum {
 	SUBGHZ_ST_ACK_TX,						// 22
 	SUBGHZ_ST_ACK_TX_ABORT,			// 23
 	SUBGHZ_ST_ACK_TX_DONE,			// 24
-	SUBGHZ_ST_HOPPING_SYNC_SLAVE_ISR,				//25
-	SUBGHZ_ST_HOPPING_SYNC_HOST_ISR,	//27
 	SUBGHZ_ST_DUMMY							// 28
 } SUBGHZ_MAC_STATE;
 
+typedef enum {
+	SUBGHZ_ST_HOPPING_NOP,				//0
+	SUBGHZ_ST_HOPPING_HOST_CMD_TX,				//1
+	SUBGHZ_ST_HOPPING_SLAVE_CMD_RX	//2
+} SUBGHZ_HOPPING_STATE;
 #ifdef LAZURITE_IDE
 typedef __packed struct {
 	uint16_t mac_header;
@@ -157,9 +160,10 @@ struct macl_param {
 	uint8_t resendingNum;
 	uint16_t ack_timeout;
 	int status;
-	int condition;
+	uint8_t condition;
+	uint8_t hopping_state;
 	volatile int  txdone;
-	volatile int  rxcmd;
+	volatile int  hoppingdone;
 	volatile int  rxdone;
 	uint16_t tx_ack_interval;
 	void (*tx_callback)(uint8_t rssi, int status);
@@ -202,8 +206,8 @@ struct ieee802154_my_addr {
 extern int	macl_start(void);
 extern struct macl_param *macl_init(void *parent);
 extern int	macl_stop(void);
-extern int	macl_xmit_sync(BUFFER buff);
-extern int	macl_xmit_async(BUFFER buff,void (*callback)(uint8_t rssi, int status));
+extern int	macl_xmit_sync(BUFFER *buff);
+extern int	macl_xmit_async(BUFFER *buff,void (*callback)(uint8_t rssi, int status));
 extern int	macl_set_channel(uint8_t page,uint8_t ch,uint32_t mbm,uint8_t antsw);
 extern int	macl_set_hw_addr_filt(struct ieee802154_my_addr *filt,uint32_t changed);
 extern int	macl_set_cca_ed_level(uint32_t mbm);
@@ -220,5 +224,6 @@ extern void	macl_set_ack_tx_interval(uint16_t interval);
 extern int	macl_set_modulation(int8_t mod, int8_t sf);
 extern int	macl_get_modulation(int8_t *mod, int8_t *sf);
 extern void macl_set_antsw(uint8_t antsw);
+extern void macl_hopping_cmd_rx(void *buff);
 #endif
 
