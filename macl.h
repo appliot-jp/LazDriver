@@ -179,6 +179,7 @@ struct macl_param {
 		uint8_t sync_enb:1;
 		uint8_t rxOnEnable:1;
 		uint8_t promiscuousMode:1;
+		uint8_t stop:1;
 	} bit_params;
 	BUFFER cmd;
 	union {
@@ -225,5 +226,6 @@ extern int	macl_set_modulation(int8_t mod, int8_t sf);
 extern int	macl_get_modulation(int8_t *mod, int8_t *sf);
 extern void macl_set_antsw(uint8_t antsw);
 extern void macl_hopping_cmd_rx(void *buff);
+extern void macl_force_stop(void);
 #endif
 

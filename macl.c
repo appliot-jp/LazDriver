@@ -115,6 +115,80 @@ static const char *macl_cca_to_str(int condition) {
 }
 */
 #endif
+
+static int macl_total_transmission_time(uint16_t len) {
+	uint32_t current_time;
+	uint32_t duration;
+	int status=STATUS_OK;
+
+	current_time = HAL_millis();
+
+#ifdef JP
+	if((macl.ch >= 24)&&(macl.ch<=32)) {
+		duration = 50 - (current_time - macl.last_send_time);
+		if((duration <= 50) && (duration > 0)) HAL_sleep(duration);
+		// restore time
+		macl.last_send_time = HAL_millis();
+	} else {
+		duration = 2 - (current_time - macl.last_send_time);
+		if((duration <= 2) && (duration > 0)) HAL_delayMicroseconds(duration*1000);
+		// check total send bytes in an hours -- an hours
+		duration = current_time - macl.start_send_time;
+		if(duration > 3600000L) {
+			macl.total_send_bytes = 0;
+			macl.start_send_time = current_time;
+		}
+
+		// check total send bytes in an hours -- calcurate total send bytes
+		switch(macl.pages) {
+			case 1:  /*  50kbps */
+				if(macl.total_send_bytes+len>2250000L) status = -EAGAIN;
+				break;
+			case 2:  /* 100kbps */
+				if(macl.total_send_bytes+len>4500000L) status = -EAGAIN;
+				break;
+			case 4:  /* 80kbps */
+				if(macl.total_send_bytes+len>3600000L) status = -EAGAIN;
+				break;
+			case 8:  /* 200kbps */
+				if(macl.total_send_bytes+len>9000000L) status = -EAGAIN;
+				break;
+			default:
+				status = -EAGAIN;
+				break;
+		}
+		if (status == STATUS_OK) macl.total_send_bytes+=len;
+	}
+#endif
+
+	return status;
+}
+
+int macl_cca_setting(void) {
+	uint8_t be;
+	uint16_t bo;
+	uint16_t cca_time;
+	static const char s1[] = "phy.unit_backoff_period is not set";
+#ifdef JP
+	be = (uint8_t)(macl.ccaMinBe + macl.ccaCount);
+	if(be >= macl.ccaMaxBe) be = macl.ccaMaxBe;
+	if(macl.phy->unit_backoff_period == 0) {
+		alert(s1);
+		return -EINVAL;
+	}
+	bo = (rand()%(( 1 << be) - 1))*macl.phy->unit_backoff_period;
+	if((macl.ch >= 24) && (macl.ch <= 32)) {
+		cca_time = 5000;
+	} else {
+		cca_time = 2000;
+	}
+#endif
+	phy_timer_start(CCA_IDLE_DETECT_ABORT_TIME+(bo%3)*10,macl_ccadone_abort_handler);
+	phy_sint_handler(macl_ccadone_handler);
+	phy_ccaCtrl((uint32_t)cca_time+bo);
+	return STATUS_OK;
+}
+
 void macl_hopping_cmd_rx(void *buff) {
 	struct mac_header *mh;
 	mh = buff;
@@ -230,79 +304,6 @@ static void macl_txdone(void) {
 	return;
 }
 
-int macl_cca_setting(void) {
-	uint8_t be;
-	uint16_t bo;
-	uint16_t cca_time;
-	static const char s1[] = "phy.unit_backoff_period is not set";
-#ifdef JP
-	be = (uint8_t)(macl.ccaMinBe + macl.ccaCount);
-	if(be >= macl.ccaMaxBe) be = macl.ccaMaxBe;
-	if(macl.phy->unit_backoff_period == 0) {
-		alert(s1);
-		return -EINVAL;
-	}
-	bo = (rand()%(( 1 << be) - 1))*macl.phy->unit_backoff_period;
-	if((macl.ch >= 24) && (macl.ch <= 32)) {
-		cca_time = 5000;
-	} else {
-		cca_time = 2000;
-	}
-#endif
-	phy_timer_start(CCA_IDLE_DETECT_ABORT_TIME+(bo%3)*10,macl_ccadone_abort_handler);
-	phy_sint_handler(macl_ccadone_handler);
-	phy_ccaCtrl((uint32_t)cca_time+bo);
-	return STATUS_OK;
-}
-
-static int macl_total_transmission_time(uint16_t len) {
-	uint32_t current_time;
-	uint32_t duration;
-	int status=STATUS_OK;
-
-	current_time = HAL_millis();
-
-#ifdef JP
-	if((macl.ch >= 24)&&(macl.ch<=32)) {
-		duration = 50 - (current_time - macl.last_send_time);
-		if((duration <= 50) && (duration > 0)) HAL_sleep(duration);
-		// restore time
-		macl.last_send_time = HAL_millis();
-	} else {
-		duration = 2 - (current_time - macl.last_send_time);
-		if((duration <= 2) && (duration > 0)) HAL_delayMicroseconds(duration*1000);
-		// check total send bytes in an hours -- an hours
-		duration = current_time - macl.start_send_time;
-		if(duration > 3600000L) {
-			macl.total_send_bytes = 0;
-			macl.start_send_time = current_time;
-		}
-
-		// check total send bytes in an hours -- calcurate total send bytes
-		switch(macl.pages) {
-			case 1:  /*  50kbps */
-				if(macl.total_send_bytes+len>2250000L) status = -EAGAIN;
-				break;
-			case 2:  /* 100kbps */
-				if(macl.total_send_bytes+len>4500000L) status = -EAGAIN;
-				break;
-			case 4:  /* 80kbps */
-				if(macl.total_send_bytes+len>3600000L) status = -EAGAIN;
-				break;
-			case 8:  /* 200kbps */
-				if(macl.total_send_bytes+len>9000000L) status = -EAGAIN;
-				break;
-			default:
-				status = -EAGAIN;
-				break;
-		}
-		if (status == STATUS_OK) macl.total_send_bytes+=len;
-	}
-#endif
-
-	return status;
-}
-
 static bool macl_timesync_search_gateway(void){
 	volatile uint32_t search_st_time;
 	uint8_t ch_index;
@@ -361,6 +362,10 @@ static bool macl_timesync_search_gateway(void){
 	while((macl.hopping.slave.ch_scan_cycle > macl.hopping.slave.ch_scan_count) &&
 			(macl.bit_params.sync_enb == false)) {
 		while(ch_index < sizeof(HOPPING_SEARCH_LIST)) {
+			if(macl.bit_params.stop == true) {
+				macl.status = -ENOPROTOOPT;
+				goto error;
+			}
 			macl.status = macl_total_transmission_time(macl.phy->out.len+TX_TTL_OFFSET);
 			if (macl.status != STATUS_OK){
 				goto error;
@@ -1088,3 +1093,7 @@ void macl_set_ack_tx_interval(uint16_t interval) {
 void macl_set_antsw(uint8_t antsw) {
 	macl.antsw = antsw;
 }
+void macl_force_stop(void) {
+	macl.bit_params.stop = true;
+}
+
