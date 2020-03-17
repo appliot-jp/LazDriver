@@ -80,7 +80,7 @@ typedef enum {
 typedef enum {
 	SUBGHZ_ST_HOPPING_NOP,				//0
 	SUBGHZ_ST_HOPPING_HOST_CMD_TX,				//1
-	SUBGHZ_ST_HOPPING_SLAVE_CMD_RX	//2
+	SUBGHZ_ST_HOPPING_SLAVE_SYNC_REQ	//2
 } SUBGHZ_HOPPING_STATE;
 #ifdef LAZURITE_IDE
 typedef __packed struct {

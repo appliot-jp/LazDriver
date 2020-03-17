@@ -907,6 +907,7 @@ int macl_rx_irq(bool *isAck)
 				switch(mach.rx.fc.fc_bit.frame_type){
 					case IEEE802154_FC_TYPE_DATA:
 					case IEEE802154_FC_TYPE_CMD:
+						PAYLOADDUMP(mach.rx.raw.data,mach.rx.raw.len);
 						// check sequence number
 						if(mach.rx.raw.size >= mach.rx.input.len) {
 							mach.rx.raw.len = mach.rx.input.len;
@@ -941,13 +942,22 @@ int macl_rx_irq(bool *isAck)
 		// reporting data to upper layer
 		if(mach.macl->status == STATUS_OK) {
 			// copy phy buffer to application buffer
-			if((mach.macl->bit_params.promiscuousMode)||
-					(mach_match_seq_num()==false)) {
+			if(mach.macl->bit_params.promiscuousMode) {
+				mach_rx_irq(mach.macl->status,&mach.rx);				// report data to upper layer
+			} else if (mach_match_seq_num()==false) {
 				memcpy(&mach.rx_prev,&mach.rx,sizeof(mach.rx));
 				switch(mach.rx.fc.fc_bit.frame_type) {
 					case IEEE802154_FC_TYPE_DATA:
 						mach_rx_irq(mach.macl->status,&mach.rx);				// report data to upper layer
 						break;
+					case IEEE802154_FC_TYPE_CMD:
+						macl_hopping_cmd_rx((void *)&mach.rx);
+						break;
+					default:
+						break;
+				}
+			} else {
+				switch(mach.rx.fc.fc_bit.frame_type) {
 					case IEEE802154_FC_TYPE_CMD:
 						macl_hopping_cmd_rx((void *)&mach.rx);
 						break;
