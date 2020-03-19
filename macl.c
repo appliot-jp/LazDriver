@@ -388,7 +388,7 @@ static bool macl_timesync_search_gateway(void){
 			if(macl.parent->rx.raw->len > 0) {
 				res = (macl_timesync_params_cmd *) macl.parent->rx.raw->data;
 				if(res->payload.cmd == SUBGHZ_HOPPING_SYNC_OK) {
-					res->payload.sync_time = millis()-res->payload.sync_from;
+					res->payload.sync_time = HAL_millis()-res->payload.sync_from;
 					memcpy(cmd_data_buf,macl.parent->rx.raw->data,macl.parent->rx.raw->len);
 					macl.bit_params.sync_enb = true;
 					macl.bit_params.timer_sync = false;
@@ -923,6 +923,10 @@ int	macl_stop(void)
 int	macl_xmit_sync(BUFFER *buff) {
 	static const char s0[] = "rxdone abort in tx";
 	uint32_t time;
+	uint32_t diff_time;
+	uint32_t now;
+	uint16_t ch_index;
+	uint16_t time_offset;
 	macl.condition=SUBGHZ_ST_TX_START;
 
 #ifdef NOT_INLINE
@@ -960,10 +964,13 @@ int	macl_xmit_sync(BUFFER *buff) {
 			}
 			// 時刻同期の結果に基づき使用するCHを計算し周波数設定を行う。
 			{
+				/*
 				uint32_t diff_time;
-				uint32_t now = millis();
+				uint32_t now = HAL_millis();
 				uint16_t ch_index;
 				uint16_t time_offset;
+				*/
+				now = HAL_millis();
 				diff_time = now - macl.hopping.slave.sync_cmd->payload.sync_time;
 				ch_index = diff_time/macl.hopping.slave.sync_cmd->payload.sync_interval;
 				ch_index += macl.hopping.slave.sync_cmd->payload.index;

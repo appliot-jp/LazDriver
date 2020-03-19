@@ -89,7 +89,7 @@ typedef __packed struct {
 	uint16_t panid;
 	uint16_t dst;
 	uint8_t src[8];
-	struct {
+	__packed struct {
 		uint8_t cmd;
 		uint8_t id[4];
 	} payload;
@@ -101,7 +101,7 @@ typedef __packed struct  {
 	uint16_t panid;
 	uint8_t dst[8];
 	uint8_t src[8];
-	struct {
+	__packed struct {
 		uint8_t cmd;
 		uint8_t index;
 		uint8_t size;
@@ -123,7 +123,7 @@ typedef struct {
 	struct {
 		uint8_t cmd;
 		uint8_t id[4];
-	} payload;
+	} __attribute__((packed)) payload;
 } __attribute__((packed)) macl_timesync_search_request_cmd;
 
 typedef struct  {
@@ -141,7 +141,7 @@ typedef struct  {
 		uint32_t sync_from;
 		uint32_t sync_time;
 		uint8_t ch_list [32];
-	} payload;
+	} __attribute__((packed)) payload;
 } __attribute__((packed)) macl_timesync_params_cmd;
 #endif
 struct macl_param {
