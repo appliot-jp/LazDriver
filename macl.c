@@ -472,7 +472,6 @@ static void macl_rxfifo_handler(void)
 				phy_rxstart();
 				macl.condition=SUBGHZ_ST_RX_STARTED;
 				macl_rxdone_handler();
-				macl.rxdone = true;
 			} else if ((((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_CMD) || ((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_DATA) )){
 				if(macl_rxdone_handler() == true) {
 					macl.status = STATUS_OK;
@@ -480,7 +479,6 @@ static void macl_rxfifo_handler(void)
 					phy_sint_handler(macl_rxfifo_handler);
 					phy_rxstart();
 					macl.condition=SUBGHZ_ST_RX_STARTED;
-					macl.rxdone = true;
 					break;
 				} else {
 					// send ACK or CMD
@@ -523,11 +521,13 @@ static bool macl_rxdone_handler(void)
 		phy_rxstart();
 		macl_rx_irq(NULL);
 		result = true;
+		macl.rxdone = true;
 		goto end;
 	}
 	if (status != STATUS_OK) {
 		macl.status = status;
 		result = true;
+		macl.rxdone = true;
 		goto end;
 	}
 	if(isAck){
@@ -539,6 +539,7 @@ static bool macl_rxdone_handler(void)
 				macl_rx_irq(NULL);
 				phy_rxstart();
 				result = true;
+				macl.rxdone = true;
 				goto end;
 			}
 		}
@@ -554,6 +555,7 @@ static bool macl_rxdone_handler(void)
 		macl.status = STATUS_OK;
 		macl_rx_irq(NULL);
 		result = macl.hoppingdone;
+		macl.rxdone = true;
 	}
 end:
 	return result;
