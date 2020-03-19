@@ -108,7 +108,7 @@ typedef __packed struct  {
 		uint8_t reserve;
 		uint32_t sync_interval;
 		uint32_t sync_from;
-		uint32_t base;
+		uint32_t sync_time;
 		uint8_t ch_list [32];
 	} payload;
 } macl_timesync_params_cmd;
@@ -139,7 +139,7 @@ typedef struct  {
 		uint8_t reserve;
 		uint32_t sync_interval;
 		uint32_t sync_from;
-		uint32_t base;
+		uint32_t sync_time;
 		uint8_t ch_list [32];
 	} payload;
 } __attribute__((packed)) macl_timesync_params_cmd;
@@ -180,14 +180,12 @@ struct macl_param {
 		uint8_t rxOnEnable:1;
 		uint8_t promiscuousMode:1;
 		uint8_t stop:1;
+		uint8_t timer_sync;
 	} bit_params;
 	BUFFER cmd;
 	union {
 		struct {
-			uint8_t ch_scan_cycle;					// hopping mode only. cycle time of scan
-			uint8_t ch_scan_count;					// hopping mode only. cycle time of scan
-			uint16_t backoff_unit;					// hopping mode only. cycle time of scan
-			uint32_t backoff_time;					// hopping mode only. cycle time of scan
+			macl_timesync_params_cmd *sync_cmd;
 		} slave;
 		struct { 
 			uint8_t ch_index;						// hopping mode only. ch index.

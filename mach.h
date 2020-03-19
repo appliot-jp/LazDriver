@@ -92,8 +92,7 @@ struct mac_header{
 	uint8_t addr_type;			// address type
 	uint8_t rssi;		// source address
 	BUFFER payload;		// source address
-	BUFFER raw;		// source address
-	BUFFER input;		// source address
+	BUFFER *raw;		// source address
 	int payload_offset;
 };
 
@@ -143,7 +142,7 @@ extern int mach_set_dst_ieee_addr(uint16_t panid,uint8_t *addr);
 extern int mach_set_dst_short_addr(uint16_t panid,uint16_t short_addr);
 extern int mach_set_src_addr(uint8_t addr_mode);
 extern int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf);
-extern int mach_start(BUFFER *rxbuf);
+extern int mach_start(void);
 extern int mach_stop(void);
 extern int mach_parse_data(struct mac_header *header);
 extern int mach_ed(uint8_t *ed);

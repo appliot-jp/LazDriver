@@ -424,7 +424,7 @@ int mach_rx_irq(int status,struct mac_header *rx)
 		subghz_param.rx.len = 0;
 		mach_set_my_short_addr(subghz_param.panid,subghz_param.short_addr);
 		mach_setup(&subghz_param.rf);
-		mach_start(&subghz_param.rx);
+		mach_start();
 		subghz_param.read = true;
 		subghz_api_status |= SUBGHZ_API_RXENABLE;
 		return STATUS_OK;
@@ -456,22 +456,22 @@ int mach_rx_irq(int status,struct mac_header *rx)
 		return STATUS_OK;
 	}
 	subghz_param.rx_stat.rssi = rx->rssi;
-	subghz_param.rx_stat.status = rx->raw.len;
+	subghz_param.rx_stat.status = rx->raw->len;
 	if (rx->fc.fc_bit.sec_enb && AES128_getStatus()) {
 		uint8_t mhr_len;
 		uint8_t pad;
 		if (rx->fc.fc_bit.seq_comp){
 			rx->seq=0;
 		}
-		mhr_len = (uint8_t)(rx->raw.len - rx->payload.len);
+		mhr_len = (uint8_t)(rx->raw->len - rx->payload.len);
 		//memcpy(subghz_param.rx.data, rx->raw.data,mhr_len);
 		pad = AES128_CBC_decrypt(subghz_param.rx.data+mhr_len, rx->payload.data, (uint32_t)rx->payload.len, rx->seq);
-		subghz_param.rx.len = rx->raw.len - pad;
+		subghz_param.rx.len = rx->raw->len - pad;
 	} else {
-		subghz_param.rx.len = rx->raw.len;
+		subghz_param.rx.len = rx->raw->len;
 	}
 	if(subghz_param.rx_callback != NULL) {
-		subghz_param.rx_callback(subghz_param.rx.data, rx->rssi,subghz_param.rx.len);
+		subghz_param.rx_callback(subghz_param.rx.data, subghz_param.rx_stat.rssi,subghz_param.rx.len);
 	}
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s %s %d mach_start\n",__FILE__,__func__,__LINE__);
@@ -509,7 +509,7 @@ static SUBGHZ_MSG subghz_rxEnable(void (*callback)(const uint8_t *data, uint8_t 
 
 	subghz_param.rx_callback = callback;
 	if(subghz_param.read == false) {
-		result = mach_start(&subghz_param.rx);
+		result = mach_start();
 		if(result  != STATUS_OK) {
 			msg = SUBGHZ_RX_ENB_FAIL;
 			goto error;
@@ -613,12 +613,11 @@ static SUBGHZ_MSG subghz_setSendMode(SUBGHZ_PARAM *param)
 static void subghz_decMac(SUBGHZ_MAC_PARAM *mac,uint8_t *raw,uint16_t raw_len)
 {
 	struct mac_header header;
-	header.input.data = raw;
-	header.input.len = raw_len;
-	header.input.size = raw_len;
-	header.raw.data = raw;
-	header.raw.len = raw_len;
-	header.raw.size = raw_len;
+	BUFFER buf;
+	header.raw = &buf;
+	header.raw->data = raw;
+	header.raw->len = raw_len;
+	header.raw->size = raw_len;
 	mach_parse_data(&header);
 
 	mac->mac_header.fc16=header.fc.fc16;

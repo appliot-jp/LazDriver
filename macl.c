@@ -194,7 +194,7 @@ void macl_hopping_cmd_rx(void *buff) {
 	mh = buff;
 	switch(macl.ch) {
 		case SUBGHZ_HOPPING_TS_S:
-			PAYLOADDUMP(mh->raw.data,mh->raw.len);
+			//PAYLOADDUMP(mh->raw.data,mh->raw.len);
 			macl.hoppingdone = true;
 			break;
 		case SUBGHZ_HOPPING_TS_H:
@@ -202,7 +202,7 @@ void macl_hopping_cmd_rx(void *buff) {
 				case SUBGHZ_HOPPING_SYNC_REQUEST:
 					{
 						macl_timesync_search_request_cmd *req;
-						req = (macl_timesync_search_request_cmd *)mh->raw.data;
+						req = (macl_timesync_search_request_cmd *)mh->raw->data;
 						if(memcmp(req->payload.id,SUBGHZ_HOPPING_ID,sizeof(SUBGHZ_HOPPING_ID)) != 0) {
 							break;
 						}
@@ -227,7 +227,7 @@ void macl_hopping_cmd_rx(void *buff) {
 						res->payload.size = (uint8_t) sizeof(HOPPING_SEARCH_LIST);
 						res->payload.sync_interval = SUBGHZ_HOPPING_CH_DURATION;
 						res->payload.sync_from = HAL_millis() - macl.hopping.host.sync_time;
-						res->payload.base = 0;
+						res->payload.sync_time = 0;
 						memcpy(res->payload.ch_list,HOPPING_SEARCH_LIST,sizeof(HOPPING_SEARCH_LIST));
 
 						macl.hopping_state = SUBGHZ_ST_HOPPING_HOST_CMD_TX;
@@ -309,18 +309,16 @@ static void macl_txdone(void) {
 }
 
 static bool macl_timesync_search_gateway(void){
-	volatile uint32_t search_st_time;
 	uint8_t ch_index;
+	uint8_t ch_scan_count = 0;
+	uint8_t ch_scan_cycle = SUBGHZ_HOPPING_SEARCH_CYCLE;
 	struct mac_fc_alignment fc;
 	macl_timesync_search_request_cmd *req;
 	macl_timesync_params_cmd *res;
 
-	printk(KERN_INFO"%s start %d\n",__func__,HZ);
-
+	//printk(KERN_INFO"%s start %d\n",__func__,HZ);
 	ch_index = 0;
 	//initializing search gateway
-	macl.hopping.slave.ch_scan_count = 0;
-	macl.hopping.slave.ch_scan_cycle = SUBGHZ_HOPPING_SEARCH_CYCLE;
 	ch_index = 0;
 
 	// mac header of search gateway
@@ -357,7 +355,8 @@ static bool macl_timesync_search_gateway(void){
 
 	macl.bit_params.sync_enb = false;
 	macl.hopping_state = SUBGHZ_ST_HOPPING_SLAVE_SYNC_REQ;
-	while((macl.hopping.slave.ch_scan_cycle > macl.hopping.slave.ch_scan_count) &&
+	macl.hopping.slave.sync_cmd = NULL;
+	while((ch_scan_cycle > ch_scan_count) &&
 			(macl.bit_params.sync_enb == false)) {
 		while(ch_index < sizeof(HOPPING_SEARCH_LIST)) {
 			if(macl.bit_params.stop == true) {
@@ -372,37 +371,41 @@ static bool macl_timesync_search_gateway(void){
 			HAL_GPIO_disableInterrupt();
 			phy_timer_stop();
 			phy_stop();
-			phy_setup(macl.pages,HOPPING_SEARCH_LIST[macl.hopping.host.ch_index],macl.txPower,macl.antsw);
+			phy_setup(macl.pages,HOPPING_SEARCH_LIST[ch_index],macl.txPower,macl.antsw);
 			// subghz_send
 			phy_txpre(MANUAL_TX);
 			HAL_GPIO_enableInterrupt();
 			macl.condition=SUBGHZ_ST_CCA;
 			macl.hoppingdone = false;
 			macl_cca_setting();
-			search_st_time = HAL_millis();
 			// wait receive sync_cmd
 #ifdef NOT_INLINE
 			HAL_wait_event_interruptible_timeout(&macl.que,&macl.hoppingdone,SUBGHZ_HOPPING_SEARCH_INTERVAL);
 #else
 			HAL_wait_event_interruptible_timeout(macl.que,macl.hoppingdone,SUBGHZ_HOPPING_SEARCH_INTERVAL);
 #endif
-			printk(KERN_INFO"end of HAL_wait_event_interruptible_timeout\n");
-			if(macl.parent->rx.raw.len > 0) {
-				res = (macl_timesync_params_cmd *) macl.parent->rx.raw.data;
-				res->payload.base = search_st_time - res->payload.sync_from;
-				macl.bit_params.sync_enb = true;
-				break;
+			//printk(KERN_INFO"end of HAL_wait_event_interruptible_timeout\n");
+			if(macl.parent->rx.raw->len > 0) {
+				res = (macl_timesync_params_cmd *) macl.parent->rx.raw->data;
+				if(res->payload.cmd == SUBGHZ_HOPPING_SYNC_OK) {
+					res->payload.sync_time = millis()-res->payload.sync_from;
+					memcpy(cmd_data_buf,macl.parent->rx.raw->data,macl.parent->rx.raw->len);
+					macl.bit_params.sync_enb = true;
+					macl.bit_params.timer_sync = false;
+					macl.hopping.slave.sync_cmd = res;
+					break;
+				}
 			} else {
 				ch_index++;
 			}
 		}
-		macl.hopping.slave.ch_scan_count++;
+		ch_scan_count++;
 		ch_index = 0;
 	}
 	memcpy(&macl.phy->out,&buf_cache,sizeof(BUFFER));
 error:
 	macl.hoppingdone = true;
-	printk(KERN_INFO"%s end\n",__func__);
+	//printk(KERN_INFO"%s end\n",__func__);
 	macl.hopping_state = SUBGHZ_ST_HOPPING_NOP;
 	return macl.bit_params.sync_enb;
 }
@@ -415,12 +418,12 @@ static void macl_timesync_slave_isr(void) {
 		macl_timesync_params_cmd *sf;
 		sf = (macl_timesync_params_cmd *) cmd_data_buf;
 		now = HAL_millis();
-		timer = sf->payload.sync_interval - (now - sf->payload.base)%sf->payload.sync_interval;
+		timer = sf->payload.sync_interval - (now - sf->payload.sync_time)%sf->payload.sync_interval;
 		if(timer < 50) {
 			timer += sf->payload.sync_interval;
-			ch = (sf->payload.index + (now - sf->payload.base)/sf->payload.sync_interval + 1)%sf->payload.size;
+			ch = (sf->payload.index + (now - sf->payload.sync_time)/sf->payload.sync_interval + 1)%sf->payload.size;
 		} else {
-			ch = (sf->payload.index + (now - sf->payload.base)/sf->payload.sync_interval + 0)%sf->payload.size;
+			ch = (sf->payload.index + (now - sf->payload.sync_time)/sf->payload.sync_interval + 0)%sf->payload.size;
 		}
 	}
 	/*
@@ -588,7 +591,10 @@ static void macl_ack_txdone_handler(void)
 
 	macl.status = STATUS_OK;
 	macl_rx_irq(NULL);				// rx callback
-	// TODO: macl_start();
+	//  macl_start();
+	phy_sint_handler(macl_rxfifo_handler);
+	phy_rxstart();
+	macl.condition=SUBGHZ_ST_RX_STARTED;
 	macl.rxdone = true;
 	HAL_wake_up_interruptible(&macl.que);
 
@@ -607,7 +613,10 @@ static void macl_ack_txdone_abort_handler(void)
 	}
 	phy_txdone();
 	macl_rx_irq(NULL);				// rx callback
-	// TODO: macl_start();
+	// macl_start();
+	phy_sint_handler(macl_rxfifo_handler);
+	phy_rxstart();
+	macl.condition=SUBGHZ_ST_RX_STARTED;
 	macl.rxdone = true;
 	HAL_wake_up_interruptible(&macl.que);
 	return;
@@ -942,8 +951,28 @@ int	macl_xmit_sync(BUFFER *buff) {
 	}
 	switch(macl.ch) {
 		case SUBGHZ_HOPPING_TS_S:
-			if(macl_timesync_search_gateway() != false) {
-				goto error;
+			// 時刻同期
+			if(macl.bit_params.sync_enb == false) {
+				if(macl_timesync_search_gateway() != false) {
+					macl.status = -ENOPROTOOPT;
+					goto error;
+				}
+			}
+			// 時刻同期の結果に基づき使用するCHを計算し周波数設定を行う。
+			{
+				uint32_t diff_time;
+				uint32_t now = millis();
+				uint16_t ch_index;
+				uint16_t time_offset;
+				diff_time = now - macl.hopping.slave.sync_cmd->payload.sync_time;
+				ch_index = diff_time/macl.hopping.slave.sync_cmd->payload.sync_interval;
+				ch_index += macl.hopping.slave.sync_cmd->payload.index;
+				ch_index = ch_index % macl.hopping.slave.sync_cmd->payload.size;
+				time_offset = diff_time%macl.hopping.slave.sync_cmd->payload.sync_interval;
+				if(macl.hopping.slave.sync_cmd->payload.sync_interval < time_offset + 100) {
+					ch_index++;
+				}
+				phy_setup(macl.pages,macl.hopping.slave.sync_cmd->payload.ch_list[ch_index],macl.txPower,macl.antsw);
 			}
 			break;
 		case SUBGHZ_HOPPING_TS_H:

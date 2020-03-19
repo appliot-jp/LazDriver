@@ -52,7 +52,7 @@
 const uint8_t device_id_bp3596[] =   {0x00,0x1d,0x12,0x90};
 const uint8_t device_id_lazurite[] = {0x00,0x1d,0x12,0xd0};
 //#define DEIVE_ID_ROHM  0x90
-#//define DEIVE_ID_LAPIS 0xD0
+//#define DEIVE_ID_LAPIS 0xD0
 
 /*
 	 I convert floating point numerical value into Q format fixed-point numerical value
@@ -319,7 +319,7 @@ static void fifo_wr(uint8_t bank, uint8_t addr)
 	regbank(bank);
 	*p_header = (uint8_t)((addr << 1) | 0x01);
 
-	if(size <= 256) {
+	if(size <= phy.out.size) {
 		HAL_SPI_transfer(p_header,size+1,reg.rdata,0);
 	} else {
 		alert(s1);
@@ -939,11 +939,14 @@ FIFO_STATE phy_rxdone()
 	reg_rd(REG_ADR_RD_RX_FIFO, 2);
 	data_size = reg.rdata[0] & 0x07;
 	data_size = (data_size << 8) + reg.rdata[1];
-	if(data_size<=256) {
+	if(data_size<=phy.in.size) {
 		phy.in.len = data_size + 1; // add ED vale
 		fifo_rd(REG_ADR_RD_RX_FIFO);
 		phy.in.data[phy.in.len-3] = phy.in.data[phy.in.len-1];		// erase crc and move ed
 		phy.in.len -= 2;
+	} else {
+		status = CRC_ERROR;
+		goto error;
 	}
 error:
 	phy_intclr(HW_EVENT_RX_DONE | HW_EVENT_CRC_ERROR | HW_EVENT_RF_STATUS | HW_EVENT_ADD_FIL_DONE);
