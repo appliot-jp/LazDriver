@@ -292,7 +292,7 @@ static void macl_timesync_host_isr(void) {
 #ifdef LAZURITE_IDE
 		Serial.println("macl_timesync_host_isr");
 #else
-		printk(KERN_INFO"%s\n",__func__);
+		printk(KERN_INFO"%s index=%d CH=%d\n",__func__,macl.hopping.host.ch_index, HOPPING_SEARCH_LIST[macl.hopping.host.ch_index]);
 #endif
 	} else {
 		macl.bit_params.hopping_sync_host_irq = true;
