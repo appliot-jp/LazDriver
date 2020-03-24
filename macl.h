@@ -84,16 +84,49 @@ typedef enum {
 } SUBGHZ_HOPPING_STATE;
 #ifdef LAZURITE_IDE
 typedef __packed struct {
+	uint8_t cmd;
+	uint8_t id[4];
+} macl_timesync_search_request_cmd;
+
+typedef __packed struct {
 	uint16_t mac_header;
 	uint8_t  seq;
 	uint16_t panid;
 	uint16_t dst;
 	uint8_t src[8];
-	__packed struct {
-		uint8_t cmd;
-		uint8_t id[4];
-	} payload;
-} macl_timesync_search_request_cmd;
+	macl_timesync_search_request_cmd payload;
+} macl_timesync_search_request_raw16;
+
+typedef __packed struct {
+	uint16_t mac_header;
+	uint8_t  seq;
+	uint16_t panid;
+	uint8_t dst[8];
+	uint8_t src[8];
+	macl_timesync_search_request_cmd payload;
+} macl_timesync_search_request_raw64;
+
+typedef __packed struct {
+	uint8_t cmd;
+	uint8_t index;
+	uint8_t size;
+	uint8_t reserve;
+	uint32_t sync_interval;
+	uint32_t sync_from;
+	uint32_t sync_time;
+	uint8_t ch_list [32];
+} macl_timesync_params_cmd;
+
+/*
+typedef __packed struct  {
+	uint16_t mac_header;
+	uint8_t  seq;
+	uint16_t panid;
+	uint16_t dst;
+	uint8_t src[8];
+	macl_timesync_params_cmd payload;
+} macl_timesync_params_raw16;
+*/
 
 typedef __packed struct  {
 	uint16_t mac_header;
@@ -101,30 +134,54 @@ typedef __packed struct  {
 	uint16_t panid;
 	uint8_t dst[8];
 	uint8_t src[8];
-	__packed struct {
-		uint8_t cmd;
-		uint8_t index;
-		uint8_t size;
-		uint8_t reserve;
-		uint32_t sync_interval;
-		uint32_t sync_from;
-		uint32_t sync_time;
-		uint8_t ch_list [32];
-	} payload;
-} macl_timesync_params_cmd;
+	macl_timesync_params_cmd payload;
+} macl_timesync_params_raw64;
 
 #else
+typedef struct {
+	uint8_t cmd;
+	uint8_t id[4];
+} __attribute__((__packed__)) macl_timesync_search_request_cmd;
+
 typedef struct {
 	uint16_t mac_header;
 	uint8_t  seq;
 	uint16_t panid;
 	uint16_t dst;
 	uint8_t src[8];
-	struct {
-		uint8_t cmd;
-		uint8_t id[4];
-	} __attribute__((packed)) payload;
-} __attribute__((packed)) macl_timesync_search_request_cmd;
+	macl_timesync_search_request_cmd payload;
+} __attribute__((__packed__)) macl_timesync_search_request_raw16;
+
+typedef struct {
+	uint16_t mac_header;
+	uint8_t  seq;
+	uint16_t panid;
+	uint8_t dst[8];
+	uint8_t src[8];
+	macl_timesync_search_request_cmd payload;
+} __attribute__((__packed__)) macl_timesync_search_request_raw64;
+
+typedef struct {
+	uint8_t cmd;
+	uint8_t index;
+	uint8_t size;
+	uint8_t reserve;
+	uint32_t sync_interval;
+	uint32_t sync_from;
+	uint32_t sync_time;
+	uint8_t ch_list [32];
+} __attribute__((__packed__)) macl_timesync_params_cmd;
+
+/*
+typedef __packed struct  {
+	uint16_t mac_header;
+	uint8_t  seq;
+	uint16_t panid;
+	uint16_t dst;
+	uint8_t src[8];
+	macl_timesync_params_cmd payload;
+} __attribute__((__packed__)) macl_timesync_params_raw16;
+*/
 
 typedef struct  {
 	uint16_t mac_header;
@@ -132,18 +189,11 @@ typedef struct  {
 	uint16_t panid;
 	uint8_t dst[8];
 	uint8_t src[8];
-	struct {
-		uint8_t cmd;
-		uint8_t index;
-		uint8_t size;
-		uint8_t reserve;
-		uint32_t sync_interval;
-		uint32_t sync_from;
-		uint32_t sync_time;
-		uint8_t ch_list [32];
-	} __attribute__((packed)) payload;
-} __attribute__((packed)) macl_timesync_params_cmd;
+	macl_timesync_params_cmd payload;
+} __attribute__((__packed__)) macl_timesync_params_raw64;
+
 #endif
+
 struct macl_param {
 	struct mach_param* parent;
 	uint8_t pages;
@@ -175,17 +225,17 @@ struct macl_param {
 	struct {
 		uint8_t hopping_sync_host_irq:1;
 		uint8_t hopping_sync_slave_irq:1;
-		uint8_t hopping:1;
+		//uint8_t hopping:1;
 		uint8_t sync_enb:1;
 		uint8_t rxOnEnable:1;
 		uint8_t promiscuousMode:1;
 		uint8_t stop:1;
 		uint8_t timer_sync;
 	} bit_params;
-	BUFFER cmd;
 	union {
 		struct {
-			macl_timesync_params_cmd *sync_cmd;
+			macl_timesync_params_raw64 *sync;
+			uint8_t ch_index;
 		} slave;
 		struct { 
 			uint8_t ch_index;						// hopping mode only. ch index.

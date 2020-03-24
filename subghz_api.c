@@ -468,6 +468,7 @@ int mach_rx_irq(int status,struct mac_header *rx)
 		pad = AES128_CBC_decrypt(subghz_param.rx.data+mhr_len, rx->payload.data, (uint32_t)rx->payload.len, rx->seq);
 		subghz_param.rx.len = rx->raw->len - pad;
 	} else {
+		memcpy(subghz_param.rx.data, rx->raw->data,rx->raw->len);
 		subghz_param.rx.len = rx->raw->len;
 	}
 	if(subghz_param.rx_callback != NULL) {
