@@ -289,6 +289,7 @@ static void macl_timesync_host_isr(void) {
 #endif
 	} else {
 		macl.bit_params.hopping_sync_host_irq = true;
+		digitalWrite(25,LOW);
 	}
 	return;
 }
@@ -326,6 +327,7 @@ static void macl_timesync_slave_isr(void) {
 		phy_rxstart();
 		macl.bit_params.hopping_sync_slave_irq = false;
 	} else {
+		digitalWrite(25,LOW);
 		macl.bit_params.hopping_sync_slave_irq = true;
 	}
 	return;
@@ -989,12 +991,14 @@ int	macl_xmit_sync(BUFFER *buff) {
 		time = status;
 	}
 #else
-	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.rxdone&macl.hoppingdone,100L);
+	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.rxdone&macl.hoppingdone,200L);
 #endif
 	HAL_GPIO_disableInterrupt();
 	phy_stop();
 	phy_timer_stop();
 	macl.txdone = false;
+	macl.rxdone = true;
+	macl.hoppingdone = true;
 	if(time == 0) {
 		alert(s0);
 	}
@@ -1066,12 +1070,13 @@ int	macl_xmit_async(BUFFER *buff,void (*callback)(uint8_t rssi, int status))
 #endif
 	HAL_GPIO_disableInterrupt();
 	macl.txdone = false;
+	macl.rxdone = true;
+	macl.hoppingdone = true;
 	if(time == 0) {
 		alert(s0);
 	}
 	phy_stop();
 	phy_timer_stop();
-	phy_sint_handler(macl_dummy_handler);
 
 	macl.status=STATUS_OK;
 	macl.phy->out = *buff;
@@ -1082,18 +1087,19 @@ int	macl_xmit_async(BUFFER *buff,void (*callback)(uint8_t rssi, int status))
 
 	macl.status = macl_total_transmission_time(macl.phy->out.len+TX_TTL_OFFSET);
 	if (macl.status != STATUS_OK){
+		macl_txdone();
 		goto error;
 	}
 
 	phy_txpre(MANUAL_TX);
 	macl_cca_setting();
 	macl.condition=SUBGHZ_ST_CCA;
-	HAL_GPIO_enableInterrupt();
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
 
 error:
+	HAL_GPIO_enableInterrupt();
 	return macl.status;
 }
 
