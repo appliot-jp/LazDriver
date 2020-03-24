@@ -447,7 +447,7 @@ int HAL_SPI_transfer(const uint8_t *wdata, uint16_t wsize,unsigned char *rdata, 
 	static int access_num = 0;
 	int result;
 	if(access_num != 0) {
-		printk(KERN_INFO"%s %d %d %d %d\n",__func__,__LINE__,access_num,macl.rxdone,macl.txdone);
+		printk(KERN_INFO"%s %d %d %d %d %d\n",__func__,__LINE__,access_num,macl.rxdone,macl.txdone,macl.hoppingdone);
 	}
 	access_num++;
 	result = lzpi_spi_transfer(wdata,wsize,rdata,rsize);

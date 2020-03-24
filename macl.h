@@ -230,6 +230,7 @@ struct macl_param {
 		uint8_t rxOnEnable:1;
 		uint8_t promiscuousMode:1;
 		uint8_t stop:1;
+		uint8_t txReserve:1;
 		uint8_t timer_sync;
 	} bit_params;
 	union {

@@ -258,38 +258,48 @@ void macl_hopping_cmd_rx(void *buff) {
 
 static void macl_timesync_host_isr(void) {
 	if(macl.txdone && macl.rxdone && macl.hoppingdone) {
+		if(macl.bit_params.hopping_sync_host_irq == false) {
+			macl.hopping.host.sync_time = HAL_millis();
+			macl.hopping.host.ch_index++;
+			if(macl.hopping.host.ch_index >= sizeof(HOPPING_SEARCH_LIST)) {
+				macl.hopping.host.ch_index=0;
+			}
+		}
+		macl.bit_params.hopping_sync_host_irq = false;
 		HAL_GPIO_disableInterrupt();
 		phy_timer_stop();
-		macl.hopping.host.sync_time = HAL_millis();
-		macl.hopping.host.ch_index++;
-		if(macl.hopping.host.ch_index >= sizeof(HOPPING_SEARCH_LIST)) {
-			macl.hopping.host.ch_index=0;
-		}
 		// close
 		phy_stop();
 		// set channel
 		phy_setup(macl.pages,HOPPING_SEARCH_LIST[macl.hopping.host.ch_index],macl.txPower,macl.antsw);
 #ifdef LAZURITE_IDE
-			Serial.print("macl_timesync_host_isr: ");
-			Serial.print_long((long)macl.hopping.host.ch_index,DEC);
-			Serial.print(",");
-			Serial.print_long((long)HOPPING_SEARCH_LIST[macl.hopping.host.ch_index],DEC);
-			Serial.print(",");
-			Serial.println_long((long)macl.bit_params.sync_enb,DEC);
+		Serial.print("macl_timesync_host_isr: ");
+		Serial.print_long((long)macl.hopping.host.ch_index,DEC);
+		Serial.print(",");
+		Serial.print_long((long)HOPPING_SEARCH_LIST[macl.hopping.host.ch_index],DEC);
+		Serial.print(",");
+		Serial.println_long((long)macl.bit_params.sync_enb,DEC);
 #endif
 		// rxEnable
-		phy_sint_handler(macl_rxfifo_handler);
-		phy_rxstart();
+		if(macl.bit_params.txReserve == false) {
+			phy_sint_handler(macl_rxfifo_handler);
+			phy_rxstart();
+		}
 		HAL_GPIO_enableInterrupt();
-		macl.bit_params.hopping_sync_host_irq = false;
 #ifdef LAZURITE_IDE
 		Serial.println("macl_timesync_host_isr");
 #else
 		printk(KERN_INFO"%s index=%d CH=%d\n",__func__,macl.hopping.host.ch_index, HOPPING_SEARCH_LIST[macl.hopping.host.ch_index]);
 #endif
 	} else {
-		macl.bit_params.hopping_sync_host_irq = true;
-		digitalWrite(25,LOW);
+		if(macl.bit_params.hopping_sync_host_irq == false) {
+			macl.hopping.host.sync_time = HAL_millis();
+			macl.hopping.host.ch_index++;
+			if(macl.hopping.host.ch_index >= sizeof(HOPPING_SEARCH_LIST)) {
+				macl.hopping.host.ch_index=0;
+			}
+			macl.bit_params.hopping_sync_host_irq = true;
+		}
 	}
 	return;
 }
@@ -324,10 +334,12 @@ static void macl_timesync_slave_isr(void) {
 		Serial.print(",");
 		Serial.println_long((long)macl.bit_params.sync_enb,DEC);
 #endif
-		phy_rxstart();
+		if(macl.bit_params.txReserve == false) {
+			phy_sint_handler(macl_rxfifo_handler);
+			phy_rxstart();
+		}
 		macl.bit_params.hopping_sync_slave_irq = false;
 	} else {
-		digitalWrite(25,LOW);
 		macl.bit_params.hopping_sync_slave_irq = true;
 	}
 	return;
@@ -354,9 +366,11 @@ static void macl_txdone(void) {
 			} else if(macl.bit_params.hopping_sync_slave_irq){
 				macl_timesync_slave_isr();
 			} else if(macl.bit_params.rxOnEnable) {
-				phy_sint_handler(macl_rxfifo_handler);
-				phy_rxstart();
-				macl.condition=SUBGHZ_ST_RX_STARTED;
+				if(macl.bit_params.txReserve == false) {
+					phy_sint_handler(macl_rxfifo_handler);
+					phy_rxstart();
+					macl.condition=SUBGHZ_ST_RX_STARTED;
+				}
 			}
 			break;
 	}
@@ -370,9 +384,11 @@ static void macl_rxdone(void) {
 	} else if(macl.bit_params.hopping_sync_slave_irq){
 		macl_timesync_slave_isr();
 	} else if(macl.bit_params.rxOnEnable) {
-		phy_sint_handler(macl_rxfifo_handler);
-		phy_rxstart();
-		macl.condition=SUBGHZ_ST_RX_STARTED;
+		if(macl.bit_params.txReserve == false) {
+			phy_sint_handler(macl_rxfifo_handler);
+			phy_rxstart();
+			macl.condition=SUBGHZ_ST_RX_STARTED;
+		}
 	}
 	return;
 }
@@ -946,8 +962,10 @@ int macl_start(void) {
 	}
 	macl.rxdone = true;
 	macl.bit_params.rxOnEnable = 1;
-	phy_sint_handler(macl_rxfifo_handler);
-	phy_rxstart();
+	if(macl.bit_params.txReserve == false) {
+		phy_sint_handler(macl_rxfifo_handler);
+		phy_rxstart();
+	}
 	macl.condition=SUBGHZ_ST_RX_STARTED;
 	HAL_GPIO_enableInterrupt();
 	return status;
@@ -975,6 +993,7 @@ int	macl_xmit_sync(BUFFER *buff) {
 	static const char s0[] = "rxdone abort in tx";
 	uint32_t time;
 	macl.condition=SUBGHZ_ST_TX_START;
+	macl.bit_params.txReserve = true;
 
 #ifdef NOT_INLINE
 	//uint32_t HAL_wait_event_interruptible_timeout(wait_queue_head_t *q,volatile int *condition,uint32_t ms)
@@ -999,6 +1018,7 @@ int	macl_xmit_sync(BUFFER *buff) {
 	macl.txdone = false;
 	macl.rxdone = true;
 	macl.hoppingdone = true;
+	macl.bit_params.txReserve = false;
 	if(time == 0) {
 		alert(s0);
 	}
@@ -1045,12 +1065,7 @@ int	macl_xmit_sync(BUFFER *buff) {
 	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.txdone,1000L);
 #endif
 	if(time == 0) {
-		if(macl.bit_params.rxOnEnable == true) {
-			// macl_start();
-			phy_sint_handler(macl_rxfifo_handler);
-			phy_rxstart();
-			macl.condition=SUBGHZ_ST_RX_STARTED;
-		}
+		macl_txdone();
 		macl.status = -EDEADLK;
 	}
 error:
@@ -1062,6 +1077,7 @@ int	macl_xmit_async(BUFFER *buff,void (*callback)(uint8_t rssi, int status))
 	static const char s0[] = "rxdone abort in tx";
 	uint32_t time;
 	macl.condition=SUBGHZ_ST_TX_START;
+	macl.bit_params.txReserve = true;
 
 #ifdef NOT_INLINE
 	time =  HAL_wait_event_interruptible_timeout(&macl.que,&macl.rxdone,100L);
@@ -1077,6 +1093,7 @@ int	macl_xmit_async(BUFFER *buff,void (*callback)(uint8_t rssi, int status))
 	}
 	phy_stop();
 	phy_timer_stop();
+	macl.bit_params.txReserve = false;
 
 	macl.status=STATUS_OK;
 	macl.phy->out = *buff;
