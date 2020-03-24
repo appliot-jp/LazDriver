@@ -285,9 +285,8 @@ static void macl_timesync_host_isr(void) {
 		macl.bit_params.hopping_sync_host_irq = false;
 		HAL_GPIO_disableInterrupt();
 		phy_timer_stop();
-		// close
-		phy_stop();
 		// set channel
+		phy_stop();
 		phy_setup(macl.pages,HOPPING_SEARCH_LIST[macl.hopping.host.ch_index],macl.txPower,macl.antsw);
 #ifdef LAZURITE_IDE
 		Serial.print("macl_timesync_host_isr: ");
@@ -345,6 +344,7 @@ static void macl_timesync_slave_isr(void) {
 		if(macl.hopping.slave.ch_index >= macl.hopping.slave.sync->payload.size) {
 			macl.hopping.slave.ch_index = 0;
 		}
+		phy_stop();
 		phy_setup(macl.pages,macl.hopping.slave.sync->payload.ch_list[macl.hopping.slave.ch_index],macl.txPower,macl.antsw);
 
 #ifdef LAZURITE_IDE
@@ -497,8 +497,8 @@ static bool macl_timesync_search_gateway(void){
 			// CH切り替え
 			HAL_GPIO_disableInterrupt();
 			phy_timer_stop();
-			phy_stop();
 			macl.phy->in.len = 0;
+			phy_stop();
 			phy_setup(macl.pages,HOPPING_SEARCH_LIST[ch_index],macl.txPower,macl.antsw);
 #ifdef LAZURITE_IDE
 			Serial.print("timesync_search_gateway: ");
@@ -894,6 +894,7 @@ static uint32_t macl_hopping_slave_phy_setup(void) {
 		ch_index = 0;
 	}
 	macl.hopping.slave.ch_index = (uint8_t)ch_index;
+	phy_stop();
 	phy_setup(macl.pages,macl.hopping.slave.sync->payload.ch_list[ch_index],macl.txPower,macl.antsw);
 #ifdef LAZURITE_IDE
 	Serial.print("macl_hopping_slave_phy_setup: ");
@@ -1024,11 +1025,11 @@ int macl_start(void) {
 	macl.condition=SUBGHZ_ST_RX_START;
 	switch(macl.ch) {
 		case SUBGHZ_HOPPING_TS_H:
-			phy_stop();
 			phy_timer_stop();
 			HAL_GPIO_disableInterrupt();
 			macl.hopping.host.ch_index=0;
 			ch = HOPPING_SEARCH_LIST[macl.hopping.host.ch_index];
+			phy_stop();
 			phy_setup(macl.pages,ch,macl.txPower,macl.antsw);
 #ifdef LAZURITE_IDE
 			Serial.print("macl_start: ");
@@ -1070,7 +1071,7 @@ int macl_start(void) {
 	macl.condition=SUBGHZ_ST_RX_STARTED;
 	HAL_GPIO_enableInterrupt();
 #ifndef LAZURITE_IDE
-		ACCESS_POP();
+	ACCESS_POP();
 #endif
 	return status;
 }
@@ -1079,7 +1080,7 @@ int	macl_stop(void)
 {
 	int status=STATUS_OK;
 #ifndef LAZURITE_IDE
-		ACCESS_PUSH(16);
+	ACCESS_PUSH(16);
 #endif
 	macl.condition=SUBGHZ_ST_STOP;
 	macl.bit_params.rxOnEnable = 0;
@@ -1094,7 +1095,7 @@ int	macl_stop(void)
 	phy_sint_handler(macl_dummy_handler);
 	macl.condition=SUBGHZ_ST_STANDBY;
 #ifndef LAZURITE_IDE
-		ACCESS_POP();
+	ACCESS_POP();
 #endif
 	return status;
 }
@@ -1123,7 +1124,7 @@ int	macl_xmit_sync(BUFFER *buff) {
 	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.rxdone&macl.hoppingdone,200L);
 #endif
 #ifndef LAZURITE_IDE
-		ACCESS_PUSH(17);
+	ACCESS_PUSH(17);
 #endif
 	macl.txdone = false;
 	macl.rxdone = true;
@@ -1159,7 +1160,7 @@ int	macl_xmit_sync(BUFFER *buff) {
 	macl.sequenceNum= buff->data[2];
 	macl.tx_callback = NULL;
 #ifndef LAZURITE_IDE
-		ACCESS_POP();
+	ACCESS_POP();
 #endif
 
 	macl.status = macl_total_transmission_time(macl.phy->out.len+TX_TTL_OFFSET);
@@ -1167,7 +1168,7 @@ int	macl_xmit_sync(BUFFER *buff) {
 		goto error;
 	}
 #ifndef LAZURITE_IDE
-		ACCESS_PUSH(18);
+	ACCESS_PUSH(18);
 #endif
 
 	phy_txpre(MANUAL_TX);
@@ -1179,7 +1180,7 @@ int	macl_xmit_sync(BUFFER *buff) {
 #endif
 
 #ifndef LAZURITE_IDE
-		ACCESS_POP();
+	ACCESS_POP();
 #endif
 
 #ifdef NOT_INLINE
@@ -1188,7 +1189,7 @@ int	macl_xmit_sync(BUFFER *buff) {
 	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.txdone,1000L);
 #endif
 #ifndef LAZURITE_IDE
-		ACCESS_PUSH(19);
+	ACCESS_PUSH(19);
 #endif
 	if(time == 0) {
 		macl_txdone();
@@ -1196,7 +1197,7 @@ int	macl_xmit_sync(BUFFER *buff) {
 	}
 error:
 #ifndef LAZURITE_IDE
-		ACCESS_POP();
+	ACCESS_POP();
 #endif
 	return macl.status;
 }
@@ -1206,7 +1207,7 @@ int	macl_xmit_async(BUFFER *buff,void (*callback)(uint8_t rssi, int status))
 	static const char s0[] = "rxdone abort in tx";
 	uint32_t time;
 #ifndef LAZURITE_IDE
-		ACCESS_PUSH(20);
+	ACCESS_PUSH(20);
 #endif
 	macl.condition=SUBGHZ_ST_TX_START;
 	macl.bit_params.txReserve = true;
@@ -1249,7 +1250,7 @@ int	macl_xmit_async(BUFFER *buff,void (*callback)(uint8_t rssi, int status))
 
 error:
 #ifndef LAZURITE_IDE
-		ACCESS_POP();
+	ACCESS_POP();
 #endif
 	HAL_GPIO_enableInterrupt();
 	return macl.status;
@@ -1270,9 +1271,6 @@ int	macl_set_channel(uint8_t page,uint8_t ch, uint32_t mbm, uint8_t antsw)
 	int status=STATUS_OK;
 	macl.condition = SUBGHZ_ST_SETUP;
 
-	if(macl.bit_params.rxOnEnable) {
-		phy_stop();
-	}
 	macl.pages = page;
 	macl.ch = ch;
 	macl.antsw = antsw;
@@ -1283,6 +1281,7 @@ int	macl_set_channel(uint8_t page,uint8_t ch, uint32_t mbm, uint8_t antsw)
 		macl.txPower = 20;
 	}
 	if(macl.ch < SUBGHZ_HOPPING) {
+		phy_stop();
 		status = phy_setup(macl.pages,macl.ch,macl.txPower,macl.antsw);
 	}
 	macl.condition = SUBGHZ_ST_STANDBY;
