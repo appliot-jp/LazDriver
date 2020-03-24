@@ -60,7 +60,7 @@ const uint8_t SUBGHZ_HOPPING_ID[] = {0x00,0x1D,0x12,0x90};
  */
 static void macl_dummy_handler(void);
 static void macl_rxfifo_handler(void);
-static bool macl_rxdone_handler(void);
+static void macl_rxdone_handler(void);
 static void macl_ack_txdone_handler(void);
 static void macl_ack_txdone_abort_handler(void);
 static void macl_txfifo_handler(void);
@@ -524,20 +524,11 @@ static void macl_rxfifo_handler(void)
 			break;
 		case FIFO_DONE:		// rxdone
 			// my packet
-			if(macl.bit_params.promiscuousMode) {
-				// macl_start();
-				phy_sint_handler(macl_rxfifo_handler);
-				phy_rxstart();
-				macl.condition=SUBGHZ_ST_RX_STARTED;
+			if((macl.bit_params.promiscuousMode) ||
+					((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_CMD) ||
+					((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_DATA)) {
 				macl_rxdone_handler();
-			} else if ((((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_CMD) || ((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_DATA) )){
-				if(macl_rxdone_handler() == true) {
-					macl_rxdone();
-					break;
-				} else {
-					// send ACK or CMD or ERROR;
-					break;
-				}
+				break;
 			} else {
 				// Disposal packet continue to CRC_ERROR
 			}
@@ -554,10 +545,9 @@ static void macl_rxfifo_handler(void)
 	return;
 }
 
-static bool macl_rxdone_handler(void)
+static void macl_rxdone_handler(void)
 {
 	int status;
-	bool result;
 	bool isAck;
 
 	macl.condition=SUBGHZ_ST_RX_DONE;
@@ -570,14 +560,12 @@ static bool macl_rxdone_handler(void)
 		macl.status = STATUS_OK;
 		macl_rxdone();
 		macl_rx_irq(NULL);
-		result = false;
 		goto end;
 	}
 	if (status != STATUS_OK) {
 		macl.status = status;
 		macl_rxdone();
 		macl_rx_irq(NULL);
-		result = false;
 		goto end;
 	}
 	if(isAck){
@@ -587,7 +575,6 @@ static bool macl_rxdone_handler(void)
 			if(status != STATUS_OK) {
 				macl.status = status;
 				macl_rx_irq(NULL);
-				result = false;
 				goto end;
 			}
 		}
@@ -598,14 +585,14 @@ static bool macl_rxdone_handler(void)
 		phy_txpre(AUTO_TX);
 		macl.status = STATUS_OK;
 		macl.condition = SUBGHZ_ST_ACK_TX;
-		result = false;
 	} else {
 		macl.status = STATUS_OK;
 		macl_rx_irq(NULL);
-		result = (bool)macl.hoppingdone;
+		if(macl.hoppingdone) macl_rxdone();			// hopping処理中は受信設定しない
+		macl.rxdone = true;											// 受信処理自体は終了にしておく
 	}
 end:
-	return result;
+	return;
 }
 
 static void macl_txfifo_handler(void)
