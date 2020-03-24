@@ -442,9 +442,9 @@ int HAL_remove(void)
 	return 0;
 }
 
+int access_num = 0;
 int HAL_SPI_transfer(const uint8_t *wdata, uint16_t wsize,unsigned char *rdata, uint16_t rsize)
 {
-	static int access_num = 0;
 	int result;
 	if(access_num != 0) {
 		printk(KERN_INFO"%s %d %d %d %d %d\n",__func__,__LINE__,access_num,macl.rxdone,macl.txdone,macl.hoppingdone);
