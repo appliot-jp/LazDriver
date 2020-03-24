@@ -327,9 +327,11 @@ static void macl_timesync_slave_isr(void) {
 	if(macl.bit_params.sync_enb == false) {
 		macl.bit_params.timer_sync = false;
 		timer4.stop();
+		macl.bit_params.hopping_sync_slave_irq = false;
 		return;
 	}
 	if(macl.txdone && macl.rxdone && macl.hoppingdone) {
+		macl.bit_params.hopping_sync_slave_irq = false;
 		if(macl.bit_params.timer_sync == false) {
 			timer4.stop();
 			timer4.set(macl.hopping.slave.sync->payload.sync_interval,macl_timesync_slave_isr);
@@ -361,7 +363,6 @@ static void macl_timesync_slave_isr(void) {
 			phy_sint_handler(macl_rxfifo_handler);
 			phy_rxstart();
 		}
-		macl.bit_params.hopping_sync_slave_irq = false;
 	} else {
 		macl.bit_params.hopping_sync_slave_irq = true;
 	}
