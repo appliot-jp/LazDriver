@@ -315,6 +315,8 @@ static void macl_timesync_slave_isr(void) {
 
 #ifdef LAZURITE_IDE
 		Serial.print("timesync_slave_isr: ");
+		Serial.print_long((long)millis(),DEC);
+		Serial.print(",");
 		Serial.print_long((long)macl.hopping.slave.ch_index,DEC);
 		Serial.print(",");
 		Serial.print_long((long)macl.hopping.slave.sync->payload.ch_list[macl.hopping.slave.ch_index],DEC);
@@ -334,6 +336,7 @@ static void macl_txdone(void) {
 		case SUBGHZ_ST_HOPPING_HOST_CMD_TX:
 			// hoppingのイベント完了してrxonする
 			macl.hoppingdone = true;
+			macl.hopping_state = SUBGHZ_ST_HOPPING_NOP;
 		case SUBGHZ_ST_HOPPING_SLAVE_SYNC_REQ:
 			// HOSTからのSYNC_OKのコマンドを受信するまで待つ
 			phy_sint_handler(macl_rxfifo_handler);
@@ -354,6 +357,20 @@ static void macl_txdone(void) {
 				macl.condition=SUBGHZ_ST_RX_STARTED;
 			}
 			break;
+	}
+	return;
+}
+
+static void macl_rxdone(void) {
+	macl.rxdone = true;
+	if(macl.bit_params.hopping_sync_host_irq){
+		macl_timesync_host_isr();
+	} else if(macl.bit_params.hopping_sync_slave_irq){
+		macl_timesync_slave_isr();
+	} else if(macl.bit_params.rxOnEnable) {
+		phy_sint_handler(macl_rxfifo_handler);
+		phy_rxstart();
+		macl.condition=SUBGHZ_ST_RX_STARTED;
 	}
 	return;
 }
@@ -487,11 +504,7 @@ static void macl_dummy_handler(void)
 	return;
 }
 static void macl_rxdone_abort_handler(void) {
-	macl.rxdone = true;
-	// macl_start();
-	phy_sint_handler(macl_rxfifo_handler);
-	phy_rxstart();
-	macl.condition=SUBGHZ_ST_RX_STARTED;
+	macl_rxdone();
 	HAL_wake_up_interruptible(&macl.que);
 }
 static void macl_rxfifo_handler(void)
@@ -519,14 +532,10 @@ static void macl_rxfifo_handler(void)
 				macl_rxdone_handler();
 			} else if ((((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_CMD) || ((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_DATA) )){
 				if(macl_rxdone_handler() == true) {
-					macl.status = STATUS_OK;
-					// macl_start();
-					phy_sint_handler(macl_rxfifo_handler);
-					phy_rxstart();
-					macl.condition=SUBGHZ_ST_RX_STARTED;
+					macl_rxdone();
 					break;
 				} else {
-					// send ACK or CMD
+					// send ACK or CMD or ERROR;
 					break;
 				}
 			} else {
@@ -538,11 +547,7 @@ static void macl_rxfifo_handler(void)
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 			printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
-			// macl_start();
-			phy_sint_handler(macl_rxfifo_handler);
-			phy_rxstart();
-			macl.condition=SUBGHZ_ST_RX_STARTED;
-			macl.rxdone = true;
+			macl_rxdone();
 			break;
 	}
 	HAL_wake_up_interruptible(&macl.que);
@@ -563,16 +568,16 @@ static bool macl_rxdone_handler(void)
 
 	if (macl.bit_params.promiscuousMode) {
 		macl.status = STATUS_OK;
-		phy_rxstart();
+		macl_rxdone();
 		macl_rx_irq(NULL);
-		result = true;
-		macl.rxdone = true;
+		result = false;
 		goto end;
 	}
 	if (status != STATUS_OK) {
 		macl.status = status;
-		result = true;
-		macl.rxdone = true;
+		macl_rxdone();
+		macl_rx_irq(NULL);
+		result = false;
 		goto end;
 	}
 	if(isAck){
@@ -582,9 +587,7 @@ static bool macl_rxdone_handler(void)
 			if(status != STATUS_OK) {
 				macl.status = status;
 				macl_rx_irq(NULL);
-				phy_rxstart();
-				result = true;
-				macl.rxdone = true;
+				result = false;
 				goto end;
 			}
 		}
@@ -600,7 +603,6 @@ static bool macl_rxdone_handler(void)
 		macl.status = STATUS_OK;
 		macl_rx_irq(NULL);
 		result = (bool)macl.hoppingdone;
-		macl.rxdone = true;
 	}
 end:
 	return result;
@@ -638,11 +640,7 @@ static void macl_ack_txdone_handler(void)
 
 	macl.status = STATUS_OK;
 	macl_rx_irq(NULL);				// rx callback
-	//  macl_start();
-	phy_sint_handler(macl_rxfifo_handler);
-	phy_rxstart();
-	macl.condition=SUBGHZ_ST_RX_STARTED;
-	macl.rxdone = true;
+	macl_rxdone();
 	HAL_wake_up_interruptible(&macl.que);
 
 	return;
@@ -660,11 +658,7 @@ static void macl_ack_txdone_abort_handler(void)
 	}
 	phy_txdone();
 	macl_rx_irq(NULL);				// rx callback
-	// macl_start();
-	phy_sint_handler(macl_rxfifo_handler);
-	phy_rxstart();
-	macl.condition=SUBGHZ_ST_RX_STARTED;
-	macl.rxdone = true;
+	macl_rxdone();
 	HAL_wake_up_interruptible(&macl.que);
 	return;
 }
