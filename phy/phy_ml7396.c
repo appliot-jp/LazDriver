@@ -405,23 +405,43 @@ static bool vco_cal(void) {
 
 	uint8_t cycle = 0;
 	static const char s1[] = "vco_cal error";
-
 	reg.wdata[1]=0x01;
+#ifndef LAZURITE_IDE
+	ACCESS_PUSH(21);
+#endif
 	reg_wr(REG_ADR_VCO_CAL_START, 2);
+#ifndef LAZURITE_IDE
+	ACCESS_POP();
+#endif
 
 	do {
 		cycle++;
 		HAL_delayMicroseconds(100L);
+#ifndef LAZURITE_IDE
+	ACCESS_PUSH(22);
+#endif
 		reg_rd(REG_ADR_INT_SOURCE_GRP1, 1);
+#ifndef LAZURITE_IDE
+	ACCESS_POP();
+#endif
 		if(cycle > 100) {
 			alert(s1);
 			phy_monitor();
 			goto error;
 		}
 	} while (!(reg.rdata[0] & 0x04));
+#ifndef LAZURITE_IDE
+	ACCESS_PUSH(23);
+#endif
 	phy_intclr((uint32_t)HW_EVENT_VCO_CAL_DONE);
+#ifndef LAZURITE_IDE
+	ACCESS_POP();
+#endif
 	return true;
 error:
+#ifndef LAZURITE_IDE
+	ACCESS_POP();
+#endif
 	return false;
 }
 

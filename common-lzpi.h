@@ -70,6 +70,18 @@ extern int module_test;
 	}\
 }
 #endif
+extern int task[4];
+extern int access_num;
+#ifndef ACCESS_PUSH
+#define ACCESS_PUSH(a) {\
+	task[access_num] = a;	\
+}
+#endif
+#ifndef ACCESS_POP
+#define ACCESS_POP() {\
+	task[access_num] = 0;	\
+}
+#endif
 
 #define LOW 0
 #define HIGH 1

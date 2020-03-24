@@ -104,8 +104,6 @@ static const char *macl_state_to_string(int condition) {
 }
 #endif
 
-static uint8_t task[16];
-extern int access_num;
 
 static int macl_total_transmission_time(uint16_t len) {
 	uint32_t current_time;
@@ -259,17 +257,6 @@ void macl_hopping_cmd_rx(void *buff) {
 	return;
 }
 
-#ifndef LAZURITE_IDE
-#define ACCESS_PUSH(a) {\
-	task[access_num] = a;	\
-	if(access_num != 0) {	\
-		printk(KERN_INFO"%s %d %d %d %d\n",__func__,__LINE__,task[0], task[1],task[2]);	\
-	}	\
-}
-#define ACCESS_POP() {\
-	task[access_num] = 0;	\
-}
-#endif
 static void macl_timesync_host_isr(void) {
 	if(macl.txdone && macl.rxdone && macl.hoppingdone) {
 		if(macl.bit_params.hopping_sync_host_irq == false) {
