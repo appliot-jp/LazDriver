@@ -104,7 +104,6 @@ static const char *macl_state_to_string(int condition) {
 }
 #endif
 
-
 static int macl_total_transmission_time(uint16_t len) {
 	uint32_t current_time;
 	uint32_t duration;
@@ -257,24 +256,33 @@ void macl_hopping_cmd_rx(void *buff) {
 	return;
 }
 
+static void macl_hopping_host_phy_setup(void) {
+	uint32_t now;
+	uint32_t diff_time;
+	uint16_t diff_ch;
+	now = HAL_millis();
+	macl.bit_params.hopping_sync_host_irq = false;
+	diff_time = now - macl.hopping.host.sync_time;
+	diff_ch = diff_time / SUBGHZ_HOPPING_CH_DURATION;
+	macl.hopping.host.ch_index += diff_ch;
+	if(macl.hopping.host.ch_index >= sizeof(HOPPING_SEARCH_LIST)) {
+		macl.hopping.host.ch_index = macl.hopping.host.ch_index % sizeof(HOPPING_SEARCH_LIST);
+	}
+	macl.hopping.host.sync_time = macl.hopping.host.sync_time + SUBGHZ_HOPPING_CH_DURATION * diff_ch;
+
+	phy_stop();
+	phy_setup(macl.pages,HOPPING_SEARCH_LIST[macl.hopping.host.ch_index],macl.txPower,macl.antsw);
+}
+
 static void macl_timesync_host_isr(void) {
 	if(macl.txdone && macl.rxdone && macl.hoppingdone) {
-		if(macl.bit_params.hopping_sync_host_irq == false) {
-			macl.hopping.host.sync_time = HAL_millis();
-			macl.hopping.host.ch_index++;
-			if(macl.hopping.host.ch_index >= sizeof(HOPPING_SEARCH_LIST)) {
-				macl.hopping.host.ch_index=0;
-			}
-		}
+		macl.hoppingdone = false;
 #ifndef LAZURITE_IDE
 		ACCESS_PUSH(1);
 #endif
-		macl.bit_params.hopping_sync_host_irq = false;
 		HAL_GPIO_disableInterrupt();
-		phy_timer_stop();
 		// set channel
-		phy_stop();
-		phy_setup(macl.pages,HOPPING_SEARCH_LIST[macl.hopping.host.ch_index],macl.txPower,macl.antsw);
+		macl_hopping_host_phy_setup();
 #ifdef LAZURITE_IDE
 		Serial.print("macl_timesync_host_isr: ");
 		Serial.print_long((long)macl.hopping.host.ch_index,DEC);
@@ -294,18 +302,13 @@ static void macl_timesync_host_isr(void) {
 #else
 		printk(KERN_INFO"%s index=%d CH=%d\n",__func__,macl.hopping.host.ch_index, HOPPING_SEARCH_LIST[macl.hopping.host.ch_index]);
 #endif
+		macl.hoppingdone = true;
+		HAL_wake_up_interruptible(&macl.que);
 	} else {
-		if(macl.bit_params.hopping_sync_host_irq == false) {
-			macl.hopping.host.sync_time = HAL_millis();
-			macl.hopping.host.ch_index++;
-			if(macl.hopping.host.ch_index >= sizeof(HOPPING_SEARCH_LIST)) {
-				macl.hopping.host.ch_index=0;
-			}
-			macl.bit_params.hopping_sync_host_irq = true;
-		}
+		macl.bit_params.hopping_sync_host_irq = true;
 	}
 #ifndef LAZURITE_IDE
-		ACCESS_POP();
+	ACCESS_POP();
 #endif
 	return;
 }
@@ -318,6 +321,7 @@ static void macl_timesync_slave_isr(void) {
 		return;
 	}
 	if(macl.txdone && macl.rxdone && macl.hoppingdone) {
+		macl.hoppingdone = false;
 		macl.bit_params.hopping_sync_slave_irq = false;
 		if(macl.bit_params.timer_sync == false) {
 			timer4.stop();
@@ -350,11 +354,13 @@ static void macl_timesync_slave_isr(void) {
 			phy_sint_handler(macl_rxfifo_handler);
 			phy_rxstart();
 		}
+		macl.hoppingdone = true;
+		HAL_wake_up_interruptible(&macl.que);
 	} else {
 		macl.bit_params.hopping_sync_slave_irq = true;
 	}
 #ifndef LAZURITE_IDE
-		ACCESS_POP();
+	ACCESS_POP();
 #endif
 	return;
 }
@@ -422,7 +428,7 @@ static bool macl_timesync_search_gateway(void){
 	} res;
 
 #ifndef LAZURITE_IDE
-		ACCESS_PUSH(3);
+	ACCESS_PUSH(3);
 #endif
 	//printk(KERN_INFO"%s start %d\n",__func__,HZ);
 	ch_index = 0;
@@ -531,7 +537,7 @@ error:
 	//printk(KERN_INFO"%s end\n",__func__);
 	macl.hopping_state = SUBGHZ_ST_HOPPING_NOP;
 #ifndef LAZURITE_IDE
-		ACCESS_POP();
+	ACCESS_POP();
 #endif
 	return macl.bit_params.sync_enb;
 }
@@ -543,11 +549,11 @@ static void macl_dummy_handler(void)
 }
 static void macl_rxdone_abort_handler(void) {
 #ifndef LAZURITE_IDE
-		ACCESS_PUSH(4);
+	ACCESS_PUSH(4);
 #endif
 	macl_rxdone();
 #ifndef LAZURITE_IDE
-		ACCESS_POP();
+	ACCESS_POP();
 #endif
 	HAL_wake_up_interruptible(&macl.que);
 }
@@ -555,7 +561,7 @@ static void macl_rxfifo_handler(void)
 {
 	int status;
 #ifndef LAZURITE_IDE
-		ACCESS_PUSH(5);
+	ACCESS_PUSH(5);
 #endif
 	macl.rxdone = false;
 	macl.condition=SUBGHZ_ST_RX_FIFO;
@@ -589,7 +595,7 @@ static void macl_rxfifo_handler(void)
 			break;
 	}
 #ifndef LAZURITE_IDE
-		ACCESS_POP();
+	ACCESS_POP();
 #endif
 	HAL_wake_up_interruptible(&macl.que);
 	return;
@@ -649,7 +655,7 @@ static void macl_txfifo_handler(void)
 {
 	FIFO_STATE fifo_state;
 #ifndef LAZURITE_IDE
-		ACCESS_PUSH(6);
+	ACCESS_PUSH(6);
 #endif
 	macl.condition = SUBGHZ_ST_TX_FIFO;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
@@ -667,54 +673,65 @@ static void macl_txfifo_handler(void)
 			break;
 	}
 #ifndef LAZURITE_IDE
-		ACCESS_POP();
+	ACCESS_POP();
 #endif
 	return;
 }
 
 static void macl_ack_txdone_handler(void)
 {
+	phy_timer_stop();
+	if(macl.condition==SUBGHZ_ST_RX_DONE){
 #ifndef LAZURITE_IDE
 		ACCESS_PUSH(7);
 #endif
-	macl.condition=SUBGHZ_ST_ACK_TX_DONE;
+		macl.condition=SUBGHZ_ST_ACK_TX_DONE;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
+		printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
-	phy_timer_stop();
-	phy_txdone();
+		phy_txdone();
 
-	macl.status = STATUS_OK;
-	macl_rx_irq(NULL);				// rx callback
-	macl_rxdone();
-	HAL_wake_up_interruptible(&macl.que);
-
+		macl.status = STATUS_OK;
+		macl_rx_irq(NULL);				// rx callback
+		macl_rxdone();
 #ifndef LAZURITE_IDE
 		ACCESS_POP();
 #endif
+	} else {
+		macl.rxdone = true;
+		macl.status = STATUS_OK;
+		macl_rx_irq(NULL);				// rx callback
+	}
+	HAL_wake_up_interruptible(&macl.que);
+
 	return;
 }
 extern int reg_access_check;
 static void macl_ack_txdone_abort_handler(void)
 {
 	static const char s1[] = "macl_txdone_abort_handler";
+	phy_timer_stop();
+	if(macl.condition==SUBGHZ_ST_RX_DONE){
 #ifndef LAZURITE_IDE
 		ACCESS_PUSH(8);
 #endif
-	phy_timer_stop();
-	if(phy_txfifo() == FIFO_DONE) {
-		macl.status = STATUS_OK;
-	} else {
-		alert(s1);
-		macl.status=-EDEADLK;
-	}
-	phy_txdone();
-	macl_rx_irq(NULL);				// rx callback
-	macl_rxdone();
-	HAL_wake_up_interruptible(&macl.que);
+		if(phy_txfifo() == FIFO_DONE) {
+			macl.status = STATUS_OK;
+		} else {
+			alert(s1);
+			macl.status=-EDEADLK;
+		}
+		phy_txdone();
+		macl_rx_irq(NULL);				// rx callback
+		macl_rxdone();
 #ifndef LAZURITE_IDE
 		ACCESS_POP();
 #endif
+	} else {
+		macl.status=-EDEADLK;
+		macl_rx_irq(NULL);				// rx callback
+	}
+	HAL_wake_up_interruptible(&macl.que);
 	return;
 }
 
@@ -723,7 +740,7 @@ static void macl_ccadone_handler(void)
 	int status = STATUS_OK;
 	uint8_t cca_idle;
 #ifndef LAZURITE_IDE
-		ACCESS_PUSH(9);
+	ACCESS_PUSH(9);
 #endif
 
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
@@ -744,7 +761,7 @@ static void macl_ccadone_handler(void)
 		macl_txdone();
 	}
 #ifndef LAZURITE_IDE
-		ACCESS_POP();
+	ACCESS_POP();
 #endif
 	HAL_wake_up_interruptible(&macl.que);
 	return;
@@ -754,7 +771,7 @@ static void macl_ccadone_abort_handler(void)
 {
 	uint8_t ccadone;
 #ifndef LAZURITE_IDE
-		ACCESS_PUSH(10);
+	ACCESS_PUSH(10);
 #endif
 	phy_timer_stop();
 	macl.status = -EBUSY;
@@ -768,7 +785,7 @@ static void macl_ccadone_abort_handler(void)
 	macl_txdone();
 	HAL_wake_up_interruptible(&macl.que);
 #ifndef LAZURITE_IDE
-		ACCESS_POP();
+	ACCESS_POP();
 #endif
 	return;
 }
@@ -777,7 +794,7 @@ static void macl_txdone_abort_handler(void)
 {
 	static const char s1[] = "macl_txdone_abort_handler";
 #ifndef LAZURITE_IDE
-		ACCESS_PUSH(11);
+	ACCESS_PUSH(11);
 #endif
 	macl.condition=SUBGHZ_ST_TX_ABORT;
 	phy_timer_stop();
@@ -790,7 +807,7 @@ static void macl_txdone_abort_handler(void)
 
 	macl_txdone();
 #ifndef LAZURITE_IDE
-		ACCESS_POP();
+	ACCESS_POP();
 #endif
 	HAL_wake_up_interruptible(&macl.que);
 }
@@ -800,7 +817,7 @@ static void macl_txdone_handler(void)
 	uint8_t ack_req;
 	uint16_t ack_timeout;
 #ifndef LAZURITE_IDE
-		ACCESS_PUSH(12);
+	ACCESS_PUSH(12);
 #endif
 	macl.condition=SUBGHZ_ST_TX_DONE;
 	phy_timer_stop();
@@ -819,7 +836,7 @@ static void macl_txdone_handler(void)
 		macl_txdone();
 	}
 #ifndef LAZURITE_IDE
-		ACCESS_POP();
+	ACCESS_POP();
 #endif
 	HAL_wake_up_interruptible(&macl.que);
 }
@@ -828,7 +845,7 @@ static void macl_ack_rxdone_handler(void) {
 	FIFO_STATE rxtype;
 	bool isAck;
 #ifndef LAZURITE_IDE
-		ACCESS_PUSH(13);
+	ACCESS_PUSH(13);
 #endif
 	macl.condition=SUBGHZ_ST_ACK_RX_DONE;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
@@ -858,7 +875,7 @@ static void macl_ack_rxdone_handler(void) {
 			break;
 	}
 #ifndef LAZURITE_IDE
-		ACCESS_POP();
+	ACCESS_POP();
 #endif
 	HAL_wake_up_interruptible(&macl.que);
 }
@@ -897,7 +914,7 @@ static uint32_t macl_hopping_slave_phy_setup(void) {
 static void macl_ack_rxdone_abort_handler(void) {
 	static const char s1[] = "macl_ack_txdone txpre error";
 #ifndef LAZURITE_IDE
-		ACCESS_PUSH(14);
+	ACCESS_PUSH(14);
 #endif
 	macl.condition=SUBGHZ_ST_ACK_RX_ABORT;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
@@ -947,7 +964,7 @@ error:
 	if(macl.tx_callback) macl.tx_callback(0,macl.status);
 	macl_txdone();
 #ifndef LAZURITE_IDE
-		ACCESS_POP();
+	ACCESS_POP();
 #endif
 	HAL_wake_up_interruptible(&macl.que);
 }
@@ -1005,7 +1022,7 @@ int macl_start(void) {
 	int status=STATUS_OK;
 	uint8_t ch;
 #ifndef LAZURITE_IDE
-		ACCESS_PUSH(15);
+	ACCESS_PUSH(15);
 #endif
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
@@ -1099,7 +1116,7 @@ int	macl_xmit_sync(BUFFER *buff) {
 	{
 		volatile uint32_t st_time = millis();
 		volatile uint32_t status;
-		const uint32_t ms = 100L;
+		const uint32_t ms = 1000L;
 		do {
 			status = st_time+ms-millis();
 			if(status > ms) {
@@ -1109,7 +1126,7 @@ int	macl_xmit_sync(BUFFER *buff) {
 		time = status;
 	}
 #else
-	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.rxdone&macl.hoppingdone,200L);
+	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.rxdone&macl.hoppingdone,1000L);
 #endif
 #ifndef LAZURITE_IDE
 	ACCESS_PUSH(17);
@@ -1137,6 +1154,7 @@ int	macl_xmit_sync(BUFFER *buff) {
 			macl_hopping_slave_phy_setup();
 			break;
 		case SUBGHZ_HOPPING_TS_H:
+			macl_hopping_host_phy_setup();
 			break;
 		default:
 			break;
@@ -1197,14 +1215,14 @@ int	macl_xmit_async(BUFFER *buff,void (*callback)(uint8_t rssi, int status))
 #ifndef LAZURITE_IDE
 	ACCESS_PUSH(20);
 #endif
-	macl.condition=SUBGHZ_ST_TX_START;
 	macl.bit_params.txReserve = true;
 
 #ifdef NOT_INLINE
-	time =  HAL_wait_event_interruptible_timeout(&macl.que,&macl.rxdone,100L);
+	time =  HAL_wait_event_interruptible_timeout(&macl.que,&macl.rxdone,1000L);
 #else
-	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.rxdone,100L);
+	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.rxdone,1000L);
 #endif
+	macl.condition=SUBGHZ_ST_TX_START;
 	macl.txdone = false;
 	macl.rxdone = true;
 	macl.hoppingdone = true;
