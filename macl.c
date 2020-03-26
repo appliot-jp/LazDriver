@@ -275,12 +275,11 @@ static void macl_hopping_host_phy_setup(void) {
 }
 
 static void macl_timesync_host_isr(void) {
-	if(macl.txdone && macl.rxdone && macl.hoppingdone) {
+	if((macl.bit_params.txReserve == false) && macl.txdone && macl.rxdone && macl.hoppingdone) {
 		macl.hoppingdone = false;
 #ifndef LAZURITE_IDE
 		ACCESS_PUSH(1);
 #endif
-		HAL_GPIO_disableInterrupt();
 		// set channel
 		macl_hopping_host_phy_setup();
 #ifdef LAZURITE_IDE
@@ -292,11 +291,8 @@ static void macl_timesync_host_isr(void) {
 		Serial.println_long((long)macl.bit_params.sync_enb,DEC);
 #endif
 		// rxEnable
-		if(macl.bit_params.txReserve == false) {
-			phy_sint_handler(macl_rxfifo_handler);
-			phy_rxstart();
-		}
-		HAL_GPIO_enableInterrupt();
+		phy_sint_handler(macl_rxfifo_handler);
+		phy_rxstart();
 #ifdef LAZURITE_IDE
 		Serial.println("macl_timesync_host_isr");
 #else
@@ -320,7 +316,7 @@ static void macl_timesync_slave_isr(void) {
 		macl.bit_params.hopping_sync_slave_irq = false;
 		return;
 	}
-	if(macl.txdone && macl.rxdone && macl.hoppingdone) {
+	if((macl.bit_params.txReserve == false) && macl.txdone && macl.rxdone && macl.hoppingdone) {
 		macl.hoppingdone = false;
 		macl.bit_params.hopping_sync_slave_irq = false;
 		if(macl.bit_params.timer_sync == false) {
@@ -337,8 +333,11 @@ static void macl_timesync_slave_isr(void) {
 		if(macl.hopping.slave.ch_index >= macl.hopping.slave.sync->payload.size) {
 			macl.hopping.slave.ch_index = 0;
 		}
+		macl_hopping_slave_phy_setup();
+		/*
 		phy_stop();
 		phy_setup(macl.pages,macl.hopping.slave.sync->payload.ch_list[macl.hopping.slave.ch_index],macl.txPower,macl.antsw);
+		*/
 
 #ifdef LAZURITE_IDE
 		Serial.print("timesync_slave_isr: ");
@@ -350,14 +349,23 @@ static void macl_timesync_slave_isr(void) {
 		Serial.print(",");
 		Serial.println_long((long)macl.bit_params.sync_enb,DEC);
 #endif
-		if(macl.bit_params.txReserve == false) {
-			phy_sint_handler(macl_rxfifo_handler);
-			phy_rxstart();
-		}
+
+		phy_sint_handler(macl_rxfifo_handler);
+		phy_rxstart();
+
 		macl.hoppingdone = true;
 		HAL_wake_up_interruptible(&macl.que);
 	} else {
 		macl.bit_params.hopping_sync_slave_irq = true;
+		Serial.print("timesync_slave_isr:");
+		Serial.print_long((long)macl.bit_params.txReserve,DEC);
+		Serial.print(",");
+		Serial.print_long((long)macl.txdone,DEC);
+		Serial.print(",");
+		Serial.print_long((long)macl.rxdone,DEC);
+		Serial.print(",");
+		Serial.print_long((long)macl.hoppingdone,DEC);
+		Serial.println("");
 	}
 #ifndef LAZURITE_IDE
 	ACCESS_POP();
@@ -381,12 +389,12 @@ static void macl_txdone(void) {
 		default:
 			macl.txdone = true;
 			macl.hopping_state = SUBGHZ_ST_HOPPING_NOP;
-			if(macl.bit_params.hopping_sync_host_irq){
-				macl_timesync_host_isr();
-			} else if(macl.bit_params.hopping_sync_slave_irq){
-				macl_timesync_slave_isr();
-			} else if(macl.bit_params.rxOnEnable) {
-				if(macl.bit_params.txReserve == false) {
+			if(macl.bit_params.txReserve == false) {
+				if(macl.bit_params.hopping_sync_host_irq){
+					macl_timesync_host_isr();
+				} else if(macl.bit_params.hopping_sync_slave_irq){
+					macl_timesync_slave_isr();
+				} else if(macl.bit_params.rxOnEnable) {
 					phy_sint_handler(macl_rxfifo_handler);
 					phy_rxstart();
 					macl.condition=SUBGHZ_ST_RX_STARTED;
@@ -399,12 +407,12 @@ static void macl_txdone(void) {
 
 static void macl_rxdone(void) {
 	macl.rxdone = true;
-	if(macl.bit_params.hopping_sync_host_irq){
-		macl_timesync_host_isr();
-	} else if(macl.bit_params.hopping_sync_slave_irq){
-		macl_timesync_slave_isr();
-	} else if(macl.bit_params.rxOnEnable) {
-		if(macl.bit_params.txReserve == false) {
+	if(macl.bit_params.txReserve == false) {
+		if(macl.bit_params.hopping_sync_host_irq){
+			macl_timesync_host_isr();
+		} else if(macl.bit_params.hopping_sync_slave_irq){
+			macl_timesync_slave_isr();
+		} else if(macl.bit_params.rxOnEnable) {
 			phy_sint_handler(macl_rxfifo_handler);
 			phy_rxstart();
 			macl.condition=SUBGHZ_ST_RX_STARTED;
@@ -917,7 +925,7 @@ static uint32_t macl_hopping_slave_phy_setup(void) {
 	Serial.print(",");
 	Serial.print_long((long)HOPPING_SEARCH_LIST[ch_index],DEC);
 	Serial.print(",");
-	Serial.println_long((long)macl.bit_params.sync_enb,DEC);
+	Serial.println_long((long)diff_time,DEC);
 #endif
 	return time_offset;
 }
@@ -987,11 +995,14 @@ error:
 struct macl_param *macl_init(void* parent)
 {
 	memset(&macl,0,sizeof(struct macl_param));
+#ifndef LAZURITE_IDE
 	memset(task,0,sizeof(task));
+#endif
 	macl.parent = (struct mach_param*) parent;
 	macl.txdone = true;
 	macl.rxdone = true;
 	macl.hoppingdone = true;
+	macl.bit_params.txReserve = false;
 	macl.condition = SUBGHZ_ST_INIT;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
@@ -1069,8 +1080,9 @@ int macl_start(void) {
 					return -ENOPROTOOPT;
 				}
 			} else {
-				// TODO: 送信により時刻同期済状態でRX STARTする。
-				// OFFSET時刻を計算して最初のタイマー時間をセットする
+				macl.bit_params.timer_sync = false;
+				timer4.set(macl_hopping_slave_phy_setup(),macl_timesync_slave_isr);
+				timer4.start();
 			}
 			break;
 		default:
@@ -1079,10 +1091,8 @@ int macl_start(void) {
 	}
 	macl.rxdone = true;
 	macl.bit_params.rxOnEnable = 1;
-	if(macl.bit_params.txReserve == false) {
-		phy_sint_handler(macl_rxfifo_handler);
-		phy_rxstart();
-	}
+	phy_sint_handler(macl_rxfifo_handler);
+	phy_rxstart();
 	macl.condition=SUBGHZ_ST_RX_STARTED;
 	HAL_GPIO_enableInterrupt();
 #ifndef LAZURITE_IDE
@@ -1144,10 +1154,10 @@ int	macl_xmit_sync(BUFFER *buff) {
 	macl.txdone = false;
 	macl.rxdone = true;
 	macl.hoppingdone = true;
+	macl.bit_params.txReserve = false;
 	HAL_GPIO_disableInterrupt();
 	phy_stop();
 	phy_timer_stop();
-	macl.bit_params.txReserve = false;
 	if(time == 0) {
 		alert(s0);
 	}
@@ -1236,13 +1246,13 @@ int	macl_xmit_async(BUFFER *buff,void (*callback)(uint8_t rssi, int status))
 	macl.txdone = false;
 	macl.rxdone = true;
 	macl.hoppingdone = true;
+	macl.bit_params.txReserve = false;
 	if(time == 0) {
 		alert(s0);
 	}
 	HAL_GPIO_disableInterrupt();
 	phy_stop();
 	phy_timer_stop();
-	macl.bit_params.txReserve = false;
 
 	macl.status=STATUS_OK;
 	macl.phy->out = *buff;
