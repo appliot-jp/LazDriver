@@ -104,6 +104,20 @@ static const char *macl_state_to_string(int condition) {
 }
 #endif
 
+static union {
+	struct {
+		volatile uint32_t now;
+		volatile uint32_t diff_time;
+		volatile uint16_t diff_ch;
+	} host;
+	struct {
+		volatile uint32_t time;
+		volatile uint32_t diff_time;
+		volatile uint16_t ch_index;
+		volatile uint16_t time_offset;
+	} slave;
+} local;
+
 static int macl_total_transmission_time(uint16_t len) {
 	uint32_t current_time;
 	uint32_t duration;
@@ -257,23 +271,47 @@ void macl_hopping_cmd_rx(void *buff) {
 }
 
 static void macl_hopping_host_phy_setup(void) {
-	uint32_t now;
-	uint32_t diff_time;
-	uint16_t diff_ch;
-	now = HAL_millis();
+	local.host.now = HAL_millis();
 	macl.bit_params.hopping_sync_host_irq = false;
-	diff_time = now - macl.hopping.host.sync_time;
-	diff_ch = diff_time / SUBGHZ_HOPPING_CH_DURATION;
-	macl.hopping.host.ch_index += diff_ch;
+	local.host.diff_time = local.host.now - macl.hopping.host.sync_time;
+	local.host.diff_ch = local.host.diff_time / SUBGHZ_HOPPING_CH_DURATION;
+	macl.hopping.host.ch_index += local.host.diff_ch;
 	if(macl.hopping.host.ch_index >= sizeof(HOPPING_SEARCH_LIST)) {
 		macl.hopping.host.ch_index = macl.hopping.host.ch_index % sizeof(HOPPING_SEARCH_LIST);
 	}
-	macl.hopping.host.sync_time = macl.hopping.host.sync_time + SUBGHZ_HOPPING_CH_DURATION * diff_ch;
+	macl.hopping.host.sync_time = macl.hopping.host.sync_time + SUBGHZ_HOPPING_CH_DURATION * local.host.diff_ch;
 
 	phy_stop();
 	phy_setup(macl.pages,HOPPING_SEARCH_LIST[macl.hopping.host.ch_index],macl.txPower,macl.antsw);
 }
 
+static uint32_t macl_hopping_slave_phy_setup(void) {
+	local.slave.time = HAL_millis();
+	local.slave.diff_time = local.slave.time - macl.hopping.slave.sync->payload.sync_time;
+	local.slave.ch_index = (uint16_t) (local.slave.diff_time/macl.hopping.slave.sync->payload.sync_interval);
+	local.slave.ch_index += macl.hopping.slave.sync->payload.index;
+	local.slave.ch_index = local.slave.ch_index % macl.hopping.slave.sync->payload.size;
+	local.slave.time_offset = (uint16_t)(macl.hopping.slave.sync->payload.sync_interval - (uint16_t)(local.slave.diff_time%macl.hopping.slave.sync->payload.sync_interval));
+	if(local.slave.time_offset < 10) {
+		local.slave.ch_index++;
+		local.slave.time_offset += macl.hopping.slave.sync->payload.sync_interval;
+	}
+	if(local.slave.ch_index >= macl.hopping.slave.sync->payload.size) {
+		local.slave.ch_index = 0;
+	}
+	macl.hopping.slave.ch_index = (uint8_t)local.slave.ch_index;
+	phy_stop();
+	phy_setup(macl.pages,macl.hopping.slave.sync->payload.ch_list[local.slave.ch_index],macl.txPower,macl.antsw);
+#ifdef LAZURITE_IDE
+	Serial.print("macl_hopping_slave_phy_setup: ");
+	Serial.print_long((long)ch_index,DEC);
+	Serial.print(",");
+	Serial.print_long((long)HOPPING_SEARCH_LIST[ch_index],DEC);
+	Serial.print(",");
+	Serial.println_long((long)diff_time,DEC);
+#endif
+	return local.slave.time_offset;
+}
 static void macl_timesync_host_isr(void) {
 	if((macl.bit_params.txReserve == false) && macl.txdone && macl.rxdone && macl.hoppingdone) {
 		macl.hoppingdone = false;
@@ -335,9 +373,9 @@ static void macl_timesync_slave_isr(void) {
 		}
 		macl_hopping_slave_phy_setup();
 		/*
-		phy_stop();
-		phy_setup(macl.pages,macl.hopping.slave.sync->payload.ch_list[macl.hopping.slave.ch_index],macl.txPower,macl.antsw);
-		*/
+			 phy_stop();
+			 phy_setup(macl.pages,macl.hopping.slave.sync->payload.ch_list[macl.hopping.slave.ch_index],macl.txPower,macl.antsw);
+			 */
 
 #ifdef LAZURITE_IDE
 		Serial.print("timesync_slave_isr: ");
@@ -357,15 +395,6 @@ static void macl_timesync_slave_isr(void) {
 		HAL_wake_up_interruptible(&macl.que);
 	} else {
 		macl.bit_params.hopping_sync_slave_irq = true;
-		Serial.print("timesync_slave_isr:");
-		Serial.print_long((long)macl.bit_params.txReserve,DEC);
-		Serial.print(",");
-		Serial.print_long((long)macl.txdone,DEC);
-		Serial.print(",");
-		Serial.print_long((long)macl.rxdone,DEC);
-		Serial.print(",");
-		Serial.print_long((long)macl.hoppingdone,DEC);
-		Serial.println("");
 	}
 #ifndef LAZURITE_IDE
 	ACCESS_POP();
@@ -693,15 +722,14 @@ static void macl_ack_txdone_handler(void)
 #ifndef LAZURITE_IDE
 		ACCESS_PUSH(7);
 #endif
+		phy_txdone();
+		macl_rxdone();
 		macl.condition=SUBGHZ_ST_ACK_TX_DONE;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 		printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
-		phy_txdone();
-
 		macl.status = STATUS_OK;
 		macl_rx_irq(NULL);				// rx callback
-		macl_rxdone();
 #ifndef LAZURITE_IDE
 		ACCESS_POP();
 #endif
@@ -898,37 +926,6 @@ static void macl_ack_rxdone_handler(void) {
 	HAL_wake_up_interruptible(&macl.que);
 }
 
-static uint32_t macl_hopping_slave_phy_setup(void) {
-	volatile static uint32_t time;
-	volatile static uint32_t diff_time;
-	volatile static uint16_t ch_index;
-	volatile static uint16_t time_offset;
-	time = HAL_millis();
-	diff_time = time - macl.hopping.slave.sync->payload.sync_time;
-	ch_index = (uint16_t) (diff_time/macl.hopping.slave.sync->payload.sync_interval);
-	ch_index += macl.hopping.slave.sync->payload.index;
-	ch_index = ch_index % macl.hopping.slave.sync->payload.size;
-	time_offset = (uint16_t)(macl.hopping.slave.sync->payload.sync_interval - (uint16_t)(diff_time%macl.hopping.slave.sync->payload.sync_interval));
-	if(time_offset < 10) {
-		ch_index++;
-		time_offset += macl.hopping.slave.sync->payload.sync_interval;
-	}
-	if(ch_index >= macl.hopping.slave.sync->payload.size) {
-		ch_index = 0;
-	}
-	macl.hopping.slave.ch_index = (uint8_t)ch_index;
-	phy_stop();
-	phy_setup(macl.pages,macl.hopping.slave.sync->payload.ch_list[ch_index],macl.txPower,macl.antsw);
-#ifdef LAZURITE_IDE
-	Serial.print("macl_hopping_slave_phy_setup: ");
-	Serial.print_long((long)ch_index,DEC);
-	Serial.print(",");
-	Serial.print_long((long)HOPPING_SEARCH_LIST[ch_index],DEC);
-	Serial.print(",");
-	Serial.println_long((long)diff_time,DEC);
-#endif
-	return time_offset;
-}
 static void macl_ack_rxdone_abort_handler(void) {
 	static const char s1[] = "macl_ack_txdone txpre error";
 #ifndef LAZURITE_IDE
