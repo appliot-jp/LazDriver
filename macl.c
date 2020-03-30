@@ -331,6 +331,7 @@ static void macl_timesync_host_isr(void) {
 		// rxEnable
 		phy_sint_handler(macl_rxfifo_handler);
 		phy_rxstart();
+		macl.condition=SUBGHZ_ST_RX_STARTED;
 #ifdef LAZURITE_IDE
 		Serial.println("macl_timesync_host_isr");
 #else
@@ -390,6 +391,7 @@ static void macl_timesync_slave_isr(void) {
 
 		phy_sint_handler(macl_rxfifo_handler);
 		phy_rxstart();
+		macl.condition=SUBGHZ_ST_RX_STARTED;
 
 		macl.hoppingdone = true;
 		HAL_wake_up_interruptible(&macl.que);
@@ -719,12 +721,12 @@ static void macl_ack_txdone_handler(void)
 {
 	phy_timer_stop();
 	if(macl.condition==SUBGHZ_ST_ACK_TX){
+		macl.condition=SUBGHZ_ST_ACK_TX_DONE;
 #ifndef LAZURITE_IDE
 		ACCESS_PUSH(7);
 #endif
 		phy_txdone();
 		macl_rxdone();
-		macl.condition=SUBGHZ_ST_ACK_TX_DONE;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 		printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
@@ -734,9 +736,6 @@ static void macl_ack_txdone_handler(void)
 		ACCESS_POP();
 #endif
 	} else {
-#ifndef LAZURITE_IDE
-		printk(KERN_INFO"%s %d %d\n",__func__,__LINE__,macl.condition);
-#endif
 		if(macl.rxdone == false) {
 			macl.status = STATUS_OK;
 			macl_rx_irq(NULL);				// rx callback
@@ -768,9 +767,6 @@ static void macl_ack_txdone_abort_handler(void)
 		ACCESS_POP();
 #endif
 	} else {
-#ifndef LAZURITE_IDE
-		printk(KERN_INFO"%s %d %d\n",__func__,__LINE__,macl.condition);
-#endif
 		if(macl.rxdone == false) {
 			macl.status=-EDEADLK;
 			macl_rx_irq(NULL);				// rx callback
@@ -1125,15 +1121,16 @@ int	macl_stop(void)
 int	macl_xmit_sync(BUFFER *buff) {
 	static const char s0[] = "rxdone abort in tx";
 	uint32_t time;
-	macl.condition=SUBGHZ_ST_TX_START;
 	macl.bit_params.txReserve = true;
 
+	// 受信完了待ち時間
+	// 1秒だと送信処理と受信のACK送信完了処理がぶつかることがあるので2秒に修正した
 #ifdef NOT_INLINE
 	//uint32_t HAL_wait_event_interruptible_timeout(wait_queue_head_t *q,volatile int *condition,uint32_t ms)
 	{
 		volatile uint32_t st_time = millis();
 		volatile uint32_t status;
-		const uint32_t ms = 1000L;
+		const uint32_t ms = 2000L;
 		do {
 			status = st_time+ms-millis();
 			if(status > ms) {
@@ -1143,7 +1140,9 @@ int	macl_xmit_sync(BUFFER *buff) {
 		time = status;
 	}
 #else
-	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.rxdone&macl.hoppingdone,1000L);
+	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.rxdone&macl.hoppingdone,2000L);
+	printk(KERN_INFO"%s %d %d %d\n",__func__,__LINE__,time,macl.condition);
+	macl.condition=SUBGHZ_ST_TX_START;
 #endif
 #ifndef LAZURITE_IDE
 	ACCESS_PUSH(17);
@@ -1235,10 +1234,11 @@ int	macl_xmit_async(BUFFER *buff,void (*callback)(uint8_t rssi, int status))
 	macl.bit_params.txReserve = true;
 
 #ifdef NOT_INLINE
-	time =  HAL_wait_event_interruptible_timeout(&macl.que,&macl.rxdone,1000L);
+	time =  HAL_wait_event_interruptible_timeout(&macl.que,&macl.rxdone,2000L);
 #else
-	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.rxdone,1000L);
+	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.rxdone,2000L);
 #endif
+	printk(KERN_INFO"%s %d %d\n",__func__,__LINE__,macl.condition);
 	macl.condition=SUBGHZ_ST_TX_START;
 	macl.txdone = false;
 	macl.rxdone = true;
