@@ -444,7 +444,9 @@ static void macl_txdone(void) {
 					phy_sint_handler(macl_rxfifo_handler);
 					phy_rxstart();
 					macl.condition=SUBGHZ_ST_RX_STARTED;
+#ifdef LAZURITE_IDE
 					Serial.println_long(__LINE__,DEC);
+#endif
 				}
 			}
 			break;
