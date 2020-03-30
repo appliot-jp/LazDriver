@@ -412,6 +412,9 @@ static bool vco_cal(void) {
 		HAL_delayMicroseconds(100L);
 		reg_rd(REG_ADR_INT_SOURCE_GRP1, 1);
 		if(cycle > 100) {
+#ifdef LAZURITE_IDE
+			Serial.println_long(__LINE__,DEC);
+#endif
 			alert(s1);
 			phy_monitor();
 			local_params.state = PHY_INIT;
