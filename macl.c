@@ -455,19 +455,22 @@ static void macl_txdone(void) {
 }
 
 static void macl_rxdone(void) {
-	macl.rxdone = true;
 	if(macl.bit_params.txReserve == false) {
 		if(macl.bit_params.hopping_sync_host_irq){
+			macl.rxdone = true;
 			macl_timesync_host_isr();
 		} else if(macl.bit_params.hopping_sync_slave_irq){
+			macl.rxdone = true;
 			macl_timesync_slave_isr();
 		} else if(macl.bit_params.rxOnEnable) {
 			phy_sint_handler(macl_rxfifo_handler);
 			phy_rxstart();
 			macl.condition=SUBGHZ_ST_RX_STARTED;
+			macl.rxdone = true;
 #ifdef LAZURITE_IDE
 			Serial.println_long(__LINE__,DEC);
 #endif
+			HAL_wake_up_interruptible(&macl.que);
 		}
 	}
 	return;
@@ -554,14 +557,14 @@ static bool macl_timesync_search_gateway(void){
 			macl.phy->in.len = 0;
 			phy_stop();
 			phy_setup(macl.pages,HOPPING_SEARCH_LIST[ch_index],macl.txPower,macl.antsw);
-/*
+			/*
 #ifdef LAZURITE_IDE
-			Serial.print("timesync_search_gateway: ");
-			Serial.print_long((long)ch_index,DEC);
-			Serial.print(",");
-			Serial.print_long((long)HOPPING_SEARCH_LIST[ch_index],DEC);
-			Serial.print(",");
-			Serial.println_long((long)macl.bit_params.sync_enb,DEC);
+Serial.print("timesync_search_gateway: ");
+Serial.print_long((long)ch_index,DEC);
+Serial.print(",");
+Serial.print_long((long)HOPPING_SEARCH_LIST[ch_index],DEC);
+Serial.print(",");
+Serial.println_long((long)macl.bit_params.sync_enb,DEC);
 #endif
 */
 			// subghz_send
@@ -660,7 +663,7 @@ static void macl_rxfifo_handler(void)
 		default:			// error
 			macl.condition=SUBGHZ_ST_RX_START;
 #ifdef LAZURITE_IDE
-	Serial.println_long(__LINE__,DEC);
+			Serial.println_long(__LINE__,DEC);
 #endif
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 			printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
@@ -781,6 +784,7 @@ static void macl_ack_txdone_handler(void)
 		macl_rx_irq(NULL);				// rx callback
 #ifndef LAZURITE_IDE
 		ACCESS_POP();
+		//printk(KERN_INFO"%s %d %d %d\n",__func__,__LINE__,macl.condition,macl.hopping_state);
 #endif
 	} else {
 		if(macl.rxdone == false) {
@@ -788,8 +792,8 @@ static void macl_ack_txdone_handler(void)
 			macl_rx_irq(NULL);				// rx callback
 		}
 		macl.rxdone = true;
+		HAL_wake_up_interruptible(&macl.que);
 	}
-	HAL_wake_up_interruptible(&macl.que);
 
 	return;
 }
@@ -972,7 +976,7 @@ static void macl_ack_rxdone_handler(void) {
 		default:
 			macl.condition = SUBGHZ_ST_ACK_RX_CRC;
 #ifdef LAZURITE_IDE
-	Serial.println_long(__LINE__,DEC);
+			Serial.println_long(__LINE__,DEC);
 #endif
 			macl_ack_rxdone_abort_handler();
 			break;
@@ -1123,14 +1127,14 @@ int macl_start(void) {
 			ch = HOPPING_SEARCH_LIST[macl.hopping.host.ch_index];
 			phy_stop();
 			phy_setup(macl.pages,ch,macl.txPower,macl.antsw);
-/*
+			/*
 #ifdef LAZURITE_IDE
-			Serial.print("macl_start: ");
-			Serial.print_long((long)macl.hopping.host.ch_index,DEC);
-			Serial.print(",");
-			Serial.print_long((long)HOPPING_SEARCH_LIST[macl.hopping.host.ch_index],DEC);
-			Serial.print(",");
-			Serial.println_long((long)macl.bit_params.sync_enb,DEC);
+Serial.print("macl_start: ");
+Serial.print_long((long)macl.hopping.host.ch_index,DEC);
+Serial.print(",");
+Serial.print_long((long)HOPPING_SEARCH_LIST[macl.hopping.host.ch_index],DEC);
+Serial.print(",");
+Serial.println_long((long)macl.bit_params.sync_enb,DEC);
 #endif
 */
 			macl.hopping.host.sync_time = HAL_millis();
@@ -1225,7 +1229,7 @@ int	macl_xmit_sync(BUFFER *buff) {
 	}
 #else
 	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.rxdone&macl.hoppingdone,2000L);
-	printk(KERN_INFO"%s %d %d %d\n",__func__,__LINE__,time,macl.condition);
+	//printk(KERN_INFO"%s %d %d %d %d %d\n",__func__,__LINE__,time,macl.condition,macl.rxdone,macl.hoppingdone);
 	macl.condition=SUBGHZ_ST_TX_START;
 #endif
 #ifndef LAZURITE_IDE
