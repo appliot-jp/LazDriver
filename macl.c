@@ -163,9 +163,8 @@ static void macl_dummy_handler(void)
 	return;
 }
 static void macl_rxdone_abort_handler(void) {
-	macl.condition=SUBGHZ_ST_RX_START;
-	phy_rxstart();
 	macl.rxdone = true;
+	macl_start();
 	HAL_wake_up_interruptible(&macl.que);
 }
 static void macl_rxfifo_handler(void)
@@ -187,12 +186,16 @@ static void macl_rxfifo_handler(void)
 			// my packet
 			if((macl.promiscuousMode) || (((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_CMD) || ((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_DATA) )){
 				if(macl_rxdone_handler() == true) {
+					macl.status = STATUS_OK;
+					macl_start();
 					macl.rxdone = true;
+					break;
+				} else {
+					// send ACK process
+					break;
 				}
-				macl.status = STATUS_OK;
-				break;
 			} else {
-				// CRC_ERROR process should work for disposal packet.
+				// Disposal packet would work as same as CRC_ERROR
 			}
 		case CRC_ERROR:		// rxdone
 		default:			// error
@@ -200,9 +203,7 @@ static void macl_rxfifo_handler(void)
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 			printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
-			phy_sint_handler(macl_rxfifo_handler);
-			phy_rxstart();
-			macl.condition=SUBGHZ_ST_RX_STARTED;
+			macl_start();
 			macl.rxdone = true;
 			break;
 	}
@@ -296,6 +297,7 @@ static void macl_ack_txdone_handler(void)
 
 	macl.status = STATUS_OK;
 	macl_rx_irq(NULL);				// rx callback
+	macl_start();
 	macl.rxdone = true;
 	HAL_wake_up_interruptible(&macl.que);
 
@@ -314,7 +316,7 @@ static void macl_ack_txdone_abort_handler(void)
 	}
 	phy_txdone();
 	macl_rx_irq(NULL);				// rx callback
-
+	macl_start();
 	macl.rxdone = true;
 	HAL_wake_up_interruptible(&macl.que);
 	return;
@@ -364,8 +366,11 @@ static void macl_ccadone_handler(void)
 	status = phy_txstart();
 	if(status != STATUS_OK) {
 		macl.status = status;
-		macl.txdone = true;
 		if(macl.tx_callback) macl.tx_callback(0,macl.status);
+		if(macl.rxOnEnable == true) {
+			macl_start();
+		}
+		macl.txdone = true;
 	}
 
 	HAL_wake_up_interruptible(&macl.que);
@@ -383,9 +388,9 @@ static void macl_ccadone_abort_handler(void)
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s,%d,%02x\n",__func__,__LINE__,ccadone);
 #endif
-	macl.txdone = true;
 	if(macl.tx_callback) macl.tx_callback(0,macl.status);
-
+	if(macl.rxOnEnable == true) macl_start();
+	macl.txdone = true;
 	HAL_wake_up_interruptible(&macl.que);
 	return;
 }
@@ -400,8 +405,9 @@ static void macl_txdone_abort_handler(void)
 	phy_stop();
 	//phy_monitor();
 	macl.status = -EDEADLK;
-	macl.txdone = true;
 	if(macl.tx_callback) macl.tx_callback(0,macl.status);
+
+	macl.txdone = true;
 
 	HAL_wake_up_interruptible(&macl.que);
 }
@@ -423,8 +429,9 @@ static void macl_txdone_handler(void)
 		phy_sint_handler(macl_ack_rxdone_handler);
 		phy_rxstart();
 	}else{
-		macl.txdone = true;
 		if(macl.tx_callback) macl.tx_callback(0,STATUS_OK);
+		if(macl.rxOnEnable == true) macl_start();
+		macl.txdone = true;
 	}
 	HAL_wake_up_interruptible(&macl.que);
 }
@@ -449,8 +456,9 @@ static void macl_ack_rxdone_handler(void)
 				phy_timer_stop();
 				macl_rx_irq(&isAck);
 				//macl_rx_irq(NULL);
-				macl.txdone = true;
 				if(macl.tx_callback) macl.tx_callback(macl.phy->in.data[macl.phy->in.len-1],STATUS_OK);
+				if(macl.rxOnEnable == true) macl_start();
+				macl.txdone = true;
 			} else {
 				macl_ack_rxdone_abort_handler();
 			}
@@ -478,16 +486,18 @@ static void macl_ack_rxdone_abort_handler(void)
 	if(macl.resendingNum <= macl.txRetries) {
 		macl.status = macl_total_transmission_time(macl.phy->out.len+TX_TTL_OFFSET);
 		if(macl.status != STATUS_OK) {
-			macl.txdone = true;
 			if(macl.tx_callback) macl.tx_callback(0,macl.status);
+			if(macl.rxOnEnable == true) macl_start();
+			macl.txdone = true;
 			goto error;
 		}
 		status = phy_txpre(MANUAL_TX);
 		if(status != STATUS_OK) {
 			alert(s1);
 			macl.status = -EDEADLK;
-			macl.txdone = true;
 			if(macl.tx_callback) macl.tx_callback(0,macl.status);
+			if(macl.rxOnEnable == true) macl_start();
+			macl.txdone = true;
 			goto error;
 		}
 		status = macl_cca_setting();
@@ -495,13 +505,16 @@ static void macl_ack_rxdone_abort_handler(void)
 			macl.status = status;
 			macl.txdone = true;
 			if(macl.tx_callback) macl.tx_callback(0,macl.status);
+			if(macl.rxOnEnable == true) macl_start();
+			macl.txdone = true;
 			goto error;
 		}
 		macl.condition=SUBGHZ_ST_CCA;
 	} else {
 		macl.status = -ETIMEDOUT;
-		macl.txdone = true;
 		if(macl.tx_callback) macl.tx_callback(0,macl.status);
+		if(macl.rxOnEnable == true) macl_start();
+		macl.txdone = true;
 		goto error;
 	}
 error:
@@ -516,6 +529,7 @@ error:
 struct macl_param *macl_init(void)
 {
 	memset(&macl,0,sizeof(struct macl_param));
+	macl.txdone = true;
 	macl.rxdone = true;
 	macl.condition = SUBGHZ_ST_INIT;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
@@ -599,10 +613,11 @@ int	macl_xmit_async(BUFFER buff,void (*callback)(uint8_t rssi, int status))
 	macl.condition=SUBGHZ_ST_TX_START;
 
 	time =  HAL_wait_event_interruptible_timeout(&macl.que,&macl.rxdone,100L);
+	HAL_GPIO_disableInterrupt();
+	macl.txdone = false;
 	if(time == 0) {
 		alert(s0);
 	}
-	HAL_GPIO_disableInterrupt();
 	phy_stop();
 	phy_timer_stop();
 	phy_sint_handler(macl_dummy_handler);

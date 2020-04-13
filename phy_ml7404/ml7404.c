@@ -1057,6 +1057,7 @@ int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw){
 					return -EINVAL;
 			}
 			reg_wr(BANK_SF_CTRL_ADR,RADIO_SF_CTRL_ADR,2);
+
 			phy.unit_backoff_period = 0;
 			break;
 		default:
@@ -1074,8 +1075,38 @@ int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw){
 	reg.data[2] = 0x80 | 0x1F;
 	reg_wr(BANK_RXFIFO_THRH_ADR,RADIO_RXFIFO_THRH_ADR,3);
 
-	// TODO: ED値調整等キャリブレーション
-	// not implemented...
+	// set calibration parameters
+	switch(txPower) {
+		case 1:
+			HAL_I2C_read((uint8_t)0x2B,reg.data+1,(uint8_t)2);
+			break;
+		case 20:
+			HAL_I2C_read((uint8_t)0x29,reg.data+1,(uint8_t)2);
+			break;
+		default:
+			return -EINVAL;
+	}
+	reg_wr(BANK_PA_REG_ADJ_H_ADR,RADIO_PA_REG_ADJ_H_ADR,3);
+
+	HAL_I2C_read((uint8_t)0x81,reg.data+1,(uint8_t)2);
+	reg_wr(BANK_FREQ_ADJ_H_ADR,RADIO_FREQ_ADJ_H_ADR,3);
+
+	switch(mod_params.mod_pages) {
+		case ((PHY_MODULATION_FSK << 8) + 1):					// GFSK 50kbps
+		case ((PHY_MODULATION_DSSS <<8) +1):					// DSSS 50kcps
+			HAL_I2C_read((uint8_t)0x8A,reg.data+1,(uint8_t)2);
+			break;
+		case ((PHY_MODULATION_FSK << 8) + 2):					// GFSK 100kbps
+		case ((PHY_MODULATION_DSSS <<8) +2):					// DSSS 100kcps
+			HAL_I2C_read((uint8_t)0x88,reg.data+1,(uint8_t)2);
+			break;
+		case ((PHY_MODULATION_DSSS <<8) + 5):					// DSSS 200kcps
+			HAL_I2C_read((uint8_t)0x8C,reg.data+1,(uint8_t)2);
+			break;
+	}
+	reg_wr(BANK_RSSI_ADJ_ADR,RADIO_RSSI_ADJ_ADR,2);
+	reg.data[1] = reg.data[2];
+	reg_wr(BANK_RSSI_MAG_ADJ_ADR,RADIO_RSSI_MAG_ADJ_ADR,2);
 
 	phy_intclr(HW_EVENT_ALL);
 	phy_inten(HW_EVENT_VCO_CAL_DONE);
@@ -1083,8 +1114,8 @@ int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw){
 	// VCO CAL
 	reg.data[1] = 1;
 	reg_wr(BANK_VCO_CAL_START_ADR,RADIO_VCO_CAL_START_ADR,2);
-
 	i=0;
+
 	do {
 		HAL_delayMicroseconds(1000L);
 		HAL_GPIO_getValue(PHY_SINTN,&data);
