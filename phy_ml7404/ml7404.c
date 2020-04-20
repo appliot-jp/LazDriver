@@ -29,6 +29,17 @@
 #include "../endian.h"
 #include "../common_subghz.h"
 
+//#define PHY_INIT 0			// not used
+#define PHY_SLEEP 1
+#define PHY_SETUP 2
+
+static struct {
+	uint8_t antsw:1;
+	uint8_t state:3;
+	uint8_t txPower;
+	uint8_t ch;
+} local_params;
+
 static const RADIO_PHY_SET_T ml7404_init[] = {
 	{RADIO_BANK_SEL_ADR              ,0x11},   /*!< [|RADIO_BANK_SEL_ADR              :BANK0]  */
 	{RADIO_SPI_EXT_PA_CTRL_ADR       ,0x00},   /*!< [|SPIインタフェースIO /外部PA制御設定:SDO出力OpenDrain設定]  */
@@ -896,6 +907,9 @@ struct phy_param *phy_init(void) {
 
 	phy_sleep();
 
+	memset(&local_params,0,sizeof(local_params));
+	local_params.state = PHY_SLEEP;
+
 	return &phy;
 }
 
@@ -936,8 +950,12 @@ int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw){
 	const char s0[] = "phy_setup SINT LOCK";
 	const char s1[] = "phy_setup VCO CAL LOCK";
 	uint8_t data;
+	uint16_t mod_pages;
 	uint32_t intsrc;
 	int i;
+
+	mod_pages = mod_params.mod_pages & 0xFF00;
+	mod_pages = mod_pages | page;
 
 	HAL_GPIO_getValue(PHY_REGPDIN,&data);
 	if(data == HIGH) {
@@ -978,17 +996,20 @@ int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw){
 		return -EDEADLK;
 	}
 
-	mod_params.mod_pages += page;
-	switch(mod_params.mod_pages) {
+	switch(mod_pages) {
 		case ((PHY_MODULATION_FSK << 8) + 1):					// GFSK 50kbps
 #ifdef JP
 			if((ch < 24) || (ch > 61)) { return -EINVAL;}
 #else
 			return -EINVAL;
 #endif
-			reg_block_wr(GFSK_50KBPS);
-			reg.data[1] = (uint8_t)(ch-24),reg_wr(BANK_CH_SET_ADR,RADIO_CH_SET_ADR,2);
-			phy.unit_backoff_period = 320;
+			if((mod_pages != mod_params.mod_pages) || (local_params.state != PHY_SETUP)) {
+				reg_block_wr(GFSK_50KBPS);
+				phy.unit_backoff_period = 320;
+			}
+			if((local_params.ch != ch) || (local_params.state != PHY_SETUP)){
+				reg.data[1] = (uint8_t)(ch-24),reg_wr(BANK_CH_SET_ADR,RADIO_CH_SET_ADR,2);
+			}
 			break;
 		case ((PHY_MODULATION_FSK << 8) + 2):					// GFSK 100kbps
 #ifdef JP
@@ -996,9 +1017,13 @@ int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw){
 #else
 			return -EINVAL;
 #endif
-			reg_block_wr(GFSK_100KBPS);
-			reg.data[1] = (uint8_t)(ch-24),reg_wr(BANK_CH_SET_ADR,RADIO_CH_SET_ADR,2);
-			phy.unit_backoff_period = 320;
+			if((mod_pages != mod_params.mod_pages) || (local_params.state != PHY_SETUP)) {
+				reg_block_wr(GFSK_100KBPS);
+				phy.unit_backoff_period = 320;
+			}
+			if((local_params.ch != ch) || (local_params.state != PHY_SETUP)){
+				reg.data[1] = (uint8_t)(ch-24),reg_wr(BANK_CH_SET_ADR,RADIO_CH_SET_ADR,2);
+			}
 			break;
 		case ((PHY_MODULATION_DSSS <<8) +1):					// DSSS 50kcps
 #ifdef JP
@@ -1006,20 +1031,24 @@ int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw){
 #else
 			return -EINVAL;
 #endif
-			reg_block_wr(DSSS_50KCPS);
-			reg.data[1] = (uint8_t)(ch-24),reg_wr(BANK_CH_SET_ADR,RADIO_CH_SET_ADR,2);
-			switch(mod_params.sf) {
-				case 32:
-					data = 0x11;
-					break;
-				case 64:
-					data = 0x22;
-					break;
-				default:
-					return -EINVAL;
+			if((mod_pages != mod_params.mod_pages) || (local_params.state != PHY_SETUP)) {
+				reg_block_wr(DSSS_50KCPS);
+				switch(mod_params.sf) {
+					case 32:
+						data = 0x11;
+						break;
+					case 64:
+						data = 0x22;
+						break;
+					default:
+						return -EINVAL;
+				}
+				reg_wr(BANK_SF_CTRL_ADR,RADIO_SF_CTRL_ADR,2);
+				phy.unit_backoff_period = 0;
 			}
-			reg_wr(BANK_SF_CTRL_ADR,RADIO_SF_CTRL_ADR,2);
-			phy.unit_backoff_period = 0;
+			if((local_params.ch != ch) || (local_params.state != PHY_SETUP)){
+				reg.data[1] = (uint8_t)(ch-24),reg_wr(BANK_CH_SET_ADR,RADIO_CH_SET_ADR,2);
+			}
 			break;
 		case ((PHY_MODULATION_DSSS <<8) +2):					// DSSS 100kcps
 #ifdef JP
@@ -1027,20 +1056,24 @@ int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw){
 #else
 			return -EINVAL;
 #endif
-			reg_block_wr(DSSS_100KCPS);
-			reg.data[1] = (uint8_t)(ch-24),reg_wr(BANK_CH_SET_ADR,RADIO_CH_SET_ADR,2);
-			switch(mod_params.sf) {
-				case 32:
-					data = 0x11;
-					break;
-				case 64:
-					data = 0x22;
-					break;
-				default:
-					return -EINVAL;
+			if((mod_pages != mod_params.mod_pages) || (local_params.state != PHY_SETUP)) {
+				reg_block_wr(DSSS_100KCPS);
+				switch(mod_params.sf) {
+					case 32:
+						data = 0x11;
+						break;
+					case 64:
+						data = 0x22;
+						break;
+					default:
+						return -EINVAL;
+				}
+				reg_wr(BANK_SF_CTRL_ADR,RADIO_SF_CTRL_ADR,2);
+				phy.unit_backoff_period = 0;
 			}
-			reg_wr(BANK_SF_CTRL_ADR,RADIO_SF_CTRL_ADR,2);
-			phy.unit_backoff_period = 0;
+			if((local_params.ch != ch) || (local_params.state != PHY_SETUP)){
+				reg.data[1] = (uint8_t)(ch-24),reg_wr(BANK_CH_SET_ADR,RADIO_CH_SET_ADR,2);
+			}
 			break;
 		case ((PHY_MODULATION_DSSS <<8) + 5):					// DSSS 200kcps
 #ifdef JP
@@ -1048,92 +1081,107 @@ int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw){
 #else
 			return -EINVAL;
 #endif
-			reg_block_wr(DSSS_200KCPS);
-			reg.data[1] = (uint8_t)((ch-24)*2+3), reg_wr(BANK_CH_SET_ADR,RADIO_CH_SET_ADR,2);
-			switch(mod_params.sf) {
-				case 32:
-					reg.data[1] = 0x11;
-					break;
-				case 64:
-					reg.data[1] = 0x22;
-					break;
-				default:
-					return -EINVAL;
+			if((mod_pages != mod_params.mod_pages) || (local_params.state != PHY_SETUP)) {
+				reg_block_wr(DSSS_200KCPS);
+				switch(mod_params.sf) {
+					case 32:
+						reg.data[1] = 0x11;
+						break;
+					case 64:
+						reg.data[1] = 0x22;
+						break;
+					default:
+						return -EINVAL;
+				}
+				reg_wr(BANK_SF_CTRL_ADR,RADIO_SF_CTRL_ADR,2);
+				phy.unit_backoff_period = 0;
 			}
-			reg_wr(BANK_SF_CTRL_ADR,RADIO_SF_CTRL_ADR,2);
-
-			phy.unit_backoff_period = 0;
+			if((local_params.ch != ch) || (local_params.state != PHY_SETUP)){
+				reg.data[1] = (uint8_t)((ch-24)*2+3), reg_wr(BANK_CH_SET_ADR,RADIO_CH_SET_ADR,2);
+			}
 			break;
 		default:
 			return -EINVAL;
 	}
 
-	// CCA時データ無効化
-	reg.data[1] = 0x01;
-	reg_wr(BANK_NONPUBLIC_B3_ADR2D,RADIO_NONPUBLIC_B3_ADR2D,2);
-	// AUTO TRX OFF
-	reg.data[1] = 0x00;
-	reg_wr(BANK_RF_STATUS_CTRL_ADR,RADIO_RF_STATUS_CTRL_ADR,2);
-	// RX FIFO しきい値設定
-	reg.data[1] = 0x80 | 0x20;
-	reg.data[2] = 0x80 | 0x1F;
-	reg_wr(BANK_RXFIFO_THRH_ADR,RADIO_RXFIFO_THRH_ADR,3);
+	if(local_params.state != PHY_SETUP) {
+		// CCA時データ無効化
+		reg.data[1] = 0x01;
+		reg_wr(BANK_NONPUBLIC_B3_ADR2D,RADIO_NONPUBLIC_B3_ADR2D,2);
+		// AUTO TRX OFF
+		reg.data[1] = 0x00;
+		reg_wr(BANK_RF_STATUS_CTRL_ADR,RADIO_RF_STATUS_CTRL_ADR,2);
+		// RX FIFO しきい値設定
+		reg.data[1] = 0x80 | 0x20;
+		reg.data[2] = 0x80 | 0x1F;
+		reg_wr(BANK_RXFIFO_THRH_ADR,RADIO_RXFIFO_THRH_ADR,3);
+	}
 
 	// set calibration parameters
-	switch(txPower) {
-		case 1:
-			HAL_I2C_read((uint8_t)0x2B,reg.data+1,(uint8_t)2);
-			break;
-		case 20:
-			HAL_I2C_read((uint8_t)0x29,reg.data+1,(uint8_t)2);
-			break;
-		default:
-			return -EINVAL;
+	if((local_params.state != PHY_SETUP) || (local_params.txPower != txPower)) {
+		switch(txPower) {
+			case 1:
+				HAL_I2C_read((uint8_t)0x2B,reg.data+1,(uint8_t)2);
+				break;
+			case 20:
+				HAL_I2C_read((uint8_t)0x29,reg.data+1,(uint8_t)2);
+				break;
+			default:
+				return -EINVAL;
+		}
+		reg_wr(BANK_PA_REG_ADJ_H_ADR,RADIO_PA_REG_ADJ_H_ADR,3);
 	}
-	reg_wr(BANK_PA_REG_ADJ_H_ADR,RADIO_PA_REG_ADJ_H_ADR,3);
-
-	HAL_I2C_read((uint8_t)0x81,reg.data+1,(uint8_t)2);
-	reg_wr(BANK_FREQ_ADJ_H_ADR,RADIO_FREQ_ADJ_H_ADR,3);
-
-	switch(mod_params.mod_pages) {
-		case ((PHY_MODULATION_FSK << 8) + 1):					// GFSK 50kbps
-		case ((PHY_MODULATION_DSSS <<8) +1):					// DSSS 50kcps
-			HAL_I2C_read((uint8_t)0x8A,reg.data+1,(uint8_t)2);
-			break;
-		case ((PHY_MODULATION_FSK << 8) + 2):					// GFSK 100kbps
-		case ((PHY_MODULATION_DSSS <<8) +2):					// DSSS 100kcps
-			HAL_I2C_read((uint8_t)0x88,reg.data+1,(uint8_t)2);
-			break;
-		case ((PHY_MODULATION_DSSS <<8) + 5):					// DSSS 200kcps
-			HAL_I2C_read((uint8_t)0x8C,reg.data+1,(uint8_t)2);
-			break;
-	}
-	reg_wr(BANK_RSSI_ADJ_ADR,RADIO_RSSI_ADJ_ADR,2);
-	reg.data[1] = reg.data[2];
-	reg_wr(BANK_RSSI_MAG_ADJ_ADR,RADIO_RSSI_MAG_ADJ_ADR,2);
 
 	phy_intclr(HW_EVENT_ALL);
 	phy_inten(HW_EVENT_VCO_CAL_DONE);
 
-	// VCO CAL
-	reg.data[1] = 1;
-	reg_wr(BANK_VCO_CAL_START_ADR,RADIO_VCO_CAL_START_ADR,2);
-	i=0;
+	if((local_params.state != PHY_SETUP) || (mod_params.mod_pages != mod_pages)) {
+		HAL_I2C_read((uint8_t)0x81,reg.data+1,(uint8_t)2);
+		reg_wr(BANK_FREQ_ADJ_H_ADR,RADIO_FREQ_ADJ_H_ADR,3);
 
-	do {
-		HAL_delayMicroseconds(1000L);
-		HAL_GPIO_getValue(PHY_SINTN,&data);
-		i++;
-		if( i > 100) {
-			alert(s1);
-			phy_regdump();
-			return -EDEADLK;
+		switch(mod_params.mod_pages) {
+			case ((PHY_MODULATION_FSK << 8) + 1):					// GFSK 50kbps
+			case ((PHY_MODULATION_DSSS <<8) +1):					// DSSS 50kcps
+				HAL_I2C_read((uint8_t)0x8A,reg.data+1,(uint8_t)2);
+				break;
+			case ((PHY_MODULATION_FSK << 8) + 2):					// GFSK 100kbps
+			case ((PHY_MODULATION_DSSS <<8) +2):					// DSSS 100kcps
+				HAL_I2C_read((uint8_t)0x88,reg.data+1,(uint8_t)2);
+				break;
+			case ((PHY_MODULATION_DSSS <<8) + 5):					// DSSS 200kcps
+				HAL_I2C_read((uint8_t)0x8C,reg.data+1,(uint8_t)2);
+				break;
 		}
-	} while(data == 1);
-	intsrc = phy_intsrc();
+		reg_wr(BANK_RSSI_ADJ_ADR,RADIO_RSSI_ADJ_ADR,2);
+		reg.data[1] = reg.data[2];
+		reg_wr(BANK_RSSI_MAG_ADJ_ADR,RADIO_RSSI_MAG_ADJ_ADR,2);
+
+		// VCO CAL
+		reg.data[1] = 1;
+		reg_wr(BANK_VCO_CAL_START_ADR,RADIO_VCO_CAL_START_ADR,2);
+		i=0;
+
+		do {
+			HAL_delayMicroseconds(1000L);
+			HAL_GPIO_getValue(PHY_SINTN,&data);
+			i++;
+			if( i > 100) {
+				alert(s1);
+				phy_regdump();
+				return -EDEADLK;
+			}
+		} while(data == 1);
+		intsrc = phy_intsrc();
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s %d %06x %d\n",__func__,__LINE__,intsrc,i);
+		printk(KERN_INFO"%s %d %06x %d\n",__func__,__LINE__,intsrc,i);
 #endif
+	}
+
+	local_params.antsw = antsw;
+	local_params.state = PHY_SETUP;
+	local_params.txPower = txPower;
+	local_params.ch = ch;
+	mod_params.mod_pages = mod_pages;
 
 	return STATUS_OK;
 }
@@ -1310,7 +1358,7 @@ void phy_txdone(void) {
 
 void phy_rxstart(void) {
 	phy.in_ptr=0;
-	phy.in.len=0;
+	//phy.in.len=0;
 	reg.data[1] = 0x82;
 	reg_wr(BANK_STATE_CLR_ADR,RADIO_STATE_CLR_ADR,2);
 	phy_intclr(HW_EVENT_ALL);
@@ -1334,7 +1382,7 @@ FIFO_STATE phy_rxdone(void){
 		phy_inten(~HW_EVENT_ALL);
 		return CRC_ERROR;
 	}
-	if(phy.in.len == 0) {
+	if(phy.in_ptr == 0) {
 		reg_rd(BANK_RX_PKT_LEN_H_ADR,RADIO_RX_PKT_LEN_H_ADR,2);
 		phy.in.len = reg.data[0] & 0x07;
 		phy.in.len = (phy.in.len << 8) + reg.data[1];
@@ -1489,6 +1537,7 @@ void phy_sleep() {
 	HAL_GPIO_setValue(PHY_RESETN,LOW);
 	HAL_delayMicroseconds(1000);
 	HAL_GPIO_setValue(PHY_REGPDIN,HIGH);
+	local_params.state = PHY_SLEEP;
 	return;
 }
 

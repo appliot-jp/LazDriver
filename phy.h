@@ -73,10 +73,6 @@ typedef enum {
 #define PHY_PA_MODE_EXTERNAL    ( 0x01 )
 
 
-#define PHY_DATARATE_50K		( 0x01 )
-#define PHY_DATARATE_100K		( 0x02 )
-#define PHY_DATARATE_200K		( 0x05 )
-
 /*
  -------------------------------------------------------------
                     Public interrupt section

@@ -734,8 +734,6 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 			reg_wr(REG_ADR_F_DEV_L, 3);
 			/* Hidden register setting */
 			reg.wdata[1] = regset->reg1, reg_wr(2,0x0e, 2);
-			/* diversity search setting */
-			reg.wdata[1] = regset->div, reg_wr(REG_ADR_2DIV_SEARCH, 2);
 		}
 	}
 

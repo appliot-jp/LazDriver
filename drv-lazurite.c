@@ -114,10 +114,8 @@ int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 	int errcode = 0;
 	static bool isFull = false;
 
-
 	// copy data to list
-	if((len < DATA_SIZE) && (len>0))
-	{
+	if((len < DATA_SIZE) && (len>0)) {
 		// get time stamp
 		getnstimeofday(&rx_time);
 
@@ -159,10 +157,8 @@ int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 
 		// poll wait cancell 
 		wake_up_interruptible(&chrdev.read_q);	
-	}
-	else
-	{
-		printk(KERN_ERR "[DRV-802154E] add_list PHY Size error\n");
+	} else {
+		printk(KERN_ERR "[DRV-802154E] add_list PHY Size error len=%d\n",len);
 		errcode = -1;
 		goto error;
 		// return -1;
