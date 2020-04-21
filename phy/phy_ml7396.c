@@ -476,6 +476,7 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 	const REGSET *regset;
 	static const char s1[] = "unsupported device1";
 	static const char s2[] = "unsupported device2";
+	static uint8_t reg_antsw;
 
 	// CLK START
 	reg.wdata[1] = 0x0f, reg_wr(REG_ADR_CLK_SET,             2);
@@ -559,20 +560,20 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 		HAL_I2C_read(0x20, device_id, 4);
 		// BP3596
 		if(memcmp(device_id, device_id_bp3596,4) == 0) {
-			reg.wdata[1] = 0x04, reg_wr(REG_ADR_2DIV_CNTRL,      2);
+			reg_antsw = 0x04;
 		} else if (memcmp(device_id,device_id_lazurite,4) == 0) {
 			// Lazurite 920J or MJ2001
 			HAL_I2C_read(0xA0, &eui64_extend_type, 1);
 			switch(eui64_extend_type) {
 				case 0x04:					// Lazurite 920J
 				case 0xFF:					// Lazurite 920J
-					reg.wdata[1] = 0x02, reg_wr(REG_ADR_2DIV_CNTRL,      2);
+					reg_antsw = 0x02;
 					break;
 				case 0x05:					// MJ2001
 					if (antsw == 0x00) {
-						reg.wdata[1] = 0x06, reg_wr(REG_ADR_2DIV_CNTRL,      2);			// inside
+						reg_antsw = 0x06;
 					}else{
-						reg.wdata[1] = 0x02, reg_wr(REG_ADR_2DIV_CNTRL,      2);			// outside
+						reg_antsw = 0x02;
 					}
 					break;
 				default:
@@ -585,6 +586,8 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 			alert(s2);
 		}
 	}
+	reg.wdata[1] = reg_antsw, reg_wr(REG_ADR_2DIV_CNTRL,      2);
+
 	if(local_params.state == PHY_INIT) {
 		// Operation Mode Set
 		reg.wdata[1] = 0x10, reg_wr(REG_ADR_ACK_TIMER_EN,       2);		// enable TX_DONE_OFF
