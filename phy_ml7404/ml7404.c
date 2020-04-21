@@ -1139,7 +1139,7 @@ int phy_setup(uint8_t page,uint8_t ch,uint8_t txPower,uint8_t antsw){
 		HAL_I2C_read((uint8_t)0x81,reg.data+1,(uint8_t)2);
 		reg_wr(BANK_FREQ_ADJ_H_ADR,RADIO_FREQ_ADJ_H_ADR,3);
 
-		switch(mod_params.mod_pages) {
+		switch(mod_pages) {
 			case ((PHY_MODULATION_FSK << 8) + 1):					// GFSK 50kbps
 			case ((PHY_MODULATION_DSSS <<8) +1):					// DSSS 50kcps
 				HAL_I2C_read((uint8_t)0x8A,reg.data+1,(uint8_t)2);
