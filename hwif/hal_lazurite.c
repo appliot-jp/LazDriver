@@ -32,6 +32,7 @@
 	#include <driver_extirq.h>
 	#include <driver_irq.h>
 	#include <driver_gpio.h>
+	#include <driver_ltbc.h>
 	#include <lp_manage.h>
 	#include <wdt.h>
 	#include "hal.h"
@@ -49,7 +50,7 @@ static struct I2C_CONFIG  {
 	uint8_t addr_bits;
 } i2c_config;
 
-static uint32_t hal_previous_time;
+//static uint32_t hal_previous_time;
 // 2015.12.14 Eiichi Saito: for preference of SubGHz
 //static unsigned char hal_setbit_exi;
 volatile uint8_t hal_event_flag = 0;
@@ -110,6 +111,9 @@ int HAL_init(struct hw_mode *mode) {
 	drv_pinMode(PHY_REGPDIN,OUTPUT);
 	drv_pinMode(PHY_RESETN,OUTPUT);
 	drv_pinMode(PHY_CSB,OUTPUT);
+
+	// LTBC init
+	ltbc_init();
 
 	return 0;
 }
@@ -195,35 +199,44 @@ int HAL_I2C_read(uint16_t addr, uint8_t *data, uint8_t size)
 }
 
 /*
-	 int HAL_TIMER_getTick(unsigned long *tick)
-	 {
-	 unsigned long hal_current_time;
-	 hal_current_time = millis(); 
+int HAL_TIMER_getTick(unsigned long *tick)
+{
+	unsigned long hal_current_time;
+	hal_current_time = millis(); 
 
- *tick = hal_current_time - hal_previous_time;
+	*tick = hal_current_time - hal_previous_time;
 
- return STATUS_OK;
- }
- */
+	return STATUS_OK;
+}
 
 int HAL_TIMER_setup(void)
 {
 	hal_previous_time = millis();
 	return STATUS_OK;
 }
+ */
+
+static void (*hal_fn_p)(void);
+int HAL_abort_func(uint8_t count)
+{
+	if (hal_fn_p != NULL) hal_fn_p();
+	return 0;
+}
 
 int HAL_TIMER_start(uint16_t msec, void (*func)(void))
 {
-
-	timer_16bit_set(6,0xE8,(uint16_t)msec,func);
-	timer_16bit_start(6);
+	uint8_t expire, count = ltbc_get_count();
+	expire = (uint8_t)(count+(msec*256/1000));
+	hal_fn_p = func;
+	ltbc_attach_handler(0,expire,HAL_abort_func);
 
 	return STATUS_OK;
 }
 
 int HAL_TIMER_stop(void)
 {
-	timer_16bit_stop(6);
+	ltbc_detach_handler(0);
+	hal_fn_p = NULL;
 
 	return STATUS_OK;
 }
@@ -351,7 +364,7 @@ void HAL_reset(){
 	dis_interrupts(DI_SUBGHZ);
 	alert(s1);
 	Serial.print(s2);
-	Serial.println_long(macl.condition,DEC);
+	Serial.println_long((long)macl.condition,DEC);
 	phy_monitor();
 
 	pinMode(25,OUTPUT);
