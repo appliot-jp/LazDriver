@@ -31,6 +31,7 @@
 	#include <driver_extirq.h>
 	#include <driver_irq.h>
 	#include <driver_gpio.h>
+	#include <driver_ltbc.h>
 	#include <driver_uart.h>
 	#include <lp_manage.h>
 	#include <wdt.h>
@@ -110,6 +111,9 @@ int HAL_init(struct hw_mode *mode) {
 	drv_pinMode(PHY_REGPDIN,OUTPUT);
 	drv_pinMode(PHY_RESETN,OUTPUT);
 	drv_pinMode(PHY_CSB,OUTPUT);
+
+	// LTBC init
+	ltbc_init();
 
 	return 0;
 }
@@ -211,19 +215,27 @@ int HAL_TIMER_setup(void)
 	hal_previous_time = millis();
 	return STATUS_OK;
 }
+static void (*hal_fn_p)(void);
+int HAL_abort_func(uint8_t count)
+{
+	if (hal_fn_p != NULL) hal_fn_p();
+	return 0;
+}
 
 int HAL_TIMER_start(uint16_t msec, void (*func)(void))
 {
-
-	timer_16bit_set(6,0xE8,(uint16_t)msec,func);
-	timer_16bit_start(6);
+	uint8_t expire, count = ltbc_get_count();
+	expire = (uint8_t)(count+(msec*256/1000));
+	hal_fn_p = func;
+	ltbc_attach_handler(0,expire,HAL_abort_func);
 
 	return STATUS_OK;
 }
 
 int HAL_TIMER_stop(void)
 {
-	timer_16bit_stop(6);
+	ltbc_detach_handler(0);
+	hal_fn_p = NULL;
 
 	return STATUS_OK;
 }
