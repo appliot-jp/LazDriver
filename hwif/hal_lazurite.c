@@ -217,7 +217,7 @@ int HAL_TIMER_setup(void)
  */
 
 static void (*hal_fn_p)(void);
-int HAL_abort_func(uint8_t count)
+uint16_t HAL_abort_func(uint16_t count)
 {
 	if (hal_fn_p != NULL) hal_fn_p();
 	return 0;
@@ -225,8 +225,8 @@ int HAL_abort_func(uint8_t count)
 
 int HAL_TIMER_start(uint16_t msec, void (*func)(void))
 {
-	uint8_t expire, count = ltbc_get_count();
-	expire = (uint8_t)(count+(msec*256/1000));
+	uint16_t expire, count = ltbc_get_count();
+	expire = count+(msec*256/1000);
 	hal_fn_p = func;
 	ltbc_attach_handler(0,expire,HAL_abort_func);
 
