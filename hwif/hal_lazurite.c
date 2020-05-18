@@ -214,21 +214,22 @@ int HAL_TIMER_setup(void)
 	hal_previous_time = millis();
 	return STATUS_OK;
 }
- */
+*/
 
-static void (*hal_fn_p)(void);
-uint16_t HAL_abort_func(uint16_t count)
+static void (*hal_tm_fn)(void);
+static uint16_t HAL_TIMER_func(uint16_t count)
 {
-	if (hal_fn_p != NULL) hal_fn_p();
+	if (hal_tm_fn != NULL) hal_tm_fn();
 	return 0;
 }
 
 int HAL_TIMER_start(uint16_t msec, void (*func)(void))
 {
 	uint16_t expire, count = ltbc_get_count();
-	expire = count+(msec*256/1000);
-	hal_fn_p = func;
-	ltbc_attach_handler(0,expire,HAL_abort_func);
+
+	expire = (uint16_t)(count+(uint32_t)msec*256/1000ul);
+	hal_tm_fn = func;
+	ltbc_attach_handler(0,expire,HAL_TIMER_func);
 
 	return STATUS_OK;
 }
@@ -236,7 +237,7 @@ int HAL_TIMER_start(uint16_t msec, void (*func)(void))
 int HAL_TIMER_stop(void)
 {
 	ltbc_detach_handler(0);
-	hal_fn_p = NULL;
+	hal_tm_fn = NULL;
 
 	return STATUS_OK;
 }

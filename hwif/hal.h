@@ -90,7 +90,7 @@ extern int HAL_GPIO_getValue(uint8_t pin, uint8_t *value);
 extern int HAL_GPIO_setInterrupt(void (*func)(void));
 extern int HAL_GPIO_enableInterrupt(void);
 extern int HAL_GPIO_disableInterrupt(void);
-extern int HAL_TIMER_setup(void);
+//extern int HAL_TIMER_setup(void);
 extern int HAL_TIMER_start(uint16_t msec, void (*func)(void));
 extern int HAL_TIMER_stop(void);
 //extern int HAL_TIMER_getTick(uint32_t *tick);
