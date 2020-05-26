@@ -234,6 +234,7 @@ void macl_hopping_cmd_rx(void *buff) {
 			switch(mh->payload.data[0]) {
 				case SUBGHZ_HOPPING_SCAN_RESPONSE:
 					if (macl.hopping_state == SUBGHZ_ST_HOPPING_SLAVE_SCAN_REQ) {
+						macl.hopping_state = SUBGHZ_ST_HOPPING_NOP;
 						// save mac addr/rssi to list
 						macl_update_scan_list(&macl.parent->scan,mh->src.addr.ieee_addr,mh->rssi);
 					}
@@ -421,7 +422,7 @@ static void macl_timesync_host_isr(void) {
 		macl.condition=SUBGHZ_ST_RX_STARTED;
 
 #ifdef LAZURITE_IDE
-		Serial.println("macl_timesync_host_isr");
+		//Serial.println("macl_timesync_host_isr");
 #else
 		printk(KERN_INFO"%s index=%d CH=%d\n",__func__,macl.hopping.host.ch_index, HOPPING_SEARCH_LIST[macl.hopping.host.ch_index]);
 #endif
@@ -543,6 +544,8 @@ static void macl_rxdone(void) {
 		} else if(macl.bit_params.hopping_sync_slave_irq){
 			macl.rxdone = true;
 			macl_timesync_slave_isr();
+		} else if(macl.hopping_state == SUBGHZ_ST_HOPPING_SLAVE_SCAN_REQ) {
+			macl.rxdone = true;
 		} else if(macl.bit_params.rxOnEnable) {
 			phy_sint_handler(macl_rxfifo_handler);
 			phy_rxstart();
@@ -1126,6 +1129,76 @@ error:
 	HAL_wake_up_interruptible(&macl.que);
 }
 
+static int macl_tx_scan_request(void) {
+	macl_scan_request_raw16 *scan_req16;
+
+	HAL_GPIO_disableInterrupt();
+	phy_timer_stop();
+	phy_stop();
+	// scan requestのコマンドをセットする
+	scan_req16 = (macl_scan_request_raw16 *)macl.phy->out.data;
+	scan_req16->mac_header = 0xE803;
+	scan_req16->seq = (uint8_t) rand();
+	if (macl.parent->scan.panid != 0xFFFF) {
+		scan_req16->panid = macl.parent->scan.panid;
+	} else {
+		scan_req16->panid = 0xFFFF;
+	}
+	scan_req16->dst = 0xFFFF;
+	memcpy(scan_req16->src,macl.parent->my_addr.ieee_addr,8);
+	scan_req16->payload.cmd = SUBGHZ_HOPPING_SCAN_REQUEST;
+	memcpy(scan_req16->payload.id,SUBGHZ_HOPPING_ID,sizeof(SUBGHZ_HOPPING_ID));;
+	macl.phy->out.len = sizeof(macl_scan_request_raw16);
+
+	macl.status = macl_total_transmission_time(macl.phy->out.len+TX_TTL_OFFSET);
+	if (macl.status != STATUS_OK){
+		goto error;
+	}
+	// CH切り替え
+	phy_setup(macl.pages,HOPPING_SEARCH_LIST[scan_next_ch_index],macl.txPower,macl.antsw);
+#ifdef LAZURITE_IDE
+	Serial.print("macl_tx_scan_request_handler: ");
+	Serial.print_long((long)scan_next_ch_index,DEC);
+	Serial.print(",");
+	Serial.print_long((long)HOPPING_SEARCH_LIST[scan_next_ch_index],DEC);
+	Serial.print(",");
+	Serial.println_long((long)macl.hopping_state,DEC);
+#endif
+	macl.hoppingdone = false;
+	macl.hopping_state = SUBGHZ_ST_HOPPING_SLAVE_SCAN_REQ;
+	// subghz_send
+	macl.phy->in.len = 0;
+	macl.status=STATUS_OK;
+	macl.resendingNum = 0;
+	macl.ccaCount=0;
+	macl.tx_callback = NULL;
+
+	phy_txpre(MANUAL_TX);
+	macl_cca_setting();
+	macl.condition=SUBGHZ_ST_CCA;
+	HAL_GPIO_enableInterrupt();
+error:
+	//printk(KERN_INFO"%s end\n",__func__);
+	return macl.status;
+}
+
+static uint16_t macl_tx_scan_request_handler(void) {
+	scan_next_ch_index = (uint8_t)((scan_next_ch_index+1)%sizeof(HOPPING_SEARCH_LIST));
+	macl_tx_scan_request();
+#if !defined(LAZURITE_IDE)
+	HAL_TIMER2_start(SUBGHZ_HOPPING_TX_SCAN_REQUEST_INTERVAL,macl_tx_scan_request_handler,1); // attach tx scan timer periodically
+#endif
+	return SUBGHZ_HOPPING_TX_SCAN_REQUEST_INTERVAL;
+}
+
+static uint16_t macl_tx_scan_done_handler(void) {
+	macl.hoppingdone = true;
+	macl.hopping_state = SUBGHZ_ST_HOPPING_NOP;
+	HAL_TIMER2_stop(1); // stop periodic timer
+	macl_tx_scan_irq();
+	return 0;
+}
+
 /*
  ******************************************************
  Public function section
@@ -1556,81 +1629,8 @@ void macl_set_antsw(uint8_t antsw) {
 void macl_force_stop(void) {
 	macl.bit_params.stop = true;
 }
-
-static int macl_tx_scan_request(void) {
-	macl_scan_request_raw16 *scan_req16;
-
-	HAL_GPIO_disableInterrupt();
-	phy_timer_stop();
-	phy_stop();
-	// scan requestのコマンドをセットする
-	scan_req16 = (macl_scan_request_raw16 *)macl.phy->out.data;
-	scan_req16->mac_header = 0xE803;
-	scan_req16->seq = (uint8_t) rand();
-	if (macl.parent->scan.panid != 0xFFFF) {
-		scan_req16->panid = macl.parent->scan.panid;
-	} else {
-		scan_req16->panid = 0xFFFF;
-	}
-	scan_req16->dst = 0xFFFF;
-	memcpy(scan_req16->src,macl.parent->my_addr.ieee_addr,8);
-	scan_req16->payload.cmd = SUBGHZ_HOPPING_SCAN_REQUEST;
-	memcpy(scan_req16->payload.id,SUBGHZ_HOPPING_ID,sizeof(SUBGHZ_HOPPING_ID));;
-	macl.phy->out.len = sizeof(macl_scan_request_raw16);
-
-	macl.status = macl_total_transmission_time(macl.phy->out.len+TX_TTL_OFFSET);
-	if (macl.status != STATUS_OK){
-		goto error;
-	}
-	// CH切り替え
-	phy_setup(macl.pages,HOPPING_SEARCH_LIST[scan_next_ch_index],macl.txPower,macl.antsw);
-#ifdef LAZURITE_IDE
-	Serial.print("macl_tx_scan_request_handler: ");
-	Serial.print_long((long)scan_next_ch_index,DEC);
-	Serial.print(",");
-	Serial.print_long((long)HOPPING_SEARCH_LIST[scan_next_ch_index],DEC);
-	Serial.print(",");
-	Serial.println_long((long)macl.hopping_state,DEC);
-#endif
-	// subghz_send
-	macl.phy->in.len = 0;
-	macl.status=STATUS_OK;
-	macl.resendingNum = 0;
-	macl.ccaCount=0;
-	macl.tx_callback = NULL;
-	macl.rxdone = true;
-	macl.bit_params.rxOnEnable = 1;
-
-	phy_txpre(MANUAL_TX);
-	macl_cca_setting();
-	macl.condition=SUBGHZ_ST_CCA;
-	HAL_GPIO_enableInterrupt();
-error:
-	//printk(KERN_INFO"%s end\n",__func__);
-	return macl.status;
-}
-
-static uint16_t macl_tx_scan_request_handler(void) {
-	scan_next_ch_index = (uint8_t)((scan_next_ch_index+1)%sizeof(HOPPING_SEARCH_LIST));
-	macl_tx_scan_request();
-#if !defined(LAZURITE_IDE)
-	HAL_TIMER2_start(SUBGHZ_HOPPING_TX_SCAN_REQUEST_INTERVAL,macl_tx_scan_request_handler,1); // attach tx scan timer periodically
-#endif
-	return SUBGHZ_HOPPING_TX_SCAN_REQUEST_INTERVAL;
-}
-
-static uint16_t macl_tx_scan_done_handler(void) {
-	macl.hopping_state = SUBGHZ_ST_HOPPING_NOP;
-	macl.hoppingdone = true;
-	HAL_TIMER2_stop(1); // stop periodic timer
-	macl_tx_scan_irq();
-	return 0;
-}
-
 int macl_tx_scan_start(void) {
 	scan_next_ch_index = 0;
-	macl.hopping_state = SUBGHZ_ST_HOPPING_SLAVE_SCAN_REQ;
-	macl.hoppingdone = false;
 	HAL_TIMER2_start(SUBGHZ_HOPPING_SCAN_INTERVAL,macl_tx_scan_done_handler,0);// attach scan stop timer
 	HAL_TIMER2_start(SUBGHZ_HOPPING_TX_SCAN_REQUEST_INTERVAL,macl_tx_scan_request_handler,1); // attach tx scan timer periodically
 	return macl_tx_scan_request();
