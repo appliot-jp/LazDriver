@@ -65,6 +65,7 @@ static struct {
 	SUBGHZ_STATUS rx_stat;
 	void (*rx_callback)(const uint8_t *data, uint8_t rssi, int status);		// change api
 	void (*tx_callback)(uint8_t rssi, int status);
+	void (*scan_callback)(uint8_t num);
 	struct rf_param rf;
 	struct mach_param *mach;
 	BUFFER tx;
@@ -688,6 +689,66 @@ static void subghz_setDsssSpreadFactor(int8_t sf) {
 	subghz_param.rf.dsssSF = sf;
 }
 
+static SUBGHZ_MSG subghz_tx_scan(uint16_t panid, SUBGHZ_SCAN_LIST *list, uint8_t size, void (*callback)(uint8_t num)) {
+	SUBGHZ_MSG msg;
+	int result;
+
+	if (subghz_param.mach->macl->hopping_state != SUBGHZ_ST_HOPPING_NOP) {
+		msg = SUBGHZ_SCAN_FAIL; // hopping process running
+	} else {
+		subghz_param.mach->scan.list = list;
+		subghz_param.mach->scan.size = size;
+		subghz_param.mach->scan.next_index = 0;
+		subghz_param.mach->scan.panid = panid;
+		result = mach_tx_scan_start();
+		if (result == STATUS_OK) {
+			subghz_param.scan_callback = callback;
+			subghz_api_status |= SUBGHZ_API_SCAN;
+		} else {
+			if (callback != (void *)0) callback(0);
+		}
+		msg = subghz_genErrMsg(result);
+	}
+	return msg;
+}
+
+void mach_tx_scan_irq(void) {
+	SUBGHZ_SCAN_LIST *list = subghz_param.mach->scan.list,tmp;
+	int i,j,k=0;
+	uint16_t sum=0;
+
+	if (list != NULL) {
+		for (i=0; i<subghz_param.mach->scan.next_index; i++) {
+			// average of rssi
+			for (j=0; j<4; j++) {
+				if (list[i].raw_rssi.byte_data[j] != 0x00) {
+					sum += list[i].raw_rssi.byte_data[j];
+					k++;
+				}
+			}
+			list[i].rssi = (uint8_t)((sum*10/k+5)/10); // rounding up, sum/k+0.5
+		}
+		if (subghz_param.mach->scan.next_index > 1) {
+			// bubble sort
+			for (i=0; i<subghz_param.mach->scan.next_index; i++) {
+				for (j=subghz_param.mach->scan.next_index-1; j>i; j--) {
+					if (list[j-1].rssi < list[j].rssi) {
+						memcpy(&tmp,&list[j],sizeof(SUBGHZ_SCAN_LIST));
+						memcpy(&list[j],&list[j-1],sizeof(SUBGHZ_SCAN_LIST));
+						memcpy(&list[j-1],&tmp,sizeof(SUBGHZ_SCAN_LIST));
+					}
+				}
+			}
+		}
+	}
+	if (subghz_param.scan_callback != (void *)0) {
+		subghz_param.scan_callback(subghz_param.mach->scan.next_index);
+		subghz_param.scan_callback = (void *)0;
+	}
+	subghz_api_status &= ~SUBGHZ_API_SCAN;
+	return;
+}
+
 // setting of function
 const SubGHz_CTRL SubGHz = {
 	subghz_init,
@@ -718,4 +779,5 @@ const SubGHz_CTRL SubGHz = {
 	subghz_set_ack_tx_interval,
 	subghz_set_ant_sw,
 	subghz_setDsssSpreadFactor,
+	subghz_tx_scan,
 };

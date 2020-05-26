@@ -121,6 +121,23 @@ struct mac_addr {
 	uint16_t	short_addr;				// for lazurite
 	uint8_t		ieee_addr[8];			// for lazurite
 };
+
+typedef struct {
+	uint8_t addr[8];
+	union {
+		uint8_t byte_data[4];
+		uint32_t long_data;
+	} raw_rssi;
+	uint8_t rssi;
+} SUBGHZ_SCAN_LIST;
+
+struct scan_param {
+	SUBGHZ_SCAN_LIST *list;
+	uint8_t size;
+	uint8_t next_index;
+	uint16_t panid;
+};
+
 struct mach_param {
 	struct macl_param *macl;
 	struct mac_addr my_addr;
@@ -132,6 +149,7 @@ struct mach_param {
 	bool coordinator;
 	bool sending;
 	struct rf_param *rf;
+	struct scan_param scan;
 };
 
 extern struct mach_param *mach_init(void);
@@ -151,7 +169,8 @@ extern int mach_set_promiscuous(bool on);
 extern void mach_get_enhance_ack(uint8_t **data, int *size);
 extern bool mach_set_enhance_ack(uint8_t *data, int size);
 extern void mach_set_ack_tx_interval(uint16_t interval);
-
 extern void mach_set_antsw(uint8_t antsw);
+extern int mach_tx_scan_start(void);
+extern void mach_tx_scan_irq(void);
 #endif
 

@@ -971,3 +971,13 @@ void mach_set_ack_tx_interval(uint16_t interval){
 void mach_set_antsw(uint8_t antsw) {
 	macl_set_antsw(antsw);
 }
+
+int mach_tx_scan_start(void) {
+	return macl_tx_scan_start();
+}
+
+int macl_tx_scan_irq(void) {
+	mach_tx_scan_irq();
+	return STATUS_OK;
+}
+

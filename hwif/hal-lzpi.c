@@ -46,8 +46,10 @@
 static struct timer_list g_timer;			// timer handler
 //static struct timer_list syslog_timer;		// timer handler
 static struct timer_list timer4_timer;		// timer4 handler
+static struct timer_list timer2_timer[2];			// timer2 handler
 
 static void (*ext_timer_func)(void);
+static uint16_t (*ext_timer2_func[2])(void);
 static void (*ext_irq_func)(void);
 //static void (*act_irq_func)(void);
 //static void (*syslog_timer_ext_func)(uint32_t data);
@@ -208,6 +210,18 @@ int rf_main_thread(void *p)
 				m.trigger&=~0x10;
 			}
 		}
+		if(m.trigger&0x20) {				// SCAN Timer INTERRUPT 0
+			if(ext_timer2_func[0]) {
+				ext_timer2_func[0]();
+			}
+			m.trigger&=~0x20;
+		}
+		if(m.trigger&0x40) {				// SCAN Timer INTERRUPT 1
+			if(ext_timer2_func[1]) {
+				ext_timer2_func[1]();
+			}
+			m.trigger&=~0x40;
+		}
 	}
 	printk(KERN_INFO"[HAL] %s thread end\n",__func__);
 	return 0;
@@ -285,6 +299,8 @@ int spi_probe(void){
 
 	// init external functions
 	ext_timer_func = NULL;
+	ext_timer2_func[0] = NULL;
+	ext_timer2_func[1] = NULL;
 	ext_irq_func = NULL;
 	ext_irq_enb = false;
 	timer4_irq_func = NULL;
@@ -502,7 +518,7 @@ int HAL_I2C_read(unsigned short addr, unsigned char *data, unsigned char size)
 
 // timer function
 static bool timer_flag=false;
-void timer_function(struct timer_list *t)
+static void timer_function(struct timer_list *t)
 {
 	if(ext_timer_func){
 		m.trigger|=0x02;
@@ -535,6 +551,61 @@ int HAL_TIMER_stop(void)
 		timer_flag = false;
 		del_timer(&g_timer);
 		ext_timer_func = NULL;
+	}
+	return STATUS_OK;
+}
+
+// timer2 function
+static bool timer2_flag[2] = { false, false };
+static void timer2_func0(struct timer_list *t)
+{
+	if(ext_timer2_func[0]){
+		m.trigger|=0x20;
+		que_irq=1;
+		wake_up_interruptible_sync(&rf_irq_q);
+	}
+	timer2_flag[0]=false;
+}
+
+static void timer2_func1(struct timer_list *t)
+{
+	if(ext_timer2_func[1]){
+		m.trigger|=0x40;
+		que_irq=1;
+		wake_up_interruptible_sync(&rf_irq_q);
+	}
+	timer2_flag[1]=false;
+}
+
+int HAL_TIMER2_start(uint16_t msec, uint16_t (*func)(void), uint8_t n)
+{
+	uint32_t ms32 = msec;
+	n = n > 0 ? 1 : 0;
+	if (timer2_flag[n] == true) {
+		del_timer(&timer2_timer[n]);
+		timer2_flag[n] = false;
+		printk(KERN_INFO"%s %s %d HAL_TIMER2 reset\n",__FILE__,__func__,__LINE__);
+	}
+	ms32 = ms32*HZ/1000;
+	timer2_timer[n].expires = jiffies + ms32;
+	if (n == 1) {
+		timer2_timer[n].function = timer2_func0;
+	} else {
+		timer2_timer[n].function = timer2_func1;
+	}
+	ext_timer2_func[n] = func;
+	add_timer(&timer2_timer[n]);
+	timer2_flag[n] = true;
+	return STATUS_OK;
+}
+
+int HAL_TIMER2_stop(uint8_t n)
+{
+	n = n > 0 ? 1 : 0;
+	if (timer2_flag[n] == true) {
+		timer2_flag[n] = false;
+		del_timer(&timer2_timer[n]);
+		ext_timer2_func[n] = NULL;
 	}
 	return STATUS_OK;
 }

@@ -45,6 +45,8 @@
 #define SUBGHZ_HOPPING_SEARCH_CYCLE				2
 #define SUBGHZ_HOPPING_SEARCH_INTERVAL		200L
 #define SUBGHZ_HOPPING_CH_DURATION				5000L
+#define SUBGHZ_HOPPING_TX_SCAN_REQUEST_INTERVAL			200 // ms
+#define SUBGHZ_HOPPING_SCAN_INTERVAL			( 10*1000) // ms
 
 #define SUBGHZ_HOPPING_SYNC_FRAME_SIZE 16
 
@@ -80,7 +82,8 @@ typedef enum {
 typedef enum {
 	SUBGHZ_ST_HOPPING_NOP,								//0		HOPPINGのコマンドではない
 	SUBGHZ_ST_HOPPING_HOST_CMD_TX,				//1		HOPPINGのコマンド送信
-	SUBGHZ_ST_HOPPING_SLAVE_SYNC_REQ			//2		HOPPING SLAVEのSYNC_REQ送信
+	SUBGHZ_ST_HOPPING_SLAVE_SYNC_REQ,			//2		HOPPING SLAVEのSYNC_REQ送信
+	SUBGHZ_ST_HOPPING_SLAVE_SCAN_REQ			//3		HOPPING SLAVEのSCAN_REQ送信
 } SUBGHZ_HOPPING_STATE;
 #ifdef LAZURITE_IDE
 typedef __packed struct {
@@ -137,6 +140,29 @@ typedef __packed struct  {
 	macl_timesync_params_cmd payload;
 } macl_timesync_params_raw64;
 
+typedef __packed struct {
+	uint8_t cmd;
+	uint8_t id[4];
+} macl_scan_request_cmd_params;
+
+typedef __packed struct {
+	uint16_t mac_header;
+	uint8_t  seq;
+	uint16_t panid;
+	uint16_t dst;
+	uint8_t src[8];
+	macl_scan_request_cmd_params payload;
+} macl_scan_request_raw16;
+
+typedef __packed struct  {
+	uint16_t mac_header;
+	uint8_t  seq;
+	uint16_t panid;
+	uint8_t dst[8];
+	uint8_t src[8];
+	macl_scan_request_cmd_params payload;
+} macl_scan_params_raw64;
+
 #else
 typedef struct {
 	uint8_t cmd;
@@ -192,6 +218,28 @@ typedef struct  {
 	macl_timesync_params_cmd payload;
 } __attribute__((__packed__)) macl_timesync_params_raw64;
 
+typedef struct {
+	uint8_t cmd;
+	uint8_t id[4];
+} __attribute__((__packed__)) macl_scan_request_cmd_params;
+
+typedef struct {
+	uint16_t mac_header;
+	uint8_t  seq;
+	uint16_t panid;
+	uint16_t dst;
+	uint8_t src[8];
+	macl_scan_request_cmd_params payload;
+} __attribute__((__packed__)) macl_scan_request_raw16;
+
+typedef struct  {
+	uint16_t mac_header;
+	uint8_t  seq;
+	uint16_t panid;
+	uint8_t dst[8];
+	uint8_t src[8];
+	macl_scan_request_cmd_params payload;
+} __attribute__((__packed__)) macl_scan_params_raw64;
 #endif
 
 struct macl_param {
@@ -237,6 +285,7 @@ struct macl_param {
 		struct {
 			macl_timesync_params_raw64 *sync;
 			uint8_t ch_index;
+			uint32_t last_rx_time;
 		} slave;
 		struct { 
 			uint8_t ch_index;						// hopping mode only. ch index.
@@ -276,5 +325,7 @@ extern int	macl_get_modulation(int8_t *mod, int8_t *sf);
 extern void macl_set_antsw(uint8_t antsw);
 extern void macl_hopping_cmd_rx(void *buff);
 extern void macl_force_stop(void);
+extern int macl_tx_scan_start(void);
+extern int macl_tx_scan_irq(void);
 #endif
 

@@ -33,6 +33,7 @@
 	#include <driver_irq.h>
 	#include <driver_gpio.h>
 	#include <driver_ltbc.h>
+	#include <driver_uart.h>
 	#include <lp_manage.h>
 	#include <wdt.h>
 	#include "hal.h"
@@ -238,6 +239,47 @@ int HAL_TIMER_stop(void)
 {
 	ltbc_detach_handler(0);
 	hal_tm_fn = NULL;
+
+	return STATUS_OK;
+}
+
+static uint16_t (*hal_tm2_fn[2])(void);
+static uint16_t HAL_TIMER2_func0(uint16_t count)
+{
+	if (hal_tm2_fn[0] != NULL) hal_tm2_fn[0]();
+	return 0;
+}
+
+// HAL_TIMER_func1 periodic timer
+static uint16_t HAL_TIMER2_func1(uint16_t count)
+{
+	uint16_t ret = 0, msec;
+
+	if (hal_tm2_fn[1] != NULL) {
+		msec = hal_tm2_fn[1]();
+		ret = (uint16_t)((uint32_t)msec*256/1000ul);
+	}
+	return ret;
+}
+
+int HAL_TIMER2_start(uint16_t msec, uint16_t (*func)(void), uint8_t n)
+{
+	uint16_t expire, count = ltbc_get_count();
+
+	n = n > 0 ? 1 : 0 ;
+	expire = (uint16_t)(count+(uint32_t)msec*256/1000ul);
+	hal_tm2_fn[n] = func;
+	if (n == 0) ltbc_attach_handler(n+1,expire,HAL_TIMER2_func0);
+	else ltbc_attach_handler(n+1,expire,HAL_TIMER2_func1);
+
+	return STATUS_OK;
+}
+
+int HAL_TIMER2_stop(uint8_t n)
+{
+	n = n > 0 ? 1 : 0 ;
+	ltbc_detach_handler(n);
+	hal_tm2_fn[n] = NULL;
 
 	return STATUS_OK;
 }

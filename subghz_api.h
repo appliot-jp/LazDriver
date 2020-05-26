@@ -33,7 +33,8 @@
 #define SUBGHZ_API_BEGIN			( 0x02 )
 #define SUBGHZ_API_SEND				( 0x04 )
 #define SUBGHZ_API_RXENABLE		( 0x08 )
-#define SUBGHZ_API_CLOSE		( 0x10 )
+#define SUBGHZ_API_SCAN				( 0x10 )
+#define SUBGHZ_API_CLOSE			( 0x20 )
 extern uint8_t subghz_api_status;
 
 typedef enum {
@@ -55,6 +56,7 @@ typedef enum {
 	SUBGHZ_TTL_SEND_OVR,		// 15
 	SUBGHZ_DEAD_LOCK,				// 16
 	SUBGHZ_SYNC_FAIL,				// 17
+	SUBGHZ_SCAN_FAIL,				// 18
 	SUBGHZ_RATE_FAIL,
 	SUBGHZ_DUMMY						// --
 } SUBGHZ_MSG;
@@ -132,6 +134,7 @@ typedef struct
 	void (*setAckTxInterval)(uint16_t interval);
 	void (*antSwitch)(uint8_t ant_sw);
 	void (*setDsssSpreadFactor)(int8_t sf);
+	SUBGHZ_MSG (*scan)(uint16_t panid, SUBGHZ_SCAN_LIST *list, uint8_t size, void (*callback)(uint8_t num));
 } SubGHz_CTRL;
 
 extern const SubGHz_CTRL SubGHz;

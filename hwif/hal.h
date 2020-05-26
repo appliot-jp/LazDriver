@@ -93,6 +93,8 @@ extern int HAL_GPIO_disableInterrupt(void);
 //extern int HAL_TIMER_setup(void);
 extern int HAL_TIMER_start(uint16_t msec, void (*func)(void));
 extern int HAL_TIMER_stop(void);
+extern int HAL_TIMER2_start(uint16_t msec, uint16_t (*func)(void), uint8_t n);
+extern int HAL_TIMER2_stop(uint8_t n);
 //extern int HAL_TIMER_getTick(uint32_t *tick);
 extern int HAL_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata, uint16_t rsize);
 extern int HAL_I2C_read(uint16_t addr, uint8_t *data, uint8_t size);

@@ -49,9 +49,12 @@ static const uint8_t HOPPING_SEARCH_LIST[] = { 24, 26, 28, 30, 34, 36, 38, 40, 4
 //static const uint8_t HOPPING_SEARCH_LIST[] = { 24, 24, 24, 24, 24, 24, 24, 24, 24, 24 };
 static uint8_t cmd_data_buf[64];
 static BUFFER  buf_cache;
+static uint8_t scan_next_ch_index;
 #endif
 #define SUBGHZ_HOPPING_SYNC_REQUEST	0x81
 #define SUBGHZ_HOPPING_SYNC_OK			0x82
+#define SUBGHZ_HOPPING_SCAN_REQUEST		0x83
+#define SUBGHZ_HOPPING_SCAN_RESPONSE	0x84
 const uint8_t SUBGHZ_HOPPING_ID[] = {0x00,0x1D,0x12,0x90};
 /*
  ******************************************************
@@ -70,6 +73,8 @@ static void macl_txdone_handler(void);
 static void macl_txdone_abort_handler(void);
 static void macl_ack_rxdone_handler(void);
 static void macl_ack_rxdone_abort_handler(void);
+static uint16_t macl_tx_scan_request_handler(void);
+static uint16_t macl_tx_scan_done_handler(void);
 #if defined(DEBUG)
 static const char macl_condition_string[][32] = {
 	"SUBGHZ_ST_INIT",
@@ -191,21 +196,51 @@ int macl_cca_setting(void) {
 	return STATUS_OK;
 }
 
+static void macl_update_scan_list(struct scan_param *scan, uint8_t *ieee_addr, uint8_t rssi) {
+	int i,found=false;
+	for (i=0; i<scan->next_index; i++) {
+		if (memcmp(scan->list[i].addr,ieee_addr,8) == 0) { // check already exist or not
+			found = true;
+			break;
+		}
+	}
+	if (found) {
+		scan->list[i].raw_rssi.long_data <<= 8; // shift left
+		scan->list[i].raw_rssi.byte_data[0] = rssi; // put latest data to LSB
+	} else if (i < scan->size) {
+		memcpy(scan->list[i].addr,ieee_addr,8);
+		scan->list[i].raw_rssi.byte_data[0] = rssi; // 1st time
+		scan->next_index++;
+	}
+}
+
 void macl_hopping_cmd_rx(void *buff) {
 	struct mac_header *mh;
 	union {
 		macl_timesync_search_request_raw16 *req16;
 		macl_timesync_search_request_raw64 *req64;
+		macl_scan_request_raw16 *scan_req16;
 	} req;
 	union {
 		//macl_timesync_params_raw16 *res16;		support only 64bit addressing mode
 		macl_timesync_params_raw64 *res64;
+		macl_scan_params_raw64 *scan_res64;
 	} res;
 	mh = buff;
 	switch(macl.ch) {
 		case SUBGHZ_HOPPING_TS_S:
 			//PAYLOADDUMP(mh->raw.data,mh->raw.len);
 			macl.hoppingdone = true;
+			switch(mh->payload.data[0]) {
+				case SUBGHZ_HOPPING_SCAN_RESPONSE:
+					if (macl.hopping_state == SUBGHZ_ST_HOPPING_SLAVE_SCAN_REQ) {
+						// save mac addr/rssi to list
+						macl_update_scan_list(&macl.parent->scan,mh->src.addr.ieee_addr,mh->rssi);
+					}
+					break;
+				default:
+					break;
+			}
 			break;
 		case SUBGHZ_HOPPING_TS_H:
 			switch(mh->payload.data[0]) {
@@ -259,6 +294,53 @@ void macl_hopping_cmd_rx(void *buff) {
 #endif
 						HAL_GPIO_enableInterrupt();
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
+						printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
+#endif
+					}
+					break;
+				case SUBGHZ_HOPPING_SCAN_REQUEST:
+					{
+						req.scan_req16 = (macl_scan_request_raw16 *)mh->raw->data;
+						if(memcmp(req.scan_req16->payload.id,SUBGHZ_HOPPING_ID,sizeof(SUBGHZ_HOPPING_ID)) != 0) {
+							break;
+						}
+					}
+					{
+						HAL_GPIO_disableInterrupt();
+						phy_stop();
+						phy_timer_stop();
+
+						res.scan_res64 = (macl_scan_params_raw64 *)macl.phy->out.data;
+						macl.phy->out.len = 22; // header:2,seq:1,panid;2,dst:8,src:8,payload:1
+
+						res.scan_res64->mac_header = 0xEC23;
+						res.scan_res64->seq = (uint8_t)rand();
+						macl.sequenceNum = res.scan_res64->seq;
+						res.scan_res64->panid = 0xFFFF;
+						memcpy(res.scan_res64->dst,mh->src.addr.ieee_addr,8);
+						memcpy(res.scan_res64->src,macl.parent->my_addr.ieee_addr,8);
+						res.scan_res64->payload.cmd = SUBGHZ_HOPPING_SCAN_RESPONSE;
+
+						macl.status = macl_total_transmission_time(macl.phy->out.len+TX_TTL_OFFSET);
+						if (macl.status != STATUS_OK){
+							break;
+						}
+
+						macl.hoppingdone = false; // ホッピング処理中
+						macl.hopping_state = SUBGHZ_ST_HOPPING_HOST_CMD_TX;
+
+						macl.status=STATUS_OK;
+						macl.resendingNum = 0;
+						macl.ccaCount = 0;
+						macl.tx_callback = NULL;
+
+						phy_txpre(MANUAL_TX);
+						macl_cca_setting();
+						macl.condition=SUBGHZ_ST_CCA;
+						HAL_GPIO_enableInterrupt();
+#ifdef LAZURITE_IDE
+//						Serial.println_long(__LINE__,DEC);
+#elif defined(DEBUG)
 						printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
 					}
@@ -325,7 +407,6 @@ static void macl_timesync_host_isr(void) {
 #endif
 		// set channel
 		macl_hopping_host_phy_setup();
-/*
 #ifdef LAZURITE_IDE
 		Serial.print("macl_timesync_host_isr: ");
 		Serial.print_long((long)macl.hopping.host.ch_index,DEC);
@@ -334,18 +415,17 @@ static void macl_timesync_host_isr(void) {
 		Serial.print(",");
 		Serial.println_long((long)macl.bit_params.sync_enb,DEC);
 #endif
-*/
 		// rxEnable
 		phy_sint_handler(macl_rxfifo_handler);
 		phy_rxstart();
 		macl.condition=SUBGHZ_ST_RX_STARTED;
-/*
+
 #ifdef LAZURITE_IDE
 		Serial.println("macl_timesync_host_isr");
 #else
 		printk(KERN_INFO"%s index=%d CH=%d\n",__func__,macl.hopping.host.ch_index, HOPPING_SEARCH_LIST[macl.hopping.host.ch_index]);
 #endif
-*/
+
 		macl.hoppingdone = true;
 		HAL_wake_up_interruptible(&macl.que);
 	} else {
@@ -387,7 +467,7 @@ static void macl_timesync_slave_isr(void) {
 			 phy_setup(macl.pages,macl.hopping.slave.sync->payload.ch_list[macl.hopping.slave.ch_index],macl.txPower,macl.antsw);
 			 */
 
-/*
+
 #ifdef LAZURITE_IDE
 		Serial.print("timesync_slave_isr: ");
 		Serial.print_long((long)millis(),DEC);
@@ -398,7 +478,7 @@ static void macl_timesync_slave_isr(void) {
 		Serial.print(",");
 		Serial.println_long((long)macl.bit_params.sync_enb,DEC);
 #endif
-*/
+
 
 		phy_sint_handler(macl_rxfifo_handler);
 		phy_rxstart();
@@ -418,10 +498,11 @@ static void macl_timesync_slave_isr(void) {
 static void macl_txdone(void) {
 	switch(macl.hopping_state) {
 		case SUBGHZ_ST_HOPPING_HOST_CMD_TX:
-			// hoppingのsync_okコマンド送信。イベント完了してrxonする
+			// hoppingのsync_ok/scan_responseコマンド送信。イベント完了してrxonする
 			macl.hoppingdone = true;
 			macl.hopping_state = SUBGHZ_ST_HOPPING_NOP;
 		case SUBGHZ_ST_HOPPING_SLAVE_SYNC_REQ:
+		case SUBGHZ_ST_HOPPING_SLAVE_SCAN_REQ:
 			// macl_search_gateway内でイベント終了を待つ
 			phy_sint_handler(macl_rxfifo_handler);
 			phy_rxstart();
@@ -1474,5 +1555,84 @@ void macl_set_antsw(uint8_t antsw) {
 }
 void macl_force_stop(void) {
 	macl.bit_params.stop = true;
+}
+
+static int macl_tx_scan_request(void) {
+	macl_scan_request_raw16 *scan_req16;
+
+	HAL_GPIO_disableInterrupt();
+	phy_timer_stop();
+	phy_stop();
+	// scan requestのコマンドをセットする
+	scan_req16 = (macl_scan_request_raw16 *)macl.phy->out.data;
+	scan_req16->mac_header = 0xE803;
+	scan_req16->seq = (uint8_t) rand();
+	if (macl.parent->scan.panid != 0xFFFF) {
+		scan_req16->panid = macl.parent->scan.panid;
+	} else {
+		scan_req16->panid = 0xFFFF;
+	}
+	scan_req16->dst = 0xFFFF;
+	memcpy(scan_req16->src,macl.parent->my_addr.ieee_addr,8);
+	scan_req16->payload.cmd = SUBGHZ_HOPPING_SCAN_REQUEST;
+	memcpy(scan_req16->payload.id,SUBGHZ_HOPPING_ID,sizeof(SUBGHZ_HOPPING_ID));;
+	macl.phy->out.len = sizeof(macl_scan_request_raw16);
+
+	macl.status = macl_total_transmission_time(macl.phy->out.len+TX_TTL_OFFSET);
+	if (macl.status != STATUS_OK){
+		goto error;
+	}
+	// CH切り替え
+	phy_setup(macl.pages,HOPPING_SEARCH_LIST[scan_next_ch_index],macl.txPower,macl.antsw);
+#ifdef LAZURITE_IDE
+	Serial.print("macl_tx_scan_request_handler: ");
+	Serial.print_long((long)scan_next_ch_index,DEC);
+	Serial.print(",");
+	Serial.print_long((long)HOPPING_SEARCH_LIST[scan_next_ch_index],DEC);
+	Serial.print(",");
+	Serial.println_long((long)macl.hopping_state,DEC);
+#endif
+	// subghz_send
+	macl.phy->in.len = 0;
+	macl.status=STATUS_OK;
+	macl.resendingNum = 0;
+	macl.ccaCount=0;
+	macl.tx_callback = NULL;
+	macl.rxdone = true;
+	macl.bit_params.rxOnEnable = 1;
+
+	phy_txpre(MANUAL_TX);
+	macl_cca_setting();
+	macl.condition=SUBGHZ_ST_CCA;
+	HAL_GPIO_enableInterrupt();
+error:
+	//printk(KERN_INFO"%s end\n",__func__);
+	return macl.status;
+}
+
+static uint16_t macl_tx_scan_request_handler(void) {
+	scan_next_ch_index = (uint8_t)((scan_next_ch_index+1)%sizeof(HOPPING_SEARCH_LIST));
+	macl_tx_scan_request();
+#if !defined(LAZURITE_IDE)
+	HAL_TIMER2_start(SUBGHZ_HOPPING_TX_SCAN_REQUEST_INTERVAL,macl_tx_scan_request_handler,1); // attach tx scan timer periodically
+#endif
+	return SUBGHZ_HOPPING_TX_SCAN_REQUEST_INTERVAL;
+}
+
+static uint16_t macl_tx_scan_done_handler(void) {
+	macl.hopping_state = SUBGHZ_ST_HOPPING_NOP;
+	macl.hoppingdone = true;
+	HAL_TIMER2_stop(1); // stop periodic timer
+	macl_tx_scan_irq();
+	return 0;
+}
+
+int macl_tx_scan_start(void) {
+	scan_next_ch_index = 0;
+	macl.hopping_state = SUBGHZ_ST_HOPPING_SLAVE_SCAN_REQ;
+	macl.hoppingdone = false;
+	HAL_TIMER2_start(SUBGHZ_HOPPING_SCAN_INTERVAL,macl_tx_scan_done_handler,0);// attach scan stop timer
+	HAL_TIMER2_start(SUBGHZ_HOPPING_TX_SCAN_REQUEST_INTERVAL,macl_tx_scan_request_handler,1); // attach tx scan timer periodically
+	return macl_tx_scan_request();
 }
 
