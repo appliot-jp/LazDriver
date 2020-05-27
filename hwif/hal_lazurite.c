@@ -226,9 +226,8 @@ static uint16_t HAL_TIMER_func(uint16_t count)
 
 int HAL_TIMER_start(uint16_t msec, void (*func)(void))
 {
-	uint16_t expire, count = ltbc_get_count();
+	uint16_t expire = (uint16_t)((uint32_t)msec*256/1000ul);
 
-	expire = (uint16_t)(count+(uint32_t)msec*256/1000ul);
 	hal_tm_fn = func;
 	ltbc_attach_handler(0,expire,HAL_TIMER_func);
 
