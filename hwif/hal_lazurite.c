@@ -226,9 +226,8 @@ static uint16_t HAL_TIMER_func(uint16_t count)
 
 int HAL_TIMER_start(uint16_t msec, void (*func)(void))
 {
-	uint16_t expire, count = ltbc_get_count();
+	uint16_t expire = (uint16_t)((uint32_t)msec*256/1000ul);
 
-	expire = (uint16_t)(count+(uint32_t)msec*256/1000ul);
 	hal_tm_fn = func;
 	ltbc_attach_handler(0,expire,HAL_TIMER_func);
 
@@ -264,10 +263,9 @@ static uint16_t HAL_TIMER2_func1(uint16_t count)
 
 int HAL_TIMER2_start(uint16_t msec, uint16_t (*func)(void), uint8_t n)
 {
-	uint16_t expire, count = ltbc_get_count();
+	uint16_t expire = (uint16_t)((uint32_t)msec*256/1000ul);
 
 	n = n > 0 ? 1 : 0 ;
-	expire = (uint16_t)(count+(uint32_t)msec*256/1000ul);
 	hal_tm2_fn[n] = func;
 	if (n == 0) ltbc_attach_handler(n+1,expire,HAL_TIMER2_func0);
 	else ltbc_attach_handler(n+1,expire,HAL_TIMER2_func1);

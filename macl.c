@@ -198,19 +198,21 @@ int macl_cca_setting(void) {
 
 static void macl_update_scan_list(struct scan_param *scan, uint8_t *ieee_addr, uint8_t rssi) {
 	int i,found=false;
-	for (i=0; i<scan->next_index; i++) {
-		if (memcmp(scan->list[i].addr,ieee_addr,8) == 0) { // check already exist or not
-			found = true;
-			break;
+	if (scan != NULL) {
+		for (i=0; i<scan->next_index; i++) {
+			if (memcmp(scan->list[i].addr,ieee_addr,8) == 0) { // check already exist or not
+				found = true;
+				break;
+			}
 		}
-	}
-	if (found) {
-		scan->list[i].raw_rssi.long_data <<= 8; // shift left
-		scan->list[i].raw_rssi.byte_data[0] = rssi; // put latest data to LSB
-	} else if (i < scan->size) {
-		memcpy(scan->list[i].addr,ieee_addr,8);
-		scan->list[i].raw_rssi.byte_data[0] = rssi; // 1st time
-		scan->next_index++;
+		if (found) {
+			scan->list[i].raw_rssi.long_data <<= 8; // shift left
+			scan->list[i].raw_rssi.byte_data[0] = rssi; // put latest data to LSB
+		} else if (i < scan->size) {
+			memcpy(scan->list[i].addr,ieee_addr,8);
+			scan->list[i].raw_rssi.byte_data[0] = rssi; // 1st time
+			scan->next_index++;
+		}
 	}
 }
 
@@ -233,11 +235,8 @@ void macl_hopping_cmd_rx(void *buff) {
 			macl.hoppingdone = true;
 			switch(mh->payload.data[0]) {
 				case SUBGHZ_HOPPING_SCAN_RESPONSE:
-					if (macl.hopping_state == SUBGHZ_ST_HOPPING_SLAVE_SCAN_REQ) {
-						macl.hopping_state = SUBGHZ_ST_HOPPING_NOP;
-						// save mac addr/rssi to list
-						macl_update_scan_list(&macl.parent->scan,mh->src.addr.ieee_addr,mh->rssi);
-					}
+					// save mac addr/rssi to list
+					macl_update_scan_list(&macl.parent->scan,mh->src.addr.ieee_addr,mh->rssi);
 					break;
 				default:
 					break;
@@ -480,7 +479,6 @@ static void macl_timesync_slave_isr(void) {
 		Serial.println_long((long)macl.bit_params.sync_enb,DEC);
 #endif
 
-
 		phy_sint_handler(macl_rxfifo_handler);
 		phy_rxstart();
 		macl.condition=SUBGHZ_ST_RX_STARTED;
@@ -500,10 +498,10 @@ static void macl_txdone(void) {
 	switch(macl.hopping_state) {
 		case SUBGHZ_ST_HOPPING_HOST_CMD_TX:
 			// hoppingのsync_ok/scan_responseコマンド送信。イベント完了してrxonする
-			macl.hoppingdone = true;
 			macl.hopping_state = SUBGHZ_ST_HOPPING_NOP;
-		case SUBGHZ_ST_HOPPING_SLAVE_SYNC_REQ:
 		case SUBGHZ_ST_HOPPING_SLAVE_SCAN_REQ:
+			macl.hoppingdone = true;
+		case SUBGHZ_ST_HOPPING_SLAVE_SYNC_REQ:
 			// macl_search_gateway内でイベント終了を待つ
 			phy_sint_handler(macl_rxfifo_handler);
 			phy_rxstart();
@@ -537,6 +535,10 @@ static void macl_txdone(void) {
 }
 
 static void macl_rxdone(void) {
+	if(macl.hopping_state == SUBGHZ_ST_HOPPING_SLAVE_SCAN_REQ) {
+		macl.rxdone = true;
+		macl.hopping_state = SUBGHZ_ST_HOPPING_NOP;
+	}
 	if(macl.bit_params.txReserve == false) {
 		if(macl.bit_params.hopping_sync_host_irq){
 			macl.rxdone = true;
@@ -544,8 +546,6 @@ static void macl_rxdone(void) {
 		} else if(macl.bit_params.hopping_sync_slave_irq){
 			macl.rxdone = true;
 			macl_timesync_slave_isr();
-		} else if(macl.hopping_state == SUBGHZ_ST_HOPPING_SLAVE_SCAN_REQ) {
-			macl.rxdone = true;
 		} else if(macl.bit_params.rxOnEnable) {
 			phy_sint_handler(macl_rxfifo_handler);
 			phy_rxstart();
@@ -1132,6 +1132,17 @@ error:
 static int macl_tx_scan_request(void) {
 	macl_scan_request_raw16 *scan_req16;
 
+	if (macl.hoppingdone == false) {
+#ifdef LAZURITE_IDE
+		Serial.print_long(__LINE__,DEC);
+		Serial.print(",macl.hopping_state:");
+		Serial.println_long((long)macl.hopping_state,DEC);
+#elif defined(DEBUG)
+		printk(KERN_INFO"%s,%d,%d\n",__func__,__LINE__,macl.hopping_state);
+#endif
+		macl.status = -ENOPROTOOPT;
+		goto error;
+	}
 	HAL_GPIO_disableInterrupt();
 	phy_timer_stop();
 	phy_stop();
@@ -1183,8 +1194,11 @@ error:
 }
 
 static uint16_t macl_tx_scan_request_handler(void) {
+	uint8_t save = scan_next_ch_index;
 	scan_next_ch_index = (uint8_t)((scan_next_ch_index+1)%sizeof(HOPPING_SEARCH_LIST));
-	macl_tx_scan_request();
+	if (macl_tx_scan_request() != STATUS_OK) {
+		scan_next_ch_index = save;
+	}
 #if !defined(LAZURITE_IDE)
 	HAL_TIMER2_start(SUBGHZ_HOPPING_TX_SCAN_REQUEST_INTERVAL,macl_tx_scan_request_handler,1); // attach tx scan timer periodically
 #endif

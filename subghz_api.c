@@ -693,12 +693,13 @@ static SUBGHZ_MSG subghz_tx_scan(uint16_t panid, SUBGHZ_SCAN_LIST *list, uint8_t
 	SUBGHZ_MSG msg;
 	int result;
 
-	if (subghz_param.mach->macl->hopping_state != SUBGHZ_ST_HOPPING_NOP) {
-		msg = SUBGHZ_SCAN_FAIL; // hopping process running
+	if (subghz_api_status & SUBGHZ_API_SCAN) { // scan is still running
+		msg = SUBGHZ_SCAN_FAIL;
 	} else {
 		subghz_param.mach->scan.list = list;
 		subghz_param.mach->scan.size = size;
 		subghz_param.mach->scan.next_index = 0;
+		if (list != NULL) memset(list,0,sizeof(SUBGHZ_SCAN_LIST)*size);
 		subghz_param.mach->scan.panid = panid;
 		result = mach_tx_scan_start();
 		if (result == STATUS_OK) {
@@ -714,13 +715,13 @@ static SUBGHZ_MSG subghz_tx_scan(uint16_t panid, SUBGHZ_SCAN_LIST *list, uint8_t
 
 void mach_tx_scan_irq(void) {
 	SUBGHZ_SCAN_LIST *list = subghz_param.mach->scan.list,tmp;
-	int i,j,k=0;
-	uint16_t sum=0;
+	int i,j,k;
+	uint16_t sum;
 
 	if (list != NULL) {
 		for (i=0; i<subghz_param.mach->scan.next_index; i++) {
 			// average of rssi
-			for (j=0; j<4; j++) {
+			for (j=0,k=0,sum=0; j<4; j++) {
 				if (list[i].raw_rssi.byte_data[j] != 0x00) {
 					sum += list[i].raw_rssi.byte_data[j];
 					k++;
