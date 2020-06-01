@@ -467,7 +467,7 @@ static void macl_timesync_slave_isr(void) {
 			 phy_setup(macl.pages,macl.hopping.slave.sync->payload.ch_list[macl.hopping.slave.ch_index],macl.txPower,macl.antsw);
 			 */
 
-
+/*
 #ifdef LAZURITE_IDE
 		Serial.print("timesync_slave_isr: ");
 		Serial.print_long((long)millis(),DEC);
@@ -478,7 +478,7 @@ static void macl_timesync_slave_isr(void) {
 		Serial.print(",");
 		Serial.println_long((long)macl.bit_params.sync_enb,DEC);
 #endif
-
+*/
 		phy_sint_handler(macl_rxfifo_handler);
 		phy_rxstart();
 		macl.condition=SUBGHZ_ST_RX_STARTED;
@@ -641,14 +641,14 @@ static bool macl_timesync_search_gateway(void){
 			macl.phy->in.len = 0;
 			phy_stop();
 			phy_setup(macl.pages,HOPPING_SEARCH_LIST[ch_index],macl.txPower,macl.antsw);
-			/*
+/*
 #ifdef LAZURITE_IDE
-Serial.print("timesync_search_gateway: ");
-Serial.print_long((long)ch_index,DEC);
-Serial.print(",");
-Serial.print_long((long)HOPPING_SEARCH_LIST[ch_index],DEC);
-Serial.print(",");
-Serial.println_long((long)macl.bit_params.sync_enb,DEC);
+			Serial.print("timesync_search_gateway: ");
+			Serial.print_long((long)ch_index,DEC);
+			Serial.print(",");
+			Serial.print_long((long)HOPPING_SEARCH_LIST[ch_index],DEC);
+			Serial.print(",");
+			Serial.println_long((long)macl.bit_params.sync_enb,DEC);
 #endif
 */
 			// subghz_send
@@ -673,6 +673,7 @@ Serial.println_long((long)macl.bit_params.sync_enb,DEC);
 					res.res64->payload.sync_time = HAL_millis()-res.res64->payload.sync_from;
 					memcpy(cmd_data_buf,macl.parent->rx.raw->data,macl.parent->rx.raw->len);
 					macl.bit_params.sync_enb = true;
+					macl.hopping.slave.last_rx_time = HAL_millis(); // save rx time to re-sync
 					macl.hopping.slave.sync = (macl_timesync_params_raw64 *)cmd_data_buf;
 					break;
 				}
@@ -1134,7 +1135,7 @@ static int macl_tx_scan_request(void) {
 
 	if (macl.hoppingdone == false) {
 #ifdef LAZURITE_IDE
-		Serial.print_long(__LINE__,DEC);
+		Serial.print_long((long)__LINE__,DEC);
 		Serial.print(",macl.hopping_state:");
 		Serial.println_long((long)macl.hopping_state,DEC);
 #elif defined(DEBUG)
@@ -1167,6 +1168,7 @@ static int macl_tx_scan_request(void) {
 	}
 	// CH切り替え
 	phy_setup(macl.pages,HOPPING_SEARCH_LIST[scan_next_ch_index],macl.txPower,macl.antsw);
+/*
 #ifdef LAZURITE_IDE
 	Serial.print("macl_tx_scan_request_handler: ");
 	Serial.print_long((long)scan_next_ch_index,DEC);
@@ -1175,6 +1177,7 @@ static int macl_tx_scan_request(void) {
 	Serial.print(",");
 	Serial.println_long((long)macl.hopping_state,DEC);
 #endif
+*/
 	macl.hoppingdone = false;
 	macl.hopping_state = SUBGHZ_ST_HOPPING_SLAVE_SCAN_REQ;
 	// subghz_send
@@ -1311,7 +1314,7 @@ Serial.println_long((long)macl.bit_params.sync_enb,DEC);
 			HAL_GPIO_enableInterrupt();
 			break;
 		case SUBGHZ_HOPPING_TS_S:
-			if(macl.bit_params.sync_enb == false) {
+			if ((macl.bit_params.sync_enb == false) || (HAL_millis() - macl.hopping.slave.last_rx_time > SUBGHZ_HOPPING_RESYNC_INTERVAL)) { // re-sync
 				if(macl_timesync_search_gateway() == true) {
 					macl.bit_params.timer_sync = false;
 					timer4.set(macl_hopping_slave_phy_setup(),macl_timesync_slave_isr);
@@ -1418,7 +1421,7 @@ int	macl_xmit_sync(BUFFER *buff) {
 	switch(macl.ch) {
 		case SUBGHZ_HOPPING_TS_S:
 			// 時刻同期
-			if(macl.bit_params.sync_enb == false) {
+			if ((macl.bit_params.sync_enb == false) || (HAL_millis() - macl.hopping.slave.last_rx_time > SUBGHZ_HOPPING_RESYNC_INTERVAL)) { // re-sync
 				if(macl_timesync_search_gateway() == false) {
 					macl.status = -ENOPROTOOPT;
 					goto error;
