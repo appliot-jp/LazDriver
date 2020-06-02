@@ -56,6 +56,7 @@ static uint8_t scan_next_ch_index;
 #define SUBGHZ_HOPPING_SCAN_REQUEST		0x83
 #define SUBGHZ_HOPPING_SCAN_RESPONSE	0x84
 const uint8_t SUBGHZ_HOPPING_ID[] = {0x00,0x1D,0x12,0x90};
+static const char comma[] = ",";
 /*
  ******************************************************
  Private handler section
@@ -400,6 +401,7 @@ static uint32_t macl_hopping_slave_phy_setup(void) {
 	return local.slave.time_offset;
 }
 static void macl_timesync_host_isr(void) {
+	static const char s1[] = "macl_timesync_host_isr: ";
 	if((macl.bit_params.txReserve == false) && macl.txdone && macl.rxdone && macl.hoppingdone) {
 		macl.hoppingdone = false;
 #ifndef LAZURITE_IDE
@@ -408,11 +410,11 @@ static void macl_timesync_host_isr(void) {
 		// set channel
 		macl_hopping_host_phy_setup();
 #ifdef LAZURITE_IDE
-		Serial.print("macl_timesync_host_isr: ");
+		Serial.print(s1);
 		Serial.print_long((long)macl.hopping.host.ch_index,DEC);
-		Serial.print(",");
+		Serial.print(comma);
 		Serial.print_long((long)HOPPING_SEARCH_LIST[macl.hopping.host.ch_index],DEC);
-		Serial.print(",");
+		Serial.print(comma);
 		Serial.println_long((long)macl.bit_params.sync_enb,DEC);
 #endif
 		// rxEnable
@@ -561,6 +563,7 @@ static void macl_rxdone(void) {
 }
 
 static bool macl_timesync_search_gateway(void){
+	static const char s1[] = "timesync_search_gateway: ";
 	uint8_t ch_index;
 	uint8_t ch_scan_count = 0;
 	uint8_t ch_scan_cycle = SUBGHZ_HOPPING_SEARCH_CYCLE;
@@ -574,6 +577,9 @@ static bool macl_timesync_search_gateway(void){
 		macl_timesync_params_raw64 *res64;
 	} res;
 
+#ifdef LAZURITE_IDE
+	wdt_clear();
+#endif
 #ifndef LAZURITE_IDE
 	ACCESS_PUSH(3);
 #endif
@@ -643,11 +649,11 @@ static bool macl_timesync_search_gateway(void){
 			phy_setup(macl.pages,HOPPING_SEARCH_LIST[ch_index],macl.txPower,macl.antsw);
 /*
 #ifdef LAZURITE_IDE
-			Serial.print("timesync_search_gateway: ");
+			Serial.print(s1);
 			Serial.print_long((long)ch_index,DEC);
-			Serial.print(",");
+			Serial.print(comma);
 			Serial.print_long((long)HOPPING_SEARCH_LIST[ch_index],DEC);
-			Serial.print(",");
+			Serial.print(comma);
 			Serial.println_long((long)macl.bit_params.sync_enb,DEC);
 #endif
 */
@@ -1131,12 +1137,14 @@ error:
 }
 
 static int macl_tx_scan_request(void) {
+	static const char s1[] = ",macl.hopping_state:";
+	static const char s2[] = "macl_tx_scan_request_handler: ";
 	macl_scan_request_raw16 *scan_req16;
 
 	if (macl.hoppingdone == false) {
 #ifdef LAZURITE_IDE
 		Serial.print_long((long)__LINE__,DEC);
-		Serial.print(",macl.hopping_state:");
+		Serial.print(s1);
 		Serial.println_long((long)macl.hopping_state,DEC);
 #elif defined(DEBUG)
 		printk(KERN_INFO"%s,%d,%d\n",__func__,__LINE__,macl.hopping_state);
@@ -1170,11 +1178,11 @@ static int macl_tx_scan_request(void) {
 	phy_setup(macl.pages,HOPPING_SEARCH_LIST[scan_next_ch_index],macl.txPower,macl.antsw);
 /*
 #ifdef LAZURITE_IDE
-	Serial.print("macl_tx_scan_request_handler: ");
+	Serial.print(s2);
 	Serial.print_long((long)scan_next_ch_index,DEC);
-	Serial.print(",");
+	Serial.print(comma);
 	Serial.print_long((long)HOPPING_SEARCH_LIST[scan_next_ch_index],DEC);
-	Serial.print(",");
+	Serial.print(comma);
 	Serial.println_long((long)macl.hopping_state,DEC);
 #endif
 */
@@ -1278,6 +1286,7 @@ error:
 	@exception	return NULL
  ********************************************************************/
 int macl_start(void) {
+	static const char s1[] = "macl_start: ";
 	int status=STATUS_OK;
 	uint8_t ch;
 #ifndef LAZURITE_IDE
@@ -1300,11 +1309,11 @@ int macl_start(void) {
 			phy_setup(macl.pages,ch,macl.txPower,macl.antsw);
 			/*
 #ifdef LAZURITE_IDE
-Serial.print("macl_start: ");
+Serial.print(s1);
 Serial.print_long((long)macl.hopping.host.ch_index,DEC);
-Serial.print(",");
+Serial.print(comma);
 Serial.print_long((long)HOPPING_SEARCH_LIST[macl.hopping.host.ch_index],DEC);
-Serial.print(",");
+Serial.print(comma);
 Serial.println_long((long)macl.bit_params.sync_enb,DEC);
 #endif
 */
@@ -1647,6 +1656,9 @@ void macl_force_stop(void) {
 	macl.bit_params.stop = true;
 }
 int macl_tx_scan_start(void) {
+#ifdef LAZURITE_IDE
+	wdt_clear();
+#endif
 	scan_next_ch_index = 0;
 	HAL_TIMER2_start(SUBGHZ_HOPPING_SCAN_INTERVAL,macl_tx_scan_done_handler,0);// attach scan stop timer
 	HAL_TIMER2_start(SUBGHZ_HOPPING_TX_SCAN_REQUEST_INTERVAL,macl_tx_scan_request_handler,1); // attach tx scan timer periodically

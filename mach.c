@@ -527,8 +527,7 @@ bool mach_make_ack_header(void) {
 			uint16_t src_target;
 			int16_t enhance_ack_offset = 4;
 			do {
-				src_target = *(tx_enhance_ack.data+enhance_ack_offset+1);
-				src_target = src_target + *(tx_enhance_ack.data+enhance_ack_offset);
+				src_target = *((uint16_t *)(tx_enhance_ack.data+enhance_ack_offset));
 				if ((src_target == 0xffff ) || (src_target == mach.rx.src.addr.short_addr)) {
 					memcpy(&mach.ack.raw->data[offset],&tx_enhance_ack.data[enhance_ack_offset+2],enhance_ack_size);
 					offset += enhance_ack_size;
