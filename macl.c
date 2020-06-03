@@ -248,7 +248,16 @@ void macl_hopping_cmd_rx(void *buff) {
 				case SUBGHZ_HOPPING_SYNC_REQUEST:
 					{
 						req.req16 = (macl_timesync_search_request_raw16 *)mh->raw->data;
-						if(memcmp(req.req16->payload.id,SUBGHZ_HOPPING_ID,sizeof(SUBGHZ_HOPPING_ID)) != 0) {
+						req.req64 = (macl_timesync_search_request_raw64 *)mh->raw->data;
+						if (req.req16->mac_header == 0xE803) { // 16bit
+							if(memcmp(req.req16->payload.id,SUBGHZ_HOPPING_ID,sizeof(SUBGHZ_HOPPING_ID)) != 0) {
+								break;
+							}
+						} else if (req.req64->mac_header == 0xEC03) { // 64bit
+							if(memcmp(req.req64->payload.id,SUBGHZ_HOPPING_ID,sizeof(SUBGHZ_HOPPING_ID)) != 0) {
+								break;
+							}
+						} else {
 							break;
 						}
 					}
