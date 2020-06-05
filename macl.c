@@ -27,6 +27,7 @@
 #if defined LAZURITE_IDE
 	#include <driver_irq.h>
 	#include "serial.h"
+	#include "wdt.h"
 #else
 	#include <linux/module.h>
 	#include "common-lzpi.h"
@@ -572,7 +573,7 @@ static void macl_rxdone(void) {
 }
 
 static bool macl_timesync_search_gateway(void){
-	static const char s1[] = "timesync_search_gateway: ";
+//	static const char s1[] = "timesync_search_gateway: ";
 	uint8_t ch_index;
 	uint8_t ch_scan_count = 0;
 	uint8_t ch_scan_cycle = SUBGHZ_HOPPING_SEARCH_CYCLE;
@@ -1146,15 +1147,15 @@ error:
 }
 
 static int macl_tx_scan_request(void) {
-	static const char s1[] = ",macl.hopping_state:";
-	static const char s2[] = "macl_tx_scan_request_handler: ";
+//	static const char s1[] = ",macl.hopping_state:";
+//	static const char s2[] = "macl_tx_scan_request_handler: ";
 	macl_scan_request_raw16 *scan_req16;
 
 	if (macl.hoppingdone == false) {
 #ifdef LAZURITE_IDE
-		Serial.print_long((long)__LINE__,DEC);
-		Serial.print(s1);
-		Serial.println_long((long)macl.hopping_state,DEC);
+//		Serial.print_long((long)__LINE__,DEC);
+//		Serial.print(s1);
+//		Serial.println_long((long)macl.hopping_state,DEC);
 #elif defined(DEBUG)
 		printk(KERN_INFO"%s,%d,%d\n",__func__,__LINE__,macl.hopping_state);
 #endif
@@ -1295,7 +1296,7 @@ error:
 	@exception	return NULL
  ********************************************************************/
 int macl_start(void) {
-	static const char s1[] = "macl_start: ";
+//	static const char s1[] = "macl_start: ";
 	int status=STATUS_OK;
 	uint8_t ch;
 #ifndef LAZURITE_IDE
