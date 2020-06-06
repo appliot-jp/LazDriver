@@ -411,7 +411,7 @@ static uint32_t macl_hopping_slave_phy_setup(void) {
 	return local.slave.time_offset;
 }
 static void macl_timesync_host_isr(void) {
-	static const char s1[] = "macl_timesync_host_isr: ";
+//	static const char s1[] = "macl_timesync_host_isr: ";
 	if((macl.bit_params.txReserve == false) && macl.txdone && macl.rxdone && macl.hoppingdone) {
 		macl.hoppingdone = false;
 #ifndef LAZURITE_IDE
@@ -434,7 +434,7 @@ static void macl_timesync_host_isr(void) {
 
 #ifdef LAZURITE_IDE
 		//Serial.println("macl_timesync_host_isr");
-#else
+#elif defined(DEBUG)
 		printk(KERN_INFO"%s index=%d CH=%d\n",__func__,macl.hopping.host.ch_index, HOPPING_SEARCH_LIST[macl.hopping.host.ch_index]);
 #endif
 
@@ -1524,7 +1524,7 @@ int	macl_xmit_async(BUFFER *buff,void (*callback)(uint8_t rssi, int status))
 	macl.condition=SUBGHZ_ST_TX_START;
 #ifdef LAZURITE_IDE
 //	Serial.println_long(__LINE__,DEC);
-#else
+#elif defined(DEBUG)
 	printk(KERN_INFO"%s %d %d\n",__func__,__LINE__,macl.condition);
 #endif
 	macl.txdone = false;
