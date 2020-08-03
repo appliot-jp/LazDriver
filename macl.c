@@ -420,12 +420,14 @@ static void macl_timesync_host_isr(void) {
 		// set channel
 		macl_hopping_host_phy_setup();
 #ifdef LAZURITE_IDE
-		Serial.print(s1);
+		/*
+		 * Serial.print(s1);
 		Serial.print_long((long)macl.hopping.host.ch_index,DEC);
 		Serial.print(comma);
 		Serial.print_long((long)HOPPING_SEARCH_LIST[macl.hopping.host.ch_index],DEC);
 		Serial.print(comma);
 		Serial.println_long((long)macl.bit_params.sync_enb,DEC);
+		*/
 #endif
 		// rxEnable
 		phy_sint_handler(macl_rxfifo_handler);
