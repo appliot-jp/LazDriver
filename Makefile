@@ -35,20 +35,20 @@ ifeq ($(shell uname -n),atde7)
 	KERNEL_SRC=/home/atmark/linux
 all:
 	echo $(CFILES)
-	make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -C $(KERNEL_SRC) SUBDIRS=$(PWD) modules
+	make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -C $(KERNEL_SRC) SUBDIRS=$(PWD) M=$(PWD) modules
 
 clean:
-	make -C $(KERNEL_SRC) SUBDIRS=$(PWD) clean
+	make -C $(KERNEL_SRC) SUBDIRS=$(PWD) M=$(PWD) clean
 endif
 
 ifeq ($(shell uname -n),armadillo)
 	KERNEL_SRC=/lib/modules/$(shell uname -r)/build
 all:
 	echo $(RF)
-	make -C $(KERNEL_SRC) SUBDIRS=$(PWD) modules
+	make -C $(KERNEL_SRC) SUBDIRS=$(PWD) M=$(PWD) modules
 
 clean:
-	make -C $(KERNEL_SRC) SUBDIRS=$(PWD) clean
+	make -C $(KERNEL_SRC) SUBDIRS=$(PWD) M=$(PWD) clean
 endif
 
 ifeq ($(shell uname -n),raspberrypi)
@@ -57,9 +57,9 @@ ifeq ($(shell uname -n),raspberrypi)
 all:
 	echo $(RF)
 	echo $(EXTRA_CFLAGS)
-	make -C $(KERNEL_SRC) SUBDIRS=$(PWD) modules
+	make -C $(KERNEL_SRC) SUBDIRS=$(PWD) M=$(PWD) modules
 
 clean:
-	make -C $(KERNEL_SRC) SUBDIRS=$(PWD) clean
+	make -C $(KERNEL_SRC) SUBDIRS=$(PWD) M=$(PWD) clean
 endif
 
