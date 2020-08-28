@@ -11,7 +11,7 @@ ifeq ($(DEBUG),ON)
 	EXTRA_CFLAGS += -DDEBUG
 endif
 
-EXTRA_CFLAGS += -D$(AREA) -DRBUF=$(RBUF)
+EXTRA_CFLAGS += -D$(AREA) -DRBUF=$(RBUF) -Wimplicit-fallthrough=0
 
 CFILES = drv-lazurite.c subghz_api.c aes/aes.c mach.c  macl.c hwif/hal-lzpi.c  hwif/random-lzpi.c  hwif/spi-lzpi.c hwif/i2c-lzpi.c 
 
