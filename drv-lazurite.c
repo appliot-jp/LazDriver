@@ -30,7 +30,6 @@
 #include <linux/time.h>
 
 #include "common-lzpi.h"
-#include "common_subghz.h"
 #include "subghz_api.h"
 #include "drv-lazurite.h"
 #include "hwif/hal.h"
@@ -114,6 +113,7 @@ int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 	int errcode = 0;
 	static bool isFull = false;
 
+
 	// copy data to list
 	if((len < DATA_SIZE) && (len>0)) {
 		// get time stamp
@@ -158,7 +158,7 @@ int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 		// poll wait cancell 
 		wake_up_interruptible(&chrdev.read_q);	
 	} else {
-		printk(KERN_ERR "[DRV-802154E] add_list PHY Size error len=%d\n",len);
+		printk(KERN_ERR "[DRV-802154E] add_list PHY Size error\n");
 		errcode = -1;
 		goto error;
 		// return -1;
@@ -709,6 +709,7 @@ end:
 }
 
 static void tx_callback(uint8_t rssi,int status) {
+	p.tx_rssi = rssi;
 	p.tx_status = status;
 }
 static ssize_t chardev_write (struct file * file, const char __user * buf, size_t count, loff_t * ppos) {
