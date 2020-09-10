@@ -718,6 +718,7 @@ end:
 }
 
 static void tx_callback(uint8_t rssi,int status) {
+	p.tx_rssi = rssi;
 	p.tx_status = status;
 }
 static ssize_t chardev_write (struct file * file, const char __user * buf, size_t count, loff_t * ppos) {
@@ -735,6 +736,17 @@ static ssize_t chardev_write (struct file * file, const char __user * buf, size_
 		}
 		EXT_set_tx_led(0);
 		if(p.tx64) {
+			/*
+			printk(KERN_INFO"dst: %02x%02x%02x%02x%02x%02x%02x%02x\n",
+					p.dst_addr[7],
+					p.dst_addr[6],
+					p.dst_addr[5],
+					p.dst_addr[4],
+					p.dst_addr[3],
+					p.dst_addr[2],
+					p.dst_addr[1],
+					p.dst_addr[0]);
+					*/
 			status = SubGHz.send64le(p.dst_addr,payload,count,tx_callback);
 		}else {
 			uint16_t dst_addr;
