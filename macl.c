@@ -398,16 +398,6 @@ static uint32_t macl_hopping_slave_phy_setup(void) {
 	macl.hopping.slave.ch_index = (uint8_t)local.slave.ch_index;
 	phy_stop();
 	phy_setup(macl.pages,macl.hopping.slave.sync->payload.ch_list[local.slave.ch_index],macl.txPower,macl.antsw);
-/*
-#ifdef LAZURITE_IDE
-	Serial.print("macl_hopping_slave_phy_setup: ");
-	Serial.print_long((long)local.slave.ch_index,DEC);
-	Serial.print(",");
-	Serial.print_long((long)HOPPING_SEARCH_LIST[local.slave.ch_index],DEC);
-	Serial.print(",");
-	Serial.println_long((long)local.slave.diff_time,DEC);
-#endif
-*/
 	return local.slave.time_offset;
 }
 static void macl_timesync_host_isr(void) {
@@ -419,16 +409,6 @@ static void macl_timesync_host_isr(void) {
 #endif
 		// set channel
 		macl_hopping_host_phy_setup();
-#ifdef LAZURITE_IDE
-		/*
-		 * Serial.print(s1);
-		Serial.print_long((long)macl.hopping.host.ch_index,DEC);
-		Serial.print(comma);
-		Serial.print_long((long)HOPPING_SEARCH_LIST[macl.hopping.host.ch_index],DEC);
-		Serial.print(comma);
-		Serial.println_long((long)macl.bit_params.sync_enb,DEC);
-		*/
-#endif
 		// rxEnable
 		phy_sint_handler(macl_rxfifo_handler);
 		phy_rxstart();
@@ -481,18 +461,6 @@ static void macl_timesync_slave_isr(void) {
 			 phy_setup(macl.pages,macl.hopping.slave.sync->payload.ch_list[macl.hopping.slave.ch_index],macl.txPower,macl.antsw);
 			 */
 
-/*
-#ifdef LAZURITE_IDE
-		Serial.print("timesync_slave_isr: ");
-		Serial.print_long((long)millis(),DEC);
-		Serial.print(",");
-		Serial.print_long((long)macl.hopping.slave.ch_index,DEC);
-		Serial.print(",");
-		Serial.print_long((long)macl.hopping.slave.sync->payload.ch_list[macl.hopping.slave.ch_index],DEC);
-		Serial.print(",");
-		Serial.println_long((long)macl.bit_params.sync_enb,DEC);
-#endif
-*/
 		phy_sint_handler(macl_rxfifo_handler);
 		phy_rxstart();
 		macl.condition=SUBGHZ_ST_RX_STARTED;
@@ -520,9 +488,6 @@ static void macl_txdone(void) {
 			phy_sint_handler(macl_rxfifo_handler);
 			phy_rxstart();
 			macl.condition=SUBGHZ_ST_RX_STARTED;
-#ifdef LAZURITE_IDE
-//			Serial.println_long(__LINE__,DEC);
-#endif
 			break;
 		case SUBGHZ_ST_HOPPING_NOP:
 		default:
@@ -659,27 +624,17 @@ static bool macl_timesync_search_gateway(void){
 			macl.phy->in.len = 0;
 			phy_stop();
 			phy_setup(macl.pages,HOPPING_SEARCH_LIST[ch_index],macl.txPower,macl.antsw);
-/*
-#ifdef LAZURITE_IDE
-			Serial.print(s1);
-			Serial.print_long((long)ch_index,DEC);
-			Serial.print(comma);
-			Serial.print_long((long)HOPPING_SEARCH_LIST[ch_index],DEC);
-			Serial.print(comma);
-			Serial.println_long((long)macl.bit_params.sync_enb,DEC);
-#endif
-*/
 			// subghz_send
 			phy_txpre(MANUAL_TX);
 			HAL_GPIO_enableInterrupt();
 			macl.condition=SUBGHZ_ST_CCA;
 #ifdef LAZURITE_IDE
-//			Serial.println_long(__LINE__,DEC);
+			//			Serial.println_long(__LINE__,DEC);
 #endif
 			macl.hoppingdone = false;
 			macl_cca_setting();
 			// wait receive sync_cmd
-#ifdef NOT_INLINE
+#ifdef LAZURITE_IDE
 			HAL_wait_event_interruptible_timeout(&macl.que,&macl.hoppingdone,SUBGHZ_HOPPING_SEARCH_INTERVAL);
 #else
 			HAL_wait_event_interruptible_timeout(macl.que,macl.hoppingdone,SUBGHZ_HOPPING_SEARCH_INTERVAL);
@@ -717,7 +672,7 @@ static void macl_dummy_handler(void)
 {
 	macl.condition = SUBGHZ_ST_DUMMY;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #endif
 	return;
 }
@@ -740,7 +695,7 @@ static void macl_rxfifo_handler(void)
 	macl.rxdone = false;
 	macl.condition=SUBGHZ_ST_RX_FIFO;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #endif
 	phy_timer_stop();
 	status = phy_rxdone();
@@ -766,7 +721,7 @@ static void macl_rxfifo_handler(void)
 		default:			// error
 			macl.condition=SUBGHZ_ST_RX_START;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+			//	Serial.println_long(__LINE__,DEC);
 #endif
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 			printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
@@ -788,7 +743,7 @@ static void macl_rxdone_handler(void)
 
 	macl.condition=SUBGHZ_ST_RX_DONE;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #endif
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
@@ -825,7 +780,7 @@ static void macl_rxdone_handler(void)
 		macl.status = STATUS_OK;
 		macl.condition = SUBGHZ_ST_ACK_TX;
 #ifdef LAZURITE_IDE
-//		Serial.println_long(__LINE__,DEC);
+		//		Serial.println_long(__LINE__,DEC);
 #endif
 	} else {
 		macl.status = STATUS_OK;
@@ -845,7 +800,7 @@ static void macl_txfifo_handler(void)
 #endif
 	macl.condition = SUBGHZ_ST_TX_FIFO;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #endif
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
@@ -873,7 +828,7 @@ static void macl_ack_txdone_handler(void)
 	if(macl.condition==SUBGHZ_ST_ACK_TX){
 		macl.condition=SUBGHZ_ST_ACK_TX_DONE;
 #ifdef LAZURITE_IDE
-//		Serial.println_long(__LINE__,DEC);
+		//		Serial.println_long(__LINE__,DEC);
 #endif
 #ifndef LAZURITE_IDE
 		ACCESS_PUSH(7);
@@ -945,7 +900,7 @@ static void macl_ccadone_handler(void)
 
 	macl.condition=SUBGHZ_ST_CCA_DONE;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #endif
 	phy_timer_stop();
 
@@ -996,7 +951,7 @@ static void macl_txdone_abort_handler(void)
 #endif
 	macl.condition=SUBGHZ_ST_TX_ABORT;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #endif
 	phy_timer_stop();
 	alert(s1);
@@ -1022,7 +977,7 @@ static void macl_txdone_handler(void)
 #endif
 	macl.condition=SUBGHZ_ST_TX_DONE;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #endif
 	phy_timer_stop();
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
@@ -1053,7 +1008,7 @@ static void macl_ack_rxdone_handler(void) {
 #endif
 	macl.condition=SUBGHZ_ST_ACK_RX_DONE;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #endif
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
@@ -1066,7 +1021,7 @@ static void macl_ack_rxdone_handler(void) {
 		case FIFO_CONT:
 			break;
 		case FIFO_DONE:
-			if(((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_ACK) && (macl.phy->in.data[2] == macl.sequenceNum)){
+			if(((macl.phy->in.data[0]&0x07) == IEEE802154_FC_TYPE_ACK) && (macl.phy->in.data[2] == macl.phy->out.data[2])){
 				phy_timer_stop();
 				macl_rx_irq(&isAck);
 				if(macl.tx_callback) macl.tx_callback(macl.phy->in.data[macl.phy->in.len-1],STATUS_OK);
@@ -1079,7 +1034,7 @@ static void macl_ack_rxdone_handler(void) {
 		default:
 			macl.condition = SUBGHZ_ST_ACK_RX_CRC;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+			//	Serial.println_long(__LINE__,DEC);
 #endif
 			macl_ack_rxdone_abort_handler();
 			break;
@@ -1149,15 +1104,15 @@ error:
 }
 
 static int macl_tx_scan_request(void) {
-//	static const char s1[] = ",macl.hopping_state:";
-//	static const char s2[] = "macl_tx_scan_request_handler: ";
+	//	static const char s1[] = ",macl.hopping_state:";
+	//	static const char s2[] = "macl_tx_scan_request_handler: ";
 	macl_scan_request_raw16 *scan_req16;
 
 	if (macl.hoppingdone == false) {
 #ifdef LAZURITE_IDE
-//		Serial.print_long((long)__LINE__,DEC);
-//		Serial.print(s1);
-//		Serial.println_long((long)macl.hopping_state,DEC);
+		//		Serial.print_long((long)__LINE__,DEC);
+		//		Serial.print(s1);
+		//		Serial.println_long((long)macl.hopping_state,DEC);
 #elif defined(DEBUG)
 		printk(KERN_INFO"%s,%d,%d\n",__func__,__LINE__,macl.hopping_state);
 #endif
@@ -1188,16 +1143,6 @@ static int macl_tx_scan_request(void) {
 	}
 	// CH切り替え
 	phy_setup(macl.pages,HOPPING_SEARCH_LIST[scan_next_ch_index],macl.txPower,macl.antsw);
-/*
-#ifdef LAZURITE_IDE
-	Serial.print(s2);
-	Serial.print_long((long)scan_next_ch_index,DEC);
-	Serial.print(comma);
-	Serial.print_long((long)HOPPING_SEARCH_LIST[scan_next_ch_index],DEC);
-	Serial.print(comma);
-	Serial.println_long((long)macl.hopping_state,DEC);
-#endif
-*/
 	macl.hoppingdone = false;
 	macl.hopping_state = SUBGHZ_ST_HOPPING_SLAVE_SCAN_REQ;
 	// subghz_send
@@ -1254,7 +1199,7 @@ struct macl_param *macl_init(void* parent)
 	macl.bit_params.txReserve = false;
 	macl.condition = SUBGHZ_ST_INIT;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #endif
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
@@ -1272,7 +1217,7 @@ struct macl_param *macl_init(void* parent)
 	HAL_init_waitqueue_head(&macl.que);
 	macl.condition = SUBGHZ_ST_SLEEPED;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #endif
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
@@ -1281,7 +1226,7 @@ struct macl_param *macl_init(void* parent)
 error:
 	macl.condition = SUBGHZ_ST_INIT_FAIL;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #endif
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
@@ -1298,7 +1243,7 @@ error:
 	@exception	return NULL
  ********************************************************************/
 int macl_start(void) {
-//	static const char s1[] = "macl_start: ";
+	//	static const char s1[] = "macl_start: ";
 	int status=STATUS_OK;
 	uint8_t ch;
 #ifndef LAZURITE_IDE
@@ -1309,7 +1254,7 @@ int macl_start(void) {
 #endif
 	macl.condition=SUBGHZ_ST_RX_START;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #endif
 	switch(macl.ch) {
 		case SUBGHZ_HOPPING_TS_H:
@@ -1319,16 +1264,6 @@ int macl_start(void) {
 			ch = HOPPING_SEARCH_LIST[macl.hopping.host.ch_index];
 			phy_stop();
 			phy_setup(macl.pages,ch,macl.txPower,macl.antsw);
-			/*
-#ifdef LAZURITE_IDE
-Serial.print(s1);
-Serial.print_long((long)macl.hopping.host.ch_index,DEC);
-Serial.print(comma);
-Serial.print_long((long)HOPPING_SEARCH_LIST[macl.hopping.host.ch_index],DEC);
-Serial.print(comma);
-Serial.println_long((long)macl.bit_params.sync_enb,DEC);
-#endif
-*/
 			macl.hopping.host.sync_time = HAL_millis();
 			timer4.set(SUBGHZ_HOPPING_CH_DURATION,macl_timesync_host_isr);
 			timer4.start();
@@ -1341,6 +1276,7 @@ Serial.println_long((long)macl.bit_params.sync_enb,DEC);
 					timer4.set(macl_hopping_slave_phy_setup(),macl_timesync_slave_isr);
 					timer4.start();
 				} else {
+					Serial.println_long(3333,DEC);
 					return -ENOPROTOOPT;
 				}
 			} else {
@@ -1359,7 +1295,7 @@ Serial.println_long((long)macl.bit_params.sync_enb,DEC);
 	phy_rxstart();
 	macl.condition=SUBGHZ_ST_RX_STARTED;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #endif
 	HAL_GPIO_enableInterrupt();
 #ifndef LAZURITE_IDE
@@ -1376,7 +1312,7 @@ int	macl_stop(void)
 #endif
 	macl.condition=SUBGHZ_ST_STOP;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #endif
 	macl.bit_params.rxOnEnable = 0;
 	timer4.stop();
@@ -1392,7 +1328,7 @@ int	macl_stop(void)
 	phy_sint_handler(macl_dummy_handler);
 	macl.condition=SUBGHZ_ST_STANDBY;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #endif
 #ifndef LAZURITE_IDE
 	ACCESS_POP();
@@ -1407,7 +1343,7 @@ int	macl_xmit_sync(BUFFER *buff) {
 
 	// 受信完了待ち時間
 	// 1秒だと送信処理と受信のACK送信完了処理がぶつかることがあるので2秒に修正した
-#ifdef NOT_INLINE
+#ifdef LAZURITE_IDE
 	//uint32_t HAL_wait_event_interruptible_timeout(wait_queue_head_t *q,volatile int *condition,uint32_t ms)
 	{
 		volatile uint32_t st_time = millis();
@@ -1479,7 +1415,7 @@ int	macl_xmit_sync(BUFFER *buff) {
 	macl_cca_setting();
 	macl.condition=SUBGHZ_ST_CCA;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #endif
 	HAL_GPIO_enableInterrupt();
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
@@ -1490,7 +1426,7 @@ int	macl_xmit_sync(BUFFER *buff) {
 	ACCESS_POP();
 #endif
 
-#ifdef NOT_INLINE
+#ifdef LAZURITE_IDE
 	time =  HAL_wait_event_interruptible_timeout(&macl.que,&macl.txdone,1000L);
 #else
 	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.txdone,1000L);
@@ -1518,14 +1454,14 @@ int	macl_xmit_async(BUFFER *buff,void (*callback)(uint8_t rssi, int status))
 #endif
 	macl.bit_params.txReserve = true;
 
-#ifdef NOT_INLINE
+#ifdef LAZURITE_IDE
 	time =  HAL_wait_event_interruptible_timeout(&macl.que,&macl.rxdone,2000L);
 #else
 	time =  HAL_wait_event_interruptible_timeout(macl.que,macl.rxdone,2000L);
 #endif
 	macl.condition=SUBGHZ_ST_TX_START;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #elif defined(DEBUG)
 	printk(KERN_INFO"%s %d %d\n",__func__,__LINE__,macl.condition);
 #endif
@@ -1557,7 +1493,7 @@ int	macl_xmit_async(BUFFER *buff,void (*callback)(uint8_t rssi, int status))
 	macl_cca_setting();
 	macl.condition=SUBGHZ_ST_CCA;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #endif
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
 	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
@@ -1586,7 +1522,7 @@ int	macl_set_channel(uint8_t page,uint8_t ch, uint32_t mbm, uint8_t antsw)
 	int status=STATUS_OK;
 	macl.condition = SUBGHZ_ST_SETUP;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #endif
 
 	macl.pages = page;
@@ -1605,7 +1541,7 @@ int	macl_set_channel(uint8_t page,uint8_t ch, uint32_t mbm, uint8_t antsw)
 		macl.rxdone = true;
 	}
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #endif
 	return status;
 }
@@ -1648,12 +1584,12 @@ int	macl_sleep(void)
 	int status=STATUS_OK;
 	macl.condition = SUBGHZ_ST_SLEEP;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #endif
 	phy_sleep();
 	macl.condition = SUBGHZ_ST_SLEEPED;
 #ifdef LAZURITE_IDE
-//	Serial.println_long(__LINE__,DEC);
+	//	Serial.println_long(__LINE__,DEC);
 #endif
 	return status;
 }

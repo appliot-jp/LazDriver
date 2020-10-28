@@ -64,7 +64,7 @@ volatile uint8_t hal_event_flag = 0;
 // Function
 //*****************************************************
 
-#ifdef NOT_INLINE
+#ifdef LAZURITE_IDE
 int HAL_init_waitqueue_head(wait_queue_head_t *q) {
 	return 0;
 }
