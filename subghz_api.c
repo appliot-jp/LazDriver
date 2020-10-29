@@ -750,6 +750,17 @@ void mach_tx_scan_irq(void) {
 	return;
 }
 
+void subghz_setHost(struct mac_addr *addr) {
+	Serial.println("subghz_setHost");
+	if(addr->pan_coord == true) {
+		Serial.println("pan_coord");
+		mach_set_dst_short_addr(addr->pan_id,addr->short_addr);
+	} else {
+		Serial.println("ieee_addr");
+		mach_set_dst_ieee_addr(0xffff,addr->ieee_addr);
+	}
+}
+
 // setting of function
 const SubGHz_CTRL SubGHz = {
 	subghz_init,
@@ -781,4 +792,5 @@ const SubGHz_CTRL SubGHz = {
 	subghz_set_ant_sw,
 	subghz_setDsssSpreadFactor,
 	subghz_tx_scan,
+	subghz_setHost,
 };

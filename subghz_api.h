@@ -135,6 +135,7 @@ typedef struct
 	void (*antSwitch)(uint8_t ant_sw);
 	void (*setDsssSpreadFactor)(int8_t sf);
 	SUBGHZ_MSG (*scan)(uint16_t panid, SUBGHZ_SCAN_LIST *list, uint8_t size, void (*callback)(uint8_t num));
+	void (*setHost)(struct mac_addr *addr);
 } SubGHz_CTRL;
 
 extern const SubGHz_CTRL SubGHz;
