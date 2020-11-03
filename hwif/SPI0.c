@@ -33,6 +33,7 @@
 #include "lp_manage.h"
 #include "driver_uart.h"
 #include "driver_irq.h"
+#include "driver_timer.h"
 
 static volatile unsigned char _spi0_transfer(UCHAR _data);
 static void _spi0_attachInterrupt(void);
@@ -95,20 +96,35 @@ static UINT16 _spi0_mod = (SPI0_MODE0 | SPI0_CLOCK_DIV4 | SPI0_TX_RX | SPI0_8BIT
 
 // SPI0  not supported by Arduino
 // for BLE or SLPR
+uint8_t _spi0_sleep = 0;
+extern bool delay_flag;
+extern void _ldo_stable_isr(void);
 static volatile unsigned char _spi0_transfer(UCHAR _data)
 {
 	UCHAR res;
-	write_reg8(SIO0BUFL,_data);
-	set_bit(S0EN);
+	if((_spi0_sleep != 0) && (getMIE() != 0)){
+		wdt_clear();
+		delay_flag = false;
+		timer_16bit_set(6,0xE8,(uint16_t)_spi0_sleep,_ldo_stable_isr);
+		timer_16bit_start(6);
+		write_reg8(SIO0BUFL,_data);
+		//digitalWrite(4,LOW);
+		set_bit(S0EN);
+		while(delay_flag == false) {
+			lp_setHaltMode();
+		}
+		//digitalWrite(4,HIGH);
+	} else {
+		write_reg8(SIO0BUFL,_data);
+		set_bit(S0EN);
+	}
 	// set data
-	
+
 	// wait end of transfer
-	while(get_bit(S0EN)==1)
-	{
+	do {
 		// w/a for avoiding UART communication data lost
 		uart_check_irq();
-		continue;
-	} 
+	} while(get_bit(S0EN)==1);
 
 	// return rx data
 	res = SIO0BUFL;
@@ -116,19 +132,19 @@ static volatile unsigned char _spi0_transfer(UCHAR _data)
 }
 static void _spi0_attachInterrupt()
 {
-	
+
 }
 static void _spi0_detachInterrupt(void)
 {
-	
+
 }
 static void _spi0_begin(void)
 {
-//	unsigned char tmp8;
-//	unsigned char tmp16;
+	//	unsigned char tmp8;
+	//	unsigned char tmp16;
 	clear_bit(DSIO0);					// BLKCON  SPI enable
 	write_reg16(SIO0MOD, _spi0_mod);		// 
-	
+
 	// GPIO setting		DIR  CON1  CON0 MD1 MD0
 	//	P00 SOUT0  OUT   0   1     1    1    0
 	//	P01 SIN0   IN    1   1     0    1    0
@@ -142,14 +158,14 @@ static void _spi0_begin(void)
 
 	P0MOD &= ~SPI0_GPIO_MASK16;
 	P0MOD |= SPI0_GPIO_MOD;
-	
+
 	// CSB GPIO setting
 	// SS setting
 	SPI0_CSB(HIGH);
 	clear_bit(P11DIR);
 	set_bit(P11C1);
 	set_bit(P11C0);
-	
+
 }
 static void _spi0_end()
 {
@@ -174,19 +190,19 @@ static void _spi0_setDataMode(uint8_t mode)
 	_spi0_mod &= (~SPI0_MODE_MASK);
 	switch(mode)
 	{
-	case SPI_MODE0:
-		_spi0_mod |= SPI0_MODE0;
-		break;
-	case SPI_MODE1:
-		_spi0_mod |= SPI0_MODE1;
-		break;
-	case SPI_MODE2:
-		_spi0_mod |= SPI0_MODE2;
-		break;
-	case SPI_MODE3:
-	default:
-		_spi0_mod |= SPI0_MODE3;
-		break;
+		case SPI_MODE0:
+			_spi0_mod |= SPI0_MODE0;
+			break;
+		case SPI_MODE1:
+			_spi0_mod |= SPI0_MODE1;
+			break;
+		case SPI_MODE2:
+			_spi0_mod |= SPI0_MODE2;
+			break;
+		case SPI_MODE3:
+		default:
+			_spi0_mod |= SPI0_MODE3;
+			break;
 	}
 }
 
@@ -196,22 +212,22 @@ static void _spi0_setClockDivider(UINT16 ckdiv)
 	_spi0_mod &= (~SPI0_CLOCK_MASK);
 	switch(ckdiv)
 	{
-	case SPI_CLOCK_DIV2:				// not supported
-	case SPI_CLOCK_DIV4:
-		_spi0_mod |= SPI0_CLOCK_DIV4;
-		break;
-	case SPI_CLOCK_DIV8:
-		_spi0_mod |= SPI0_CLOCK_DIV8;
-		break;
-	case SPI_CLOCK_DIV16:
-		_spi0_mod |= SPI0_CLOCK_DIV16;
-		break;
-	case SPI_CLOCK_DIV32:
-	case SPI_CLOCK_DIV64:				// not supported
-	case SPI_CLOCK_DIV128:				// not supported:
-	default:
-		_spi0_mod |= SPI0_CLOCK_DIV32;
-		break;
+		case SPI_CLOCK_DIV2:				// not supported
+		case SPI_CLOCK_DIV4:
+			_spi0_mod |= SPI0_CLOCK_DIV4;
+			break;
+		case SPI_CLOCK_DIV8:
+			_spi0_mod |= SPI0_CLOCK_DIV8;
+			break;
+		case SPI_CLOCK_DIV16:
+			_spi0_mod |= SPI0_CLOCK_DIV16;
+			break;
+		case SPI_CLOCK_DIV32:
+		case SPI_CLOCK_DIV64:				// not supported
+		case SPI_CLOCK_DIV128:				// not supported:
+		default:
+			_spi0_mod |= SPI0_CLOCK_DIV32;
+			break;
 	}
 }
 

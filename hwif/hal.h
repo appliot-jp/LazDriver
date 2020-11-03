@@ -79,6 +79,10 @@ extern int HAL_SPI_transfer(const uint8_t *wdata, uint16_t wsize,uint8_t *rdata,
 extern int HAL_I2C_read(uint16_t addr, uint8_t *data, uint8_t size);
 extern void HAL_reset(void);
 
+#ifdef LAZURITE_IDE
+extern uint8_t HAL_spi0_sleep;
+#endif
+
 extern void HAL_delayMicroseconds(uint32_t us);
 extern uint32_t HAL_millis(void);
 extern void HAL_sleep(uint32_t ms);

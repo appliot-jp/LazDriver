@@ -65,6 +65,7 @@ typedef struct {
 //   extern function definitions
 //********************************************************************************
 extern const SPI0Class SPI0;
+extern uint8_t _spi0_sleep;
 
 #endif // _ARDUINO_SPI_H_
 

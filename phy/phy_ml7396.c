@@ -479,8 +479,13 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 	static uint8_t reg_antsw;
 
 	// CLK START
+#ifdef LAZURITE_IDE
+	HAL_spi0_sleep = 2;
+#endif
 	reg.wdata[1] = 0x0f, reg_wr(REG_ADR_CLK_SET,             2);
-	HAL_sleep(10L);
+#ifdef LAZURITE_IDE
+	HAL_spi0_sleep = 0;
+#endif
 
 	// Check Parameters
 #ifdef JP
@@ -1189,6 +1194,7 @@ void phy_monitor(void){
 #else
 	Serial.print(s10);
 	Serial.println_long((long)reg.rdata[0],HEX);
+	__asm("brk");
 #endif
 }
 

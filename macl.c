@@ -623,10 +623,15 @@ static bool macl_timesync_search_gateway(void){
 			phy_timer_stop();
 			macl.phy->in.len = 0;
 			phy_stop();
+#ifdef LAZURITE_IDE
+			HAL_GPIO_enableInterrupt();
+#endif
 			phy_setup(macl.pages,HOPPING_SEARCH_LIST[ch_index],macl.txPower,macl.antsw);
 			// subghz_send
 			phy_txpre(MANUAL_TX);
+#ifndef LAZURITE_IDE
 			HAL_GPIO_enableInterrupt();
+#endif
 			macl.condition=SUBGHZ_ST_CCA;
 			macl.hoppingdone = false;
 			macl_cca_setting();

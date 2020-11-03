@@ -55,6 +55,7 @@ static struct I2C_CONFIG  {
 // 2015.12.14 Eiichi Saito: for preference of SubGHz
 //static unsigned char hal_setbit_exi;
 volatile uint8_t hal_event_flag = 0;
+uint8_t HAL_spi0_sleep = 0;
 
 //*****************************************************
 // temporary
@@ -134,6 +135,11 @@ int HAL_SPI_transfer(const unsigned char *wdata, uint16_t wsize,unsigned char *r
 	//  api_debug mod
 	for(n=0;n<wsize;n++)
 	{
+		if(n == (wsize-1)) {
+			_spi0_sleep = HAL_spi0_sleep;
+		} else {
+			_spi0_sleep = 0;
+		}
 		SPI0.transfer(*(wdata + n));
 	}
 	if(rdata==NULL) return STATUS_OK;
