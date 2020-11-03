@@ -99,8 +99,7 @@ static UINT16 _spi0_mod = (SPI0_MODE0 | SPI0_CLOCK_DIV4 | SPI0_TX_RX | SPI0_8BIT
 uint8_t _spi0_sleep = 0;
 extern bool delay_flag;
 extern void _ldo_stable_isr(void);
-static volatile unsigned char _spi0_transfer(UCHAR _data)
-{
+static volatile unsigned char _spi0_transfer(UCHAR _data) {
 	UCHAR res;
 	if((_spi0_sleep != 0) && (getMIE() != 0)){
 		wdt_clear();

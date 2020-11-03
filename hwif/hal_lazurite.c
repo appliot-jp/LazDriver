@@ -65,7 +65,6 @@ uint8_t HAL_spi0_sleep = 0;
 // Function
 //*****************************************************
 
-#ifdef LAZURITE_IDE
 int HAL_init_waitqueue_head(wait_queue_head_t *q) {
 	return 0;
 }
@@ -86,7 +85,6 @@ int HAL_wake_up_interruptible(wait_queue_head_t *q)
 {
 	return 0;
 }
-#endif
 
 
 
