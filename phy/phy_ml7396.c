@@ -307,7 +307,7 @@ static void fifo_wr(uint8_t bank, uint8_t addr)
 	regbank(bank);
 	*p_header = (uint8_t)((addr << 1) | 0x01);
 
-	if(size <= 256) {
+	if(size <= phy.out.size) {
 		HAL_SPI_transfer(p_header,size+1,reg.rdata,0);
 	} else {
 		alert(s1);
@@ -393,10 +393,8 @@ static bool vco_cal(void) {
 
 	uint8_t cycle = 0;
 	static const char s1[] = "vco_cal error";
-
 	reg.wdata[1]=0x01;
 	reg_wr(REG_ADR_VCO_CAL_START, 2);
-
 	do {
 		cycle++;
 		HAL_delayMicroseconds(100L);
@@ -462,10 +460,16 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 	const REGSET *regset;
 	static const char s1[] = "unsupported device1";
 	static const char s2[] = "unsupported device2";
+	static uint8_t reg_antsw;
 
 	// CLK START
+#ifdef LAZURITE_IDE
+	HAL_spi0_sleep = 2;
+#endif
 	reg.wdata[1] = 0x0f, reg_wr(REG_ADR_CLK_SET,             2);
-	HAL_sleep(10L);
+#ifdef LAZURITE_IDE
+	HAL_spi0_sleep = 0;
+#endif
 
 	// Check Parameters
 #ifdef JP
@@ -890,7 +894,7 @@ FIFO_STATE phy_rxdone()
 	reg_rd(REG_ADR_RD_RX_FIFO, 2);
 	data_size = reg.rdata[0] & 0x07;
 	data_size = (data_size << 8) + reg.rdata[1];
-	if(data_size<=256) {
+	if(data_size<=phy.in.size) {
 		phy.in.len = data_size + 1; // add ED vale
 		fifo_rd(REG_ADR_RD_RX_FIFO);
 		phy.in.data[phy.in.len-3] = phy.in.data[phy.in.len-1];		// erase crc and move ed
@@ -1131,6 +1135,7 @@ void phy_monitor(void){
 #else
 	Serial.print(s10);
 	Serial.println_long((long)reg.rdata[0],HEX);
+	__asm("brk");
 #endif
 }
 

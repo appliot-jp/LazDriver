@@ -27,7 +27,6 @@
 #include "common.h"
 #include "binary.h"
 #include "lazurite_system.h"
-//#include "lazurite.h"
 #include "wire0.h"
 #include "driver_i2c.h"
 #include <stdlib.h>

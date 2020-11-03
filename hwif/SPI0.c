@@ -33,6 +33,7 @@
 #include "lp_manage.h"
 #include "driver_uart.h"
 #include "driver_irq.h"
+#include "driver_timer.h"
 
 static volatile unsigned char _spi0_transfer(UCHAR _data);
 static void _spi0_attachInterrupt(void);
@@ -95,20 +96,34 @@ static UINT16 _spi0_mod = (SPI0_MODE0 | SPI0_CLOCK_DIV4 | SPI0_TX_RX | SPI0_8BIT
 
 // SPI0  not supported by Arduino
 // for BLE or SLPR
-static volatile unsigned char _spi0_transfer(UCHAR _data)
-{
+uint8_t _spi0_sleep = 0;
+extern bool delay_flag;
+extern void _ldo_stable_isr(void);
+static volatile unsigned char _spi0_transfer(UCHAR _data) {
 	UCHAR res;
+	if((_spi0_sleep != 0) && (getMIE() != 0)){
+		wdt_clear();
+		delay_flag = false;
+		timer_16bit_set(6,0xE8,(uint16_t)_spi0_sleep,_ldo_stable_isr);
+		timer_16bit_start(6);
 	write_reg8(SIO0BUFL,_data);
+		//digitalWrite(4,LOW);
 	set_bit(S0EN);
+		while(delay_flag == false) {
+			lp_setHaltMode();
+		}
+		//digitalWrite(4,HIGH);
+	} else {
+		write_reg8(SIO0BUFL,_data);
+		set_bit(S0EN);
+	}
 	// set data
 	
 	// wait end of transfer
-	while(get_bit(S0EN)==1)
-	{
+	do {
 		// w/a for avoiding UART communication data lost
 		uart_check_irq();
-		continue;
-	} 
+	} while(get_bit(S0EN)==1);
 
 	// return rx data
 	res = SIO0BUFL;

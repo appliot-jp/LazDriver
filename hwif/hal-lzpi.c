@@ -112,12 +112,8 @@ static bool timer4_enb = false;
 void timer4_callback(struct timer_list *data) {
 	m.trigger |= 0x10;
 	mod_timer(&timer4_timer, timer4_timer.expires + timer4_interval);
-	//if (que_irq==0)
-	//{
-		que_irq=1;
-		wake_up_interruptible_sync(&rf_irq_q);
-		//return IRQ_WAKE_THREAD;
-	//}
+	que_irq=1;
+	wake_up_interruptible_sync(&rf_irq_q);
 }
 void HAL_timer4_set(uint32_t ms, void (*func)(void)) {
 	if(timer4_enb != false) {
@@ -159,23 +155,10 @@ const MsTimer4 timer4 = {
 	HAL_timer4_stop
 };
 
-/*
-static void syslog_timer_isr(struct timer_list *t) {
-	if(syslog_timer_ext_func) syslog_timer_ext_func(jiffies);
-	syslog_timer.expires = jiffies + HZ*2;
-	add_timer(&syslog_timer);
-}
-*/
 #include "../macl.h"
 extern struct macl_param macl;
 int rf_main_thread(void *p)
 {
-	// system logging start
-	//syslog_timer_ext_func = NULL;
-	//timer_setup(&syslog_timer,syslog_timer_isr,0);
-	//syslog_timer.expires = jiffies + HZ*2;
-	//add_timer(&syslog_timer);
-
 	m.trigger=0;
 	while(!kthread_should_stop()) {
 		// printk(KERN_INFO"%s %s %d %d %d %d\n",__FILE__,__func__,__LINE__,flag_irq_enable,gpio_get_value(GPIO_SINTN),m.trigger);
@@ -271,9 +254,6 @@ static irqreturn_t rf_irq_handler(int irq,void *dev_id) {
 	if(ext_irq_func)
 	{
 		m.trigger |= 0x01;
-		//if (que_irq==0)
-		//{
-		//			printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,que_irq);
 		if((macl.rxdone == false) && (macl.txdone == false )) {
 			printk(KERN_INFO"%s %d rx & tx\n",__func__,__LINE__);
 		}
@@ -282,8 +262,6 @@ static irqreturn_t rf_irq_handler(int irq,void *dev_id) {
 		}
 		que_irq=1;
 		wake_up_interruptible_sync(&rf_irq_q);
-		//return IRQ_WAKE_THREAD;
-		//}
 	}
 	return IRQ_HANDLED;
 }
