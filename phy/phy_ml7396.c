@@ -460,7 +460,6 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 	const REGSET *regset;
 	static const char s1[] = "unsupported device1";
 	static const char s2[] = "unsupported device2";
-	static uint8_t reg_antsw;
 
 	// CLK START
 #ifdef LAZURITE_IDE
