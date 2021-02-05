@@ -51,7 +51,7 @@ clean:
 	make -C $(KERNEL_SRC) SUBDIRS=$(PWD) M=$(PWD) clean
 endif
 
-ifeq ($(shell uname -n),raspberrypi)
+ifeq ($(shell lsb_release -is),Raspbian)
 	KERNEL_SRC=/lib/modules/$(shell uname -r)/build
 
 all:
