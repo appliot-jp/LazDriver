@@ -101,7 +101,7 @@ int lzpi_i2c_adapter_init(uint8_t i2c_addr)
 		memset(&info, 0, sizeof(struct i2c_board_info));
 		info.addr = i2c_addr;
 		memcpy(info.type, "lzpi_i2c", strlen("lzpi_i2c"));
-		client = i2c_new_device(adapter,&info);
+		client = i2c_new_client_device(adapter,&info);
 		if (client == NULL)
 		{
 			i2c_del_driver(&lzpi_i2c_driver);

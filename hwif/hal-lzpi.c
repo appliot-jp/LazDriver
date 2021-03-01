@@ -32,6 +32,7 @@
 #include	<linux/kthread.h>
 #include	<linux/unistd.h>
 #include	<linux/wait.h>
+#include	<asm/div64.h>
 #include	"spi-lzpi.h"
 #include	"i2c-lzpi.h"
 #include	"hal-lzpi.h"
@@ -82,10 +83,10 @@ struct thread_param m = {0};
 //*****************************************************
 // millis
 // return milli second time from loading driver
-static struct timespec load_time;
+static uint64_t load_time;
 void millis_init(void)
 {
-	getnstimeofday(&load_time);
+	load_time = ktime_get_real();
 }
 
 void HAL_delayMicroseconds(uint32_t us) {
@@ -94,14 +95,11 @@ void HAL_delayMicroseconds(uint32_t us) {
 uint32_t HAL_millis(void)
 {
 	unsigned long res;
-	struct timespec current_time;
-	struct timespec diff_time;
-	getnstimeofday(&current_time);
+	uint64_t now;
+	now = ktime_get_real();
+	now = now - load_time;
 
-	diff_time.tv_sec = current_time.tv_sec - load_time.tv_sec;
-	diff_time.tv_nsec = current_time.tv_nsec - load_time.tv_nsec;
-
-	res = diff_time.tv_sec * 1000 + ((long)diff_time.tv_nsec)/1000000;
+	res = div_u64(now , 1000000);
 
 	return res;
 }

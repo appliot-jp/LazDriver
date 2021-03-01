@@ -17,6 +17,7 @@
 #include <linux/init.h>
 #include <linux/wait.h>
 #include <linux/sched.h>
+#include <linux/time.h>
 #include <linux/ioctl.h>
 #include <linux/parport.h>
 #include <linux/ctype.h>
@@ -28,6 +29,7 @@
 #include <linux/kernel.h>
 #include <linux/list.h>
 #include <linux/time.h>
+#include <asm/div64.h>
 
 #include "common-lzpi.h"
 #include "subghz_api.h"
@@ -79,7 +81,7 @@ static struct {
 	unsigned char txRetry;
 	unsigned short txInterval;
 	unsigned short ccaWait;
-	struct timespec rx_time;
+	uint64_t rx_time;
 	int rx_status;
 	int tx_status;
 	bool tx64;
@@ -107,7 +109,7 @@ int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 	int offset = 0;
 	void *msg;
 	struct list_data *new_data;
-	struct timespec rx_time;
+	uint64_t rx_time;
 	const uint8_t *in;
 	uint8_t *out;
 	int errcode = 0;
@@ -118,7 +120,7 @@ int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 	if((len < DATA_SIZE) && (len>0))
 	{
 		// get time stamp
-		getnstimeofday(&rx_time);
+		rx_time = ktime_get_real();
 
 		//check number of list. if the number is  over, delete list.
 		if(listed_packet >= RBUF) {
@@ -190,6 +192,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 	unsigned int command = cmd & 0xF000;
 	unsigned int param = cmd & 0x0FFF;
 	long ret=-EFAULT;
+	uint32_t d32;
 
 	mutex_lock( &chrdev.lock );
 
@@ -470,16 +473,18 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 					}
 					break;
 				case IOCTL_GET_RX_SEC0:
-					ret = (p.rx_time.tv_sec >> 0) & 0x0000ffff;
+					ret = (div_u64(p.rx_time,1000000000) >> 0) & 0x0000ffff;
 					break;
 				case IOCTL_GET_RX_SEC1:
-					ret = (p.rx_time.tv_sec >> 16) & 0x0000ffff;
+					ret = (div_u64(p.rx_time,1000000000) >> 16) & 0x0000ffff;
 					break;
 				case IOCTL_GET_RX_NSEC0:
-					ret = (p.rx_time.tv_nsec >> 0) & 0x0000ffff;
+					div_u64_rem(p.rx_time,1000000000,&d32);
+					ret = (d32 >> 0) & 0x0000ffff;
 					break;
 				case IOCTL_GET_RX_NSEC1:
-					ret = (p.rx_time.tv_nsec >> 16) & 0x0000ffff;
+					div_u64_rem(p.rx_time,1000000000,&d32);
+					ret = (d32 >> 16) & 0x0000ffff;
 					break;
 				case IOCTL_GET_RX_RSSI:
 					ret = p.rx_rssi;
