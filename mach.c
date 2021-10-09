@@ -140,7 +140,7 @@ static int mach_make_header(struct mac_header *header) {
 				H2LBS(header->raw.data[offset],header->dst.panid.data), offset+=2;
 			} else {
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-				printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+				printk(KERN_ERR"[DRV-Lazurite] memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 				status = -ENOMEM;
 				goto error;
@@ -161,7 +161,7 @@ static int mach_make_header(struct mac_header *header) {
 						(header->dst.panid.enb == false))
 				{
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-					printk(KERN_ERR"invalid panid for short address.%s,%s,%d\n", __FILE__, __func__, __LINE__);
+					printk(KERN_ERR"[DRV-Lazurite] invalid panid for short address.%s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -EINVAL;
 					goto error;
@@ -172,7 +172,7 @@ static int mach_make_header(struct mac_header *header) {
 					if(header->dst.addr.lddn_addr != 0xff) dst_ffff = false;
 				} else {
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+					printk(KERN_ERR"[DRV-Lazurite] memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -ENOMEM;
 					goto error;
@@ -184,7 +184,7 @@ static int mach_make_header(struct mac_header *header) {
 						(header->dst.panid.enb == false))
 				{
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-					printk(KERN_ERR"invalid panid for short address.%s,%s,%d\n", __FILE__, __func__, __LINE__);
+					printk(KERN_ERR"[DRV-Lazurite] invalid panid for short address.%s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -EINVAL;
 					goto error;
@@ -194,7 +194,7 @@ static int mach_make_header(struct mac_header *header) {
 					H2LBS(header->raw.data[offset],header->dst.addr.short_addr), offset+=2;
 				} else {
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+						printk(KERN_ERR"[DRV-Lazurie] memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -ENOMEM;
 					goto error;
@@ -211,7 +211,7 @@ static int mach_make_header(struct mac_header *header) {
 					header->fc.fc_bit.dst_addr_type = IEEE802154_FC_ADDR_IEEE;
 				} else {
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+						printk(KERN_INFO"[DRV-Lazurie] memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -ENOMEM;
 					goto error;
@@ -219,7 +219,7 @@ static int mach_make_header(struct mac_header *header) {
 				break;
 			default:				// addr_type = 0
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-				printk(KERN_ERR"dst address is not set in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+				printk(KERN_INFO"[DRV-Lazurite] dst address is not set in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 				status = -EINVAL;
 				goto error;
@@ -236,7 +236,7 @@ static int mach_make_header(struct mac_header *header) {
 		if(header->src.panid.enb == 0)
 		{
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-			printk(KERN_ERR"src panid is invalid in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+			printk(KERN_ERR"[DRV-Lazurite] src panid is invalid in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 			status = -EINVAL;
 			goto error;
@@ -245,7 +245,7 @@ static int mach_make_header(struct mac_header *header) {
 				H2LBS(header->raw.data[offset],header->src.panid.data), offset+=2;
 			} else {
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-				printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+				printk(KERN_ERR"[DRV-Lazurite] memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 				status = -ENOMEM;
 				goto error;
@@ -260,14 +260,14 @@ static int mach_make_header(struct mac_header *header) {
 			case 1:
 				if(header->raw.size < (offset + addr_len[1])){
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+					printk(KERN_ERR"[DRV-Lazurite] memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -ENOMEM;
 					goto error;
 				}
 				if(header->src.addr.lddn_addr==0xff){
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-					printk(KERN_ERR"invalid src LDD address. %s,%s,%d\n", __FILE__, __func__, __LINE__);
+					printk(KERN_ERR"[DRV-Lazurite] invalid src LDD address. %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -EINVAL;
 					goto error;
@@ -278,7 +278,7 @@ static int mach_make_header(struct mac_header *header) {
 			case 2:
 				if(header->raw.size < (offset + addr_len[2])){
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+					printk(KERN_ERR"[DRV-Lazurite] memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -ENOMEM;
 					goto error;
@@ -286,7 +286,7 @@ static int mach_make_header(struct mac_header *header) {
 				if(header->src.addr.short_addr==0xffff)
 				{
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-					printk(KERN_ERR"invalid src short address. %s,%s,%d\n", __FILE__, __func__, __LINE__);
+					printk(KERN_ERR"[DRV-Lazurite] invalid src short address. %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -EINVAL;
 					goto error;
@@ -297,7 +297,7 @@ static int mach_make_header(struct mac_header *header) {
 			case 3:
 				if(header->raw.size < (offset + addr_len[3])){
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-					printk(KERN_ERR"memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
+					printk(KERN_ERR"[DRV-Lazurite] memory error in %s,%s,%d\n", __FILE__, __func__, __LINE__);
 #endif
 					status = -ENOMEM;
 					goto error;
@@ -351,7 +351,7 @@ static int mach_make_header(struct mac_header *header) {
 	H2LBS(header->raw.data[0],header->fc.fc16);
 
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
+	printk(KERN_INFO"[DRV-Lazurite] %s %s %d\n",__FILE__,__func__,__LINE__);
 #endif
 
 	status = STATUS_OK;
@@ -489,7 +489,7 @@ bool mach_make_ack_header(void) {
 
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
+		printk(KERN_INFO"[DRV-Lazurite] %s %s %d\n",__FILE__,__func__,__LINE__);
 	}
 #endif
 	if( ((mach.rx.addr_type == 6) || (mach.rx.addr_type == 7)) &&
@@ -528,7 +528,6 @@ bool mach_make_ack_header(void) {
 			int16_t enhance_ack_offset = 4;
 			do {
 				src_target = *((uint16_t *)(tx_enhance_ack.data+enhance_ack_offset));
-				//printk(KERN_INFO"src_target: %u\n",src_target);
 				if ((src_target == 0xffff ) || (src_target == mach.rx.src.addr.short_addr)) {
 					memcpy(&mach.ack.raw.data[offset],&tx_enhance_ack.data[enhance_ack_offset+2],enhance_ack_size);
 					offset += enhance_ack_size;
@@ -605,7 +604,7 @@ int mach_start(BUFFER *rxbuf) {
 	mach.rx.payload.len = 0;
 
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s %s %d macl_start\n",__FILE__,__func__,__LINE__);
+	printk(KERN_INFO"[DRV-Lazurite] %s %s %d macl_start\n",__FILE__,__func__,__LINE__);
 #endif
 	status = macl_start();
 
@@ -670,8 +669,8 @@ int mach_set_dst_ieee_addr(uint16_t panid,uint8_t *addr)
 	memcpy(mach.tx.dst.addr.ieee_addr,addr,8);
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
 	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
-		printk(KERN_INFO"dst: %04x %02x%02x%02x%02x%02x%02x%02x%02x\n",
+		printk(KERN_INFO"[DRV-Lazurite] %s %s %d\n",__FILE__,__func__,__LINE__);
+		printk(KERN_INFO"[DRV-Lazurite] dst: %04x %02x%02x%02x%02x%02x%02x%02x%02x\n",
 				mach.tx.dst.panid.data,
 				mach.tx.dst.addr.ieee_addr[7],
 				mach.tx.dst.addr.ieee_addr[6],
@@ -839,7 +838,7 @@ int mach_tx(struct mac_fc_alignment fc,uint8_t addr_type,BUFFER *txbuf,void (*ca
 	}
 
 #if !defined(LAZURITE_IDE) && !defined(ARDUINO)
-	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"%s %s %d\n",__FILE__,__func__,__LINE__);
+	if(module_test & MODE_MACH_DEBUG) printk(KERN_INFO"[DRV-Lazurite] %s %s %d\n",__FILE__,__func__,__LINE__);
 #endif
 	//printk(KERN_INFO"PAYLOAD\n");
 	//PAYLOADDUMP(mach.tx.payload.data,mach.tx.payload.len);
@@ -949,7 +948,7 @@ int macl_rx_irq(bool *isAck)
 				mach_rx_irq(mach.macl->status,&mach.rx);				// report data to upper layer
 			} else {								// match sequence number
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-				printk(KERN_INFO"%s %s %d macl_start\n",__FILE__,__func__,__LINE__);
+				printk(KERN_INFO"[DRV-Lazurite] %s %s %d macl_start\n",__FILE__,__func__,__LINE__);
 #endif
 				status = macl_start();
 			}

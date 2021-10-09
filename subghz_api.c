@@ -437,7 +437,7 @@ int mach_rx_irq(int status,struct mac_header *rx)
 		}
 	}
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s %s %d mach_start\n",__FILE__,__func__,__LINE__);
+	printk(KERN_INFO"[DRV-Lazurite] %s %s %d mach_start\n",__FILE__,__func__,__LINE__);
 #endif
 	return STATUS_OK;
 }

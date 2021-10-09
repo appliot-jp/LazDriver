@@ -176,7 +176,7 @@ static void macl_rxfifo_handler(void)
 	status = phy_rxdone();
 
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s,%d,%s,%d\n",__func__,__LINE__,macl_state_to_string(macl.condition),status);
+	printk(KERN_INFO"[DRV-Lazurite] %s,%d,%s,%d\n",__func__,__LINE__,macl_state_to_string(macl.condition),status);
 #endif
 	switch(status) {
 		case FIFO_CONT:			// next data 
@@ -201,7 +201,7 @@ static void macl_rxfifo_handler(void)
 		default:			// error
 			macl.condition=SUBGHZ_ST_RX_START;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-			printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
+			printk(KERN_INFO"[DRV-Lazurite] %s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
 			macl_start();
 			macl.rxdone = true;
@@ -221,7 +221,7 @@ static bool macl_rxdone_handler(void)
 
 	macl.condition=SUBGHZ_ST_RX_DONE;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
+	printk(KERN_INFO"[DRV-Lazurite] %s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
 	status = macl_rx_irq(&isAck);
 
@@ -270,7 +270,7 @@ static void macl_txfifo_handler(void)
 	FIFO_STATE fifo_state;
 	macl.condition = SUBGHZ_ST_TX_FIFO;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
+	printk(KERN_INFO"[DRV-Lazurite] %s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
 	fifo_state = phy_txfifo();
 	switch(fifo_state) {
@@ -290,7 +290,7 @@ static void macl_ack_txdone_handler(void)
 {
 	macl.condition=SUBGHZ_ST_ACK_TX_DONE;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
+	printk(KERN_INFO"[DRV-Lazurite] %s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
 	phy_timer_stop();
 	phy_txdone();
@@ -353,7 +353,7 @@ static void macl_ccadone_handler(void)
 	uint8_t cca_idle;
 
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
+	printk(KERN_INFO"[DRV-Lazurite] %s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
 
 	macl.condition=SUBGHZ_ST_CCA_DONE;
@@ -386,7 +386,7 @@ static void macl_ccadone_abort_handler(void)
 
 	ccadone = phy_ccadone();
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s,%d,%02x\n",__func__,__LINE__,ccadone);
+	printk(KERN_INFO"[DRV-Lazurite] %s,%d,%02x\n",__func__,__LINE__,ccadone);
 #endif
 	if(macl.tx_callback) macl.tx_callback(0,macl.status);
 	if(macl.rxOnEnable == true) macl_start();
@@ -419,7 +419,7 @@ static void macl_txdone_handler(void)
 	macl.condition=SUBGHZ_ST_TX_DONE;
 	phy_timer_stop();
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
+	printk(KERN_INFO"[DRV-Lazurite] %s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
 	phy_txdone();
 	ack_req = (uint8_t)(macl.phy->out.data[0]&0x20);
@@ -442,7 +442,7 @@ static void macl_ack_rxdone_handler(void)
 	bool isAck;
 	macl.condition=SUBGHZ_ST_ACK_RX_DONE;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
+	printk(KERN_INFO"[DRV-Lazurite] %s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
 	phy_timer_stop();
 
@@ -478,7 +478,7 @@ static void macl_ack_rxdone_abort_handler(void)
 	static const char s1[] = "macl_ack_txdone txpre error";
 	macl.condition=SUBGHZ_ST_ACK_RX_ABORT;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s,%d,%s,%d\n",__func__,__LINE__,macl_state_to_string(macl.condition),macl.condition);
+	printk(KERN_INFO"[DRV-Lazurite] %s,%d,%s,%d\n",__func__,__LINE__,macl_state_to_string(macl.condition),macl.condition);
 #endif
 	phy_timer_stop();
 	phy_stop();
@@ -533,7 +533,7 @@ struct macl_param *macl_init(void)
 	macl.rxdone = true;
 	macl.condition = SUBGHZ_ST_INIT;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
+	printk(KERN_INFO"[DRV-Lazurite] %s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
 
 	// 0:normal, 1:wait at fifodone, 2:no cca
@@ -548,13 +548,13 @@ struct macl_param *macl_init(void)
 	HAL_init_waitqueue_head(&macl.que);
 	macl.condition = SUBGHZ_ST_SLEEPED;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
+	printk(KERN_INFO"[DRV-Lazurite] %s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
 	return &macl;
 error:
 	macl.condition = SUBGHZ_ST_INIT_FAIL;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
+	printk(KERN_INFO"[DRV-Lazurite] %s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
 	macl.status = -EIO;
 	return NULL;
@@ -572,7 +572,7 @@ int	macl_start(void)
 	int status=STATUS_OK;
 
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
+	printk(KERN_INFO"[DRV-Lazurite] %s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
 	macl.rxdone = true;
 	macl.condition=SUBGHZ_ST_RX_START;
@@ -593,7 +593,7 @@ int	macl_stop(void)
 	macl.condition=SUBGHZ_ST_STOP;
 	macl.rxOnEnable = 0;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
+	printk(KERN_INFO"[DRV-Lazurite] %s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
 	HAL_GPIO_disableInterrupt();
 	phy_stop();
@@ -639,7 +639,7 @@ int	macl_xmit_async(BUFFER buff,void (*callback)(uint8_t rssi, int status))
 	macl.condition=SUBGHZ_ST_CCA;
 	HAL_GPIO_enableInterrupt();
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-	printk(KERN_INFO"%s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
+	printk(KERN_INFO"[DRV-Lazurite] %s,%d,%s\n",__func__,__LINE__,macl_state_to_string(macl.condition));
 #endif
 
 error:

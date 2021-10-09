@@ -115,7 +115,7 @@ void timer4_callback(struct timer_list *data) {
 }
 void HAL_timer4_set(uint32_t ms, void (*func)(void)) {
 	if(timer4_enb != false) {
-		printk(KERN_INFO"timer4 is active\n");
+		printk(KERN_INFO"[DRV-Lazurite] timer4 is active\n");
 		goto error;
 	}
 	timer4_irq_func = func;
@@ -125,11 +125,11 @@ error:
 }
 void HAL_timer4_start(void) {
 	if(timer4_enb == true) {
-		printk(KERN_INFO"timer4 is active\n");
+		printk(KERN_INFO"[DRV-Lazurite] timer4 is active\n");
 		goto error;
 	}
 	if(timer4_interval <= 0) {
-		printk(KERN_INFO"timer4 interval =< 0\n");
+		printk(KERN_INFO"[DRV-Lazurite] timer4 interval =< 0\n");
 		goto error;
 	}
 	timer4_timer.expires = jiffies + timer4_interval;
@@ -142,7 +142,7 @@ error:
 }
 
 void HAL_timer4_stop(void) {
-	printk(KERN_INFO"timer4.stop()\n");
+	printk(KERN_INFO"[DRV-Lazurite] timer4.stop()\n");
 	if(timer4_enb == true)  del_timer(&timer4_timer);
 	timer4_enb = false;
 }
@@ -163,14 +163,14 @@ int rf_main_thread(void *p)
 		if((flag_irq_enable == true) && (gpio_get_value(PHY_SINTN) == 0)) {
 			m.trigger |= 0x01;
 #if !defined(LAZURITE_IDE) && defined(DEBUG)
-			printk(KERN_INFO"%s %s %d %d %d macl.condition=%d\n",__FILE__,__func__,__LINE__,m.trigger, gpio_get_value(PHY_SINTN),macl.condition);
+			printk(KERN_INFO"[DRV-Lazurite] %s %s %d %d %d macl.condition=%d\n",__FILE__,__func__,__LINE__,m.trigger, gpio_get_value(PHY_SINTN),macl.condition);
 #endif
 		}
 		if(m.trigger == 0x00) {
 			que_irq=0;
 			wait_event_interruptible(rf_irq_q, que_irq);
 			if(flag_irq_enable == false) {
-				printk(KERN_INFO"%s %s %d %d %d macl.condition=%d\n",__FILE__,__func__,__LINE__,m.trigger, gpio_get_value(PHY_SINTN),macl.condition);
+				printk(KERN_INFO"[DRV-Lazurite] %s %s %d %d %d macl.condition=%d\n",__FILE__,__func__,__LINE__,m.trigger, gpio_get_value(PHY_SINTN),macl.condition);
 				m.trigger &= ~0x01;
 				continue;
 			}
@@ -207,7 +207,7 @@ int rf_main_thread(void *p)
 			}
 		}
 	}
-	printk(KERN_INFO"[HAL] %s thread end\n",__func__);
+	printk(KERN_INFO"[DRV-Lazurite] %s thread end\n",__func__);
 	return 0;
 }
 int rx_led_thread(void *p)
@@ -220,7 +220,7 @@ int rx_led_thread(void *p)
 		msleep(1);
 		gpio_set_value(GPIO_RX_LED,1);
 	}
-	printk(KERN_INFO"[HAL] %s thread end\n",__func__);
+	printk(KERN_INFO"[DRV-Lazurite] %s thread end\n",__func__);
 	return 0;
 }
 void EXT_set_rx_led(int value)
@@ -243,7 +243,7 @@ int tx_led_thread(void *p)
 		msleep(1);
 		gpio_set_value(GPIO_TX_LED,1);
 	}
-	printk(KERN_INFO"[HAL] %s thread end\n",__func__);
+	printk(KERN_INFO"[DRV-Lazurite] %s thread end\n",__func__);
 	return 0;
 }
 // rf hardware interrupt handler
@@ -253,7 +253,7 @@ static irqreturn_t rf_irq_handler(int irq,void *dev_id) {
 	{
 		m.trigger |= 0x01;
 		if((macl.rxdone == false) && (macl.txdone == false )) {
-			printk(KERN_INFO"%s %d rx & tx\n",__func__,__LINE__);
+			printk(KERN_INFO"[DRV-Lazurite] %s %d rx & tx\n",__func__,__LINE__);
 		}
 		if(macl.rxdone && macl.txdone) {
 			macl.rxdone = false;
@@ -326,20 +326,20 @@ int spi_probe(void){
 		status = HAL_ERROR_THREAD;
 		goto error_thread;
 	}
-	printk(KERN_INFO"[HAL] %s thread start pid=%d\n",rf_main_task->comm,rf_main_task->pid);
+	printk(KERN_INFO"[DRV-Lazurite] %s thread start pid=%d\n",rf_main_task->comm,rf_main_task->pid);
 
 	rx_led_task = kthread_run(rx_led_thread, NULL,"lzpi_rx_led_thread");
 	if (IS_ERR(rx_led_task)) {
 		status = HAL_ERROR_THREAD;
 		goto error_thread;
 	}
-	printk(KERN_INFO"[HAL] %s thread start pid=%d\n",rx_led_task->comm,rx_led_task->pid);
+	printk(KERN_INFO"[DRV-Lazurite] %s thread start pid=%d\n",rx_led_task->comm,rx_led_task->pid);
 	tx_led_task = kthread_run(tx_led_thread, NULL, "lzpi_tx_led_thread");
 	if (IS_ERR(tx_led_task)) {
 		status = HAL_ERROR_THREAD;
 		goto error_thread;
 	}
-	printk(KERN_INFO"[HAL] %s thread start pid=%d\n",tx_led_task->comm,tx_led_task->pid);
+	printk(KERN_INFO"[DRV-Lazurite] %s thread start pid=%d\n",tx_led_task->comm,tx_led_task->pid);
 
 	return 0;
 
@@ -391,10 +391,10 @@ int HAL_wake_up_interruptible(wait_queue_head_t *q)
 
 uint8_t lastSequenceNum = 0;
 void timer4_func(void) {
-	printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,macl.condition);
+	printk(KERN_INFO"[DRV-Lazurite] %s %s %d %d\n",__FILE__,__func__,__LINE__,macl.condition);
 	if(macl.sequenceNum == lastSequenceNum) {
 		phy_monitor();
-		printk(KERN_INFO"%s %s %d %d\n",__FILE__,__func__,__LINE__,mutex_is_locked(&chrdev.lock));
+		printk(KERN_INFO"[DRV-Lazurite] %s %s %d %d\n",__FILE__,__func__,__LINE__,mutex_is_locked(&chrdev.lock));
 	}
 	lastSequenceNum = macl.sequenceNum;
 }
@@ -443,7 +443,7 @@ int HAL_SPI_transfer(const uint8_t *wdata, uint16_t wsize,unsigned char *rdata, 
 	static int access_num = 0;
 	int result;
 	if(access_num != 0) {
-		printk(KERN_INFO"%s %d %d %d %d\n",__func__,__LINE__,access_num,macl.rxdone,macl.txdone);
+		printk(KERN_INFO"[DRV-Lazurite] %s %d %d %d %d\n",__func__,__LINE__,access_num,macl.rxdone,macl.txdone);
 	}
 	access_num++;
 	result = lzpi_spi_transfer(wdata,wsize,rdata,rsize);
@@ -462,7 +462,7 @@ extern uint32_t phy_intsrc(void);
 int HAL_GPIO_enableInterrupt(void)
 {
 	if(gpio_get_value(PHY_SINTN) == 0) {
-		printk(KERN_INFO"%s %s %d %08x\n",__FILE__,__func__,__LINE__,phy_intsrc());
+		printk(KERN_INFO"[DRV-Lazurite] %s %s %d %08x\n",__FILE__,__func__,__LINE__,phy_intsrc());
 	}
 	if(!flag_irq_enable) enable_irq(gpio_to_irq(PHY_SINTN));
 	flag_irq_enable = true;
@@ -512,7 +512,7 @@ int HAL_TIMER_start(uint16_t msec, void (*func)(void))
 	if(timer_flag == true) {
 		del_timer(&g_timer);
 		timer_flag = false;
-		printk(KERN_INFO"%s %s %d HAL_TIMER conflict\n",__FILE__,__func__,__LINE__);
+		printk(KERN_INFO"[DRV-Lazurite] %s %s %d HAL_TIMER conflict\n",__FILE__,__func__,__LINE__);
 	}
 	ms32 = ms32*HZ/1000;
 	g_timer.expires = jiffies + ms32;

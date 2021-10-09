@@ -47,7 +47,7 @@ static int lzpi_spi_probe(struct spi_device *spi)
 	spi->max_speed_hz = 5000000;
 	err = spi_setup(spi);
 	if (err < 0) {
-		printk(KERN_ERR"spi_setup error %d\n", err);
+		printk(KERN_ERR"[DRV-Lazurite] spi_setup error %d\n", err);
 		goto error_spi_setup;
 	}
 
@@ -58,7 +58,7 @@ static int lzpi_spi_probe(struct spi_device *spi)
 	lzpi_spi->irq = (u16)spi->irq;
 
 	m_lzpi_spi = lzpi_spi;
-	printk(KERN_INFO "spi_probe name[%s]]\n", lzpi_spi->name);
+	printk(KERN_INFO "[DRV-Lazurite] spi_probe name[%s]]\n", lzpi_spi->name);
 
 	spi_set_drvdata(spi, lzpi_spi);
 
@@ -83,7 +83,7 @@ static int lzpi_spi_remove(struct spi_device *dev)
 	/* gpio uninit */
 	//gpio_free(GPIO_SINTN);
 
-	printk(KERN_INFO "spi_remove\n");
+	printk(KERN_INFO "[DRV-Lazurite] spi_remove\n");
 	return 0;
 }
 
@@ -116,8 +116,8 @@ int lzpi_spi_transfer(const uint8_t* wdata, uint16_t wsize, uint8_t* rdata, uint
 	//PAYLOADDUMP(wdata,wsize);
 	status = spi_write_then_read(m_lzpi_spi->spi,wdata, wsize, rdata, rsize);
 	if(status != 0) {
-		printk(KERN_INFO"%s %s %d %d %d\n",__FILE__,__func__,__LINE__,wsize,rsize);
-		printk("[LZPI] SPI Unknow Error1 status=%d\n",status);
+		printk(KERN_ERR "[DRV-Lazurite] %s %s %d %d %d\n",__FILE__,__func__,__LINE__,wsize,rsize);
+		printk(KERN_ERR "[DRV-Lazurite] SPI Unknow Error1 status=%d\n",status);
 		goto error;
 	}
 error:
