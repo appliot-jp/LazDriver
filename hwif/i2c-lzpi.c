@@ -58,7 +58,7 @@ static int lzpi_i2c_probe(struct i2c_client *client,
 
 static int lzpi_i2c_remove(struct i2c_client *client) {
 	if (!client->adapter){
-		printk(KERN_INFO "[I2C] client is not attached\n");
+		printk(KERN_ERR "[DRV-Lazurite] client is not attached\n");
 		return -ENODEV;	/* our client isn't attached */
 	}
 	return 0;
@@ -95,7 +95,7 @@ int lzpi_i2c_adapter_init(uint8_t i2c_addr)
 		if(adapter == NULL)
 		{
 			i2c_del_driver(&lzpi_i2c_driver);
-			printk("[I2C] i2c adapter fail\n");
+			printk(KERN_ERR"[DRV-Lazurite] i2c adapter fail\n");
 			return -2;
 		}
 		memset(&info, 0, sizeof(struct i2c_board_info));
@@ -105,14 +105,14 @@ int lzpi_i2c_adapter_init(uint8_t i2c_addr)
 		if (client == NULL)
 		{
 			i2c_del_driver(&lzpi_i2c_driver);
-			printk("[I2C] i2c new device fail\n");
+			printk(KERN_ERR"[DRV-Lazurite] i2c new device fail\n");
 			return -3;
 		}
 		i2c_put_adapter(adapter); 
 	}
 	else
 	{
-		printk("[I2C] i2c adapter already probed\n");
+		printk(KERN_ERR "[DRV-Lazurite] i2c adapter already probed\n");
 	}
 
 	return 0;

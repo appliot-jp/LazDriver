@@ -29,7 +29,7 @@
 extern int module_test;
 //#endif
 #ifndef alert
-#define alert(a) printk(KERN_INFO"%s  %s\n",__func__,a)
+#define alert(a) printk(KERN_ERR"[DRV-Lazurite] ERROR %s  %s\n",__func__,a)
 #endif
 
 #ifndef PAYLOADDUMP

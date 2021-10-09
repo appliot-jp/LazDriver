@@ -161,7 +161,7 @@ int write_list_data(const uint8_t* raw,int len,uint8_t rssi){
 	}
 	else
 	{
-		printk(KERN_ERR "[DRV-802154E] add_list PHY Size error\n");
+		printk(KERN_ERR "[DRV-Lazurite] add_list PHY Size error\n");
 		errcode = -1;
 		goto error;
 		// return -1;
@@ -173,7 +173,7 @@ void rx_callback(const uint8_t *data, uint8_t rssi, int status) {
 	EXT_rx_led_flash(1);
 #ifdef LAZURITE_IDE
 	if(module_test & MODE_MACH_DEBUG) {
-		printk(KERN_INFO"%s,%s,%d,%d,%d\n",__FILE__,__func__,__LINE__,rssi,status);
+		printk(KERN_INFO"[DRV-Lazurite] %s,%s,%d,%d,%d\n",__FILE__,__func__,__LINE__,rssi,status);
 		PAYLOADDUMP(mach.rx.input.data, mach.rx.raw.len);
 	}
 #endif
@@ -251,7 +251,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 							ret = SubGHz.setKey(NULL);
 						} else {
 							if(copy_from_user(ckey,(const char __user *)arg,32)) {
-								printk(KERN_INFO"%s %d %s\n",__func__,__LINE__,"error of copy key");
+								printk(KERN_INFO"[DRV-Lazurite] %s %d %s\n",__func__,__LINE__,"error of copy key");
 								ret = -EFAULT;
 							} else {
 								ckey[32]='\0';
@@ -295,7 +295,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 						p.pwr = arg;
 						ret = p.pwr;
 					} else {
-						printk(KERN_ERR"pwr = %lx error!! must be 1 or 20\n",arg);
+						printk(KERN_ERR"[DRV-Lazurite] pwr = %lx error!! must be 1 or 20\n",arg);
 						ret = -EINVAL;
 					}
 					break;
@@ -310,7 +310,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 						p.bps = arg;
 						ret = p.bps;
 					} else {
-						printk(KERN_ERR"bps = %lx error!! must be 50 or 100\n",arg);
+						printk(KERN_ERR"[DRV-Lazurite] bps = %lx error!! must be 50 or 100\n",arg);
 						ret = -EINVAL;
 					}
 					break;
@@ -322,7 +322,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 						p.my_panid = arg;
 						ret = p.my_panid;
 					} else {
-						printk(KERN_ERR"bps = %lx SRC PANID ERROR\n",arg);
+						printk(KERN_ERR"[DRV-Lazurite] bps = %lx SRC PANID ERROR\n",arg);
 						ret = -EINVAL;
 					}
 					break;
@@ -334,7 +334,7 @@ static long chardev_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 						p.dst_panid = arg;
 						ret = p.dst_panid;
 					} else {
-						printk(KERN_ERR"DST PANID ERROR = %lx error!!\n",arg);
+						printk(KERN_ERR"[DRV-Lazurite] DST PANID ERROR = %lx error!!\n",arg);
 						ret = -EINVAL;
 					}
 					break;
@@ -684,7 +684,7 @@ static ssize_t chardev_read (struct file * file, char __user * buf, size_t count
 	// error
 	ptr = list_entry(head.list.next, struct list_data, list);
 	if (ptr == NULL) {
-		printk( KERN_ERR "%s : list_entry failed\n", chrdev.name);
+		printk( KERN_ERR "[DRV-Lazurite] %s : list_entry failed\n", chrdev.name);
 		bytes_read = 0;
 		goto end;
 	}
@@ -692,7 +692,7 @@ static ssize_t chardev_read (struct file * file, char __user * buf, size_t count
 	if (count == sizeof(unsigned short)) {
 		bytes_read = count;
 		if (bytes_read > 0 && copy_to_user (buf, &(ptr->len), count)) {
-			printk( KERN_ERR "%s : copy_to_user failed\n", chrdev.name);
+			printk( KERN_ERR "[DRV-Lazurite] %s : copy_to_user failed\n", chrdev.name);
 			bytes_read = 0;
 			goto end;
 		}
@@ -704,7 +704,7 @@ static ssize_t chardev_read (struct file * file, char __user * buf, size_t count
 		bytes_read = count;
 
 		if (bytes_read > 0 && copy_to_user (buf, &ptr->data[offset], bytes_read)) {
-			printk( KERN_ERR "%s : copy_to_user failed\n", chrdev.name);
+			printk( KERN_ERR "[DRV-Lazurite] %s : copy_to_user failed\n", chrdev.name);
 			bytes_read = 0;
 			goto end;
 		}
@@ -801,10 +801,10 @@ static int __init drv_param_init(void) {
 	struct device *dev;
 
 	if(RBUF <= 0) {
-		printk(KERN_ERR"[drv-lazurite] read buffer size error=%d\n",RBUF);
+		printk(KERN_ERR"[DRV-Lazurite] read buffer size error=%d\n",RBUF);
 		goto error;
 	} else {
-		printk(KERN_INFO"[drv-lazurite] read buffer size = %d\n",RBUF);
+		printk(KERN_INFO"[DRV-Lazurite] read buffer size = %d\n",RBUF);
 	}
 
 	eack_tx.data = NULL;
@@ -813,7 +813,7 @@ static int __init drv_param_init(void) {
 	// create char device
 	if((chrdev.major = register_chrdev(0, DRV_NAME, &chardev_fops)) < 0)
 	{
-		printk(KERN_ERR "[drv-lazurite] unable to get major =%d\n",
+		printk(KERN_ERR "[DRV-Lazurite] unable to get major =%d\n",
 				chrdev.major);
 		goto error;
 	}
@@ -821,13 +821,13 @@ static int __init drv_param_init(void) {
 	if(IS_ERR(chrdev.dev_class))
 	{
 		err = PTR_ERR(chrdev.dev_class);
-		printk(KERN_ERR"[drv-lazurite] class_create error %d\n", err);
+		printk(KERN_ERR"[DRV-Lazurite] class_create error %d\n", err);
 		goto error_class_create;
 	}
 	dev = device_create(chrdev.dev_class, NULL, MKDEV(chrdev.major, 0), NULL, chrdev.name);
 	if (IS_ERR(dev)) {
 		err = PTR_ERR(dev);
-		printk(KERN_ERR"[drv-lazurite]device_create error %d\n", err);
+		printk(KERN_ERR"[DRV-Lazurite] device_create error %d\n", err);
 		goto error_device_create;
 	}
 
@@ -841,7 +841,7 @@ static int __init drv_param_init(void) {
 	if(status != SUBGHZ_OK) goto error_device_create;
 
 	SubGHz.getMyAddr64(p.my_addr);
-	printk(KERN_INFO"Lazurite MAC address: %02x%02x %02x%02x %02x%02x %02x%02x\n",
+	printk(KERN_INFO"[DRV-Lazurite] Lazurite MAC address: %02x%02x %02x%02x %02x%02x %02x%02x\n",
 			p.my_addr[0],
 			p.my_addr[1],
 			p.my_addr[2],
@@ -852,7 +852,7 @@ static int __init drv_param_init(void) {
 			p.my_addr[7]
 			);
 
-	printk(KERN_INFO "[drv-lazurite] End of init\n");
+	printk(KERN_INFO "[DRV-Lazurite] End of init\n");
 	mutex_init( &chrdev.lock );
 
 	return status;
@@ -862,7 +862,7 @@ error_device_create:
 error_class_create:
 	unregister_chrdev(chrdev.major, chrdev.name);
 error:
-	printk(KERN_ERR "[drv-lazurite] Init Error\n");
+	printk(KERN_ERR "[DRV-Lazurite] Init Error\n");
 	return status;
 }
 
@@ -888,7 +888,7 @@ static void __exit drv_param_exit(void) {
 		listed_packet--;
 	}
 
-	printk(KERN_INFO "[drv-lazurite] exit remove\n");
+	printk(KERN_INFO "[DRV-Lazurite] exit remove\n");
 	return;
 }
 

@@ -1059,8 +1059,8 @@ void phy_monitor(void){
 	// READ INT SOURCE
 	reg_rd(REG_ADR_INT_SOURCE_GRP1, 4);
 #ifndef LAZURITE_IDE
-	printk(KERN_INFO"QUE :: %d %d\n",que_irq,m.trigger);
-	printk(KERN_INFO"INT SOURCE:: %x,%x,%x,%x\n", reg.rdata[0],reg.rdata[1],reg.rdata[2],reg.rdata[3]);
+	printk(KERN_INFO "[DRV-Lazurite] QUE :: %d %d\n",que_irq,m.trigger);
+	printk(KERN_INFO "[DRV-Lazurite] INT SOURCE:: %x,%x,%x,%x\n", reg.rdata[0],reg.rdata[1],reg.rdata[2],reg.rdata[3]);
 #else
 	delay(10);
 	Serial.println(s1);
@@ -1077,7 +1077,7 @@ void phy_monitor(void){
 	// READ INT ENABLE
 	reg_rd(REG_ADR_INT_EN_GRP1, 4);
 #ifndef LAZURITE_IDE
-	printk(KERN_INFO"INT ENABLE:: %x,%x,%x,%x\n", reg.rdata[0],reg.rdata[1],reg.rdata[2],reg.rdata[3]);
+	printk(KERN_INFO "[DRV-Lazurite] INT ENABLE:: %x,%x,%x,%x\n", reg.rdata[0],reg.rdata[1],reg.rdata[2],reg.rdata[3]);
 #else
 	Serial.print(s4);
 	Serial.print_long((long)reg.rdata[0],HEX);
@@ -1092,42 +1092,42 @@ void phy_monitor(void){
 	// READ RF STATE
 	reg_rd(REG_ADR_RF_STATUS, 1);
 #ifndef LAZURITE_IDE
-	printk(KERN_INFO"RF STATUS:: %x\n", reg.rdata[0]);
+	printk(KERN_INFO"[DRV-Lazurite] RF STATUS:: %x\n", reg.rdata[0]);
 #else
 	Serial.print(s5);
 	Serial.println_long((long)reg.rdata[0],HEX);
 #endif
 	reg_rd(REG_ADR_CCA_CNTRL, 1);
 #ifndef LAZURITE_IDE
-	printk(KERN_INFO"RF CCA CNTL:: %x\n", reg.rdata[0]);
+	printk(KERN_INFO"[DRV-Lazurite] RF CCA CNTL:: %x\n", reg.rdata[0]);
 #else
 	Serial.print(s6);
 	Serial.println_long((long)reg.rdata[0],HEX);
 #endif
 	reg_rd(REG_ADR_PACKET_MODE_SET, 1);
 #ifndef LAZURITE_IDE
-	printk(KERN_INFO"PACKET MODE SET:: %x\n", reg.rdata[0]);
+	printk(KERN_INFO"[DRV-Lazurite] PACKET MODE SET:: %x\n", reg.rdata[0]);
 #else
 	Serial.print(s7);
 	Serial.println_long((long)reg.rdata[0],HEX);
 #endif
 	reg_rd(REG_ADR_PD_DATA_REQ, 1);
 #ifndef LAZURITE_IDE
-	printk(KERN_INFO"PD DATA REQ:: %x\n", reg.rdata[0]);
+	printk(KERN_INFO"[DRV-Lazurite] PD DATA REQ:: %x\n", reg.rdata[0]);
 #else
 	Serial.print(s8);
 	Serial.println_long((long)reg.rdata[0],HEX);
 #endif
 	reg_rd(REG_ADR_PD_DATA_IND, 1);
 #ifndef LAZURITE_IDE
-	printk(KERN_INFO"PD DATA IND:: %x\n", reg.rdata[0]);
+	printk(KERN_INFO"[DRV-Lazurite] PD DATA IND:: %x\n", reg.rdata[0]);
 #else
 	Serial.print(s9);
 	Serial.println_long((long)reg.rdata[0],HEX);
 #endif
 	reg_rd(REG_ADR_AUTO_ACK_SET, 1);
 #ifndef LAZURITE_IDE
-	printk(KERN_INFO"AUTO ACK SET: %x\n", reg.rdata[0]);
+	printk(KERN_INFO"[DRV-Lazurite] AUTO ACK SET: %x\n", reg.rdata[0]);
 #else
 	Serial.print(s10);
 	Serial.println_long((long)reg.rdata[0],HEX);
