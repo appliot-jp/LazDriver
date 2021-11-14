@@ -47,6 +47,7 @@
 	 Define section
 	 --------------------------------------------------------------
 	 */
+#define ML7396_WAKEUP_WAIT 4	//(default 2)
 #define BUFFER_SIZE 1+254+2				// WR: FIFO_HDR(1)+PSDU(254)+CRC(2)
 																	// RD: PSDU(254)+CRC(2)+ED(1)
 const uint8_t device_id_bp3596[] =   {0x00,0x1d,0x12,0x90};
@@ -463,7 +464,7 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 
 	// CLK START
 #ifdef LAZURITE_IDE
-	HAL_spi0_sleep = 2;
+	HAL_spi0_sleep = ML7396_WAKEUP_WAIT;
 #endif
 	reg.wdata[1] = 0x0f, reg_wr(REG_ADR_CLK_SET,             2);
 #ifdef LAZURITE_IDE
