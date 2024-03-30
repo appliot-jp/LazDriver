@@ -52,8 +52,9 @@
 																	// RD: PSDU(254)+CRC(2)+ED(1)
 const uint8_t device_id_bp3596[] =   {0x00,0x1d,0x12,0x90};
 const uint8_t device_id_lazurite[] = {0x00,0x1d,0x12,0xd0};
+const uint8_t device_id_maspro[] = {0x00,0x50,0xc9};
 //#define DEIVE_ID_ROHM  0x90
-#//define DEIVE_ID_LAPIS 0xD0
+//#define DEIVE_ID_LAPIS 0xD0
 
 /*
 	 I convert floating point numerical value into Q format fixed-point numerical value
@@ -101,6 +102,14 @@ A return value: Fixed-point numerical value
 
 #define UNIT_BACKOFF_PERIOD  320
 #define DEFAUL_BAKOF        1000
+
+typedef enum{
+	BP3596A=0x10,
+	LAZURITE920J=0x20,
+	MJ2001=0x21,
+	MASPRO=0x22
+} DEVICE_TYPE;
+static DEVICE_TYPE device_type=0;
 /*
 	 ---------------------------------------------------------------
 	 Struct and Enum section
@@ -537,6 +546,7 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 	// BP3596
 	if(memcmp(device_id, device_id_bp3596,4) == 0) {
 		reg.wdata[1] = 0x04, reg_wr(REG_ADR_2DIV_CNTRL,      2);
+		device_type=BP3596A;
 	} else if (memcmp(device_id,device_id_lazurite,4) == 0) {
 		// Lazurite 920J or MJ2001
 		HAL_I2C_read(0xA0, &eui64_extend_type, 1);
@@ -544,6 +554,7 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 			case 0x04:					// Lazurite 920J
 			case 0xFF:					// Lazurite 920J
 				reg.wdata[1] = 0x02, reg_wr(REG_ADR_2DIV_CNTRL,      2);
+				device_type=LAZURITE920J;
 				break;
 			case 0x05:					// MJ2001
 				if (antsw == 0x00) {
@@ -551,6 +562,7 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 				}else{
 					reg.wdata[1] = 0x02, reg_wr(REG_ADR_2DIV_CNTRL,      2);			// outside
 				}
+				device_type=MJ2001;
 				break;
 			default:
 				alert(s1);
@@ -558,6 +570,14 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 				break;
 		}
 		HAL_I2C_read(0x80, &reg.wdata[1],1),  reg_wr(REG_ADR_OSC_ADJ2, 2);  /* Additional parameter */
+	} else if (memcmp(device_id,device_id_maspro,3) == 0) {
+		if (antsw == 0x00) {
+			reg.wdata[1] = 0x06, reg_wr(REG_ADR_2DIV_CNTRL,      2);			// inside
+		}else{
+			reg.wdata[1] = 0x02, reg_wr(REG_ADR_2DIV_CNTRL,      2);			// outside
+		}
+		HAL_I2C_read(0x80, &reg.wdata[1],1),  reg_wr(REG_ADR_OSC_ADJ2, 2);  /* Additional parameter */
+		device_type=MASPRO;
 	} else {
 		alert(s2);
 	}
@@ -616,7 +636,11 @@ int phy_setup(uint8_t page,uint8_t ch, uint8_t txPower,uint8_t antsw)
 	reg.wdata[1] = 0x07, reg_wr(REG_ADR_PA_REG_ADJ1,         2);
 	reg.wdata[1] = 0x07, reg_wr(REG_ADR_PA_REG_ADJ2,         2);
 	reg.wdata[1] = 0x07, reg_wr(REG_ADR_PA_REG_ADJ3,         2);
-	reg.wdata[1] = 0x30, reg_wr(REG_ADR_CCA_LEVEL,           2);
+	if(device_type == MASPRO) {
+		reg.wdata[1] = 0x55, reg_wr(REG_ADR_CCA_LEVEL,           2);
+	} else {
+		reg.wdata[1] = 0x30, reg_wr(REG_ADR_CCA_LEVEL,           2);
+	}
 #else
 	reg.wdata[1] = 0x06, reg_wr(REG_ADR_PA_REG_ADJ1,         2);
 	reg.wdata[1] = 0x01, reg_wr(REG_ADR_PA_REG_ADJ2,         2);
